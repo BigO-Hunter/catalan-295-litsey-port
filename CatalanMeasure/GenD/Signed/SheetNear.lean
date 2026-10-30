@@ -847,6 +847,11 @@ theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → 
       have := hzi (show Fin.append x y (Fin.castAdd m a) = Fin.append x y (Fin.castAdd m b) by
         simpa using hab)
       simpa using this
+    have hyi : Function.Injective y := by
+      intro a b hab
+      have := hzi (show Fin.append x y (Fin.natAdd _ a) = Fin.append x y (Fin.natAdd _ b) by
+        simpa using hab)
+      simpa using this
     have hnR : (P.n N : ℝ) = (P.n0 : ℝ) * N := n_cast P N
     have hinjF : Function.Injective
         (Fin.append (fun b => x (σx (Sum.inl b))) (fun b => x (σx (Sum.inr b)))) := by
@@ -872,7 +877,9 @@ theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → 
           (fun j => y (σy (Sum.inr (τ (Sum.inr j))))) s
           (fun b => ⟨(hx _).1, hxneg b⟩) (fun b => ⟨hxpos b, (hx _).2⟩)
           (fun b => ⟨(hy _).1, hyneg b⟩) (fun j => ⟨hypos _, (hy _).2⟩)
-          (fun j => ⟨hypos _, (hy _).2⟩) hinjF hinj (fun j => hs j) hsi hCls hAdm
+          (fun j => ⟨hypos _, (hy _).2⟩) hinjF hinj
+          (hyi.comp (σy.injective.comp (Sum.inr_injective.comp (τ.injective.comp Sum.inr_injective))))
+          (fun j => hs j) hsi hCls hAdm
         have hcN : (m1 + r + s' : ℕ) = m := by omega
         have hconst' := hconst N (k + q) (m1 + r) s' (by omega)
         rw [hn] at hEc
