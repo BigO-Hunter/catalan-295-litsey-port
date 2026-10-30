@@ -1160,6 +1160,515 @@ theorem isTrial_arcsine : IsTrial (fun _ => 0) 0 1 := by
   refine ⟨one_pos, fun u _ => ?_⟩
   simp [chebP]
 
+/-! ### I. Trials with summable Chebyshev coefficients
+
+The class of §B (`IsTrial`, a finite Chebyshev polynomial) is a special case (`isTrialS_bTrunc`)
+of the class of trials `P = 1 + 2 Σ_{k ≥ 1} b_k T_k` with `Σ |b_k| < ∞`.  The finite theorems above
+are kept as they are; the summable versions are obtained from them by a limit `K → ∞` in the
+truncations `chebP b K`, which converge uniformly (`abs_chebPs_sub_chebP_le`) and are themselves
+trials for large `K` (`eventually_isTrial`). -/
+
+/-- The Chebyshev series `1 + 2 Σ_{k ≥ 1} b_k T_k(u)` (a convergent series when `Σ |b_k| < ∞`). -/
+def chebPs (b : ℕ → ℝ) (u : ℝ) : ℝ :=
+  1 + 2 * ∑' k : ℕ, b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u
+
+/-- Trial class with summable coefficients: `Σ |b_k| < ∞` and `P ≥ c > 0` on `[-1, 1]`. -/
+def IsTrialS (b : ℕ → ℝ) (c : ℝ) : Prop :=
+  Summable (fun k : ℕ => |b (k + 1)|) ∧ 0 < c ∧ ∀ u ∈ Icc (-1 : ℝ) 1, c ≤ chebPs b u
+
+/-- The density (in `θ`) of the trial with summable coefficients. -/
+def denQs (b : ℕ → ℝ) (θ : ℝ) : ℝ := chebPs b (Real.cos θ) / Real.pi
+
+/-- Truncation of a coefficient sequence: keep `b_k` for `k ≤ K`. -/
+def bTrunc (b : ℕ → ℝ) (K : ℕ) (k : ℕ) : ℝ := if k ≤ K then b k else 0
+
+theorem summable_chebTerm {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) {u : ℝ}
+    (hu : u ∈ Icc (-1 : ℝ) 1) :
+    Summable fun k : ℕ => b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u := by
+  refine Summable.of_norm_bounded hb fun k => ?_
+  rw [Real.norm_eq_abs, abs_mul]
+  exact mul_le_of_le_one_right (abs_nonneg _) (energy_chebyshev_abs_le_one (k + 1) hu)
+
+theorem tendsto_chebP_chebPs {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) {u : ℝ}
+    (hu : u ∈ Icc (-1 : ℝ) 1) :
+    Tendsto (fun K => chebP b K u) atTop (𝓝 (chebPs b u)) := by
+  have h := (summable_chebTerm hb hu).hasSum.tendsto_sum_nat
+  unfold chebP chebPs
+  exact tendsto_const_nhds.add (h.const_mul 2)
+
+/-- Uniform tail bound `|P - P_K| ≤ 2 Σ_{k > K} |b_k|` on `[-1, 1]`. -/
+theorem abs_chebPs_sub_chebP_le {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) {u : ℝ}
+    (hu : u ∈ Icc (-1 : ℝ) 1) (K : ℕ) :
+    |chebPs b u - chebP b K u| ≤ 2 * ∑' i : ℕ, |b (i + K + 1)| := by
+  have hs := summable_chebTerm hb hu
+  have h1 := hs.sum_add_tsum_nat_add K
+  have hg : Summable fun i : ℕ => |b (i + K + 1)| := (summable_nat_add_iff K).2 hb
+  have hbd : ‖∑' i : ℕ, b (i + K + 1) *
+      (Polynomial.Chebyshev.T ℝ ((i + K + 1 : ℕ) : ℤ)).eval u‖ ≤ ∑' i : ℕ, |b (i + K + 1)| := by
+    refine tsum_of_norm_bounded hg.hasSum fun i => ?_
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_of_le_one_right (abs_nonneg _) (energy_chebyshev_abs_le_one (i + K + 1) hu)
+  have heq : chebPs b u - chebP b K u = 2 * ∑' i : ℕ, b (i + K + 1) *
+      (Polynomial.Chebyshev.T ℝ ((i + K + 1 : ℕ) : ℤ)).eval u := by
+    unfold chebPs chebP
+    have : ∑' k : ℕ, b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u =
+        ∑ k ∈ Finset.range K, b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u +
+        ∑' i : ℕ, b (i + K + 1) * (Polynomial.Chebyshev.T ℝ ((i + K + 1 : ℕ) : ℤ)).eval u :=
+      h1.symm
+    rw [this]; ring
+  rw [heq, abs_mul, abs_two]
+  exact mul_le_mul_of_nonneg_left (by simpa [Real.norm_eq_abs] using hbd) (by norm_num)
+
+theorem eventually_isTrial {b : ℕ → ℝ} {c : ℝ} (h : IsTrialS b c) :
+    ∀ᶠ K in atTop, IsTrial b K (c / 2) := by
+  have ht : Tendsto (fun K : ℕ => ∑' i : ℕ, |b (i + K + 1)|) atTop (𝓝 0) :=
+    tendsto_sum_nat_add (fun k : ℕ => |b (k + 1)|)
+  filter_upwards [ht.eventually (gt_mem_nhds (show (0 : ℝ) < c / 4 by linarith [h.2.1]))]
+    with K hK
+  refine ⟨by linarith [h.2.1], fun u hu => ?_⟩
+  have h1 := abs_chebPs_sub_chebP_le h.1 hu K
+  have h2 := h.2.2 u hu
+  rw [abs_le] at h1
+  linarith [h1.1, h1.2]
+
+theorem abs_denQ_le_of_summable {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) (K : ℕ)
+    (θ : ℝ) : |denQ b K θ| ≤ (1 + 2 * ∑' k : ℕ, |b (k + 1)|) / Real.pi := by
+  unfold denQ
+  rw [abs_div, abs_of_pos Real.pi_pos]
+  refine div_le_div_of_nonneg_right ((abs_chebP_cos_le b K θ).trans ?_) Real.pi_pos.le
+  have : ∑ k ∈ Finset.range K, |b (k + 1)| ≤ ∑' k : ℕ, |b (k + 1)| :=
+    hb.sum_le_tsum _ fun _ _ => abs_nonneg _
+  linarith
+
+/-- Dominated convergence for the truncated densities against a bounded measurable test
+function. -/
+theorem tendsto_integral_denQ_mul {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|)
+    {G : ℝ → ℝ} (hGm : Measurable G) {M : ℝ} (hGb : ∀ θ, |G θ| ≤ M) :
+    Tendsto (fun K => ∫ θ in (0 : ℝ)..Real.pi, denQ b K θ * G θ) atTop
+      (𝓝 (∫ θ in (0 : ℝ)..Real.pi, denQs b θ * G θ)) := by
+  refine intervalIntegral.tendsto_integral_filter_of_dominated_convergence
+    (fun _ => (1 + 2 * ∑' k : ℕ, |b (k + 1)|) / Real.pi * M) ?_ ?_
+    intervalIntegrable_const ?_
+  · exact Eventually.of_forall fun K =>
+      ((continuous_denQ b K).measurable.mul hGm).aestronglyMeasurable
+  · refine Eventually.of_forall fun K => Eventually.of_forall fun θ _ => ?_
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_mul (abs_denQ_le_of_summable hb K θ) (hGb θ) (abs_nonneg _)
+      (div_nonneg (by have h0 : 0 ≤ ∑' k : ℕ, |b (k + 1)| := tsum_nonneg fun k => abs_nonneg _; linarith)
+        Real.pi_pos.le)
+  · refine Eventually.of_forall fun θ _ => ?_
+    have := tendsto_chebP_chebPs hb (u := Real.cos θ)
+      ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+    exact (this.div_const Real.pi).mul_const (G θ)
+
+theorem summable_energy_coeff {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) :
+    Summable (fun i : ℕ => 2 * b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) ∧
+    Summable (fun i : ℕ => b (i + 1) ^ 2) := by
+  set S := ∑' k : ℕ, |b (k + 1)| with hS
+  have hbS : ∀ i : ℕ, |b (i + 1)| ≤ S := fun i =>
+    hb.le_tsum i fun j _ => abs_nonneg _
+  have hsq : Summable (fun i : ℕ => b (i + 1) ^ 2) := by
+    refine Summable.of_nonneg_of_le (fun i => sq_nonneg _) (fun i => ?_) (hb.mul_left S)
+    rw [← sq_abs]
+    nlinarith [abs_nonneg (b (i + 1)), hbS i]
+  refine ⟨?_, hsq⟩
+  refine Summable.of_nonneg_of_le (fun i => by positivity) (fun i => ?_) (hsq.mul_left 2)
+  have : (1 : ℝ) ≤ ((i + 1 : ℕ) : ℝ) := by exact_mod_cast Nat.succ_pos i
+  rw [div_le_iff₀ (by linarith)]
+  nlinarith [sq_nonneg (b (i + 1))]
+
+/-- **J5 for trials with summable Chebyshev coefficients** (crude entropy form): for a measurable
+field `Q` bounded on `[-1, 1]`,
+`s(s-1) Σ(ν') + s ∫ Q dν' + s (log π - 2 Σ b_k²) ≤ log Z`, where
+`Σ(ν') = -log 2 - Σ_{k ≥ 1} 2 b_k² / k` (the exact energy of the trial). -/
+theorem arcsine_jensen_denominator_crude_sum {b : ℕ → ℝ} {c : ℝ} (h : IsTrialS b c) {Q : ℝ → ℝ}
+    (hQm : Measurable Q) {M : ℝ} (hQb : ∀ u ∈ Icc (-1 : ℝ) 1, |Q u| ≤ M) (s : ℕ) :
+    0 < denZ Q s ∧
+    (s : ℝ) * ((s : ℝ) - 1) *
+        (-Real.log 2 - ∑' i : ℕ, 2 * b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+      s * (∫ θ in (0 : ℝ)..Real.pi, denQs b θ * Q (Real.cos θ)) +
+      s * (Real.log Real.pi - 2 * ∑' k : ℕ, b (k + 1) ^ 2) ≤
+      Real.log (denZ Q s) := by
+  obtain ⟨hen, hsq⟩ := summable_energy_coeff h.1
+  have hev := eventually_isTrial h
+  have hmem : ∀ θ : ℝ, Real.cos θ ∈ Icc (-1 : ℝ) 1 := fun θ =>
+    ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  have hlim : Tendsto (fun K : ℕ => (s : ℝ) * ((s : ℝ) - 1) *
+        (-Real.log 2 - ∑ i ∈ Finset.range K, 2 * b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+      s * (∫ θ in (0 : ℝ)..Real.pi, denQ b K θ * Q (Real.cos θ)) +
+      s * (Real.log Real.pi - 2 * ∑ k ∈ Finset.range K, b (k + 1) ^ 2)) atTop
+      (𝓝 ((s : ℝ) * ((s : ℝ) - 1) *
+        (-Real.log 2 - ∑' i : ℕ, 2 * b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+      s * (∫ θ in (0 : ℝ)..Real.pi, denQs b θ * Q (Real.cos θ)) +
+      s * (Real.log Real.pi - 2 * ∑' k : ℕ, b (k + 1) ^ 2))) := by
+    have h1 := (tendsto_const_nhds (x := -Real.log 2)).sub hen.hasSum.tendsto_sum_nat
+    have h2 := tendsto_integral_denQ_mul h.1 (G := fun θ => Q (Real.cos θ))
+      (hQm.comp Real.measurable_cos) (M := M) (fun θ => hQb _ (hmem θ))
+    have h3 := (tendsto_const_nhds (x := Real.log Real.pi)).sub
+      (hsq.hasSum.tendsto_sum_nat.const_mul 2)
+    exact ((h1.const_mul _).add (h2.const_mul _)).add (h3.const_mul _)
+  obtain ⟨K0, hK0⟩ := hev.exists
+  have hpos := (arcsine_jensen_denominator_crude hK0 hQm hQb s).1
+  refine ⟨hpos, le_of_tendsto hlim ?_⟩
+  filter_upwards [hev] with K hK
+  exact (arcsine_jensen_denominator_crude hK hQm hQb s).2
+
+theorem measurable_crossLog (x : ℝ) : Measurable (crossLog x) := by
+  unfold crossLog
+  exact Real.measurable_log.comp (by fun_prop)
+
+/-- Uniform bound of the cross field: `|l(x, u)| ≤ log 4 + 2 |log (1 - |x|)|` on `[-1, 1]`. -/
+theorem abs_crossLog_le {x : ℝ} (hxa : |x| < 1) {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    |crossLog x u| ≤ Real.log 4 + 2 * |Real.log (1 - |x|)| := by
+  have hp := cross_pos hxa hu
+  have hlo := sq_one_sub_abs_le_cross (x := x) hu
+  have hup : 1 + 2 * x * u + x ^ 2 ≤ 4 := by
+    have hxc : |x * u| ≤ 1 := by
+      rw [abs_mul]
+      nlinarith [abs_nonneg x, abs_le.mpr hu, abs_nonneg u]
+    nlinarith [abs_le.mp hxc, sq_abs x, abs_nonneg x]
+  have h1 : crossLog x u ≤ Real.log 4 := Real.log_le_log hp hup
+  have h1a : 0 < 1 - |x| := sub_pos.mpr hxa
+  have h2 : 2 * Real.log (1 - |x|) ≤ crossLog x u := by
+    rw [show (2 : ℝ) * Real.log (1 - |x|) = Real.log ((1 - |x|) ^ 2) by
+      rw [Real.log_pow]; norm_num]
+    exact Real.log_le_log (pow_pos h1a 2) hlo
+  have h4 : 0 ≤ Real.log 4 := Real.log_nonneg (by norm_num)
+  rw [abs_le]
+  constructor <;> nlinarith [neg_abs_le (Real.log (1 - |x|)), le_abs_self (Real.log (1 - |x|))]
+
+/-- **The cross field of a summable trial**: `∫ l(x, cos θ) dν' = -2 Σ_{k ≥ 1} (-x)^k b_k / k`
+for `|x| < 1`. -/
+theorem integral_crossLog_denQs {b : ℕ → ℝ} {c : ℝ} (h : IsTrialS b c) {x : ℝ}
+    (hx : x ∈ Ioo (-1 : ℝ) 1) :
+    ∫ θ in (0 : ℝ)..Real.pi, denQs b θ * crossLog x (Real.cos θ) =
+      -2 * ∑' i : ℕ, (-x) ^ (i + 1) * b (i + 1) / ((i + 1 : ℕ) : ℝ) := by
+  have hxa : |x| < 1 := abs_lt.mpr hx
+  have hmem : ∀ θ : ℝ, Real.cos θ ∈ Icc (-1 : ℝ) 1 := fun θ =>
+    ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  have hGb : ∀ θ, |crossLog x (Real.cos θ)| ≤ Real.log 4 + 2 * |Real.log (1 - |x|)| :=
+    fun θ => abs_crossLog_le hxa (hmem θ)
+  have hlimL := tendsto_integral_denQ_mul h.1 (G := fun θ => crossLog x (Real.cos θ))
+    (by unfold crossLog; exact Real.measurable_log.comp (by fun_prop)) hGb
+  have hterm : Summable fun i : ℕ => (-x) ^ (i + 1) * b (i + 1) / ((i + 1 : ℕ) : ℝ) := by
+    refine Summable.of_norm_bounded h.1 fun i => ?_
+    have : (1 : ℝ) ≤ ((i + 1 : ℕ) : ℝ) := by exact_mod_cast Nat.succ_pos i
+    rw [Real.norm_eq_abs, abs_div, abs_mul, abs_pow, abs_neg, Nat.abs_cast,
+      div_le_iff₀ (by linarith)]
+    have h1 : |x| ^ (i + 1) ≤ 1 := pow_le_one₀ (abs_nonneg _) hxa.le
+    nlinarith [abs_nonneg (b (i + 1)), mul_le_mul_of_nonneg_right h1 (abs_nonneg (b (i + 1)))]
+  have hlimR := (hterm.hasSum.tendsto_sum_nat).const_mul (-2)
+  have hlimR' : Tendsto (fun K : ℕ => -2 * ∑ i ∈ Finset.range K,
+      (-x) ^ (i + 1) * b (i + 1) / ((i + 1 : ℕ) : ℝ)) atTop
+      (𝓝 (-2 * ∑' i : ℕ, (-x) ^ (i + 1) * b (i + 1) / ((i + 1 : ℕ) : ℝ))) := hlimR
+  refine tendsto_nhds_unique_of_eventuallyEq hlimL hlimR' ?_
+  filter_upwards [eventually_isTrial h] with K hK
+  have := integral_crossLog_denMeasure hK hx
+  rw [integral_denMeasure hK] at this
+  exact this
+
+/-- The truncation of a finite trial has the same Chebyshev series. -/
+theorem chebPs_bTrunc (b : ℕ → ℝ) (K : ℕ) (u : ℝ) : chebPs (bTrunc b K) u = chebP b K u := by
+  unfold chebPs chebP
+  congr 2
+  rw [tsum_eq_sum (s := Finset.range K)]
+  · refine Finset.sum_congr rfl fun k hk => ?_
+    have : k + 1 ≤ K := by simp at hk; omega
+    simp [bTrunc, this]
+  · intro k hk
+    have : ¬ (k + 1 ≤ K) := by simp at hk; omega
+    simp [bTrunc, this]
+
+/-- The finite trial class is a special case of the summable one. -/
+theorem isTrialS_bTrunc {b : ℕ → ℝ} {K : ℕ} {c : ℝ} (h : IsTrial b K c) :
+    IsTrialS (bTrunc b K) c := by
+  refine ⟨?_, h.1, fun u hu => ?_⟩
+  · refine summable_of_ne_finset_zero (s := Finset.range K) fun k hk => ?_
+    have : ¬ (k + 1 ≤ K) := by simp at hk; omega
+    simp [bTrunc, this]
+  · rw [chebPs_bTrunc]; exact h.2 u hu
+
+/-! ### J. Fourier coefficients of summable trials, and the Poisson trials
+
+`integral_denQs_cos`: the trial `ν' = P(cos θ) dθ / π` has `∫ T_k dν' = b_k`.
+The Poisson trial `b_k = (-ρ)^k` is the balayage `β_ρ`: its density is
+`(1/π)(1 - ρ²)/(1 + 2ρ cos θ + ρ²)`. -/
+
+theorem continuous_chebPs_cos {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) :
+    Continuous fun θ : ℝ => chebPs b (Real.cos θ) := by
+  unfold chebPs
+  refine continuous_const.add (continuous_const.mul ?_)
+  refine continuous_tsum (u := fun k : ℕ => |b (k + 1)|) (fun k => ?_) hb (fun k θ => ?_)
+  · exact continuous_const.mul ((Polynomial.continuous _).comp Real.continuous_cos)
+  · rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_of_le_one_right (abs_nonneg _)
+      (energy_chebyshev_abs_le_one (k + 1) ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩)
+
+theorem continuous_denQs {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) :
+    Continuous (denQs b) :=
+  (continuous_chebPs_cos hb).div_const _
+
+theorem abs_denQs_le {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) (θ : ℝ) :
+    |denQs b θ| ≤ (1 + 2 * ∑' k : ℕ, |b (k + 1)|) / Real.pi := by
+  have hmem : Real.cos θ ∈ Icc (-1 : ℝ) 1 := ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  have h1' : ‖∑' k : ℕ, b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval
+      (Real.cos θ)‖ ≤ ∑' k : ℕ, |b (k + 1)| := by
+    refine tsum_of_norm_bounded hb.hasSum fun k => ?_
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_of_le_one_right (abs_nonneg _) (energy_chebyshev_abs_le_one (k + 1) hmem)
+  have h1 : |∑' k : ℕ, b (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval
+      (Real.cos θ)| ≤ ∑' k : ℕ, |b (k + 1)| := by simpa [Real.norm_eq_abs] using h1'
+  unfold denQs chebPs
+  rw [abs_div, abs_of_pos Real.pi_pos]
+  refine div_le_div_of_nonneg_right ?_ Real.pi_pos.le
+  have h0 : 0 ≤ ∑' k : ℕ, |b (k + 1)| := tsum_nonneg fun k => abs_nonneg _
+  calc _ ≤ |(1 : ℝ)| + |2 * ∑' k : ℕ, b (k + 1) * (Polynomial.Chebyshev.T ℝ
+        ((k + 1 : ℕ) : ℤ)).eval (Real.cos θ)| := abs_add_le _ _
+    _ ≤ _ := by rw [abs_one, abs_mul, abs_two]; linarith
+
+/-- Dominated convergence against the fixed density `denQs b` and a uniformly bounded sequence
+of test functions converging pointwise. -/
+theorem tendsto_integral_denQs_mul {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|)
+    {G : ℕ → ℝ → ℝ} {g : ℝ → ℝ} (hGm : ∀ K, Measurable (G K)) {M : ℝ}
+    (hGb : ∀ K θ, |G K θ| ≤ M) (hlim : ∀ θ, Tendsto (fun K => G K θ) atTop (𝓝 (g θ))) :
+    Tendsto (fun K => ∫ θ in (0 : ℝ)..Real.pi, denQs b θ * G K θ) atTop
+      (𝓝 (∫ θ in (0 : ℝ)..Real.pi, denQs b θ * g θ)) := by
+  refine intervalIntegral.tendsto_integral_filter_of_dominated_convergence
+    (fun _ => (1 + 2 * ∑' k : ℕ, |b (k + 1)|) / Real.pi * M) ?_ ?_
+    intervalIntegrable_const ?_
+  · exact Eventually.of_forall fun K =>
+      ((continuous_denQs hb).measurable.mul (hGm K)).aestronglyMeasurable
+  · refine Eventually.of_forall fun K => Eventually.of_forall fun θ _ => ?_
+    rw [Real.norm_eq_abs, abs_mul]
+    exact mul_le_mul (abs_denQs_le hb θ) (hGb K θ) (abs_nonneg _)
+      (div_nonneg (by have h0 : 0 ≤ ∑' k : ℕ, |b (k + 1)| := tsum_nonneg fun k => abs_nonneg _
+                      linarith) Real.pi_pos.le)
+  · exact Eventually.of_forall fun θ _ => (hlim θ).const_mul _
+
+/-- `∫₀^π P(cos θ) cos (jθ) dθ / π = b_j` for `j ≥ 1`. -/
+theorem integral_denQs_cos {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) {j : ℕ}
+    (hj : j ≠ 0) :
+    ∫ θ in (0 : ℝ)..Real.pi, denQs b θ * Real.cos ((j : ℝ) * θ) = b j := by
+  have h := tendsto_integral_denQ_mul hb (G := fun θ => Real.cos ((j : ℝ) * θ))
+    (by fun_prop) (M := 1) (fun θ => Real.abs_cos_le_one _)
+  refine tendsto_nhds_unique h (tendsto_const_nhds.congr' ?_)
+  filter_upwards [eventually_ge_atTop j] with K hK
+  have : ∀ θ, denQ b K θ * Real.cos ((j : ℝ) * θ) =
+      chebP b K (Real.cos θ) * Real.cos ((j : ℝ) * θ) / Real.pi := fun θ => by
+    unfold denQ; ring
+  simp_rw [this]
+  rw [intervalIntegral.integral_div, integral_chebP_cos_mul b K j hj]
+  simp only [hK, ↓reduceIte]
+  field_simp
+
+theorem integral_denQs {b : ℕ → ℝ} (hb : Summable fun k : ℕ => |b (k + 1)|) :
+    ∫ θ in (0 : ℝ)..Real.pi, denQs b θ = 1 := by
+  have h := tendsto_integral_denQ_mul hb (G := fun _ => (1 : ℝ)) (by fun_prop) (M := 1)
+    (fun θ => by simp)
+  simp only [mul_one, integral_denQ] at h
+  exact tendsto_nhds_unique h tendsto_const_nhds
+
+/-- The Poisson (balayage) trial sequence `b_k = (-ρ)^k`. -/
+def poisSeq (ρ : ℝ) (k : ℕ) : ℝ := (-ρ) ^ k
+
+theorem summable_poisSeq {ρ : ℝ} (hρ : |ρ| < 1) :
+    Summable fun k : ℕ => |poisSeq ρ (k + 1)| := by
+  have : Summable fun k : ℕ => |ρ| ^ (k + 1) :=
+    (summable_geometric_of_lt_one (abs_nonneg ρ) hρ).comp_injective (add_left_injective 1)
+  refine this.congr fun k => ?_
+  unfold poisSeq
+  rw [abs_pow, abs_neg]
+
+/-- The Poisson kernel as a Chebyshev series. -/
+theorem chebPs_poisSeq_cos {ρ : ℝ} (hρ : |ρ| < 1) (θ : ℝ) :
+    chebPs (poisSeq ρ) (Real.cos θ) =
+      (1 - ρ ^ 2) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by
+  set z : ℂ := -(ρ : ℂ) * Complex.exp ((θ : ℂ) * Complex.I) with hz
+  have hzn : ‖z‖ < 1 := by
+    rw [hz, norm_mul, norm_neg, Complex.norm_real, Complex.norm_exp_ofReal_mul_I, mul_one,
+      Real.norm_eq_abs]
+    exact hρ
+  have hgeo := (hasSum_geometric_of_norm_lt_one hzn).mul_left z
+  have hre := Complex.reCLM.hasSum hgeo
+  have hterm : ∀ n : ℕ, (z * z ^ n).re = poisSeq ρ (n + 1) *
+      (Polynomial.Chebyshev.T ℝ ((n + 1 : ℕ) : ℤ)).eval (Real.cos θ) := by
+    intro n
+    rw [← pow_succ' z n, hz, mul_pow, ← Complex.exp_nat_mul]
+    rw [show ((n + 1 : ℕ) : ℂ) * ((θ : ℂ) * Complex.I) = (((n + 1 : ℕ) : ℝ) * θ : ℝ) * Complex.I by
+      push_cast; ring]
+    rw [show (-(ρ : ℂ)) ^ (n + 1) = (((-ρ) ^ (n + 1) : ℝ) : ℂ) by push_cast; ring]
+    rw [Complex.re_ofReal_mul, Complex.exp_ofReal_mul_I_re, Polynomial.Chebyshev.T_real_cos]
+    simp [poisSeq]
+  simp only [Complex.reCLM_apply, hterm] at hre
+  have hsum := hre.tsum_eq
+  have hcs : Real.cos θ ^ 2 + Real.sin θ ^ 2 = 1 := Real.cos_sq_add_sin_sq θ
+  have hD : 0 < 1 + 2 * ρ * Real.cos θ + ρ ^ 2 :=
+    cross_pos hρ ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  have hzre : z.re = -ρ * Real.cos θ := by
+    rw [hz]; simp [Complex.exp_ofReal_mul_I_re]
+  have hzim : z.im = -ρ * Real.sin θ := by
+    rw [hz]; simp [Complex.exp_ofReal_mul_I_im]
+  have hnorm : Complex.normSq (1 - z) = 1 + 2 * ρ * Real.cos θ + ρ ^ 2 := by
+    rw [Complex.normSq_apply]
+    simp only [Complex.sub_re, Complex.one_re, Complex.sub_im, Complex.one_im, hzre, hzim]
+    nlinarith [hcs]
+  have hre1 : ((1 - z)⁻¹).re = (1 + ρ * Real.cos θ) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by
+    rw [Complex.inv_re, hnorm, Complex.sub_re, Complex.one_re, hzre]; ring
+  have hre2 : ((1 - z)⁻¹).im = -(ρ * Real.sin θ) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by
+    rw [Complex.inv_im, hnorm, Complex.sub_im, Complex.one_im, hzim]; ring
+  have h2 : ρ ^ 2 * Real.cos θ ^ 2 + ρ ^ 2 * Real.sin θ ^ 2 = ρ ^ 2 := by
+    rw [← mul_add, hcs, mul_one]
+  have hval : (z * (1 - z)⁻¹).re = (-ρ * Real.cos θ - ρ ^ 2) /
+      (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by
+    rw [Complex.mul_re, hre1, hre2, hzre, hzim]
+    have : -ρ * Real.cos θ * ((1 + ρ * Real.cos θ) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2)) -
+        -ρ * Real.sin θ * (-(ρ * Real.sin θ) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2)) =
+        (-ρ * Real.cos θ * (1 + ρ * Real.cos θ) - ρ ^ 2 * Real.sin θ ^ 2) /
+          (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by ring
+    rw [this]
+    congr 1
+    linear_combination (-1 : ℝ) * h2
+  have hsum' : ∑' n : ℕ, poisSeq ρ (n + 1) *
+      (Polynomial.Chebyshev.T ℝ ((n + 1 : ℕ) : ℤ)).eval (Real.cos θ) =
+      (-ρ * Real.cos θ - ρ ^ 2) / (1 + 2 * ρ * Real.cos θ + ρ ^ 2) := by
+    rw [← hval, ← hsum]
+  unfold chebPs
+  rw [hsum']
+  field_simp
+  ring
+
+theorem chebPs_poisSeq {ρ : ℝ} (hρ : |ρ| < 1) {u : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) :
+    chebPs (poisSeq ρ) u = (1 - ρ ^ 2) / (1 + 2 * ρ * u + ρ ^ 2) := by
+  have h := chebPs_poisSeq_cos hρ (Real.arccos u)
+  rwa [Real.cos_arccos hu.1 hu.2] at h
+
+theorem isTrialS_poisSeq {ρ : ℝ} (hρ : |ρ| < 1) :
+    IsTrialS (poisSeq ρ) ((1 - ρ ^ 2) / (1 + |ρ|) ^ 2) := by
+  refine ⟨summable_poisSeq hρ, ?_, fun u hu => ?_⟩
+  · have : 0 < 1 - ρ ^ 2 := by nlinarith [abs_nonneg ρ, sq_abs ρ]
+    positivity
+  · rw [chebPs_poisSeq hρ hu]
+    have hD : 0 < 1 + 2 * ρ * u + ρ ^ 2 := cross_pos hρ hu
+    have h1 : 1 + 2 * ρ * u + ρ ^ 2 ≤ (1 + |ρ|) ^ 2 := by
+      have : |ρ * u| ≤ |ρ| := by
+        rw [abs_mul]; exact mul_le_of_le_one_right (abs_nonneg _) (abs_le.mpr hu)
+      nlinarith [(abs_le.mp this).2, sq_abs ρ]
+    have h2 : 0 ≤ 1 - ρ ^ 2 := by nlinarith [abs_nonneg ρ, sq_abs ρ]
+    exact div_le_div_of_nonneg_left h2 hD h1
+
+/-- The Poisson kernel is a positive probability density. -/
+theorem denQs_poisSeq_pos {ρ : ℝ} (hρ : |ρ| < 1) (θ : ℝ) : 0 < denQs (poisSeq ρ) θ := by
+  have h := isTrialS_poisSeq hρ
+  have := h.2.2 (Real.cos θ) ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  unfold denQs
+  exact div_pos (lt_of_lt_of_le h.2.1 this) Real.pi_pos
+
+/-- **Poisson average.** If a Chebyshev series with summable coefficients is `≤ ℓ` on `[-1, 1]`,
+its Poisson average `Σ c_k (-ρ)^k` is `≤ ℓ`. -/
+theorem poisson_average_le {c : ℕ → ℝ} (hc : Summable fun k : ℕ => |c (k + 1)|) {ℓ : ℝ}
+    (hℓ : ∀ u ∈ Icc (-1 : ℝ) 1,
+      ∑' k : ℕ, c (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u ≤ ℓ)
+    {ρ : ℝ} (hρ : |ρ| < 1) :
+    ∑' k : ℕ, c (k + 1) * (-ρ) ^ (k + 1) ≤ ℓ := by
+  have hp := summable_poisSeq hρ
+  have hmem : ∀ θ : ℝ, Real.cos θ ∈ Icc (-1 : ℝ) 1 := fun θ =>
+    ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
+  set G : ℝ → ℝ := fun θ => ∑' k : ℕ, c (k + 1) *
+    (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval (Real.cos θ) with hG
+  set GK : ℕ → ℝ → ℝ := fun K θ => ∑ k ∈ Finset.range K, c (k + 1) *
+    (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval (Real.cos θ) with hGK
+  have hGc : Continuous G := by
+    refine continuous_tsum (u := fun k : ℕ => |c (k + 1)|) (fun k => ?_) hc (fun k θ => ?_)
+    · exact continuous_const.mul ((Polynomial.continuous _).comp Real.continuous_cos)
+    · rw [Real.norm_eq_abs, abs_mul]
+      exact mul_le_of_le_one_right (abs_nonneg _) (energy_chebyshev_abs_le_one (k + 1) (hmem θ))
+  have hGKc : ∀ K, Continuous (GK K) := fun K => by
+    simp only [hGK]
+    exact continuous_finsetSum _ fun k _ =>
+      continuous_const.mul ((Polynomial.continuous _).comp Real.continuous_cos)
+  set S := ∑' k : ℕ, |c (k + 1)| with hS
+  have hGKb : ∀ K θ, |GK K θ| ≤ S := by
+    intro K θ
+    simp only [hGK]
+    refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+    refine le_trans (Finset.sum_le_sum fun k _ => ?_) (hc.sum_le_tsum _ fun _ _ => abs_nonneg _)
+    rw [abs_mul]
+    exact mul_le_of_le_one_right (abs_nonneg _) (energy_chebyshev_abs_le_one (k + 1) (hmem θ))
+  have hGKlim : ∀ θ, Tendsto (fun K => GK K θ) atTop (𝓝 (G θ)) := by
+    intro θ
+    have hs : Summable fun k : ℕ => c (k + 1) *
+        (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval (Real.cos θ) :=
+      summable_chebTerm hc (hmem θ)
+    exact hs.hasSum.tendsto_sum_nat
+  have h1 := tendsto_integral_denQs_mul (b := poisSeq ρ) hp (fun K => (hGKc K).measurable) hGKb
+    hGKlim
+  -- the finite integrals
+  have hfin : ∀ K, ∫ θ in (0 : ℝ)..Real.pi, denQs (poisSeq ρ) θ * GK K θ =
+      ∑ k ∈ Finset.range K, c (k + 1) * (-ρ) ^ (k + 1) := by
+    intro K
+    simp only [hGK]
+    simp_rw [Finset.mul_sum]
+    rw [intervalIntegral.integral_finsetSum]
+    · refine Finset.sum_congr rfl fun k _ => ?_
+      have : ∀ θ, denQs (poisSeq ρ) θ * (c (k + 1) *
+          (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval (Real.cos θ)) =
+          c (k + 1) * (denQs (poisSeq ρ) θ * Real.cos (((k + 1 : ℕ) : ℝ) * θ)) := by
+        intro θ
+        rw [Polynomial.Chebyshev.T_real_cos]
+        simp only [Int.cast_natCast]
+        ring
+      simp_rw [this]
+      rw [intervalIntegral.integral_const_mul, integral_denQs_cos hp (Nat.succ_ne_zero k)]
+      simp [poisSeq]
+    · intro k _
+      apply Continuous.intervalIntegrable
+      exact (continuous_denQs hp).mul (continuous_const.mul
+        ((Polynomial.continuous _).comp Real.continuous_cos))
+  have hcp : Summable fun k : ℕ => c (k + 1) * (-ρ) ^ (k + 1) := by
+    refine Summable.of_norm_bounded hc fun k => ?_
+    rw [Real.norm_eq_abs, abs_mul, abs_pow, abs_neg]
+    exact mul_le_of_le_one_right (abs_nonneg _) (pow_le_one₀ (abs_nonneg _) hρ.le)
+  have h2 : Tendsto (fun K => ∫ θ in (0 : ℝ)..Real.pi, denQs (poisSeq ρ) θ * GK K θ) atTop
+      (𝓝 (∑' k : ℕ, c (k + 1) * (-ρ) ^ (k + 1))) := by
+    simp_rw [hfin]
+    exact hcp.hasSum.tendsto_sum_nat
+  have h3 := tendsto_nhds_unique h1 h2
+  rw [← h3]
+  calc ∫ θ in (0 : ℝ)..Real.pi, denQs (poisSeq ρ) θ * G θ
+      ≤ ∫ θ in (0 : ℝ)..Real.pi, denQs (poisSeq ρ) θ * ℓ := by
+        refine intervalIntegral.integral_mono_on Real.pi_pos.le ?_ ?_ fun θ _ => ?_
+        · exact ((continuous_denQs hp).mul hGc).intervalIntegrable _ _
+        · exact ((continuous_denQs hp).mul continuous_const).intervalIntegrable _ _
+        · exact mul_le_mul_of_nonneg_left (hℓ _ (hmem θ)) (denQs_poisSeq_pos hρ θ).le
+    _ = ℓ := by
+        rw [intervalIntegral.integral_mul_const, integral_denQs hp, one_mul]
+
+/-- The Poisson energy sum. -/
+theorem energy_poisSeq {ρ : ℝ} (hρ : |ρ| < 1) :
+    ∑' i : ℕ, 2 * poisSeq ρ (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ) = -2 * Real.log (1 - ρ ^ 2) := by
+  have hr : |ρ ^ 2| < 1 := by
+    rw [abs_pow, sq_abs]; nlinarith [abs_nonneg ρ, mul_nonneg (abs_nonneg ρ) (sub_nonneg.2 hρ.le), sq_abs ρ]
+  have h := (Real.hasSum_pow_div_log_of_abs_lt_one hr).mul_left 2
+  rw [show -2 * Real.log (1 - ρ ^ 2) = 2 * -Real.log (1 - ρ ^ 2) by ring, ← h.tsum_eq]
+  refine tsum_congr fun k => ?_
+  unfold poisSeq
+  rw [show ((-ρ) ^ (k + 1)) ^ 2 = (ρ ^ 2) ^ (k + 1) by rw [← pow_mul, mul_comm, pow_mul]; simp]
+  push_cast; ring
+
+theorem sq_poisSeq {ρ : ℝ} (hρ : |ρ| < 1) :
+    ∑' k : ℕ, poisSeq ρ (k + 1) ^ 2 = ρ ^ 2 / (1 - ρ ^ 2) := by
+  have hr : ρ ^ 2 < 1 := by
+    nlinarith [abs_nonneg ρ, mul_nonneg (abs_nonneg ρ) (sub_nonneg.2 hρ.le), sq_abs ρ]
+  have h0 : 0 ≤ ρ ^ 2 := sq_nonneg ρ
+  have h := (hasSum_geometric_of_lt_one h0 hr).mul_left (ρ ^ 2)
+  have h2 : HasSum (fun k : ℕ => poisSeq ρ (k + 1) ^ 2) (ρ ^ 2 * (1 - ρ ^ 2)⁻¹) := by
+    convert h using 1
+    funext k
+    unfold poisSeq
+    rw [← pow_mul, mul_comm, pow_mul, pow_succ']
+    simp
+  rw [h2.tsum_eq]; field_simp
+
 /-! ### Audit -/
 
 #print axioms CatalanMeasure.Signed.chebP_cos
@@ -1180,6 +1689,18 @@ theorem isTrial_arcsine : IsTrial (fun _ => 0) 0 1 := by
 #print axioms CatalanMeasure.Signed.denEntropy_ge
 #print axioms CatalanMeasure.Signed.arcsine_jensen_denominator
 #print axioms CatalanMeasure.Signed.arcsine_jensen_denominator_crude
+#print axioms CatalanMeasure.Signed.arcsine_jensen_denominator_crude_sum
+#print axioms CatalanMeasure.Signed.integral_crossLog_denQs
+#print axioms CatalanMeasure.Signed.poisson_average_le
+#print axioms CatalanMeasure.Signed.chebPs_poisSeq
+#print axioms CatalanMeasure.Signed.isTrialS_poisSeq
+#print axioms CatalanMeasure.Signed.integral_denQs_cos
+#print axioms CatalanMeasure.Signed.integral_denQs
+#print axioms CatalanMeasure.Signed.isTrialS_bTrunc
+#print axioms CatalanMeasure.Signed.eventually_isTrial
+#print axioms CatalanMeasure.Signed.denQs_poisSeq_pos
+#print axioms CatalanMeasure.Signed.energy_poisSeq
+#print axioms CatalanMeasure.Signed.sq_poisSeq
 
 end
 
