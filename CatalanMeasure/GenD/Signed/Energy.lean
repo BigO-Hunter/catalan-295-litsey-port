@@ -1137,18 +1137,24 @@ def SignedData.spikeTerm (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) : ℝ :
 def SignedData.fPosS (D : SignedData) (x : ℝ) : ℝ :=
   D.fPos x + D.cs * (if 1 - D.θ < x then 1 else 0)
 
+/-- The J3 dilation error of the spike lemmas: `(4e/c')(s/ν)(nrows/ν)`, where `c' ∈ (0,1]` is the
+margin of every negative and every non-spike positive (enforced by `Cls`). -/
+def SignedData.errJ3 (D : SignedData) (c' : ℝ) (nrows : ℕ) : ℝ :=
+  (4 * D.e / c') * ((D.sp : ℝ) / D.ν) * ((nrows : ℝ) / D.ν)
+
 /-- **The A7 interface (bound form).**  `LR xn gp` is the logarithm of the route II ratio
 `log Pref + log Z(φψ) − log Z(ψ)` (`logRatioZ`).  For every configuration of the class `Cls`
 (negatives in `(-1,0)`, positives in `(0,1)`, spikes counted by `cs`) the ratio is bounded by the
 consumer's expression `numB − denB` at the TRUE positions plus the spike cost
 (`SpikeReduction` followed by `SpikeCompare` of SIMPLIFY-S2 §1.3 and PROOF-A 17.38; the cap `θ`,
 the constant `C ≤ 1.02` per spike, and the class bound `M ≤ 1.1228 N` live in `Cls` and `cs`). -/
-def SpikeCompare (D : SignedData) {k q : ℕ}
+def SpikeCompare (D : SignedData) (c' : ℝ) {k q : ℕ}
     (Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop)
     (LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ) : Prop :=
   ∀ (xn : Fin k → ℝ) (gp : Fin q → ℝ), (∀ b, xn b ∈ Ioo (-1 : ℝ) 0) → (∀ p, gp p ∈ Ioo (0 : ℝ) 1) →
     Cls xn gp →
-    LR xn gp / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + D.spikeTerm gp
+    LR xn gp / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + D.spikeTerm gp +
+        D.errJ3 c' (k + q)
 
 /-- **The joint theorem (deterministic form, fixed `N`).** -/
 theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
@@ -1159,7 +1165,7 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hμf : ∀ τ, BD (D.μf τ) D.Cbf) (hCf : 0 ≤ D.Cbf)
     (hmassf : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μf τ).real univ)
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop} {LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ}
-    (hA7 : SpikeCompare D Cls LR)
+    {c' : ℝ} (hA7 : SpikeCompare D c' Cls LR)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
     (hinj : Function.Injective (Fin.append xn gp))
@@ -1167,10 +1173,11 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
         (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR xn gp / D.ν ^ 2 ≤
-      D.constTotal (k + q) + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
+      D.constTotal (k + q) + D.errJ3 c' (k + q) + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
         (1 / D.ν) * (∑ p, D.fPosS (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  have hA := hA7 xn gp hxn hgp hcls
   have h := signed_master D hν he hp hv hR ht hμ hC hmass hμf hCf hmassf xn gp sc hxn hgp hinj hs hsi
-    (LR xn gp) (D.spikeTerm gp) (hA7 xn gp hxn hgp hcls)
+    (LR xn gp) (D.spikeTerm gp + D.errJ3 c' (k + q)) (by linarith only [hA])
   have hsp : D.spikeTerm gp + (1 / D.ν) * (∑ p, D.fPos (gp p)) =
       (1 / D.ν) * (∑ p, D.fPosS (gp p)) := by
     unfold SignedData.spikeTerm SignedData.fPosS
@@ -1204,7 +1211,11 @@ structure SignedTrialBounds where
     (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μ τ).real univ ∧
     (∀ τ, BD ((D N).μf τ) (D N).Cbf) ∧ 0 ≤ (D N).Cbf ∧
     (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μf τ).real univ
-  spike : ∀ N k q, SpikeCompare (D N) (Cls N k q) (LR N k q)
+  cp : ℕ → ℝ
+  cp_pos : ∀ N, 0 < cp N
+  cp_le : ∀ N, cp N ≤ 1
+  err_small : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, (D N).errJ3 (cp N) (ncount N) ≤ ε
+  spike : ∀ N k q, SpikeCompare (D N) (cp N) (Cls N k q) (LR N k q)
   rowNeg : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D N).fNeg x ≤ MXn + ε
   rowPos : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
@@ -1232,9 +1243,9 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
         (∑ j, (T.D N).Cf (sc j)) / (T.D N).ν + T.LR N k q xn gp / (T.D N).ν ^ 2 ≤ T.B + δ := by
   have hε : 0 < δ / 8 := by linarith
   filter_upwards [T.e_mem, T.v_summable, T.R_geom, T.t_geom, T.reference, T.rowNeg hε,
-    T.rowPos hε, T.column hε,
+    T.rowPos hε, T.column hε, T.err_small hε,
     T.const_tendsto.eventually (gt_mem_nhds (show T.cInf < T.cInf + δ / 8 by linarith))]
-    with N he hv hR ht ⟨hμ, hC, hmass, hμf, hCf, hmassf⟩ hN hP hCo hconst k q hkq hlo hhi xn gp sc hxn hgp hinj
+    with N he hv hR ht ⟨hμ, hC, hmass, hμf, hCf, hmassf⟩ hN hP hCo herr hconst k q hkq hlo hhi xn gp sc hxn hgp hinj
       hs hsi hcls
   have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N
   have hνe := T.ν_eq N
@@ -1277,8 +1288,9 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
       _ = T.MY + δ / 8 := by rw [hνe, hkqR]; field_simp
   have hb := T.budget κ ⟨hlo, hhi⟩
   have hct : (T.D N).constTotal (k + q) = (T.D N).constTotal (T.ncount N) := by rw [hkq]
-  rw [hct] at h
-  nlinarith only [h, h1, h2, h3, hb, hconst, hδ]
+  have hej : (T.D N).errJ3 (T.cp N) (k + q) = (T.D N).errJ3 (T.cp N) (T.ncount N) := by rw [hkq]
+  rw [hct, hej] at h
+  nlinarith only [h, h1, h2, h3, hb, hconst, hδ, herr]
 
 end Master
 

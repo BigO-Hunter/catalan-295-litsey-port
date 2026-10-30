@@ -328,7 +328,7 @@ theorem signed_master_fixed (D : SignedData) {k q m1 m2 : ℕ} (hν : 0 < D.ν)
 ratio of the whole configuration; for configurations of the class `Cls` it is bounded by the
 consumer's expression at the TRUE positions of the combined sign-split node lists, plus the
 spike cost of the positive nodes (free and fixed). -/
-def SpikeCompareFixed (D : SignedData) {k q m1 m2 : ℕ}
+def SpikeCompareFixed (D : SignedData) (c' : ℝ) {k q m1 m2 : ℕ}
     (Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop)
     (LR : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ) : Prop :=
   ∀ (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ),
@@ -337,7 +337,7 @@ def SpikeCompareFixed (D : SignedData) {k q m1 m2 : ℕ}
     LR xn gp yn yp / D.ν ^ 2 ≤
       logPref (Fin.append xn yn) (Fin.append gp yp) / D.ν ^ 2 +
         D.numB (Fin.append xn yn) (Fin.append gp yp) - D.denB (Fin.append gp yp) +
-        D.spikeTerm (Fin.append gp yp)
+        D.spikeTerm (Fin.append gp yp) + D.errJ3 c' ((k + m1) + (q + m2))
 
 /-- **The deterministic theorem with fixed nodes (fixed `N`).** -/
 theorem signed_second_energy_fixed_nodes_det (D : SignedData) {k q m1 m2 : ℕ} (hν : 0 < D.ν)
@@ -349,7 +349,7 @@ theorem signed_second_energy_fixed_nodes_det (D : SignedData) {k q m1 m2 : ℕ} 
     (hmassf : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μf τ).real univ)
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop}
     {LR : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ}
-    (hA7 : SpikeCompareFixed D Cls LR)
+    {c' : ℝ} (hA7 : SpikeCompareFixed D c' Cls LR)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ)
     (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
@@ -364,13 +364,14 @@ theorem signed_second_energy_fixed_nodes_det (D : SignedData) {k q m1 m2 : ℕ} 
             Fin.append (Fin.append xn yn) (Fin.append gp yp) i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append (Fin.append xn yn) (Fin.append gp yp) i)) / D.ν +
         (∑ j, D.Cf (sc j)) / D.ν + LR xn gp yn yp / D.ν ^ 2 ≤
-      D.constFix (k + q) ((k + m1) + (q + m2)) +
+      D.constFix (k + q) ((k + m1) + (q + m2)) + D.errJ3 c' ((k + m1) + (q + m2)) +
         (1 / D.ν) * ((∑ b, D.fNeg (xn b)) + ∑ j, D.fNegFix (yn j)) +
         (1 / D.ν) * ((∑ p, D.fPosS (gp p)) + ∑ j, D.fPosFixS (yp j)) +
         (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  have hA := hA7 xn gp yn yp hxn hgp hyn hyp hcls
   have h := signed_master_fixed D hν he hp hv hR ht hμ hC hmass hμf hCf hmassf xn gp yn yp sc
-    hxn hgp hyn hyp hinjF hinj hs hsi (LR xn gp yn yp) (D.spikeTerm (Fin.append gp yp))
-    (hA7 xn gp yn yp hxn hgp hyn hyp hcls)
+    hxn hgp hyn hyp hinjF hinj hs hsi (LR xn gp yn yp)
+    (D.spikeTerm (Fin.append gp yp) + D.errJ3 c' ((k + m1) + (q + m2))) (by linarith only [hA])
   have e := row_sum_split (fun x => D.cs * (if 1 - D.θ < x then 1 else 0)) gp yp
   beta_reduce at e
   have hsp : D.spikeTerm (Fin.append gp yp) + (1 / D.ν) * ((∑ p, D.fPos (gp p)) +
@@ -432,8 +433,13 @@ structure SignedFixedBounds (I : ℕ) where
       1 = ∑ τ, ((D i N α).μ τ).real univ ∧
     (∀ τ, BD ((D i N α).μf τ) (D i N α).Cbf) ∧ 0 ≤ (D i N α).Cbf ∧
       1 - α = ∑ τ, ((D i N α).μf τ).real univ
+  cp : Fin I → ℕ → ℝ → ℝ
+  cp_pos : ∀ i N α, 0 < cp i N α
+  cp_le : ∀ i N α, cp i N α ≤ 1
+  err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
+    (D i N α).errJ3 (cp i N α) (ncount N) ≤ ε
   spikeFix : ∀ i N α k q m1 m2,
-    SpikeCompareFixed (D i N α) (Clsf N k q m1 m2) (LRf N k q m1 m2)
+    SpikeCompareFixed (D i N α) (cp i N α) (Clsf N k q m1 m2) (LRf N k q m1 m2)
   rowNeg : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D i N α).fNeg x ≤ MXn i + ε
   rowPos : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
@@ -509,13 +515,15 @@ theorem signed_second_energy_fixed_nodes {I : ℕ} (T : SignedFixedBounds I) {δ
           (1 / (T.D i N α).ν) * ((∑ j, (T.D i N α).fNegFix (yn j)) +
               ∑ j, (T.D i N α).fPosFixR (remC (T.epsSplit i)) α (yp j)) ≤
             T.ZB i ((m1 : ℝ) / (T.ncount N : ℝ)) ((m2 : ℝ) / (T.ncount N : ℝ)) + δ / 8) ∧
-      (∀ α ∈ Icc (T.lo i) (T.hi i), (T.D i N α).constTotal (T.ncount N) ≤ T.cInf i + δ / 8) := by
+      (∀ α ∈ Icc (T.lo i) (T.hi i), (T.D i N α).constTotal (T.ncount N) ≤ T.cInf i + δ / 8) ∧
+      (∀ α ∈ Icc (T.lo i) (T.hi i), (T.D i N α).errJ3 (T.cp i N α) (T.ncount N) ≤ δ / 8) := by
     rw [Filter.eventually_all]
     intro i
     filter_upwards [T.e_mem i, T.v_summable i, T.R_geom i, T.t_geom i, T.reference i,
-      T.rowNeg i hε, T.rowPos i hε, T.column i hε, T.fixedSum i hε, T.const_le i hε]
-      with N h1 h2 h3 h4 h5 h6 h7 h8 h9 h10
-    exact ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩
+      T.rowNeg i hε, T.rowPos i hε, T.column i hε, T.fixedSum i hε, T.const_le i hε,
+      T.err_small i hε]
+      with N h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11
+    exact ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11⟩
   filter_upwards [hall] with N hN k q m1 m2 hkq hα hκ xn gp yn yp sc hxn hgp hyn hyp hinjF hinj
     hs hsi hcls hadm
   have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N
@@ -527,7 +535,7 @@ theorem signed_second_energy_fixed_nodes {I : ℕ} (T : SignedFixedBounds I) {δ
   have hα0 : 0 ≤ α := by rw [hαdef]; positivity
   have hα1 : α ≤ T.α1 := by rw [hαdef, div_le_iff₀ hνp]; exact hα
   obtain ⟨i, hlo, hhi⟩ := T.cover α hα0 hα1
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩ := hN i
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10, h11⟩ := hN i
   have hαI : α ∈ Icc (T.lo i) (T.hi i) := ⟨hlo, hhi⟩
   obtain ⟨hνD, hRfD, hCfD, hcD⟩ := T.same i N α
   rw [← hn] at hνD
@@ -630,6 +638,10 @@ theorem signed_second_energy_fixed_nodes {I : ℕ} (T : SignedFixedBounds I) {δ
     rw [h1', hcol]
     nlinarith [hmono]
   have hconst := h10 α hαI
+  have herr := h11 α hαI
+  have hej : (T.D i N α).errJ3 (T.cp i N α) ((k + m1) + (q + m2)) =
+      (T.D i N α).errJ3 (T.cp i N α) (T.ncount N) := by rw [hkq]
+  rw [hej] at h
   rw [hνD, hRfD, hCfD, hcD] at h
   simp only [mul_add] at g1 g2 g3 g4 hb
   have hκ0 : 0 ≤ κ := by rw [hκdef]; positivity
@@ -638,7 +650,7 @@ theorem signed_second_energy_fixed_nodes {I : ℕ} (T : SignedFixedBounds I) {δ
   have hm3 := mul_nonneg (show 0 ≤ 1 - (c + d) by linarith) hδ.le
   have hm4 := mul_nonneg (add_nonneg hc0 hd0) hδ.le
   rw [hνD] at g1 g2 g3 g4
-  nlinarith only [h, hct, g1, g2, g3, g4, hb, hconst, hδ, hm1, hm2, hm3, hm4]
+  nlinarith only [h, hct, g1, g2, g3, g4, hb, hconst, hδ, hm1, hm2, hm3, hm4, herr]
 
 
 /-! ### The η-split and the linearisation of Lemma R′ (PROOF-A 17.33, NOTES §§11-12.1)
