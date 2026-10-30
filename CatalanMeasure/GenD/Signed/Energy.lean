@@ -9,6 +9,7 @@ public import CatalanMeasure.GenD.Signed.PickDet
 public import CatalanMeasure.GenD.Signed.LemmaT
 public import CatalanMeasure.GenD.Signed.LemmaK
 public import CatalanMeasure.FreePopulationFields
+public import CatalanMeasure.Parametric.GroupedFieldAssembly
 public import CatalanMeasure.PinSupDual
 
 /-!
@@ -635,6 +636,9 @@ theorem isGeom_powSum {m : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (y :
 /-- The inner product `Σ_n c_n d_n / (n+1)`. -/
 def ip (c d : ℕ → ℝ) : ℝ := ∑' n : ℕ, c n * d n / ((n : ℝ) + 1)
 
+theorem ip_self_nonneg (c : ℕ → ℝ) : 0 ≤ ip c c :=
+  tsum_nonneg fun n => div_nonneg (mul_self_nonneg _) (by positivity)
+
 theorem hasSum_ip {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {c d : ℕ → ℝ} (hc : IsGeom τ c)
     (hd : IsGeom τ d) : HasSum (fun n : ℕ => c n * d n / ((n : ℝ) + 1)) (ip c d) :=
   (hc.summable_mul hτ hd).hasSum
@@ -902,6 +906,8 @@ structure SignedData where
   t : ℕ → ℝ
   μ : Bool → Measure ℝ
   Cb : ℝ
+  μf : Bool → Measure ℝ
+  Cbf : ℝ
   Sup : ℝ
   constant : ℝ
   Rf : ℝ → ℝ
@@ -944,7 +950,8 @@ def denB {q : ℕ} (gp : Fin q → ℝ) : ℝ :=
 /-- Common row field. -/
 def rowBase (x : ℝ) : ℝ :=
   D.Rf x - barrierTrialS D.v x - Real.log (1 - x) / (2 * D.ν) +
-    (1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μ x
+    (1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μ x +
+    ((1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μf x)
 
 /-- Row field on the negatives. -/
 def fNeg (x : ℝ) : ℝ :=
@@ -970,11 +977,16 @@ def eD7 (p : ℕ) : ℝ :=
   (1 / 2) * (8 * ((p : ℝ) / D.ν) * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2)))
     + 2 * (1 - D.τ ^ 2) * (2 * ((p : ℝ) / D.ν)) ^ 2)
 
+/-- The D7.1 error of the free-row copy (pin principal), reference `μf`. -/
+def eD7f (p : ℕ) : ℝ :=
+  (1 / 2) * (8 * ((p : ℝ) / D.ν) * D.Cbf * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2)))
+    + 2 * (1 - D.τ ^ 2) * (2 * ((p : ℝ) / D.ν)) ^ 2)
+
 /-- The total constant, `p = k + q` rows. -/
 def constTotal (p : ℕ) : ℝ :=
   D.constant - ((p : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.v / 2 +
-    4 * D.e * (∑' j, |D.v j|) + pinZeroError D.ν D.e + D.eD7 p + (1 / 2) * refEnergy D.μ +
-    D.numConst - D.denConst + D.Kq
+    4 * D.e * (∑' j, |D.v j|) + pinZeroError D.ν D.e + D.eD7 p + D.eD7f p + (1 / 2) * refEnergy D.μ +
+    (1 / 2) * refEnergy D.μf + D.numConst - D.denConst + D.Kq
 
 end SignedData
 
@@ -989,13 +1001,21 @@ theorem rowBase_sum (D : SignedData) (hν : 0 < D.ν) {p : ℕ} (x : Fin p → �
     (∑ i, D.Rf (x i)) / D.ν + (∑ i, -barrierTrialS D.v (x i)) / D.ν -
       (∑ i, Real.log (1 - x i)) / (2 * D.ν ^ 2) +
       (1 / 2) * (∑ i : Fin p, (1 / D.ν) ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - D.τ ^ 2)))) -
-      (∑ i, rowRef D.μ (x i)) / D.ν = (1 / D.ν) * ∑ i, D.rowBase (x i) := by
+      (∑ i, rowRef D.μ (x i)) / D.ν +
+      ((1 / 2) * (∑ i : Fin p, (1 / D.ν) ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - D.τ ^ 2)))) -
+      (∑ i, rowRef D.μf (x i)) / D.ν) = (1 / D.ν) * ∑ i, D.rowBase (x i) := by
   unfold SignedData.rowBase
   simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_neg_distrib,
     ← Finset.mul_sum, ← Finset.sum_div]
   field_simp
   ring
 
+
+/-- `pinOffDiagonalInteraction ν 2` is the pin copy plus the all-row Vandermonde. -/
+theorem pinOff_two {p : ℕ} (ν : ℝ) (x s : Fin p → ℝ) :
+    pinOffDiagonalInteraction ν 2 x s = pinOffDiagonalInteraction ν 1 x s +
+      (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |x j - x i|) / ν ^ 2 := by
+  unfold pinOffDiagonalInteraction; ring
 
 /-- **The master inequality.**  Under the A7 bound-form hypothesis `hA7` on the route II ratio,
 the full functional is bounded by the explicit constant plus single-variable fields at the
@@ -1005,6 +1025,8 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
     (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
     (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    (hμf : ∀ τ, BD (D.μf τ) D.Cbf) (hCf : 0 ≤ D.Cbf)
+    (hmassf : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μf τ).real univ)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
     (hinj : Function.Injective (Fin.append xn gp))
@@ -1012,6 +1034,7 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (LR spike : ℝ)
     (hA7 : LR / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + spike) :
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
+        (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR / D.ν ^ 2 ≤
       D.constTotal (k + q) + spike + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
         (1 / D.ν) * (∑ p, D.fPos (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
@@ -1031,11 +1054,17 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
   have h1 := pin_zero_canonical hν he hp hx hs hinj hsi D.v hv
   have h2 := rows_vandermonde_le hν (Fin.append xn gp) hx0 hx hinj D.μ hμ hC hmass
     (ρ := D.τ ^ 2) (pow_pos hτ.1 2) (by nlinarith [hτ.1, hτ.2])
+  have h2f := rows_vandermonde_le hν (Fin.append xn gp) hx0 hx hinj D.μf hμf hCf hmassf
+    (ρ := D.τ ^ 2) (pow_pos hτ.1 2) (by nlinarith [hτ.1, hτ.2])
   have hτ0 := hτ.1
   have hn' : ∀ b, xn b < 0 := fun b => (hxn b).2
   have hg' : ∀ p, 0 < gp p := fun p => (hgp p).1
   rw [Fintype.sum_bool, Lpart_true_eq hτ0 hν xn gp hn' hg' D.μ,
     Lpart_false_eq hτ0 hν xn gp hn' hg' D.μ] at h2
+  rw [Fintype.sum_bool, Lpart_true_eq hτ0 hν xn gp hn' hg' D.μf,
+    Lpart_false_eq hτ0 hν xn gp hn' hg' D.μf] at h2f
+  have nn1 := ip_self_nonneg (fun n => powSum D.τ D.ν gp n - mpos D.μf D.τ n)
+  have nn2 := ip_self_nonneg (fun n => powSum D.τ D.ν xn n - mneg D.μf D.τ n)
   have h3 := logPref_le_prefTau hτ1 hν xn gp hxn hgp
   have hnorm1 : ∀ b, |D.τ * xn b| < 1 := fun b => by
     rw [abs_mul, abs_of_pos hτ0]
@@ -1083,7 +1112,7 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
         ip (powSum D.τ D.ν xn) (powSum D.τ D.ν gp) -
         (1 / (2 * D.ν ^ 2)) * ∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b)) := h4
   unfold SignedData.numB SignedData.denB at hA7
-  unfold SignedData.constTotal SignedData.eD7 SignedData.Kq
+  unfold SignedData.constTotal SignedData.eD7 SignedData.eD7f SignedData.Kq
   rw [hsplit]
   have hsN' : (1 / D.ν) * ∑ b, D.fNeg (xn b) = (1 / D.ν) * ((∑ b, D.rowBase (xn b)) -
       (1 / (2 * D.ν)) * (∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b))) -
@@ -1096,9 +1125,9 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
   have hsC' : (1 / D.ν) * ∑ j, D.fCol (sc j) = (1 / D.ν) * ((∑ j, D.Cf (sc j)) +
       (∑ j, 2 * barrierTrialT D.v (sc j)) - (∑ j, Real.log (1 - sc j)) / D.ν) := by rw [hsC]
   simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_neg_distrib,
-    ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h1 h2 hbase hsC' hA7
-  ring_nf at hA7 h1 h2 h3 h4' h5 hl1 hl2 hbase hsN' hsP' hsC' ⊢
-  linarith only [hA7, h1, h2, h3, h4', h5, hl1, hl2, hbase, hsN', hsP', hsC']
+    ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h1 h2 h2f hbase hsC' hA7
+  ring_nf at hA7 h1 h2 h2f h3 h4' h5 hl1 hl2 hbase hsN' hsP' hsC' nn1 nn2 ⊢
+  linarith only [hA7, h1, h2, h2f, h3, h4', h5, hl1, hl2, hbase, hsN', hsP', hsC', nn1, nn2]
 
 /-- The spike cost: `cs` per positive node beyond `1 - θ`, per `ν`. -/
 def SignedData.spikeTerm (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) : ℝ :=
@@ -1127,6 +1156,8 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
     (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
     (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    (hμf : ∀ τ, BD (D.μf τ) D.Cbf) (hCf : 0 ≤ D.Cbf)
+    (hmassf : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μf τ).real univ)
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop} {LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ}
     (hA7 : SpikeCompare D Cls LR)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
@@ -1134,10 +1165,11 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hinj : Function.Injective (Fin.append xn gp))
     (hs : ∀ j, sc j ∈ Ioo (0 : ℝ) 1) (hsi : Function.Injective sc) (hcls : Cls xn gp) :
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
+        (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR xn gp / D.ν ^ 2 ≤
       D.constTotal (k + q) + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
         (1 / D.ν) * (∑ p, D.fPosS (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
-  have h := signed_master D hν he hp hv hR ht hμ hC hmass xn gp sc hxn hgp hinj hs hsi
+  have h := signed_master D hν he hp hv hR ht hμ hC hmass hμf hCf hmassf xn gp sc hxn hgp hinj hs hsi
     (LR xn gp) (D.spikeTerm gp) (hA7 xn gp hxn hgp hcls)
   have hsp : D.spikeTerm gp + (1 / D.ν) * (∑ p, D.fPos (gp p)) =
       (1 / D.ν) * (∑ p, D.fPosS (gp p)) := by
@@ -1169,7 +1201,9 @@ structure SignedTrialBounds where
   R_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).R
   t_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).t
   reference : ∀ᶠ N : ℕ in Filter.atTop, (∀ τ, BD ((D N).μ τ) (D N).Cb) ∧ 0 ≤ (D N).Cb ∧
-    (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μ τ).real univ
+    (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μ τ).real univ ∧
+    (∀ τ, BD ((D N).μf τ) (D N).Cbf) ∧ 0 ≤ (D N).Cbf ∧
+    (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μf τ).real univ
   spike : ∀ N k q, SpikeCompare (D N) (Cls N k q) (LR N k q)
   rowNeg : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D N).fNeg x ≤ MXn + ε
@@ -1192,13 +1226,15 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
       Function.Injective (Fin.append xn gp) → (∀ j, sc j ∈ Ioo (0 : ℝ) 1) →
       Function.Injective sc → T.Cls N k q xn gp →
       (T.D N).constant + pinOffDiagonalInteraction (T.D N).ν 1 (Fin.append xn gp) sc +
+        (∑ i, ∑ j ∈ Finset.Ioi i,
+          Real.log |Fin.append xn gp j - Fin.append xn gp i|) / (T.D N).ν ^ 2 +
         (∑ i, (T.D N).Rf (Fin.append xn gp i)) / (T.D N).ν +
         (∑ j, (T.D N).Cf (sc j)) / (T.D N).ν + T.LR N k q xn gp / (T.D N).ν ^ 2 ≤ T.B + δ := by
   have hε : 0 < δ / 8 := by linarith
   filter_upwards [T.e_mem, T.v_summable, T.R_geom, T.t_geom, T.reference, T.rowNeg hε,
     T.rowPos hε, T.column hε,
     T.const_tendsto.eventually (gt_mem_nhds (show T.cInf < T.cInf + δ / 8 by linarith))]
-    with N he hv hR ht ⟨hμ, hC, hmass⟩ hN hP hCo hconst k q hkq hlo hhi xn gp sc hxn hgp hinj
+    with N he hv hR ht ⟨hμ, hC, hmass, hμf, hCf, hmassf⟩ hN hP hCo hconst k q hkq hlo hhi xn gp sc hxn hgp hinj
       hs hsi hcls
   have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N
   have hνe := T.ν_eq N
@@ -1207,7 +1243,9 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
   have hp : ((k + q : ℕ) : ℝ) ≤ (T.D N).ν := by rw [hνe, hkqR]
   have hmass' : ((k + q : ℕ) : ℝ) / (T.D N).ν = ∑ τ, ((T.D N).μ τ).real univ := by
     rw [hkqR]; exact hmass
-  have h := signed_second_energy_fixed (T.D N) hν he hp hv hR ht hμ hC hmass'
+  have hmassf' : ((k + q : ℕ) : ℝ) / (T.D N).ν = ∑ τ, ((T.D N).μf τ).real univ := by
+    rw [hkqR]; exact hmassf
+  have h := signed_second_energy_fixed (T.D N) hν he hp hv hR ht hμ hC hmass' hμf hCf hmassf'
     (T.spike N k q) xn gp sc hxn hgp hinj hs hsi hcls
   set κ : ℝ := (k : ℝ) / (T.ncount N : ℝ) with hκ
   have hq : (q : ℝ) / (T.ncount N : ℝ) = 1 - κ := by
@@ -1376,6 +1414,58 @@ theorem log_route_two {q : ℕ} (g : Fin q → ℝ) (hg : ∀ i, |g i| < 1) (s k
 
 end RouteTwo
 
+
+section Bridge532
+
+/-- **Bridge to the 532 functional.**  For `a = b = 0` the grouped value is the contract's left
+side: pin principal (free-row copy) plus the all-row Vandermonde plus the fields. -/
+theorem groupedValue_free_eq (ν c : ℝ) (R M L C : ℝ → ℝ) {r : ℕ} (z s : Fin r → ℝ)
+    (x y : Fin 0 → ℝ) :
+    CatalanMeasure.Parametric.groupedValueWithFields ν c R M L C z x y s =
+      c + pinOffDiagonalInteraction ν 1 z s +
+        (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |z j - z i|) / ν ^ 2 +
+        (∑ i, R (z i)) / ν + (∑ j, C (s j)) / ν := by
+  have hap : (Fin.append z x : Fin (r + 0) → ℝ) = z := funext fun i => Fin.append_left z x i
+  unfold CatalanMeasure.Parametric.groupedValueWithFields
+    CatalanMeasure.Parametric.groupedPopulationInteraction
+    CatalanMeasure.Parametric.crossCauchyProduct
+  rw [hap]
+  simp
+  ring
+
+/-- A sum over ordered pairs `i < j` of a symmetric function is invariant under relabelling. -/
+theorem sum_Ioi_perm {p : ℕ} (g : ℝ → ℝ → ℝ) (hg : ∀ a b, g a b = g b a) (x : Fin p → ℝ)
+    (e : Equiv.Perm (Fin p)) :
+    ∑ i, ∑ j ∈ Finset.Ioi i, g (x (e i)) (x (e j)) = ∑ i, ∑ j ∈ Finset.Ioi i, g (x i) (x j) := by
+  have h1 := sum_offdiag_eq_two_mul (p := p) (fun i j => g (x (e i)) (x (e j)))
+    (fun i j => hg _ _)
+  have h2 := sum_offdiag_eq_two_mul (p := p) (fun i j => g (x i) (x j)) (fun i j => hg _ _)
+  have h3 : (∑ i : Fin p, ∑ j : Fin p, if i = j then (0 : ℝ) else g (x (e i)) (x (e j))) =
+      ∑ i : Fin p, ∑ j : Fin p, if i = j then (0 : ℝ) else g (x i) (x j) := by
+    rw [← Equiv.sum_comp e (fun i => ∑ j : Fin p, if i = j then (0 : ℝ) else g (x i) (x j))]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← Equiv.sum_comp e (fun j => if e i = j then (0 : ℝ) else g (x (e i)) (x j))]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    simp only [e.injective.eq_iff]
+  linarith
+
+/-- `pinOffDiagonalInteraction` is invariant under independent relabellings of rows and columns. -/
+theorem pinOff_perm {p : ℕ} (ν k : ℝ) (x s : Fin p → ℝ) (e e' : Equiv.Perm (Fin p)) :
+    pinOffDiagonalInteraction ν k (fun i => x (e i)) (fun j => s (e' j)) =
+      pinOffDiagonalInteraction ν k x s := by
+  unfold pinOffDiagonalInteraction
+  have a1 := sum_Ioi_perm (fun a b => Real.log |b - a|) (fun a b => by rw [abs_sub_comm]) x e
+  have a2 := sum_Ioi_perm (fun a b => Real.log (1 - a * b)) (fun a b => by rw [mul_comm]) x e
+  have a3 := sum_Ioi_perm (fun a b => Real.log |b - a|) (fun a b => by rw [abs_sub_comm]) s e'
+  have a4 : (∑ i : Fin p, ∑ j : Fin p, Real.log (1 - 2 * x (e i) * s (e' j) + x (e i) ^ 2)) =
+      ∑ i : Fin p, ∑ j : Fin p, Real.log (1 - 2 * x i * s j + x i ^ 2) := by
+    rw [← Equiv.sum_comp e (fun i => ∑ j : Fin p, Real.log (1 - 2 * x i * s j + x i ^ 2))]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    exact Equiv.sum_comp e' (fun j => Real.log (1 - 2 * x (e i) * s j + x (e i) ^ 2))
+  rw [a1, a2, a3, a4]
+
+end Bridge532
+
 end
 end CatalanMeasure.Signed
 
@@ -1399,3 +1489,6 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.lemmaT_of_class
 #print axioms CatalanMeasure.Signed.abs_det_fromBlocks_le_eleven
 #print axioms CatalanMeasure.Signed.log_route_two
+#print axioms CatalanMeasure.Signed.groupedValue_free_eq
+#print axioms CatalanMeasure.Signed.pinOff_perm
+#print axioms CatalanMeasure.Signed.pinOff_two
