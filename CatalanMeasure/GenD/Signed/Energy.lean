@@ -317,18 +317,1064 @@ theorem pair_log_add_cross_le_tilted_ref {ν e : ℝ} (hν : 0 < ν)
   ring_nf at hrx ht hav hs1 ⊢
   linarith only [hrx, ht, hav, hs1]
 
-/-! ### The spike hypothesis (A7, Theorem S2′), recorded as a type
+/-! ### Obligation 5 -/
 
-`logRatio g` is `log Pref + log Z(φψ) − log Z(ψ)` of the route II ratio as a function of the
-positive nodes `g` (negative nodes and particle count fixed).  Capping replaces `g p` by
-`min (g p) (1 - θ)`.  The hypothesis says that each spiked positive (one with `1 - θ < g p`)
-costs at most `cost` (`= C N + O(1)`, with `C ≤ 0.85` at `θ = 0.001`), uniformly in the depth,
-plus a global slack `slack` (`o(N²)`).  The class condition `M ≤ 1.1228 N` on the number of
-spikes is a separate hypothesis of the consumer. -/
-def SpikeBound {q : ℕ} (logRatio : (Fin q → ℝ) → ℝ) (θ cost slack : ℝ) : Prop :=
-  ∀ g : Fin q → ℝ, (∀ p, g p ∈ Ioo (0 : ℝ) 1) →
-    logRatio g ≤ logRatio (fun p => min (g p) (1 - θ)) +
-      cost * ((Finset.univ.filter (fun p => 1 - θ < g p)).card : ℝ) + slack
+theorem bDeriv_eq_negBlaschkeDeriv {n : ℕ} (x : Fin n → ℝ) (a : Fin n) :
+    CatalanMeasure.Signed.bDeriv x a = CatalanMeasure.GenD.Signed.negBlaschkeDeriv x a := rfl
+
+/-! ### (d) Distinctness a.e. and the Heine/log-gas bridge -/
+
+section Bridge
+
+/-- The diagonal `θ_l = θ_l'` is null for the product Lebesgue measure on `[0,π]^s`. -/
+theorem lebPi_diag_null {s : ℕ} {l l' : Fin s} (hne : l ≠ l') :
+    lebPi s {θ | θ l = θ l'} = 0 := by
+  have hT := isTrial_arcsine
+  have hP := isProbabilityMeasure_denMeasure hT
+  have hmap := map_pair_denPi hT (s := s) hne
+  have hm : Measurable (fun θ : Fin s → ℝ => (θ l, θ l')) := by fun_prop
+  have hatom : ∀ x : ℝ, denMeasure (fun _ => 0) 0 {x} = 0 := by
+    intro x
+    have h1 : denMeasure (fun _ => 0) 0 ≪ volume.restrict (Set.Icc 0 Real.pi) :=
+      withDensity_absolutelyContinuous _ _
+    apply h1
+    rw [Measure.restrict_apply (measurableSet_singleton x)]
+    exact measure_mono_null Set.inter_subset_left (Real.volume_singleton)
+  have hD : denPi (fun _ => 0) 0 s {θ | θ l = θ l'} = 0 := by
+    have : {θ : Fin s → ℝ | θ l = θ l'} = (fun θ => (θ l, θ l')) ⁻¹' Set.diagonal ℝ := rfl
+    rw [this, ← Measure.map_apply hm measurableSet_diagonal, hmap,
+      Measure.prod_apply measurableSet_diagonal]
+    have hpre : ∀ x : ℝ, Prod.mk x ⁻¹' Set.diagonal ℝ = {x} := by
+      intro x; ext y; simp [Set.mem_diagonal_iff, eq_comm]
+    simp only [hpre, hatom, lintegral_zero]
+  rw [denPi_eq_withDensity hT] at hD
+  have hf : AEMeasurable (fun θ : Fin s → ℝ => ENNReal.ofReal (∏ l, denQ (fun _ => 0) 0 (θ l)))
+      (lebPi s) := by
+    refine (Measurable.ennreal_ofReal ?_).aemeasurable
+    exact (continuous_finset_prod _ fun l _ => (continuous_denQ _ _).comp (continuous_apply l)).measurable
+  rw [withDensity_apply_eq_zero' hf] at hD
+  have hall : {x : Fin s → ℝ | ENNReal.ofReal (∏ l, denQ (fun _ => 0) 0 (x l)) ≠ 0} = Set.univ := by
+    ext θ
+    simp only [Set.mem_setOf_eq, Set.mem_univ, iff_true, ne_eq, ENNReal.ofReal_eq_zero, not_le]
+    exact Finset.prod_pos fun l _ => denQ_pos hT _
+  rwa [hall, Set.univ_inter] at hD
+
+/-- Almost every point of `[0,π]^s` has distinct coordinates, all in `[0, π]`. -/
+theorem ae_lebPi_distinct (s : ℕ) :
+    ∀ᵐ θ ∂(lebPi s), (∀ l, θ l ∈ Set.Icc 0 Real.pi) ∧ ∀ l l', l ≠ l' → θ l ≠ θ l' := by
+  refine Filter.Eventually.and ?_ ?_
+  · rw [ae_all_iff]
+    intro l
+    have hz : lebPi s {θ | θ l ∉ Set.Icc 0 Real.pi} = 0 := by
+      have hset : {θ : Fin s → ℝ | θ l ∉ Set.Icc 0 Real.pi} =
+          Set.pi Set.univ (fun i => if i = l then (Set.Icc 0 Real.pi)ᶜ else Set.univ) := by
+        ext θ
+        simp only [Set.mem_setOf_eq, Set.mem_pi, Set.mem_univ, true_implies]
+        constructor
+        · intro h i
+          by_cases hi : i = l
+          · subst hi; simpa using h
+          · simp [hi]
+        · intro h
+          simpa using h l
+      rw [hset]
+      unfold lebPi
+      rw [Measure.pi_pi]
+      exact Finset.prod_eq_zero (Finset.mem_univ l)
+        (by simp [Measure.restrict_apply measurableSet_Icc.compl])
+    filter_upwards [measure_eq_zero_iff_ae_notMem.mp hz] with θ h
+    simpa using h
+  · rw [ae_all_iff]; intro l
+    rw [ae_all_iff]; intro l'
+    by_cases hne : l = l'
+    · simp [hne]
+    · filter_upwards [measure_eq_zero_iff_ae_notMem.mp (lebPi_diag_null hne)] with θ h _ using h
+
+/-- At a point with distinct cosines, `exp (denEnergy)` is the Heine integrand. -/
+theorem exp_denEnergy_eq {s : ℕ} (f : ℝ → ℝ) (θ : Fin s → ℝ)
+    (hc : Function.Injective fun l => Real.cos (θ l)) (hf : ∀ l, 0 < f (Real.cos (θ l))) :
+    Real.exp (denEnergy (fun u => Real.log (f u)) s θ) =
+      (Matrix.vandermonde fun l => Real.cos (θ l)).det ^ 2 * ∏ l, f (Real.cos (θ l)) := by
+  set c : Fin s → ℝ := fun l => Real.cos (θ l) with hcdef
+  have hne : ∀ i j, i ≠ j → c i - c j ≠ 0 := fun i j hij h => hij (hc (sub_eq_zero.mp h))
+  have hA : (∑ l, ∑ l' ∈ Finset.univ.erase l, kerL (θ l) (θ l')) =
+      2 * ∑ i, ∑ j ∈ Finset.Ioi i, Real.log |c i - c j| := by
+    rw [← sum_offdiag_eq_two_mul (fun i j => Real.log |c i - c j|)
+      (fun i j => by rw [abs_sub_comm])]
+    refine Finset.sum_congr rfl fun l _ => ?_
+    rw [← Finset.add_sum_erase _ _ (Finset.mem_univ l), if_pos rfl, zero_add]
+    refine Finset.sum_congr rfl fun l' hl' => ?_
+    rw [if_neg (Finset.ne_of_mem_erase hl').symm]
+    rfl
+  unfold denEnergy
+  rw [hA, Real.exp_add, Matrix.det_vandermonde, ← Finset.prod_pow, Real.exp_sum]
+  congr 1
+  · rw [Finset.mul_sum, Real.exp_sum]
+    refine Finset.prod_congr rfl fun i _ => ?_
+    rw [Finset.mul_sum, Real.exp_sum, ← Finset.prod_pow]
+    refine Finset.prod_congr rfl fun j hj => ?_
+    have hij : i ≠ j := (Finset.mem_Ioi.mp hj).ne
+    have h0 : 0 < |c i - c j| := abs_pos.mpr (hne i j hij)
+    rw [show (2 : ℝ) * Real.log |c i - c j| = Real.log (|c i - c j| ^ 2) by
+      rw [Real.log_pow]; norm_num, Real.exp_log (pow_pos h0 2), sq_abs]
+    ring
+  · exact Finset.prod_congr rfl fun l _ => Real.exp_log (hf l)
+
+theorem heineZ_eq_denZ {s : ℕ} (f : ℝ → ℝ) (hf : ∀ u ∈ Set.Icc (-1 : ℝ) 1, 0 < f u) :
+    CatalanMeasure.GenD.Signed.heineZ s f = denZ (fun u => Real.log (f u)) s := by
+  have hmu : volume.restrict (Set.Ioc 0 Real.pi) = volume.restrict (Set.Icc 0 Real.pi) :=
+    Measure.restrict_congr_set Ioc_ae_eq_Icc
+  unfold CatalanMeasure.GenD.Signed.heineZ denZ lebPi
+  simp only [hmu]
+  refine integral_congr_ae ?_
+  filter_upwards [ae_lebPi_distinct s] with θ ⟨hmem, hdist⟩
+  symm
+  refine exp_denEnergy_eq f θ ?_ fun l => hf _ ⟨Real.neg_one_le_cos _, Real.cos_le_one _⟩
+  intro l l' h
+  by_contra hll
+  exact hdist l l' hll (Real.injOn_cos (hmem l) (hmem l') h)
+
+/-- Upper bound of the Heine integral by the pointwise supremum of the exponent. -/
+theorem denZ_le {s : ℕ} (Q : ℝ → ℝ) (B : ℝ)
+    (hB : ∀ θ : Fin s → ℝ, (∀ l, θ l ∈ Set.Icc 0 Real.pi) → (∀ l l', l ≠ l' → θ l ≠ θ l') →
+      denEnergy Q s θ ≤ B) :
+    denZ Q s ≤ Real.pi ^ s * Real.exp B := by
+  unfold denZ
+  have hfin : IsFiniteMeasure (lebPi s) := by unfold lebPi; infer_instance
+  have hb : ∀ᵐ θ ∂(lebPi s), ‖Real.exp (denEnergy Q s θ)‖ ≤ Real.exp B := by
+    filter_upwards [ae_lebPi_distinct s] with θ ⟨hm, hd⟩
+    rw [Real.norm_eq_abs, abs_of_pos (Real.exp_pos _)]
+    exact Real.exp_le_exp.mpr (hB θ hm hd)
+  have h1 := norm_integral_le_of_norm_le_const hb
+  have h2 : (lebPi s).real Set.univ = Real.pi ^ s := by
+    unfold lebPi
+    rw [Measure.real, Measure.pi_univ]
+    simp only [Measure.restrict_apply MeasurableSet.univ, Set.univ_inter, Real.volume_Icc,
+      sub_zero, Finset.prod_const, Finset.card_univ, Fintype.card_fin]
+    rw [ENNReal.toReal_pow, ENNReal.toReal_ofReal Real.pi_pos.le]
+  rw [h2] at h1
+  calc _ ≤ ‖∫ θ, Real.exp (denEnergy Q s θ) ∂(lebPi s)‖ := le_abs_self _
+    _ ≤ _ := by rw [mul_comm]; exact h1
+
+end Bridge
+
+/-! ### (a) The prefactor -/
+
+section Pref
+
+/-- Series of the double logarithm: `Σ_n (Σ_i t_i^{n+1})(Σ_j u_j^{n+1})/(n+1) = -Σ_{i,j} log(1 - t_i u_j)`. -/
+theorem hasSum_log_pair {a b : ℕ} {t : Fin a → ℝ} {u : Fin b → ℝ}
+    (ht : ∀ i, |t i| < 1) (hu : ∀ j, |u j| < 1) :
+    HasSum (fun n : ℕ => (∑ i, t i ^ (n + 1)) * (∑ j, u j ^ (n + 1)) / ((n : ℝ) + 1))
+      (-∑ i, ∑ j, Real.log (1 - t i * u j)) := by
+  have h1 : ∀ i j, HasSum (fun n : ℕ => (t i * u j) ^ (n + 1) / ((n : ℝ) + 1))
+      (-Real.log (1 - t i * u j)) := by
+    intro i j
+    apply Real.hasSum_pow_div_log_of_abs_lt_one
+    rw [abs_mul]
+    calc |t i| * |u j| ≤ 1 * |u j| :=
+          mul_le_mul_of_nonneg_right (ht i).le (abs_nonneg _)
+      _ < 1 := by rw [one_mul]; exact hu j
+  have h2 := hasSum_sum (s := Finset.univ) fun i _ =>
+    hasSum_sum (s := Finset.univ) fun j _ => h1 i j
+  convert h2 using 1
+  · funext n
+    rw [Finset.sum_mul_sum, Finset.sum_div]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    rw [mul_pow]
+  · simp only [Finset.sum_neg_distrib]
+
+/-- The (possibly self-paired) off-diagonal logarithm sum in terms of the full double sum. -/
+theorem sum_Ioi_log_eq {a : ℕ} (t : Fin a → ℝ) :
+    ∑ i, ∑ j ∈ Finset.Ioi i, Real.log (1 - t i * t j) =
+      (1 / 2) * ((∑ i, ∑ j, Real.log (1 - t i * t j)) - ∑ i, Real.log (1 - t i * t i)) := by
+  have h := sum_offdiag_eq_two_mul (p := a) (fun i j => Real.log (1 - t i * t j))
+    (fun i j => by rw [mul_comm])
+  have h2 : (∑ i, ∑ j, if i = j then (0:ℝ) else Real.log (1 - t i * t j)) =
+      (∑ i, ∑ j, Real.log (1 - t i * t j)) - ∑ i, Real.log (1 - t i * t i) := by
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    have hj : ∀ j, (if i = j then (0:ℝ) else Real.log (1 - t i * t j)) =
+        Real.log (1 - t i * t j) - (if i = j then Real.log (1 - t i * t j) else 0) := by
+      intro j; split_ifs <;> simp
+    simp only [hj]
+    rw [Finset.sum_sub_distrib, Finset.sum_ite_eq]
+    simp
+  linarith
+
+/-- Dilated prefactor (per `ν²`) of negatives `xn` and positives `gp`. -/
+def prefTau {k q : ℕ} (τ ν : ℝ) (xn : Fin k → ℝ) (gp : Fin q → ℝ) : ℝ :=
+  ((∑ i, ∑ j ∈ Finset.Ioi i, Real.log (1 - τ ^ 2 * (xn i * xn j))) -
+    ∑ b, ∑ p, Real.log (1 - τ ^ 2 * (gp p * xn b))) / ν ^ 2
+
+/-- Undilated `log Pref` of `route_two`. -/
+def logPref {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) : ℝ :=
+  (∑ i, ∑ j ∈ Finset.Ioi i, Real.log (1 - xn i * xn j)) -
+    ∑ b, ∑ p, Real.log (1 - gp p * xn b)
+
+/-- Dilating the nodes towards `0` only increases the prefactor. -/
+theorem logPref_le_prefTau {k q : ℕ} {τ ν : ℝ} (hτ : τ ∈ Set.Ioc (0 : ℝ) 1) (hν : 0 < ν)
+    (xn : Fin k → ℝ) (gp : Fin q → ℝ) (hn : ∀ b, xn b ∈ Set.Ioo (-1 : ℝ) 0)
+    (hg : ∀ p, gp p ∈ Set.Ioo (0 : ℝ) 1) :
+    logPref xn gp / ν ^ 2 ≤ prefTau τ ν xn gp := by
+  unfold logPref prefTau
+  refine div_le_div_of_nonneg_right ?_ (sq_nonneg ν)
+  have hτ2 : τ ^ 2 ≤ 1 := pow_le_one₀ hτ.1.le hτ.2
+  have hτ0 : 0 < τ ^ 2 := pow_pos hτ.1 2
+  refine sub_le_sub (Finset.sum_le_sum fun i _ => Finset.sum_le_sum fun j hj => ?_)
+    (Finset.sum_le_sum fun b _ => Finset.sum_le_sum fun p _ => ?_)
+  · have h0 : 0 < xn i * xn j := mul_pos_of_neg_of_neg (hn i).2 (hn _).2
+    have h1 : xn i * xn j < 1 := by nlinarith [(hn i).1, (hn j).1, (hn i).2, (hn j).2]
+    exact Real.log_le_log (by linarith) (by nlinarith)
+  · have hgx : gp p * xn b < 0 := mul_neg_of_pos_of_neg (hg p).1 (hn b).2
+    exact Real.log_le_log (by nlinarith) (by nlinarith)
+
+/-- Dilated power sums of the nodes, normalised by `ν`, at index `n + 1`. -/
+def powSum {m : ℕ} (τ ν : ℝ) (y : Fin m → ℝ) (n : ℕ) : ℝ := (∑ b, (τ * y b) ^ (n + 1)) / ν
+
+theorem hasSum_pair_powSum {a b : ℕ} {τ ν : ℝ} (hν : 0 < ν) {y : Fin a → ℝ} {z : Fin b → ℝ}
+    (hy : ∀ i, |τ * y i| < 1) (hz : ∀ j, |τ * z j| < 1) :
+    HasSum (fun n : ℕ => powSum τ ν y n * powSum τ ν z n / ((n : ℝ) + 1))
+      (-(∑ i, ∑ j, Real.log (1 - (τ * y i) * (τ * z j))) / ν ^ 2) := by
+  have h := (hasSum_log_pair hy hz).div_const (ν ^ 2)
+  convert h using 1
+  funext n
+  unfold powSum
+  field_simp
+
+/-- The dilated prefactor as quadratic series in the dilated power sums. -/
+theorem prefTau_eq {k q : ℕ} {τ ν : ℝ} (hν : 0 < ν) (xn : Fin k → ℝ) (gp : Fin q → ℝ)
+    (hn : ∀ b, |τ * xn b| < 1) (hg : ∀ p, |τ * gp p| < 1) :
+    prefTau τ ν xn gp =
+      -(1 / 2) * (∑' n : ℕ, powSum τ ν xn n * powSum τ ν xn n / ((n : ℝ) + 1)) +
+      (∑' n : ℕ, powSum τ ν xn n * powSum τ ν gp n / ((n : ℝ) + 1)) -
+      (1 / (2 * ν ^ 2)) * ∑ b, Real.log (1 - (τ * xn b) * (τ * xn b)) := by
+  have h1 := (hasSum_pair_powSum hν hn hn).tsum_eq
+  have h2 := (hasSum_pair_powSum hν hn hg).tsum_eq
+  rw [h1, h2]
+  unfold prefTau
+  have e1 : ∀ i j, Real.log (1 - τ ^ 2 * (xn i * xn j)) = Real.log (1 - (τ * xn i) * (τ * xn j)) :=
+    fun i j => by congr 1; ring
+  have e2 : ∀ b p, Real.log (1 - τ ^ 2 * (gp p * xn b)) =
+      Real.log (1 - (τ * xn b) * (τ * gp p)) := fun b p => by congr 1; ring
+  simp only [e1, e2]
+  rw [sum_Ioi_log_eq (fun i => τ * xn i)]
+  field_simp
+  ring
+
+end Pref
+
+/-! ### (b) Geometric sequences and the quadratic algebra -/
+
+section Quad
+
+/-- A sequence dominated by a multiple of `τ^(n+1)`. -/
+def IsGeom (τ : ℝ) (c : ℕ → ℝ) : Prop := ∃ C : ℝ, ∀ n, |c n| ≤ C * τ ^ (n + 1)
+
+theorem IsGeom.add {τ : ℝ} {c d : ℕ → ℝ} (hc : IsGeom τ c) (hd : IsGeom τ d) :
+    IsGeom τ (fun n => c n + d n) := by
+  obtain ⟨C, hC⟩ := hc; obtain ⟨D, hD⟩ := hd
+  exact ⟨C + D, fun n => by
+    calc |c n + d n| ≤ |c n| + |d n| := abs_add_le _ _
+      _ ≤ C * τ ^ (n + 1) + D * τ ^ (n + 1) := add_le_add (hC n) (hD n)
+      _ = _ := by ring⟩
+
+theorem IsGeom.neg {τ : ℝ} {c : ℕ → ℝ} (hc : IsGeom τ c) : IsGeom τ (fun n => -c n) := by
+  obtain ⟨C, hC⟩ := hc
+  exact ⟨C, fun n => by simpa using hC n⟩
+
+theorem IsGeom.sub {τ : ℝ} {c d : ℕ → ℝ} (hc : IsGeom τ c) (hd : IsGeom τ d) :
+    IsGeom τ (fun n => c n - d n) := by
+  simpa [sub_eq_add_neg] using hc.add hd.neg
+
+theorem IsGeom.const_mul {τ : ℝ} {c : ℕ → ℝ} (a : ℝ) (hc : IsGeom τ c) :
+    IsGeom τ (fun n => a * c n) := by
+  obtain ⟨C, hC⟩ := hc
+  exact ⟨|a| * C, fun n => by
+    rw [abs_mul]
+    calc |a| * |c n| ≤ |a| * (C * τ ^ (n + 1)) := mul_le_mul_of_nonneg_left (hC n) (abs_nonneg _)
+      _ = _ := by ring⟩
+
+/-- Products of two geometric sequences divided by `n + 1` are summable. -/
+theorem IsGeom.summable_mul {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {c d : ℕ → ℝ}
+    (hc : IsGeom τ c) (hd : IsGeom τ d) :
+    Summable (fun n : ℕ => c n * d n / ((n : ℝ) + 1)) := by
+  obtain ⟨C, hC⟩ := hc; obtain ⟨D, hD⟩ := hd
+  have hg : Summable (fun n : ℕ => |C * D| * (τ ^ 2) ^ (n + 1)) :=
+    ((summable_geometric_of_lt_one (by have := hτ.1; positivity)
+      (by nlinarith [hτ.1, hτ.2])).comp_injective (add_left_injective 1)).mul_left _
+  refine Summable.of_norm_bounded hg fun n => ?_
+  have hn : (1 : ℝ) ≤ (n : ℝ) + 1 := by linarith [(Nat.cast_nonneg n : (0:ℝ) ≤ n)]
+  rw [Real.norm_eq_abs, abs_div, abs_of_pos (by linarith : (0:ℝ) < (n : ℝ) + 1), abs_mul]
+  have h1 : |c n| * |d n| ≤ |C * D| * (τ ^ 2) ^ (n + 1) := by
+    calc |c n| * |d n| ≤ (C * τ ^ (n + 1)) * (D * τ ^ (n + 1)) :=
+          mul_le_mul (hC n) (hD n) (abs_nonneg _) ((abs_nonneg _).trans (hC n))
+      _ ≤ |C * D| * (τ ^ 2) ^ (n + 1) := by
+          rw [← pow_mul, mul_comm 2 (n + 1), pow_mul]
+          have : (C * τ ^ (n + 1)) * (D * τ ^ (n + 1)) = (C * D) * (τ ^ (n + 1)) ^ 2 := by ring
+          rw [this]
+          exact mul_le_mul_of_nonneg_right (le_abs_self _) (sq_nonneg _)
+  calc |c n| * |d n| / ((n : ℝ) + 1) ≤ |c n| * |d n| := div_le_self (by positivity) hn
+    _ ≤ _ := h1
+
+/-- Dilated power sums of nodes with `|y| ≤ 1` are geometric. -/
+theorem isGeom_powSum {m : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (y : Fin m → ℝ)
+    (hy : ∀ b, |y b| ≤ 1) : IsGeom τ (powSum τ ν y) := by
+  refine ⟨(m : ℝ) / ν, fun n => ?_⟩
+  unfold powSum
+  rw [abs_div, abs_of_pos hν, div_mul_eq_mul_div]
+  refine div_le_div_of_nonneg_right ?_ hν.le
+  calc |∑ b, (τ * y b) ^ (n + 1)| ≤ ∑ b, |(τ * y b) ^ (n + 1)| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _b : Fin m, τ ^ (n + 1) := Finset.sum_le_sum fun b _ => by
+        rw [abs_pow, abs_mul, abs_of_pos hτ]
+        exact pow_le_pow_left₀ (by positivity) (mul_le_of_le_one_right hτ.le (hy b)) _
+    _ = (m : ℝ) * τ ^ (n + 1) := by simp
+
+/-- The inner product `Σ_n c_n d_n / (n+1)`. -/
+def ip (c d : ℕ → ℝ) : ℝ := ∑' n : ℕ, c n * d n / ((n : ℝ) + 1)
+
+theorem hasSum_ip {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {c d : ℕ → ℝ} (hc : IsGeom τ c)
+    (hd : IsGeom τ d) : HasSum (fun n : ℕ => c n * d n / ((n : ℝ) + 1)) (ip c d) :=
+  (hc.summable_mul hτ hd).hasSum
+
+/-- The tangent-plane inequality for the quadratic part: Pref, the Λ term and the two `L`
+terms of D7.1 (signed power sums `B` of the negatives, `P` of the positives; references
+`R`, `mp`, `mn`; trial tangent point `t` for the negatives). -/
+theorem quad_master {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {B P R mp mn t : ℕ → ℝ}
+    (hB : IsGeom τ B) (hP : IsGeom τ P) (hR : IsGeom τ R) (hmp : IsGeom τ mp)
+    (hmn : IsGeom τ mn) (ht : IsGeom τ t) :
+    -(1 / 2) * ip B B + ip B P + (1 / 2) * ip (fun n => B n - P n - R n) (fun n => B n - P n - R n)
+        - (1 / 2) * ip (fun n => P n - mp n) (fun n => P n - mp n)
+        - (1 / 2) * ip (fun n => B n - mn n) (fun n => B n - mn n) ≤
+      ip P (fun n => mp n + R n) + ip B (fun n => mn n - R n - t n) + (1 / 2) * ip R R
+        - (1 / 2) * ip mp mp + (1 / 2) * ip t t - (1 / 2) * ip mn mn := by
+  have hBPR : IsGeom τ (fun n => B n - P n - R n) := (hB.sub hP).sub hR
+  have hPm : IsGeom τ (fun n => P n - mp n) := hP.sub hmp
+  have hBm : IsGeom τ (fun n => B n - mn n) := hB.sub hmn
+  have hL : HasSum (fun n : ℕ => (-(1 / 2) * (B n * B n) + B n * P n +
+      (1 / 2) * ((B n - P n - R n) * (B n - P n - R n)) -
+      (1 / 2) * ((P n - mp n) * (P n - mp n)) - (1 / 2) * ((B n - mn n) * (B n - mn n))) /
+        ((n : ℝ) + 1))
+      (-(1 / 2) * ip B B + ip B P +
+        (1 / 2) * ip (fun n => B n - P n - R n) (fun n => B n - P n - R n)
+        - (1 / 2) * ip (fun n => P n - mp n) (fun n => P n - mp n)
+        - (1 / 2) * ip (fun n => B n - mn n) (fun n => B n - mn n)) := by
+    have h := ((((((hasSum_ip hτ hB hB).mul_left (-(1 / 2))).add (hasSum_ip hτ hB hP)).add
+      ((hasSum_ip hτ hBPR hBPR).mul_left (1 / 2))).sub
+      ((hasSum_ip hτ hPm hPm).mul_left (1 / 2))).sub
+      ((hasSum_ip hτ hBm hBm).mul_left (1 / 2)))
+    convert h using 1
+    funext n; ring
+  have hMR : IsGeom τ (fun n => mp n + R n) := hmp.add hR
+  have hBmt : IsGeom τ (fun n => mn n - R n - t n) := (hmn.sub hR).sub ht
+  have hR' : HasSum (fun n : ℕ => (P n * (mp n + R n) + B n * (mn n - R n - t n) +
+      (1 / 2) * (R n * R n) - (1 / 2) * (mp n * mp n) + (1 / 2) * (t n * t n) -
+      (1 / 2) * (mn n * mn n)) / ((n : ℝ) + 1))
+      (ip P (fun n => mp n + R n) + ip B (fun n => mn n - R n - t n) + (1 / 2) * ip R R
+        - (1 / 2) * ip mp mp + (1 / 2) * ip t t - (1 / 2) * ip mn mn) := by
+    have h := ((((((hasSum_ip hτ hP hMR).add (hasSum_ip hτ hB hBmt)).add
+      ((hasSum_ip hτ hR hR).mul_left (1 / 2))).sub ((hasSum_ip hτ hmp hmp).mul_left (1 / 2))).add
+      ((hasSum_ip hτ ht ht).mul_left (1 / 2))).sub ((hasSum_ip hτ hmn hmn).mul_left (1 / 2)))
+    convert h using 1
+    funext n; ring
+  refine hasSum_le (fun n => ?_) hL hR'
+  have hn : (0 : ℝ) < (n : ℝ) + 1 := by positivity
+  rw [div_le_div_iff_of_pos_right hn]
+  nlinarith [sq_nonneg (B n - t n)]
+
+/-- The single-node field `x ↦ Σ_n (τ x)^{n+1} c_n / (n+1)` of a coefficient sequence. -/
+def fld (τ : ℝ) (c : ℕ → ℝ) (x : ℝ) : ℝ := ∑' n : ℕ, (τ * x) ^ (n + 1) * c n / ((n : ℝ) + 1)
+
+theorem isGeom_node {τ : ℝ} (hτ : 0 < τ) {x : ℝ} (hx : |x| ≤ 1) :
+    IsGeom τ (fun n : ℕ => (τ * x) ^ (n + 1)) := by
+  refine ⟨1, fun n => ?_⟩
+  rw [abs_pow, abs_mul, abs_of_pos hτ, one_mul]
+  exact pow_le_pow_left₀ (by positivity) (mul_le_of_le_one_right hτ.le hx) _
+
+theorem hasSum_fld {τ : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) {c : ℕ → ℝ} (hc : IsGeom τ c) {x : ℝ}
+    (hx : |x| ≤ 1) :
+    HasSum (fun n : ℕ => (τ * x) ^ (n + 1) * c n / ((n : ℝ) + 1)) (fld τ c x) :=
+  ((isGeom_node hτ.1 hx).summable_mul hτ hc).hasSum
+
+theorem ip_powSum_left {m : ℕ} {τ ν : ℝ} (hτ : τ ∈ Set.Ioo (0 : ℝ) 1) (hν : 0 < ν)
+    (y : Fin m → ℝ) (hy : ∀ b, |y b| ≤ 1) {c : ℕ → ℝ} (hc : IsGeom τ c) :
+    ip (powSum τ ν y) c = (∑ b, fld τ c (y b)) / ν := by
+  have h := (hasSum_sum (s := Finset.univ) fun b _ => hasSum_fld hτ hc (hy b)).div_const ν
+  rw [ip, ← h.tsum_eq]
+  congr 1
+  funext n
+  unfold powSum
+  simp only [Finset.sum_div, Finset.sum_mul]
+  exact Finset.sum_congr rfl fun b _ => by ring
+
+end Quad
+
+/-! ### Matching D7.1's `L`-terms with the inner products -/
+
+section LMatch
+
+open CatalanMeasure.Signed.ReflectionEnergy
+
+theorem BD.ae_mem {m : Measure ℝ} {C : ℝ} (h : BD m C) : ∀ᵐ y ∂m, y ∈ Set.Ioo (0 : ℝ) 1 := by
+  rw [ae_iff]
+  show m (Set.Ioo (0 : ℝ) 1)ᶜ = 0
+  have h1 := Measure.le_iff'.1 h (Set.Ioo (0 : ℝ) 1)ᶜ
+  have h2 : (ENNReal.ofReal C • volume.restrict (Set.Ioo (0 : ℝ) 1)) (Set.Ioo (0 : ℝ) 1)ᶜ = 0 := by
+    rw [Measure.smul_apply, Measure.restrict_apply measurableSet_Ioo.compl]
+    simp
+  rw [h2] at h1
+  exact le_zero_iff.mp h1
+
+/-- Reference moments are geometric. -/
+theorem isGeom_refMoment {m : Measure ℝ} {C : ℝ} (h : BD m C) {τ : ℝ} (hτ : 0 < τ) :
+    IsGeom τ (fun n : ℕ => ∫ y, (τ * y) ^ (n + 1) ∂m) := by
+  have := h.finite
+  refine ⟨m.real Set.univ, fun n => ?_⟩
+  have hb : ∀ᵐ y ∂m, ‖(τ * y) ^ (n + 1)‖ ≤ τ ^ (n + 1) := by
+    filter_upwards [h.ae_mem] with y hy
+    rw [Real.norm_eq_abs, abs_pow, abs_mul, abs_of_pos hτ]
+    have hy1 : |y| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hy.1, hy.2]
+    exact pow_le_pow_left₀ (by have := abs_nonneg y; positivity)
+      (mul_le_of_le_one_right hτ.le hy1) _
+  have := norm_integral_le_of_norm_le_const hb
+  rw [Real.norm_eq_abs] at this
+  linarith [mul_comm (τ ^ (n + 1)) (m.real Set.univ)]
+
+/-- Reference species moments (positive species / signed negative species) at index `n + 1`. -/
+def mpos (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ := ∫ y, (τ * y) ^ (n + 1) ∂(μ true)
+def mneg (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ :=
+  (-1) ^ (n + 1) * ∫ y, (τ * y) ^ (n + 1) ∂(μ false)
+
+theorem isGeom_mneg {μ : Bool → Measure ℝ} {C : ℝ} (h : BD (μ false) C) {τ : ℝ} (hτ : 0 < τ) :
+    IsGeom τ (mneg μ τ) := by
+  obtain ⟨K, hK⟩ := isGeom_refMoment h hτ
+  exact ⟨K, fun n => by
+    unfold mneg; rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]; exact hK n⟩
+
+theorem Lpart_true_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (xn : Fin k → ℝ)
+    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : Bool → Measure ℝ) :
+    Lpart (fun _ : Fin (k + q) => 1 / ν) (fun i => |Fin.append xn gp i|)
+      (fun i => decide (0 < Fin.append xn gp i)) μ (τ ^ 2) true =
+      ip (fun n => powSum τ ν gp n - mpos μ τ n) (fun n => powSum τ ν gp n - mpos μ τ n) := by
+  unfold Lpart ip
+  simp only [Real.sqrt_sq hτ.le]
+  refine tsum_congr fun n => ?_
+  have hsum : (∑ i : Fin (k + q), if decide (0 < Fin.append xn gp i) = true then
+      1 / ν * (τ * |Fin.append xn gp i|) ^ (n + 1) else 0) = powSum τ ν gp n := by
+    rw [Fin.sum_univ_add]
+    have h1 : ∀ b : Fin k, (if decide (0 < Fin.append xn gp (Fin.castAdd q b)) = true then
+        1 / ν * (τ * |Fin.append xn gp (Fin.castAdd q b)|) ^ (n + 1)
+        else 0) = 0 := by
+      intro b
+      simp [Fin.append_left, not_lt.mpr (hn b).le]
+    have h2 : ∀ p : Fin q, (if decide (0 < Fin.append xn gp (Fin.natAdd k p)) = true then
+        1 / ν * (τ * |Fin.append xn gp (Fin.natAdd k p)|) ^ (n + 1)
+        else 0) = 1 / ν * (τ * gp p) ^ (n + 1) := by
+      intro p
+      simp [Fin.append_right, hg p, abs_of_pos (hg p)]
+    simp only [h1, h2, Finset.sum_const_zero, zero_add]
+    unfold powSum
+    rw [← Finset.mul_sum, one_div, inv_mul_eq_div]
+  rw [hsum]
+  unfold mpos
+  field_simp
+
+theorem Lpart_false_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (xn : Fin k → ℝ)
+    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : Bool → Measure ℝ) :
+    Lpart (fun _ : Fin (k + q) => 1 / ν) (fun i => |Fin.append xn gp i|)
+      (fun i => decide (0 < Fin.append xn gp i)) μ (τ ^ 2) false =
+      ip (fun n => powSum τ ν xn n - mneg μ τ n) (fun n => powSum τ ν xn n - mneg μ τ n) := by
+  unfold Lpart ip
+  simp only [Real.sqrt_sq hτ.le]
+  refine tsum_congr fun n => ?_
+  have hsum : (∑ i : Fin (k + q), if decide (0 < Fin.append xn gp i) = false then
+      1 / ν * (τ * |Fin.append xn gp i|) ^ (n + 1) else 0) =
+      (-1) ^ (n + 1) * powSum τ ν xn n := by
+    rw [Fin.sum_univ_add]
+    have h1 : ∀ b : Fin k, (if decide (0 < Fin.append xn gp (Fin.castAdd q b)) = false then
+        1 / ν * (τ * |Fin.append xn gp (Fin.castAdd q b)|) ^ (n + 1)
+        else 0) = (-1) ^ (n + 1) * (1 / ν * (τ * xn b) ^ (n + 1)) := by
+      intro b
+      have : decide (0 < Fin.append xn gp (Fin.castAdd q b)) = false := by
+        simp [Fin.append_left, not_lt.mpr (hn b).le]
+      rw [if_pos this]
+      simp only [Fin.append_left, abs_of_neg (hn b)]
+      rw [show τ * -xn b = -1 * (τ * xn b) by ring, mul_pow]
+      ring
+    have h2 : ∀ p : Fin q, (if decide (0 < Fin.append xn gp (Fin.natAdd k p)) = false then
+        1 / ν * (τ * |Fin.append xn gp (Fin.natAdd k p)|) ^ (n + 1)
+        else 0) = 0 := by
+      intro p
+      simp [Fin.append_right, hg p]
+    simp only [h1, h2, Finset.sum_const_zero, add_zero]
+    unfold powSum
+    rw [← Finset.mul_sum, ← Finset.mul_sum, one_div, inv_mul_eq_div]
+  have hsq : ((-1 : ℝ) ^ (n + 1)) ^ 2 = 1 := by rw [← pow_mul, mul_comm, pow_mul]; simp
+  rw [hsum]
+  show _ = (powSum τ ν xn n - mneg μ τ n) * (powSum τ ν xn n - mneg μ τ n) / ((n : ℝ) + 1)
+  unfold mneg
+  set I := ∫ y, (τ * y) ^ (n + 1) ∂(μ false)
+  set B := powSum τ ν xn n
+  set sg : ℝ := (-1) ^ (n + 1)
+  have key : (sg * B - I) ^ 2 = (B - sg * I) * (B - sg * I) := by
+    linear_combination (B ^ 2 - I ^ 2) * hsq
+  rw [one_div, inv_mul_eq_div, key]
+
+end LMatch
+
+/-! ### The cross tilt of the append configuration -/
+
+section Tilt
+
+/-- The reference tilt sequence attached to a reference moment sequence `R` (index `m = n + 1`). -/
+def refTilt (R : ℕ → ℝ) (m : ℕ) : ℝ := -(-1 : ℝ) ^ m * R (m - 1) / (m : ℝ)
+
+/-- Signed cross weights: `+1/(2ν)` on the negatives, `-1/(2ν)` on the positives. -/
+def crossW {k q : ℕ} (ν : ℝ) : Fin (k + q) → ℝ :=
+  Fin.append (fun _ => 1 / (2 * ν)) (fun _ => -(1 / (2 * ν)))
+
+theorem crossBeta_append {k q : ℕ} {τ ν : ℝ} (hν : 0 < ν) (xn : Fin k → ℝ) (gp : Fin q → ℝ)
+    (n : ℕ) :
+    crossBeta τ (crossW ν) (Fin.append xn gp) (n + 1) =
+      -(-1 : ℝ) ^ (n + 1) * (powSum τ ν xn n - powSum τ ν gp n) / ((n : ℝ) + 1) := by
+  unfold crossBeta crossW powSum
+  rw [Fin.sum_univ_add]
+  simp only [Fin.append_left, Fin.append_right, mul_pow, Finset.sum_neg_distrib,
+    ← Finset.mul_sum, ← Finset.sum_div, Nat.cast_add, Nat.cast_one]
+  field_simp
+  ring
+
+theorem crossTiltNormRef_append {k q : ℕ} {τ ν : ℝ} (hν : 0 < ν) (xn : Fin k → ℝ)
+    (gp : Fin q → ℝ) (R : ℕ → ℝ) :
+    crossTiltNormRef τ (crossW ν) (Fin.append xn gp) (refTilt R) =
+      (1 / 4) * ip (fun n => powSum τ ν xn n - powSum τ ν gp n - R n)
+        (fun n => powSum τ ν xn n - powSum τ ν gp n - R n) := by
+  unfold crossTiltNormRef ip
+  rw [← tsum_mul_left]
+  refine tsum_congr fun n => ?_
+  rw [crossBeta_append hν]
+  unfold refTilt
+  have hn : ((n : ℝ) + 1) ≠ 0 := by positivity
+  simp only [Nat.add_sub_cancel, Nat.cast_add, Nat.cast_one]
+  have hsq : ((-1 : ℝ) ^ (n + 1)) ^ 2 = 1 := by rw [← pow_mul, mul_comm, pow_mul]; simp
+  generalize (-1 : ℝ) ^ (n + 1) = sg at hsq ⊢
+  rcases eq_or_eq_neg_of_sq_eq_sq sg 1 (by simpa using hsq) with h | h <;> subst h <;>
+    field_simp <;> ring
+
+theorem sum_S_append {k q : ℕ} {ν : ℝ} (hν : 0 < ν) (a : ℕ → ℝ) (c : ℝ) (xn : Fin k → ℝ)
+    (gp : Fin q → ℝ) :
+    -2 * ∑ l, crossW ν l * barrierTrialS a (c * Fin.append xn gp l) =
+      (1 / ν) * ((∑ b, -barrierTrialS a (c * xn b)) + ∑ p, barrierTrialS a (c * gp p)) := by
+  unfold crossW
+  rw [Fin.sum_univ_add]
+  simp only [Fin.append_left, Fin.append_right]
+  rw [← Finset.mul_sum, ← Finset.mul_sum, Finset.sum_neg_distrib]
+  generalize ∑ b, barrierTrialS a (c * xn b) = A
+  generalize ∑ p, barrierTrialS a (c * gp p) = Bq
+  field_simp
+  ring
+
+end Tilt
+
+/-! ### The data, the bound expressions and the master inequality -/
+
+section Master
+
+open CatalanMeasure.Signed.ReflectionEnergy
+
+/-- `∫ l(x, u) dν'(u) = - denPoly b K x` for the denominator trial `ν'` (J5). -/
+def denPoly (b : ℕ → ℝ) (K : ℕ) (g : ℝ) : ℝ :=
+  2 * ∑ i ∈ Finset.range K, (-g) ^ (i + 1) * b (i + 1) / ((i + 1 : ℕ) : ℝ)
+
+/-- Data of one instance of the signed second-sheet bound (fixed `N`).  All numerical inputs
+(trial sequences, reference measures, field sups) are fields; hypotheses are theorem arguments. -/
+structure SignedData where
+  ν : ℝ
+  e : ℝ
+  sp : ℕ
+  v : ℕ → ℝ
+  a : ℕ → ℝ
+  b : ℕ → ℝ
+  K : ℕ
+  R : ℕ → ℝ
+  t : ℕ → ℝ
+  μ : Bool → Measure ℝ
+  Cb : ℝ
+  Sup : ℝ
+  constant : ℝ
+  Rf : ℝ → ℝ
+  Cf : ℝ → ℝ
+  θ : ℝ
+  cs : ℝ
+
+namespace SignedData
+
+variable (D : SignedData)
+
+/-- The dilation `τ = 1 - e`. -/
+def τ : ℝ := realEnergyTau D.e
+
+/-- `Σ' r_{n+1} a_{n+1}` for the reference tilt. -/
+def ra : ℝ := ∑' n : ℕ, refTilt D.R (n + 1) * D.a (n + 1)
+
+def numConst : ℝ :=
+  2 * (-(1 / 2 : ℝ) * ((D.sp : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.a +
+    ((D.sp : ℝ) / D.ν) * D.Sup - D.ra + trialPairError D.ν D.e D.a) +
+    (D.sp : ℝ) * Real.log Real.pi / D.ν ^ 2
+
+def denConst : ℝ :=
+  ((D.sp : ℝ) * ((D.sp : ℝ) - 1) *
+      (-Real.log 2 - ∑ i ∈ Finset.range D.K, 2 * D.b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+    (D.sp : ℝ) * (Real.log Real.pi - 2 * ∑ i ∈ Finset.range D.K, D.b (i + 1) ^ 2)) / D.ν ^ 2
+
+/-- The numerator bound expression (J2 with reference, doubled, plus `s log π / ν²`),
+with the particle sum replaced by `(s/ν) Sup`. -/
+def numB {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) : ℝ :=
+  D.numConst + (2 / D.ν) * ((∑ b, -barrierTrialS D.a (-D.τ * xn b)) +
+      ∑ p, barrierTrialS D.a (-D.τ * gp p)) +
+    (1 / 2) * ip (fun n => powSum D.τ D.ν xn n - powSum D.τ D.ν gp n - D.R n)
+      (fun n => powSum D.τ D.ν xn n - powSum D.τ D.ν gp n - D.R n)
+
+/-- The denominator bound expression (J5, crude entropy form), per `ν²`. -/
+def denB {q : ℕ} (gp : Fin q → ℝ) : ℝ :=
+  D.denConst + ((D.sp : ℝ) / D.ν ^ 2) * ∑ p, denPoly D.b D.K (gp p)
+
+/-- Common row field. -/
+def rowBase (x : ℝ) : ℝ :=
+  D.Rf x - barrierTrialS D.v x - Real.log (1 - x) / (2 * D.ν) +
+    (1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μ x
+
+/-- Row field on the negatives. -/
+def fNeg (x : ℝ) : ℝ :=
+  D.rowBase x - (1 / (2 * D.ν)) * Real.log (1 - (D.τ * x) * (D.τ * x)) -
+    2 * barrierTrialS D.a (-D.τ * x) +
+    fld D.τ (fun n => mneg D.μ D.τ n - D.R n - D.t n) x
+
+/-- Row field on the positives. -/
+def fPos (x : ℝ) : ℝ :=
+  D.rowBase x + 2 * barrierTrialS D.a (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
+    fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x
+
+/-- Column field. -/
+def fCol (s : ℝ) : ℝ := D.Cf s + 2 * barrierTrialT D.v s - Real.log (1 - s) / D.ν
+
+/-- The constant of the quadratic tangent plane. -/
+def Kq : ℝ :=
+  (1 / 2) * ip D.R D.R - (1 / 2) * ip (mpos D.μ D.τ) (mpos D.μ D.τ) + (1 / 2) * ip D.t D.t
+    - (1 / 2) * ip (mneg D.μ D.τ) (mneg D.μ D.τ)
+
+/-- The D7.1 error. -/
+def eD7 (p : ℕ) : ℝ :=
+  (1 / 2) * (8 * ((p : ℝ) / D.ν) * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2)))
+    + 2 * (1 - D.τ ^ 2) * (2 * ((p : ℝ) / D.ν)) ^ 2)
+
+/-- The total constant, `p = k + q` rows. -/
+def constTotal (p : ℕ) : ℝ :=
+  D.constant - ((p : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.v / 2 +
+    4 * D.e * (∑' j, |D.v j|) + pinZeroError D.ν D.e + D.eD7 p + (1 / 2) * refEnergy D.μ +
+    D.numConst - D.denConst + D.Kq
+
+end SignedData
+
+theorem row_sum_split {k q : ℕ} (F : ℝ → ℝ) (xn : Fin k → ℝ) (gp : Fin q → ℝ) :
+    ∑ i, F (Fin.append xn gp i) = (∑ b, F (xn b)) + ∑ p, F (gp p) := by
+  rw [Fin.sum_univ_add]
+  simp only [Fin.append_left, Fin.append_right]
+
+/-- The common row terms of the pin bound, D7.1 and the problem's own field, as a sum of
+`rowBase` over the rows. -/
+theorem rowBase_sum (D : SignedData) (hν : 0 < D.ν) {p : ℕ} (x : Fin p → ℝ) :
+    (∑ i, D.Rf (x i)) / D.ν + (∑ i, -barrierTrialS D.v (x i)) / D.ν -
+      (∑ i, Real.log (1 - x i)) / (2 * D.ν ^ 2) +
+      (1 / 2) * (∑ i : Fin p, (1 / D.ν) ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - D.τ ^ 2)))) -
+      (∑ i, rowRef D.μ (x i)) / D.ν = (1 / D.ν) * ∑ i, D.rowBase (x i) := by
+  unfold SignedData.rowBase
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_neg_distrib,
+    ← Finset.mul_sum, ← Finset.sum_div]
+  field_simp
+  ring
+
+
+/-- **The master inequality.**  Under the A7 bound-form hypothesis `hA7` on the route II ratio,
+the full functional is bounded by the explicit constant plus single-variable fields at the
+negative rows, positive rows and columns. -/
+theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
+    (he : D.e ∈ Ioo (0 : ℝ) (1 / 8)) (hp : ((k + q : ℕ) : ℝ) ≤ D.ν)
+    (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
+    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
+    (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
+    (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
+    (hinj : Function.Injective (Fin.append xn gp))
+    (hs : ∀ j, sc j ∈ Ioo (0 : ℝ) 1) (hsi : Function.Injective sc)
+    (LR spike : ℝ)
+    (hA7 : LR / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + spike) :
+    D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
+        (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR / D.ν ^ 2 ≤
+      D.constTotal (k + q) + spike + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
+        (1 / D.ν) * (∑ p, D.fPos (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  have hτb := realEnergyTau_bounds he
+  have hτ : D.τ ∈ Ioo (0 : ℝ) 1 := hτb
+  have hτ1 : D.τ ∈ Ioc (0 : ℝ) 1 := ⟨hτb.1, hτb.2.le⟩
+  have hx : ∀ i, Fin.append xn gp i ∈ Ioo (-1 : ℝ) 1 := by
+    intro i
+    refine Fin.addCases (fun b => ?_) (fun p => ?_) i
+    · simp only [Fin.append_left]; exact ⟨(hxn b).1, by linarith [(hxn b).2]⟩
+    · simp only [Fin.append_right]; exact ⟨by linarith [(hgp p).1], (hgp p).2⟩
+  have hx0 : ∀ i, Fin.append xn gp i ≠ 0 := by
+    intro i
+    refine Fin.addCases (fun b => ?_) (fun p => ?_) i
+    · simp only [Fin.append_left]; exact (hxn b).2.ne
+    · simp only [Fin.append_right]; exact (hgp p).1.ne'
+  have h1 := pin_zero_canonical hν he hp hx hs hinj hsi D.v hv
+  have h2 := rows_vandermonde_le hν (Fin.append xn gp) hx0 hx hinj D.μ hμ hC hmass
+    (ρ := D.τ ^ 2) (pow_pos hτ.1 2) (by nlinarith [hτ.1, hτ.2])
+  have hτ0 := hτ.1
+  have hn' : ∀ b, xn b < 0 := fun b => (hxn b).2
+  have hg' : ∀ p, 0 < gp p := fun p => (hgp p).1
+  rw [Fintype.sum_bool, Lpart_true_eq hτ0 hν xn gp hn' hg' D.μ,
+    Lpart_false_eq hτ0 hν xn gp hn' hg' D.μ] at h2
+  have h3 := logPref_le_prefTau hτ1 hν xn gp hxn hgp
+  have hnorm1 : ∀ b, |D.τ * xn b| < 1 := fun b => by
+    rw [abs_mul, abs_of_pos hτ0]
+    have : |xn b| < 1 := abs_lt.mpr ⟨(hxn b).1, by linarith [(hxn b).2]⟩
+    nlinarith [hτ.2, abs_nonneg (xn b)]
+  have hnorm2 : ∀ p, |D.τ * gp p| < 1 := fun p => by
+    rw [abs_mul, abs_of_pos hτ0]
+    have : |gp p| < 1 := abs_lt.mpr ⟨by linarith [(hgp p).1], (hgp p).2⟩
+    nlinarith [hτ.2, abs_nonneg (gp p)]
+  have h4 := prefTau_eq hν xn gp hnorm1 hnorm2
+  have hxn1 : ∀ b, |xn b| ≤ 1 := fun b => (abs_lt.mpr ⟨(hxn b).1, by linarith [(hxn b).2]⟩).le
+  have hgp1 : ∀ p, |gp p| ≤ 1 := fun p => (abs_lt.mpr ⟨by linarith [(hgp p).1], (hgp p).2⟩).le
+  have hB := isGeom_powSum hτ0 hν xn hxn1
+  have hP := isGeom_powSum hτ0 hν gp hgp1
+  have hmp : IsGeom D.τ (mpos D.μ D.τ) := isGeom_refMoment (hμ true) hτ0
+  have hmn : IsGeom D.τ (mneg D.μ D.τ) := isGeom_mneg (hμ false) hτ0
+  have h5 := quad_master hτ hB hP hR hmp hmn ht
+  have hl1 := ip_powSum_left hτ hν gp hgp1 (hmp.add hR)
+  have hl2 := ip_powSum_left hτ hν xn hxn1 ((hmn.sub hR).sub ht)
+  have hbase := rowBase_sum D hν (Fin.append xn gp)
+  rw [row_sum_split D.rowBase xn gp] at hbase
+  have hsN : ∑ b, D.fNeg (xn b) = (∑ b, D.rowBase (xn b)) -
+      (1 / (2 * D.ν)) * (∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b))) -
+      2 * (∑ b, barrierTrialS D.a (-D.τ * xn b)) +
+      ∑ b, fld D.τ (fun n => mneg D.μ D.τ n - D.R n - D.t n) (xn b) := by
+    unfold SignedData.fNeg
+    simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum]
+  have hsP : ∑ p, D.fPos (gp p) = (∑ p, D.rowBase (gp p)) +
+      2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
+      ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
+      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) := by
+    unfold SignedData.fPos
+    simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum]
+  have hsC : ∑ j, D.fCol (sc j) = (∑ j, D.Cf (sc j)) + (∑ j, 2 * barrierTrialT D.v (sc j)) -
+      (∑ j, Real.log (1 - sc j)) / D.ν := by
+    unfold SignedData.fCol
+    simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.sum_div]
+  have hsplit : pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc =
+      pinOffDiagonalInteraction D.ν 0 (Fin.append xn gp) sc +
+        (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) /
+          D.ν ^ 2 := by
+    unfold pinOffDiagonalInteraction; ring
+  have h4' : prefTau D.τ D.ν xn gp =
+      -(1 / 2) * ip (powSum D.τ D.ν xn) (powSum D.τ D.ν xn) +
+        ip (powSum D.τ D.ν xn) (powSum D.τ D.ν gp) -
+        (1 / (2 * D.ν ^ 2)) * ∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b)) := h4
+  unfold SignedData.numB SignedData.denB at hA7
+  unfold SignedData.constTotal SignedData.eD7 SignedData.Kq
+  rw [hsplit]
+  have hsN' : (1 / D.ν) * ∑ b, D.fNeg (xn b) = (1 / D.ν) * ((∑ b, D.rowBase (xn b)) -
+      (1 / (2 * D.ν)) * (∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b))) -
+      2 * (∑ b, barrierTrialS D.a (-D.τ * xn b)) +
+      ∑ b, fld D.τ (fun n => mneg D.μ D.τ n - D.R n - D.t n) (xn b)) := by rw [hsN]
+  have hsP' : (1 / D.ν) * ∑ p, D.fPos (gp p) = (1 / D.ν) * ((∑ p, D.rowBase (gp p)) +
+      2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
+      ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
+      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p)) := by rw [hsP]
+  have hsC' : (1 / D.ν) * ∑ j, D.fCol (sc j) = (1 / D.ν) * ((∑ j, D.Cf (sc j)) +
+      (∑ j, 2 * barrierTrialT D.v (sc j)) - (∑ j, Real.log (1 - sc j)) / D.ν) := by rw [hsC]
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_neg_distrib,
+    ← Finset.mul_sum, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at h1 h2 hbase hsC' hA7
+  ring_nf at hA7 h1 h2 h3 h4' h5 hl1 hl2 hbase hsN' hsP' hsC' ⊢
+  linarith only [hA7, h1, h2, h3, h4', h5, hl1, hl2, hbase, hsN', hsP', hsC']
+
+/-- The spike cost: `cs` per positive node beyond `1 - θ`, per `ν`. -/
+def SignedData.spikeTerm (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) : ℝ :=
+  (1 / D.ν) * ∑ p, D.cs * (if 1 - D.θ < gp p then 1 else 0)
+
+/-- The positive field with the spike cost attached. -/
+def SignedData.fPosS (D : SignedData) (x : ℝ) : ℝ :=
+  D.fPos x + D.cs * (if 1 - D.θ < x then 1 else 0)
+
+/-- **The A7 interface (bound form).**  `LR xn gp` is the logarithm of the route II ratio
+`log Pref + log Z(φψ) − log Z(ψ)` (`logRatioZ`).  For every configuration of the class `Cls`
+(negatives in `(-1,0)`, positives in `(0,1)`, spikes counted by `cs`) the ratio is bounded by the
+consumer's expression `numB − denB` at the TRUE positions plus the spike cost
+(`SpikeReduction` followed by `SpikeCompare` of SIMPLIFY-S2 §1.3 and PROOF-A 17.38; the cap `θ`,
+the constant `C ≤ 1.02` per spike, and the class bound `M ≤ 1.1228 N` live in `Cls` and `cs`). -/
+def SpikeCompare (D : SignedData) {k q : ℕ}
+    (Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop)
+    (LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ) : Prop :=
+  ∀ (xn : Fin k → ℝ) (gp : Fin q → ℝ), (∀ b, xn b ∈ Ioo (-1 : ℝ) 0) → (∀ p, gp p ∈ Ioo (0 : ℝ) 1) →
+    Cls xn gp →
+    LR xn gp / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + D.spikeTerm gp
+
+/-- **The joint theorem (deterministic form, fixed `N`).** -/
+theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
+    (he : D.e ∈ Ioo (0 : ℝ) (1 / 8)) (hp : ((k + q : ℕ) : ℝ) ≤ D.ν)
+    (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
+    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
+    (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    {Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop} {LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ}
+    (hA7 : SpikeCompare D Cls LR)
+    (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
+    (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
+    (hinj : Function.Injective (Fin.append xn gp))
+    (hs : ∀ j, sc j ∈ Ioo (0 : ℝ) 1) (hsi : Function.Injective sc) (hcls : Cls xn gp) :
+    D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
+        (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR xn gp / D.ν ^ 2 ≤
+      D.constTotal (k + q) + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
+        (1 / D.ν) * (∑ p, D.fPosS (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  have h := signed_master D hν he hp hv hR ht hμ hC hmass xn gp sc hxn hgp hinj hs hsi
+    (LR xn gp) (D.spikeTerm gp) (hA7 xn gp hxn hgp hcls)
+  have hsp : D.spikeTerm gp + (1 / D.ν) * (∑ p, D.fPos (gp p)) =
+      (1 / D.ν) * (∑ p, D.fPosS (gp p)) := by
+    unfold SignedData.spikeTerm SignedData.fPosS
+    rw [Finset.sum_add_distrib]; ring
+  linarith only [h, hsp]
+
+/-- **The contract** (sibling of `Analytic.SecondTrialBounds`): a family of instances indexed by
+`N` (`ncount N = n N` rows and columns), the field caps, the constant's limit, the budget
+inequality (linear in the negative fraction `κ`), and the A7 hypothesis `SpikeCompare`.
+The numerical inputs (trial sequences, reference measures, field sups) are data and hypotheses
+here; Phase 2 supplies them. -/
+structure SignedTrialBounds where
+  D : ℕ → SignedData
+  ncount : ℕ → ℕ
+  MXn : ℝ
+  MXp : ℝ
+  MY : ℝ
+  cInf : ℝ
+  B : ℝ
+  κlo : ℝ
+  κhi : ℝ
+  Cls : ∀ N k q, (Fin k → ℝ) → (Fin q → ℝ) → Prop
+  LR : ∀ N k q, (Fin k → ℝ) → (Fin q → ℝ) → ℝ
+  ν_eq : ∀ N, (D N).ν = (ncount N : ℝ)
+  ncount_pos : ∀ N, 0 < ncount N
+  e_mem : ∀ᶠ N : ℕ in Filter.atTop, (D N).e ∈ Ioo (0 : ℝ) (1 / 8)
+  v_summable : ∀ᶠ N : ℕ in Filter.atTop, Summable (fun j => |(D N).v j|)
+  R_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).R
+  t_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).t
+  reference : ∀ᶠ N : ℕ in Filter.atTop, (∀ τ, BD ((D N).μ τ) (D N).Cb) ∧ 0 ≤ (D N).Cb ∧
+    (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μ τ).real univ
+  spike : ∀ N k q, SpikeCompare (D N) (Cls N k q) (LR N k q)
+  rowNeg : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
+    ∀ x ∈ Ioo (-1 : ℝ) 0, (D N).fNeg x ≤ MXn + ε
+  rowPos : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
+    ∀ x ∈ Ioo (0 : ℝ) 1, (D N).fPosS x ≤ MXp + ε
+  column : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
+    ∀ s ∈ Ioo (0 : ℝ) 1, (D N).fCol s ≤ MY + ε
+  const_tendsto : Filter.Tendsto (fun N => (D N).constTotal (ncount N)) Filter.atTop (nhds cInf)
+  budget : ∀ κ ∈ Icc κlo κhi, cInf + κ * MXn + (1 - κ) * MXp + MY ≤ B
+
+/-- **Theorem `signed_second_energy`.**  For every `δ > 0` and all large `N`, every configuration
+of `k` negatives and `q` positives with `k + q = n N` rows and `n N` columns, negative fraction in
+`[κlo, κhi]` and in the class `Cls`, has
+`constant + E_disc + fields + log(route II ratio)/ν² ≤ B + δ`. -/
+theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ (k q : ℕ), k + q = T.ncount N →
+      T.κlo ≤ (k : ℝ) / (T.ncount N : ℝ) → (k : ℝ) / (T.ncount N : ℝ) ≤ T.κhi →
+      ∀ (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ),
+      (∀ b, xn b ∈ Ioo (-1 : ℝ) 0) → (∀ p, gp p ∈ Ioo (0 : ℝ) 1) →
+      Function.Injective (Fin.append xn gp) → (∀ j, sc j ∈ Ioo (0 : ℝ) 1) →
+      Function.Injective sc → T.Cls N k q xn gp →
+      (T.D N).constant + pinOffDiagonalInteraction (T.D N).ν 1 (Fin.append xn gp) sc +
+        (∑ i, (T.D N).Rf (Fin.append xn gp i)) / (T.D N).ν +
+        (∑ j, (T.D N).Cf (sc j)) / (T.D N).ν + T.LR N k q xn gp / (T.D N).ν ^ 2 ≤ T.B + δ := by
+  have hε : 0 < δ / 8 := by linarith
+  filter_upwards [T.e_mem, T.v_summable, T.R_geom, T.t_geom, T.reference, T.rowNeg hε,
+    T.rowPos hε, T.column hε,
+    T.const_tendsto.eventually (gt_mem_nhds (show T.cInf < T.cInf + δ / 8 by linarith))]
+    with N he hv hR ht ⟨hμ, hC, hmass⟩ hN hP hCo hconst k q hkq hlo hhi xn gp sc hxn hgp hinj
+      hs hsi hcls
+  have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N
+  have hνe := T.ν_eq N
+  have hν : 0 < (T.D N).ν := by rw [hνe]; exact hνp
+  have hkqR : ((k + q : ℕ) : ℝ) = (T.ncount N : ℝ) := by exact_mod_cast hkq
+  have hp : ((k + q : ℕ) : ℝ) ≤ (T.D N).ν := by rw [hνe, hkqR]
+  have hmass' : ((k + q : ℕ) : ℝ) / (T.D N).ν = ∑ τ, ((T.D N).μ τ).real univ := by
+    rw [hkqR]; exact hmass
+  have h := signed_second_energy_fixed (T.D N) hν he hp hv hR ht hμ hC hmass'
+    (T.spike N k q) xn gp sc hxn hgp hinj hs hsi hcls
+  set κ : ℝ := (k : ℝ) / (T.ncount N : ℝ) with hκ
+  have hq : (q : ℝ) / (T.ncount N : ℝ) = 1 - κ := by
+    have : (k : ℝ) + q = T.ncount N := by exact_mod_cast hkq
+    rw [hκ]; field_simp; linarith
+  have h1 : (1 / (T.D N).ν) * (∑ b, (T.D N).fNeg (xn b)) ≤ κ * (T.MXn + δ / 8) := by
+    have hs1 : ∑ b, (T.D N).fNeg (xn b) ≤ (k : ℝ) * (T.MXn + δ / 8) := by
+      have := Finset.sum_le_card_nsmul Finset.univ (fun b => (T.D N).fNeg (xn b))
+        (T.MXn + δ / 8) (fun b _ => hN _ (hxn b))
+      simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at this; exact this
+    calc _ ≤ (1 / (T.D N).ν) * ((k : ℝ) * (T.MXn + δ / 8)) :=
+          mul_le_mul_of_nonneg_left hs1 (by positivity)
+      _ = κ * (T.MXn + δ / 8) := by rw [hνe, hκ]; field_simp
+  have h2 : (1 / (T.D N).ν) * (∑ p, (T.D N).fPosS (gp p)) ≤ (1 - κ) * (T.MXp + δ / 8) := by
+    have hs1 : ∑ p, (T.D N).fPosS (gp p) ≤ (q : ℝ) * (T.MXp + δ / 8) := by
+      have := Finset.sum_le_card_nsmul Finset.univ (fun p => (T.D N).fPosS (gp p))
+        (T.MXp + δ / 8) (fun p _ => hP _ (hgp p))
+      simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at this; exact this
+    calc _ ≤ (1 / (T.D N).ν) * ((q : ℝ) * (T.MXp + δ / 8)) :=
+          mul_le_mul_of_nonneg_left hs1 (by positivity)
+      _ = (1 - κ) * (T.MXp + δ / 8) := by rw [hνe, ← hq]; field_simp
+  have h3 : (1 / (T.D N).ν) * ∑ j, (T.D N).fCol (sc j) ≤ T.MY + δ / 8 := by
+    have hs1 : ∑ j, (T.D N).fCol (sc j) ≤ ((k + q : ℕ) : ℝ) * (T.MY + δ / 8) := by
+      have := Finset.sum_le_card_nsmul Finset.univ (fun j => (T.D N).fCol (sc j))
+        (T.MY + δ / 8) (fun j _ => hCo _ (hs j))
+      simp only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] at this; exact this
+    calc _ ≤ (1 / (T.D N).ν) * (((k + q : ℕ) : ℝ) * (T.MY + δ / 8)) :=
+          mul_le_mul_of_nonneg_left hs1 (by positivity)
+      _ = T.MY + δ / 8 := by rw [hνe, hkqR]; field_simp
+  have hb := T.budget κ ⟨hlo, hhi⟩
+  have hct : (T.D N).constTotal (k + q) = (T.D N).constTotal (T.ncount N) := by rw [hkq]
+  rw [hct] at h
+  nlinarith only [h, h1, h2, h3, hb, hconst, hδ]
+
+end Master
+
+/-! ### Lemma K/T and Theorem C.3 chains -/
+
+section Chains
+
+open CatalanMeasure.GenD.Signed in
+/-- **Lemma T from the class** (Lemma K feeding Lemma T): the Loewner form of
+`|Σ_{a>0} B'(x_a) x_a^e c_a²| ≤ (3/2) Σ c_a c_b/(1 - x_a x_b)` from the class data of Lemma K. -/
+theorem lemmaT_of_class {n : ℕ} (hn : 0 < n) (x c : Fin n → ℝ) (hxi : Function.Injective x)
+    (hx1 : ∀ a, |x a| < 1) (hx0 : ∀ a, x a ≠ 0) {e : ℕ} (he : 1 ≤ e)
+    {d v : ℕ → ℝ} (hv : ∀ k, 0 < v k) {D Δ : ℝ} (hD : HasSum (fun k => d k ^ 2 / v k) D)
+    (hDΔ : D ≤ Δ) (F : ℝ → ℕ → ℝ) (H cc ε : ℝ → ℝ)
+    (hH : ∀ t, HasSum (fun k => F t k ^ 2 * v k) (H t))
+    {a₀ t₀ φ : ℝ} (ha₀ : 0 < a₀) (ht₀ : 0 < t₀)
+    (hfew : ((Finset.univ.filter (fun a => |x a| < a₀)).card : ℝ) ≤ φ * n)
+    (hsmall : (n : ℝ) * (φ + t₀ ^ 2 / a₀ ^ 2) < e)
+    (hstat : ∀ t ∈ Ioc (0 : ℝ) 1, t₀ ≤ t →
+      |(∑ a, slopeKernel t (x a)) / n - (cc t + ∑' k, F t k * d k)| ≤ ε t)
+    (hbig : ∀ t ∈ Ioc (0 : ℝ) 1, t₀ ≤ t →
+      (n : ℝ) * (cc t + Real.sqrt (H t * Δ) + ε t) < e) :
+    |∑ a ∈ Finset.univ.filter (fun a => 0 < x a), bDeriv x a * x a ^ e * c a ^ 2| ≤
+      (3 / 2) * ∑ a, ∑ b, c a * c b / (1 - x a * x b) :=
+  lemmaT_of_slope x c hxi hx1 hx0 he
+    (slope_of_class hn x e hv hD hDΔ F H cc ε hH ha₀ ht₀ hfew hsmall hstat hbig)
+
+open CatalanMeasure.GenD.Signed Matrix in
+open scoped ComplexOrder in
+/-- **Theorem C.3 with `τ' ≤ 3/2`:** `|det L| ≤ 11^{k₊} det L₋₋` at the level of the block
+matrices consumed by `norm_det_fromBlocks_sub_le_two_six`.  The D58 instance must supply
+`L = fromBlocks A Cᴴ C (D - 6 T)` with `A = L₋₋` (negative block, positive definite), the Pick
+matrix `fromBlocks A Cᴴ C D` positive semidefinite with norm ≤ 2, and `T` with `‖T‖ ≤ τ ≤ 3/2`
+(Loewner form), which comes from `lemmaT_of_class`. -/
+theorem abs_det_fromBlocks_le_eleven {m n : Type*} [Fintype m] [Fintype n] [DecidableEq m]
+    [DecidableEq n] {A : Matrix m m ℂ} {C : Matrix n m ℂ} {D T : Matrix n n ℂ}
+    (hA : A.PosDef) (hL : (fromBlocks A Cᴴ C D).PosSemidef)
+    (hb : ((2 : ℂ) • (1 : Matrix (m ⊕ n) (m ⊕ n) ℂ) - fromBlocks A Cᴴ C D).PosSemidef)
+    {τ : ℝ} (hτ0 : 0 ≤ τ) (hτ : τ ≤ 3 / 2)
+    (hT1 : ((τ : ℂ) • (1 : Matrix n n ℂ) - T).PosSemidef)
+    (hT2 : ((τ : ℂ) • (1 : Matrix n n ℂ) + T).PosSemidef) :
+    ‖(fromBlocks A Cᴴ C (D - (6 : ℂ) • T)).det‖ ≤ 11 ^ Fintype.card n * A.det.re := by
+  have h := norm_det_fromBlocks_sub_le_two_six hA hL hb hT1 hT2
+  have hre : 0 ≤ A.det.re := ((Complex.lt_def.mp hA.det_pos).1).le
+  refine h.trans (mul_le_mul_of_nonneg_right ?_ hre)
+  exact pow_le_pow_left₀ (by linarith) (by linarith) _
+
+end Chains
+
+/-! ### The concrete ratio -/
+
+/-- `log Pref + log Z(φψ) − log Z(ψ)` of `route_two` with `φ = ∏_b (1 + 2 x_b u + x_b²)` and
+`ψ = ∏_p (1 + 2 g_p u + g_p²)⁻¹`; this is the `LR` of the contract. -/
+def logRatioZ {k q : ℕ} (sp : ℕ) (xn : Fin k → ℝ) (gp : Fin q → ℝ) : ℝ :=
+  logPref xn gp +
+    Real.log (CatalanMeasure.GenD.Signed.heineZ sp (fun u =>
+      (∏ b, (1 + 2 * xn b * u + xn b ^ 2)) / ∏ p, (1 + 2 * gp p * u + gp p ^ 2))) -
+    Real.log (CatalanMeasure.GenD.Signed.heineZ sp (fun u =>
+      1 / ∏ p, (1 + 2 * gp p * u + gp p ^ 2)))
+
+
+
+
+
+section RouteTwo
+
+open CatalanMeasure.GenD.Signed
+
+theorem heineZ_pos {s : ℕ} (f : ℝ → ℝ) (hf : ∀ u ∈ Set.Icc (-1 : ℝ) 1, 0 < f u)
+    (hc : ContinuousOn (fun u => Real.log (f u)) (Set.Icc (-1 : ℝ) 1))
+    (hm : Measurable (fun u => Real.log (f u))) : 0 < heineZ s f := by
+  rw [heineZ_eq_denZ f hf]
+  obtain ⟨M, hM⟩ := isCompact_Icc.exists_bound_of_continuousOn hc
+  exact (arcsine_jensen_denominator isTrial_arcsine hm
+    (fun u hu => by simpa [Real.norm_eq_abs] using hM u hu) s).1
+
+theorem fac_pos {y u : ℝ} (hy : |y| < 1) (hu : u ∈ Set.Icc (-1 : ℝ) 1) :
+    0 < 1 + 2 * y * u + y ^ 2 := by
+  have h1 : |y * u| ≤ |y| := by
+    rw [abs_mul]; exact mul_le_of_le_one_right (abs_nonneg _) (abs_le.mpr ⟨hu.1, hu.2⟩)
+  have h2 := (abs_le.mp h1).1
+  nlinarith [sq_abs y, abs_nonneg y, sq_nonneg (1 - |y|)]
+
+/-- The log of the `route_two` determinant ratio is `logRatioZ`. -/
+theorem log_route_two {q : ℕ} (g : Fin q → ℝ) (hg : ∀ i, |g i| < 1) (s k e : ℕ) (hk : 0 < k)
+    (hs : q < 2 * s) (he : e + q + 1 = 2 * s + k) (x : Fin k → ℝ) (hinj : Function.Injective x)
+    (hx0 : ∀ b, x b ≠ 0) (hx1 : ∀ b, |x b| < 1) :
+    Real.log ((kMat x + dMinus (hOfRoots g) q e x).det / (kMat x).det) = logRatioZ s x g := by
+  rw [route_two g hg s k e hk hs he x hinj hx0 hx1]
+  have hpos : ∀ a b : ℝ, |a| < 1 → |b| < 1 → 0 < 1 - a * b := by
+    intro a b ha hb
+    have := mul_lt_one_of_nonneg_of_lt_one_left (abs_nonneg a) ha hb.le
+    have h2 : |a * b| < 1 := by rw [abs_mul]; nlinarith [abs_nonneg a, abs_nonneg b]
+    linarith [(abs_lt.mp h2).2]
+  have hA : 0 < ∏ i : Fin k, ∏ j ∈ Finset.Ioi i, (1 - x i * x j) :=
+    Finset.prod_pos fun i _ => Finset.prod_pos fun j _ => hpos _ _ (hx1 i) (hx1 j)
+  have hB : 0 < ∏ b : Fin k, ∏ i : Fin q, (1 - g i * x b)⁻¹ :=
+    Finset.prod_pos fun b _ => Finset.prod_pos fun i _ => inv_pos.mpr (hpos _ _ (hg i) (hx1 b))
+  have hfac : ∀ (z : Fin k → ℝ) (w : Fin q → ℝ), (∀ b, |z b| < 1) → (∀ i, |w i| < 1) →
+      ∀ u ∈ Set.Icc (-1 : ℝ) 1, 0 < (∏ b, (1 + 2 * z b * u + z b ^ 2)) /
+        ∏ i, (1 + 2 * w i * u + w i ^ 2) := by
+    intro z w hz hw u hu
+    exact div_pos (Finset.prod_pos fun b _ => fac_pos (hz b) hu)
+      (Finset.prod_pos fun i _ => fac_pos (hw i) hu)
+  have hfac1 : ∀ u ∈ Set.Icc (-1 : ℝ) 1, 0 < 1 / ∏ i, (1 + 2 * g i * u + g i ^ 2) := fun u hu =>
+    one_div_pos.mpr (Finset.prod_pos fun i _ => fac_pos (hg i) hu)
+  have cont : ∀ (z : Fin k → ℝ), Continuous fun u : ℝ => ∏ b, (1 + 2 * z b * u + z b ^ 2) :=
+    fun z => continuous_finset_prod _ fun b _ => by fun_prop
+  have contg : Continuous fun u : ℝ => ∏ i, (1 + 2 * g i * u + g i ^ 2) :=
+    continuous_finset_prod _ fun b _ => by fun_prop
+  have hZ1 : 0 < heineZ s (fun u => (∏ b, (1 + 2 * x b * u + x b ^ 2)) /
+      ∏ i, (1 + 2 * g i * u + g i ^ 2)) := by
+    refine heineZ_pos _ (hfac x g hx1 hg) ?_ ?_
+    · refine ContinuousOn.log ((cont x).continuousOn.div contg.continuousOn fun u hu =>
+        (Finset.prod_pos fun i _ => fac_pos (hg i) hu).ne') fun u hu => (hfac x g hx1 hg u hu).ne'
+    · exact ((cont x).measurable.div contg.measurable).log
+  have hZ2 : 0 < heineZ s (fun u => 1 / ∏ i, (1 + 2 * g i * u + g i ^ 2)) := by
+    refine heineZ_pos _ hfac1 ?_ ?_
+    · exact ContinuousOn.log (continuousOn_const.div contg.continuousOn fun u hu =>
+        (Finset.prod_pos fun i _ => fac_pos (hg i) hu).ne') fun u hu => (hfac1 u hu).ne'
+    · exact (measurable_const.div contg.measurable).log
+  rw [Real.log_mul (mul_pos hA hB).ne' (div_pos hZ1 hZ2).ne', Real.log_mul hA.ne' hB.ne',
+    Real.log_div hZ1.ne' hZ2.ne']
+  unfold logRatioZ logPref
+  rw [Real.log_prod (fun i _ => (Finset.prod_pos fun j _ => hpos _ _ (hx1 i) (hx1 j)).ne'),
+    Real.log_prod (fun b _ => (Finset.prod_pos fun i _ =>
+      inv_pos.mpr (hpos _ _ (hg i) (hx1 b))).ne')]
+  simp only [Real.log_prod (fun j _ => (hpos _ _ (hx1 _) (hx1 j)).ne'),
+    Real.log_prod (fun i _ => (inv_pos.mpr (hpos _ _ (hg i) (hx1 _))).ne'), Real.log_inv,
+    Finset.sum_neg_distrib]
+  rw [Finset.sum_comm]
+  ring
+
+end RouteTwo
 
 end
 end CatalanMeasure.Signed
@@ -336,3 +1382,20 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.pin_zero_canonical
 #print axioms CatalanMeasure.Signed.rows_vandermonde_le
 #print axioms CatalanMeasure.Signed.pair_log_add_cross_le_tilted_ref
+#print axioms CatalanMeasure.Signed.bDeriv_eq_negBlaschkeDeriv
+#print axioms CatalanMeasure.Signed.lebPi_diag_null
+#print axioms CatalanMeasure.Signed.heineZ_eq_denZ
+#print axioms CatalanMeasure.Signed.denZ_le
+#print axioms CatalanMeasure.Signed.heineZ_pos
+#print axioms CatalanMeasure.Signed.logPref_le_prefTau
+#print axioms CatalanMeasure.Signed.prefTau_eq
+#print axioms CatalanMeasure.Signed.quad_master
+#print axioms CatalanMeasure.Signed.Lpart_true_eq
+#print axioms CatalanMeasure.Signed.Lpart_false_eq
+#print axioms CatalanMeasure.Signed.crossTiltNormRef_append
+#print axioms CatalanMeasure.Signed.signed_master
+#print axioms CatalanMeasure.Signed.signed_second_energy_fixed
+#print axioms CatalanMeasure.Signed.signed_second_energy
+#print axioms CatalanMeasure.Signed.lemmaT_of_class
+#print axioms CatalanMeasure.Signed.abs_det_fromBlocks_le_eleven
+#print axioms CatalanMeasure.Signed.log_route_two
