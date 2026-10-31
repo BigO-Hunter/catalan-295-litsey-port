@@ -738,6 +738,143 @@ theorem gap_weight_joint_keyhole_seg_le (P : Parameters) (hg : P.g0 ≤ P.n0) {a
         ring
     _ ≤ _ := mul_le_mul_of_nonneg_left hs (by positivity)
 
+/-- The keyhole radius rate `max 0 ((κ - 2 g₀/n₀) log (1/r))`: the exponent per `n` of
+`max 1 (r^A / r^(b+k+q))` at `κ = k/n`. -/
+def keyholeRate (g0 n0 : ℕ) (r κ : ℝ) : ℝ :=
+  max 0 ((κ - 2 * (g0 : ℝ) / n0) * Real.log (1 / r))
+
+theorem max_one_ratio_le_exp_rate (P : Parameters) (hn0' : 0 < P.n0) {r : ℝ} (hr0 : 0 < r)
+    (hr1 : r ≤ 1) (N k : ℕ) (hN : 0 < N) :
+    max 1 (r ^ P.A N / r ^ (P.b N + k + P.q N)) ≤
+      Real.exp ((P.n N : ℝ) * keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N)) := by
+  have hn : (P.n N : ℝ) = (P.n0 : ℝ) * N := by simp [Parameters.n]
+  have hn0 : (0 : ℝ) < P.n0 := by exact_mod_cast hn0'
+  have hnpos : (0 : ℝ) < P.n N := by rw [hn]; positivity
+  have hL : 0 ≤ Real.log (1 / r) := Real.log_nonneg (by rw [le_div_iff₀ hr0]; linarith)
+  have hp : ∀ m : ℕ, r ^ m = Real.exp ((m : ℝ) * Real.log r) := fun m => by
+    rw [Real.exp_nat_mul, Real.exp_log hr0]
+  have hratio : r ^ P.A N / r ^ (P.b N + k + P.q N) =
+      Real.exp (((k : ℝ) - 2 * ((P.g0 : ℝ) * N)) * Real.log (1 / r)) := by
+    rw [hp, hp, ← Real.exp_sub]
+    congr 1
+    simp only [Parameters.A, Parameters.b, Parameters.q, Parameters.g]
+    push_cast
+    rw [one_div, Real.log_inv]
+    ring
+  have hu : (P.n N : ℝ) * (((k : ℝ) / P.n N - 2 * (P.g0 : ℝ) / P.n0) * Real.log (1 / r)) =
+      ((k : ℝ) - 2 * ((P.g0 : ℝ) * N)) * Real.log (1 / r) := by
+    rw [hn]
+    field_simp
+  rw [hratio]
+  apply max_le
+  · rw [← Real.exp_zero]
+    apply Real.exp_le_exp.mpr
+    unfold keyholeRate
+    exact mul_nonneg hnpos.le (le_max_left _ _)
+  · apply Real.exp_le_exp.mpr
+    rw [← hu]
+    unfold keyholeRate
+    exact mul_le_mul_of_nonneg_left (le_max_right _ _) hnpos.le
+
+/-- **Per-column weight bound for the gap nodes from the keyhole covers**, in the form
+`C₀ N⁵ exp(n ω(k/n))` consumed by `binom_hweights_of_column_bound`
+(`ω(κ) = keyholeRate κ + max(wc, wc')/n₀`). -/
+theorem gap_hW_of_keyhole (P : Parameters) (hg : P.g0 ≤ P.n0) (hn0' : 0 < P.n0)
+    {a r C wc δ C' wc' : ℝ}
+    (ha0 : 0 < a) (ha1 : a < 1) (ha4 : 1 - a ^ 2 ≤ 4 * a)
+    (hr0 : 0 < r) (hr1 : r ≤ 1) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1) (hC : 0 ≤ C) (hC' : 0 ≤ C')
+    (hcirc : GapCircleBound P a r C wc) (hseg : GapSegBound P a r C' wc')
+    (hsep : ∀ (N : ℕ) (i : Fin (((P.n0 - P.g0) * N + 1) / 2)),
+      δ ≤ |posNode a (((P.n0 - P.g0) * N + 1) / 2) i - r|) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ k : ℕ, k < P.n N → ∀ j : Fin ((P.n0 - P.g0) * N),
+      |(rowCommonFactor P N).eval (gapNodesD P a N j)| *
+        |restrictedWeight P N k (gapNodesD P a N) j| ≤
+      (4 * (1 + (P.n0 : ℝ)) * (2 * C / δ ^ 2 +
+          512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C')) * (N : ℝ) ^ 5 *
+        Real.exp ((P.n N : ℝ) * (keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N) +
+          max wc wc' / P.n0)) := by
+  filter_upwards [Filter.eventually_gt_atTop 0] with N hN k hk j
+  have hn : (P.n N : ℝ) = (P.n0 : ℝ) * N := by simp [Parameters.n]
+  have hn0 : (0 : ℝ) < P.n0 := by exact_mod_cast hn0'
+  have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
+  have hNn : (0 : ℝ) < N := by linarith
+  have hmain := gap_weight_joint_keyhole_seg_le P hg ha0 ha1 ha4 hr0 hr1 hδ0 hδ1 hcirc hseg
+    N k j (hsep N)
+  refine hmain.trans ?_
+  set Kc : ℝ := ((((P.n0 - P.g0) * N + 1) / 2 : ℕ) : ℝ) with hKc
+  have hK : Kc ≤ (P.n0 : ℝ) * N := by
+    rw [hKc]
+    have : ((P.n0 - P.g0) * N + 1) / 2 ≤ P.n0 * N := by
+      have h1 : (P.n0 - P.g0) * N ≤ P.n0 * N := Nat.mul_le_mul_right _ (Nat.sub_le _ _)
+      have h2 : 1 ≤ P.n0 * N := Nat.mul_pos hn0' hN
+      omega
+    exact_mod_cast this
+  have hK0 : 0 ≤ Kc := Nat.cast_nonneg _
+  set wm : ℝ := max wc wc' with hwm
+  have hJ : (((P.b N + k + P.q N - P.A N : ℕ)) : ℝ) ≤ (P.n0 : ℝ) * N := by
+    have : P.b N + k + P.q N - P.A N ≤ P.n N := by
+      simp only [Parameters.A, Parameters.n] at *
+      omega
+    rw [← hn]; exact_mod_cast this
+  have hκ := max_one_ratio_le_exp_rate P hn0' hr0 hr1 N k hN
+  have hE1 : Real.exp (wc * N) ≤ Real.exp (wm * N) :=
+    Real.exp_le_exp.mpr (by nlinarith only [le_max_left wc wc', hNn])
+  have hE2 : Real.exp (wc' * N) ≤ Real.exp (wm * N) :=
+    Real.exp_le_exp.mpr (by nlinarith only [le_max_right wc wc', hNn])
+  have hN4 : (1 : ℝ) ≤ (N : ℝ) ^ 4 := one_le_pow₀ hN1
+  have hM : 2 * (C * Real.exp (wc * N)) / δ ^ 2 ≤
+      (2 * C / δ ^ 2 + 512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C') *
+        ((N : ℝ) ^ 4 * Real.exp (wm * N)) := by
+    have h0 : 2 * (C * Real.exp (wc * N)) / δ ^ 2 ≤ 2 * C / δ ^ 2 * Real.exp (wm * N) := by
+      rw [show 2 * (C * Real.exp (wc * N)) / δ ^ 2 = 2 * C / δ ^ 2 * Real.exp (wc * N) by ring]
+      gcongr
+    have hz : 0 ≤ 512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C' := by positivity
+    calc _ ≤ 2 * C / δ ^ 2 * Real.exp (wm * N) := h0
+      _ ≤ 2 * C / δ ^ 2 * ((N : ℝ) ^ 4 * Real.exp (wm * N)) := by
+          gcongr
+          exact le_mul_of_one_le_left (Real.exp_pos _).le hN4
+      _ ≤ _ := by
+          have : 0 ≤ (N : ℝ) ^ 4 * Real.exp (wm * N) := by positivity
+          nlinarith only [mul_nonneg hz this]
+  have hB : 512 * Kc ^ 4 * Real.exp (gapSegConst a) * (C' * Real.exp (wc' * N)) ≤
+      (2 * C / δ ^ 2 + 512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C') *
+        ((N : ℝ) ^ 4 * Real.exp (wm * N)) := by
+    have hK4 : Kc ^ 4 ≤ ((P.n0 : ℝ) * N) ^ 4 := pow_le_pow_left₀ hK0 hK 4
+    have h1 : 512 * Kc ^ 4 * Real.exp (gapSegConst a) * (C' * Real.exp (wc' * N)) ≤
+        512 * ((P.n0 : ℝ) * N) ^ 4 * Real.exp (gapSegConst a) * (C' * Real.exp (wm * N)) := by
+      gcongr
+    have h2 : 512 * ((P.n0 : ℝ) * N) ^ 4 * Real.exp (gapSegConst a) * (C' * Real.exp (wm * N)) =
+        (512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C') *
+          ((N : ℝ) ^ 4 * Real.exp (wm * N)) := by ring
+    have hz : 0 ≤ (N : ℝ) ^ 4 * Real.exp (wm * N) := by positivity
+    have h3 : 0 ≤ 2 * C / δ ^ 2 := by positivity
+    calc _ ≤ _ := h1
+      _ = _ := h2
+      _ ≤ _ := by nlinarith only [mul_nonneg h3 hz]
+  have hmaxle : max (2 * (C * Real.exp (wc * N)) / δ ^ 2)
+      (512 * Kc ^ 4 * Real.exp (gapSegConst a) * (C' * Real.exp (wc' * N))) ≤
+      (2 * C / δ ^ 2 + 512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C') *
+        ((N : ℝ) ^ 4 * Real.exp (wm * N)) := max_le hM hB
+  have hexp : Real.exp ((P.n N : ℝ) * (keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N) +
+        wm / P.n0)) =
+      Real.exp ((P.n N : ℝ) * keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N)) *
+        Real.exp (wm * N) := by
+    rw [← Real.exp_add]; congr 1; rw [hn]; field_simp
+  rw [hexp]
+  set Cs := 2 * C / δ ^ 2 + 512 * (P.n0 : ℝ) ^ 4 * Real.exp (gapSegConst a) * C' with hCs
+  have hCs0 : 0 ≤ Cs := by positivity
+  have h4 : 4 * (1 + (((P.b N + k + P.q N - P.A N : ℕ)) : ℝ)) ≤
+      4 * (1 + (P.n0 : ℝ)) * N := by nlinarith only [hJ, hN1, hn0]
+  have hE : 0 ≤ Real.exp ((P.n N : ℝ) * keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N)) :=
+    (Real.exp_pos _).le
+  calc _ ≤ (4 * (1 + (P.n0 : ℝ)) * N) *
+        (Real.exp ((P.n N : ℝ) * keyholeRate P.g0 P.n0 r ((k : ℝ) / P.n N)) *
+          (Cs * ((N : ℝ) ^ 4 * Real.exp (wm * N)))) := by
+        apply mul_le_mul h4 _ (by positivity) (by positivity)
+        exact mul_le_mul hκ (by simpa [hCs] using hmaxle) (le_max_of_le_left (by positivity))
+          hE
+    _ = _ := by ring
+
 end
 
 end Analytic
@@ -749,3 +886,4 @@ end CatalanMeasure.GenD
 
 #print axioms CatalanMeasure.GenD.Analytic.gap_cardinal_real_le
 #print axioms CatalanMeasure.GenD.Analytic.gap_weight_joint_keyhole_seg_le
+#print axioms CatalanMeasure.GenD.Analytic.gap_hW_of_keyhole
