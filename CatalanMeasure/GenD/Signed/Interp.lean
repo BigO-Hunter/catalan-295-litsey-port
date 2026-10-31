@@ -275,6 +275,7 @@ def SignedData.interp (DA DB : SignedData) (l c : ℝ) : SignedData where
   Cf := DA.Cf
   θ := DA.θ
   cs := (1 - l) * DA.cs + l * DB.cs
+  kph := DA.kph
 
 /-- Two trials that can be interpolated: they agree on the scale data. -/
 structure InterpCompat (DA DB : SignedData) : Prop where
@@ -285,6 +286,7 @@ structure InterpCompat (DA DB : SignedData) : Prop where
   Rf : DB.Rf = DA.Rf
   Cf : DB.Cf = DA.Cf
   θ : DB.θ = DA.θ
+  kph : DB.kph = DA.kph
 
 theorem InterpCompat.τ {DA DB : SignedData} (hc : InterpCompat DA DB) : DB.τ = DA.τ := by
   unfold SignedData.τ; rw [hc.e]
@@ -311,8 +313,8 @@ theorem interp_zero (DA DB : SignedData) (c : ℝ) :
 
 theorem interp_one {DA DB : SignedData} (hc : InterpCompat DA DB) (c : ℝ) :
     SignedData.interp DA DB 1 c = { DB with constant := c } := by
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := hc
-  simp [SignedData.interp, linSeq_one, mixFam_one, h1, h2, h3, h4, h5, h6, h7]
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := hc
+  simp [SignedData.interp, linSeq_one, mixFam_one, h1, h2, h3, h4, h5, h6, h7, h8]
 
 theorem abs_linSeq_le (l : ℝ) (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (u v : ℕ → ℝ) (n : ℕ) :
     |linSeq l u v n| ≤ (1 - l) * |u n| + l * |v n| := by

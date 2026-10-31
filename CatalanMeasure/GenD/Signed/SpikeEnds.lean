@@ -323,7 +323,7 @@ def SpikeCostOK (D : SignedData) {k q' M : ℕ} (m : ℕ) (xn : Fin k → ℝ) (
         spikeDenB D.b D.sp y (extFam z zph m) +
         spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k (extFam z zph m) ≤
       spikeNumB D.ν D.e D.a (refTilt D.R) D.Sup D.sp xn y z - spikeDenB D.b D.sp y z +
-        D.ν * ((M : ℝ) * D.cs)
+        D.ν * ((M : ℝ) * D.cs) + D.ν * D.kph
 
 /-- The condition (P') of `SpikeWitness`, as a predicate of the trial. -/
 def SpikeChebOK (D : SignedData) (m : ℕ) (ρ c1 : ℝ) : Prop :=
@@ -337,7 +337,7 @@ def costGap (D : SignedData) {k q' M : ℕ} (m : ℕ) (xn : Fin k → ℝ) (y : 
     2 * (D.sp : ℝ) * ((∑ p, barrierTrialS D.b (-(extFam z zph m p))) -
       ∑ p, barrierTrialS D.b (-(z p))) +
     spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k (extFam z zph m) -
-    D.ν * ((M : ℝ) * D.cs)
+    D.ν * ((M : ℝ) * D.cs) - D.ν * D.kph
 
 theorem costOK_iff (D : SignedData) (hν : 0 < D.ν) {k q' M : ℕ} (m : ℕ) (xn : Fin k → ℝ)
     (y : Fin q' → ℝ) (z : Fin M → ℝ) (zph ρ : ℝ) :
@@ -383,16 +383,16 @@ theorem costGap_interp_le {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 
           ∑ p, barrierTrialS (linSeq l DA.b DB.b) (-(z p))) +
         spikeCost DA.ν DA.e (linSeq l DA.a DB.a) (linSeq l DA.b DB.b) (DA.sp - m) m ρ
           (1 - DA.θ) k (extFam z zph m) -
-        DA.ν * ((M : ℝ) * ((1 - l) * DA.cs + l * DB.cs)) := rfl
+        DA.ν * ((M : ℝ) * ((1 - l) * DA.cs + l * DB.cs)) - DA.ν * DA.kph := rfl
   have hB : costGap DB m xn y z zph ρ =
       DA.ν ^ 2 * numDiff DA.ν DA.τ DB.a DB.R xn (Fin.append y (extFam z zph m))
           (Fin.append y z) -
         2 * (DA.sp : ℝ) * ((∑ p, barrierTrialS DB.b (-(extFam z zph m p))) -
           ∑ p, barrierTrialS DB.b (-(z p))) +
         spikeCost DA.ν DA.e DB.a DB.b (DA.sp - m) m ρ (1 - DA.θ) k (extFam z zph m) -
-        DA.ν * ((M : ℝ) * DB.cs) := by
+        DA.ν * ((M : ℝ) * DB.cs) - DA.ν * DA.kph := by
     unfold costGap
-    rw [hc.ν, hc.τ, hc.e, hc.sp, hc.θ]
+    rw [hc.ν, hc.τ, hc.e, hc.sp, hc.θ, hc.kph]
   rw [hI, hB]
   have h1 := numDiff_linSeq hτ hν rA.ha rB.ha rA.hR (rB.hRτ hc) l xn
     (Fin.append y (extFam z zph m)) (Fin.append y z) hx hge hgz
@@ -656,11 +656,127 @@ exactly the bound `spikeCost ≤ ν M cs` (the per-spike constant of the trial).
 theorem SpikeCostOK.of_even (D : SignedData) {k q' m : ℕ} (xn : Fin k → ℝ) (y : Fin q' → ℝ)
     (z : Fin (2 * m) → ℝ) (zph ρ : ℝ)
     (h : spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k z ≤
-      D.ν * (((2 * m : ℕ) : ℝ) * D.cs)) :
+      D.ν * (((2 * m : ℕ) : ℝ) * D.cs) + D.ν * D.kph) :
     SpikeCostOK D m xn y z zph ρ := by
   unfold SpikeCostOK
   rw [extFam_even]
   linarith
+
+
+/-! ### 7. Per-trial certificates: (P') and the even-`M` cost
+
+Both lemmas reduce the witness inequalities to inequalities in finitely many real/rational
+parameters of the trial (data supplies only those), uniformly in the configuration. -/
+
+/-- **(P') from a polynomial certificate.**  If `m ≤ κ sp` and, on `[-1,1]`,
+`c1 ≤ P_b(u)` and `κ(1-ρ²) ≤ (P_b(u) - (1-κ) c1)(1 + 2ρu + ρ²)` (a polynomial inequality in `u`
+for a finitely supported `b`), then `SpikeChebOK D m ρ c1`. -/
+theorem spikeChebOK_of_cert {D : SignedData} {m : ℕ} {ρ c1 κ : ℝ} (hρ : |ρ| < 1)
+    (hκ0 : 0 ≤ κ) (hmκ : (m : ℝ) ≤ κ * D.sp) (hm : m ≤ D.sp)
+    (hb : ∀ u ∈ Icc (-1 : ℝ) 1, c1 ≤ chebPs D.b u)
+    (hpoly : ∀ u ∈ Icc (-1 : ℝ) 1,
+      κ * (1 - ρ ^ 2) ≤ (chebPs D.b u - (1 - κ) * c1) * (1 + 2 * ρ * u + ρ ^ 2)) :
+    SpikeChebOK D m ρ c1 := by
+  intro u hu
+  have hρ1 := abs_lt.mp hρ
+  have hd : 0 < 1 + 2 * ρ * u + ρ ^ 2 := by
+    have h1 : -|ρ| ≤ ρ * u := by
+      have : |ρ * u| ≤ |ρ| := by
+        rw [abs_mul]
+        exact mul_le_of_le_one_right (abs_nonneg _) (abs_le.mpr ⟨hu.1, hu.2⟩)
+      linarith [neg_abs_le (ρ * u)]
+    have h2 : 0 < (1 - |ρ|) ^ 2 := pow_pos (by linarith) 2
+    have h3 : (1 - |ρ|) ^ 2 = 1 - 2 * |ρ| + ρ ^ 2 := by
+      have := sq_abs ρ
+      nlinarith [this]
+    nlinarith [h2, h3]
+  rw [chebPs_poisSeq hρ hu, Nat.cast_sub hm]
+  set P := chebPs D.b u
+  set Q := (1 - ρ ^ 2) / (1 + 2 * ρ * u + ρ ^ 2) with hQ
+  have hQd : Q * (1 + 2 * ρ * u + ρ ^ 2) = 1 - ρ ^ 2 := by
+    rw [hQ]; exact div_mul_cancel₀ _ hd.ne'
+  have hkey : κ * (Q - c1) ≤ P - c1 := by
+    have h := hpoly u hu
+    have h' : κ * Q * (1 + 2 * ρ * u + ρ ^ 2) ≤ (P - (1 - κ) * c1) * (1 + 2 * ρ * u + ρ ^ 2) := by
+      calc κ * Q * (1 + 2 * ρ * u + ρ ^ 2) = κ * (1 - ρ ^ 2) := by rw [mul_assoc, hQd]
+        _ ≤ _ := h
+    have := le_of_mul_le_mul_right h' hd
+    linarith
+  have hP1 := hb u hu
+  have hsp : (0 : ℝ) ≤ D.sp := Nat.cast_nonneg _
+  have hm0 : (0 : ℝ) ≤ m := Nat.cast_nonneg _
+  rcases le_or_gt c1 Q with hq | hq
+  · have h1 : (m : ℝ) * (Q - c1) ≤ κ * D.sp * (Q - c1) :=
+      mul_le_mul_of_nonneg_right hmκ (by linarith)
+    have h2 : κ * D.sp * (Q - c1) ≤ D.sp * (P - c1) := by
+      have := mul_le_mul_of_nonneg_left hkey hsp
+      nlinarith [this]
+    nlinarith [h1, h2]
+  · have h1 : (m : ℝ) * (Q - c1) ≤ 0 := mul_nonpos_of_nonneg_of_nonpos hm0 (by linarith)
+    have h2 : 0 ≤ (D.sp : ℝ) * (P - c1) := mul_nonneg hsp (by linarith)
+    nlinarith [h1, h2]
+
+/-- The `O(m)` remainder of `spikeCost` per pinned pair (terms T5-T10 of SPIKE-CLASS §4). -/
+def costRem (b : ℕ → ℝ) (s' m : ℕ) (ρ : ℝ) : ℝ :=
+  Real.log 2 - (((s' : ℝ) + m) / s') * (∑' i : ℕ, 2 * b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+    (2 * ((s' : ℝ) + m) / s') * (∑' k : ℕ, b (k + 1) ^ 2) -
+    (4 * ((s' : ℝ) + m) / s') * (∑' k : ℕ, b (k + 1) * poisSeq ρ (k + 1)) +
+    (2 * (m : ℝ) / s') * (ρ ^ 2 / (1 - ρ ^ 2)) + (4 * ((s' : ℝ) + m) / s') * barrierTrialS b (-ρ)
+
+/-- **The cost in the paper's terms** (field map, SPIKE-CLASS §4): `T1 + T2 + T3 + T4 + m·costRem`. -/
+theorem spikeCost_eq_map (ν e : ℝ) (a b : ℕ → ℝ) (s' m : ℕ) (ρ r : ℝ) (k : ℕ) {M : ℕ}
+    (z : Fin M → ℝ) :
+    spikeCost ν e a b s' m ρ r k z =
+      2 * (m : ℝ) * k * Real.log (2 / (1 + realEnergyTau e ^ 2 * r)) +
+      4 * ν * m * e * ∑' j : ℕ, |a j| +
+      2 * (m : ℝ) ^ 2 * (Real.log (1 - realEnergyTau e ^ 2 * r ^ 2) - Real.log (1 - ρ ^ 2)) +
+      2 * ((s' : ℝ) + m) * ∑ p, (barrierTrialS b (-(z p)) - barrierTrialS b (-ρ)) +
+      (m : ℝ) * costRem b s' m ρ := by
+  unfold spikeCost costRem
+  ring
+
+/-- **Even-`M` cost from per-trial bounds.**  With `Λ' ≤ L`, `S_b(-y) - S_b(-ρ) ≤ De2` on
+`[r,1)`, the Σ gain `≤ Sg`, `Σ|a| ≤ A`, `costRem ≤ K0`: an explicit bound, linear in the
+configuration counts. -/
+theorem spikeCost_le_of_bounds {ν e : ℝ} (hν : 0 ≤ ν) (he : 0 ≤ e) (a b : ℕ → ℝ) (s' m : ℕ)
+    {ρ r L De2 Sg A K0 : ℝ} (k : ℕ) (z : Fin (2 * m) → ℝ)
+    (hL : Real.log (2 / (1 + realEnergyTau e ^ 2 * r)) ≤ L)
+    (hDe : ∀ p, barrierTrialS b (-(z p)) - barrierTrialS b (-ρ) ≤ De2)
+    (hSg : Real.log (1 - realEnergyTau e ^ 2 * r ^ 2) - Real.log (1 - ρ ^ 2) ≤ Sg)
+    (hA : ∑' j : ℕ, |a j| ≤ A) (hK : costRem b s' m ρ ≤ K0) :
+    spikeCost ν e a b s' m ρ r k z ≤
+      2 * (m : ℝ) * (k * L + 2 * ((s' : ℝ) + m) * De2 + m * Sg + 2 * ν * e * A) +
+        (m : ℝ) * K0 := by
+  rw [spikeCost_eq_map]
+  have hm : (0 : ℝ) ≤ m := Nat.cast_nonneg _
+  have hk : (0 : ℝ) ≤ k := Nat.cast_nonneg _
+  have hs : (0 : ℝ) ≤ (s' : ℝ) + m := by positivity
+  have h1 : 2 * (m : ℝ) * k * Real.log (2 / (1 + realEnergyTau e ^ 2 * r)) ≤ 2 * m * k * L :=
+    mul_le_mul_of_nonneg_left hL (by positivity)
+  have h2 : 4 * ν * m * e * ∑' j : ℕ, |a j| ≤ 4 * ν * m * e * A :=
+    mul_le_mul_of_nonneg_left hA (by positivity)
+  have h3 : 2 * (m : ℝ) ^ 2 * (Real.log (1 - realEnergyTau e ^ 2 * r ^ 2) - Real.log (1 - ρ ^ 2))
+      ≤ 2 * (m : ℝ) ^ 2 * Sg := mul_le_mul_of_nonneg_left hSg (by positivity)
+  have h4 : ∑ p, (barrierTrialS b (-(z p)) - barrierTrialS b (-ρ)) ≤ 2 * (m : ℝ) * De2 := by
+    calc _ ≤ ∑ _p : Fin (2 * m), De2 := Finset.sum_le_sum fun p _ => hDe p
+      _ = 2 * (m : ℝ) * De2 := by simp
+  have h4' := mul_le_mul_of_nonneg_left h4 (by positivity : (0 : ℝ) ≤ 2 * ((s' : ℝ) + m))
+  have h5 : (m : ℝ) * costRem b s' m ρ ≤ m * K0 := mul_le_mul_of_nonneg_left hK hm
+  nlinarith [h1, h2, h3, h4', h5]
+
+/-- **`SpikeCostOK` for even `M` from the per-trial bounds** and one arithmetic inequality in the
+counts (`hfin`; `cs` the trial's per-spike charge, `kph ≥ 0` its phantom charge). -/
+theorem SpikeCostOK.of_even_cert (D : SignedData) {k q' m : ℕ} (xn : Fin k → ℝ) (y : Fin q' → ℝ)
+    (z : Fin (2 * m) → ℝ) (zph ρ : ℝ) {L De2 Sg A K0 : ℝ} (hν : 0 ≤ D.ν) (he : 0 ≤ D.e)
+    (hL : Real.log (2 / (1 + realEnergyTau D.e ^ 2 * (1 - D.θ))) ≤ L)
+    (hDe : ∀ p, barrierTrialS D.b (-(z p)) - barrierTrialS D.b (-ρ) ≤ De2)
+    (hSg : Real.log (1 - realEnergyTau D.e ^ 2 * (1 - D.θ) ^ 2) - Real.log (1 - ρ ^ 2) ≤ Sg)
+    (hA : ∑' j : ℕ, |D.a j| ≤ A) (hK : costRem D.b (D.sp - m) m ρ ≤ K0)
+    (hfin : 2 * (m : ℝ) * (k * L + 2 * (((D.sp - m : ℕ) : ℝ) + m) * De2 + m * Sg +
+        2 * D.ν * D.e * A) + (m : ℝ) * K0 ≤ D.ν * (((2 * m : ℕ) : ℝ) * D.cs) + D.ν * D.kph) :
+    SpikeCostOK D m xn y z zph ρ :=
+  SpikeCostOK.of_even D xn y z zph ρ
+    ((spikeCost_le_of_bounds hν he D.a D.b (D.sp - m) m k z hL hDe hSg hA hK).trans hfin)
 
 end
 
@@ -690,3 +806,6 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.SpikePair.monoMargin
 #print axioms CatalanMeasure.Signed.PairCls.ofWitness
 #print axioms CatalanMeasure.Signed.SpikeCostOK.of_even
+#print axioms CatalanMeasure.Signed.spikeChebOK_of_cert
+#print axioms CatalanMeasure.Signed.spikeCost_le_of_bounds
+#print axioms CatalanMeasure.Signed.SpikeCostOK.of_even_cert

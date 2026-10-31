@@ -264,7 +264,7 @@ structure SpikeWitness (D : SignedData) (c' : ℝ) {k q : ℕ} (xn : Fin k → �
         spikeDenB D.b D.sp y (extFam z zph m) +
         spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k (extFam z zph m) ≤
       spikeNumB D.ν D.e D.a (refTilt D.R) D.Sup D.sp xn y z - spikeDenB D.b D.sp y z +
-        D.ν * ((M : ℝ) * D.cs)
+        D.ν * ((M : ℝ) * D.cs) + D.ν * D.kph
 
 /-- The class predicate (a refinement of the `Cls` of the contracts). -/
 def SpikeCls (D : SignedData) (c' : ℝ) {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) : Prop :=
@@ -378,7 +378,7 @@ theorem spikeCompare_of_class (D : SignedData) (E : SpikeEnv D) {c' : ℝ}
   have hE4 : 0 ≤ 4 * D.e / c' := div_nonneg (by linarith [E.he.1]) hc'.1.le
   have hq'q : W.q' ≤ q := by omega
   have hJ : ((D.sp - W.m : ℕ) : ℝ) * (((k + W.q' : ℕ) : ℝ) * (4 * D.e / c')) / D.ν ^ 2 ≤
-      D.errJ3 c' (k + q) := by
+      (4 * D.e / c') * ((D.sp : ℝ) / D.ν) * (((k + q : ℕ) : ℝ) / D.ν) := by
     have h1 : ((D.sp - W.m : ℕ) : ℝ) * (((k + W.q' : ℕ) : ℝ) * (4 * D.e / c')) ≤
         (D.sp : ℝ) * (((k + q : ℕ) : ℝ) * (4 * D.e / c')) :=
       mul_le_mul (Nat.cast_le.mpr (Nat.sub_le _ _))
@@ -386,20 +386,22 @@ theorem spikeCompare_of_class (D : SignedData) (E : SpikeEnv D) {c' : ℝ}
         (Nat.cast_nonneg _)
     have h2 := div_le_div_of_nonneg_right h1 (sq_nonneg D.ν)
     refine h2.trans (le_of_eq ?_)
-    unfold SignedData.errJ3
     field_simp
+  have hErr : D.errJ3 c' (k + q) =
+      (4 * D.e / c') * ((D.sp : ℝ) / D.ν) * (((k + q : ℕ) : ℝ) / D.ν) + D.kph / D.ν := rfl
   have key : logRatioZ D.sp xn gp - logPref xn gp ≤ D.ν ^ 2 * (D.numB xn gp - D.denB gp) +
-      D.ν * ((W.M : ℝ) * D.cs) + ((D.sp - W.m : ℕ) : ℝ) *
+      D.ν * ((W.M : ℝ) * D.cs) + D.ν * D.kph + ((D.sp - W.m : ℕ) : ℝ) *
         (((k + W.q' : ℕ) : ℝ) * (4 * D.e / c')) := by
     rw [hLRe]
     linarith [hred, hcmp, hcost]
   have hdiv := div_le_div_of_nonneg_right key (sq_nonneg D.ν)
-  have hrhs : (D.ν ^ 2 * (D.numB xn gp - D.denB gp) + D.ν * ((W.M : ℝ) * D.cs) +
+  have hrhs : (D.ν ^ 2 * (D.numB xn gp - D.denB gp) + D.ν * ((W.M : ℝ) * D.cs) + D.ν * D.kph +
       ((D.sp - W.m : ℕ) : ℝ) * (((k + W.q' : ℕ) : ℝ) * (4 * D.e / c'))) / D.ν ^ 2 =
-      (D.numB xn gp - D.denB gp) + (1 / D.ν) * ((W.M : ℝ) * D.cs) +
+      (D.numB xn gp - D.denB gp) + (1 / D.ν) * ((W.M : ℝ) * D.cs) + D.kph / D.ν +
         ((D.sp - W.m : ℕ) : ℝ) * (((k + W.q' : ℕ) : ℝ) * (4 * D.e / c')) / D.ν ^ 2 := by
     field_simp
   rw [hrhs, sub_div, ← hST] at hdiv
+  rw [hErr]
   linarith [hdiv, hJ]
 
 /-! ### F. Fixed (marked) nodes -/

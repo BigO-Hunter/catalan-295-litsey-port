@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Interp
 public import CatalanMeasure.GenD.Signed.SigmaCap
 public import CatalanMeasure.GenD.Signed.SpikeEnds
 public import CatalanMeasure.GenD.Signed.SheetNear
+public import CatalanMeasure.GenD.Signed.MarkedCap
 
 /-!
 # Phase 2 contract: the complete `SignedNearBounds` from endpoint data
@@ -404,13 +405,7 @@ theorem Phase2Data.hFix {I : ℕ} (D : Phase2Data I) (i : Fin I) :
 
 /-! ### Admissibility of the actual marked nodes -/
 
-/-- **What `hlink` needs about the actual marked nodes `y`** (all marked rows, both signs): every
-node has `|y| ≥ gs` (this is a property of each node: take it into `G`), every node is at
-distance `≥ umin` from `1`, and the top count `#{i : y_j ≤ y_i} ≤ C1 n (1 - y_j) + 1` for
-`y_j ≥ xc`. -/
-def MarkedCap (gs xc C1 n umin : ℝ) {m : ℕ} (y : Fin m → ℝ) : Prop :=
-  (∀ j, gs ≤ |y j|) ∧ (∀ j, y j ≤ 1 - umin) ∧
-    ∀ j, xc ≤ y j → ((Finset.univ.filter (fun i => y j ≤ y i)).card : ℝ) ≤ C1 * n * (1 - y j) + 1
+/-! `MarkedCap` (the cap of the actual marked rows) is defined in `MarkedCap.lean`. -/
 
 theorem count_sub_le {m a : ℕ} (y : Fin m → ℝ) (f : Fin a → Fin m) (hf : Function.Injective f)
     (j : Fin a) :
@@ -562,6 +557,43 @@ theorem Phase2Data.signedSecondSheetNear_nearOpt {I : ℕ} (D : Phase2Data I) {P
   D.signedSecondSheetNear hP G target0 c2 _ hn hconst hRf hRm hRn hCf hLRf hB hcost
     (hnon_nearOpt P target0 c2 G) hlink
 
+/-- **Node-set form** (`Nd`, SheetNear `signedSecondSheetNearNd`) with the near-optimal class. -/
+theorem Phase2Data.signedSecondSheetNearNd_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters}
+    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hlink : SignedNearClassLinkNd P D.toBounds (nearOptCls P target0 c2 G) G Nd) :
+    SignedSecondSheetCoreNd P G Nd target0 c2 D.α1 :=
+  _root_.CatalanMeasure.Signed.signedSecondSheetNearNd hP G target0 c2 _ D.toBounds hn hconst
+    hRf hRm hRn hCf hLRf hB hcost (hnon_nearOpt P target0 c2 G) Nd hlink
+
+/-- **The `FixAdm` clause of `hlink` from the node set** (NOTES-MC wiring): for marked rows that
+are node images (`NodeSub τ`) of a node set with `NodeCap` at the common cap data of `D`, every
+sign split and every splitting satisfy `D.FixAdm`.  For the real nodes take
+`τ := gapNodesD P (2g/(1+g²))` and `hZ := nodeCap_gap ..` (with `D.C1` the node constant
+`J/(n · 2 xc √(1-a²))`, `D.umin N = √(1-a²)/(2(J+1))`). -/
+theorem Phase2Data.fixAdm_of_nodeSub {I : ℕ} (D : Phase2Data I) {J : ℕ → ℕ}
+    {τ : (N : ℕ) → Fin (J N) → ℝ} {N m m1 m2 r s' : ℕ} {y : Fin m → ℝ}
+    (hxc : 0 ≤ D.xc)
+    (hZ : NodeCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N)
+      (fun a => OAI.InternalCatalan.realCoordinate (τ N a)))
+    (hy : ∀ j, y j ∈ Ioo (-1 : ℝ) 1) (hNd : NodeSub τ N m y) (σy : Fin m1 ⊕ Fin m2 ≃ Fin m)
+    (hyneg : ∀ b, y (σy (Sum.inl b)) < 0) (hypos : ∀ b, 0 < y (σy (Sum.inr b)))
+    (τ' : Fin r ⊕ Fin s' ≃ Fin m2) :
+    D.FixAdm N m1 r s' (fun b => y (σy (Sum.inl b)))
+      (fun j => y (σy (Sum.inr (τ' (Sum.inl j))))) (fun j => y (σy (Sum.inr (τ' (Sum.inr j))))) :=
+  fixAdmCap_of_marked hxc (markedCap_of_nodeSub hZ hy hNd) σy hyneg hypos τ'
+
 end Sheet
 
 end
@@ -578,3 +610,5 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.fixAdmCap_of_marked
 #print axioms CatalanMeasure.Signed.hnon_nearOpt
 #print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNear_nearOpt
+#print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNearNd_nearOpt
+#print axioms CatalanMeasure.Signed.Phase2Data.fixAdm_of_nodeSub

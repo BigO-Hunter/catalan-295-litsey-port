@@ -914,6 +914,9 @@ structure SignedData where
   Cf : ℝ → ℝ
   θ : ℝ
   cs : ℝ
+  /-- Phantom charge (per `ν`): bounds the one phantom spike of an odd spike count, an additive
+  `O(N)` once per configuration (SIMPLIFY-S2 §2.3); enters `errJ3` as `kph / ν → 0`. -/
+  kph : ℝ
 
 namespace SignedData
 
@@ -1137,10 +1140,11 @@ def SignedData.spikeTerm (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) : ℝ :
 def SignedData.fPosS (D : SignedData) (x : ℝ) : ℝ :=
   D.fPos x + D.cs * (if 1 - D.θ < x then 1 else 0)
 
-/-- The J3 dilation error of the spike lemmas: `(4e/c')(s/ν)(nrows/ν)`, where `c' ∈ (0,1]` is the
-margin of every negative and every non-spike positive (enforced by `Cls`). -/
+/-- The additive error of the spike lemmas: the J3 dilation error `(4e/c')(s/ν)(nrows/ν)`
+(`c' ∈ (0,1]` the margin of the non-spike positives; the negatives need none, one-sided J3) plus
+the phantom charge `kph/ν` of an odd spike count (SIMPLIFY-S2 §2.3: `O(N)` once, `o(N²)`). -/
 def SignedData.errJ3 (D : SignedData) (c' : ℝ) (nrows : ℕ) : ℝ :=
-  (4 * D.e / c') * ((D.sp : ℝ) / D.ν) * ((nrows : ℝ) / D.ν)
+  (4 * D.e / c') * ((D.sp : ℝ) / D.ν) * ((nrows : ℝ) / D.ν) + D.kph / D.ν
 
 /-- **The A7 interface (bound form).**  `LR xn gp` is the logarithm of the route II ratio
 `log Pref + log Z(φψ) − log Z(ψ)` (`logRatioZ`).  For every configuration of the class `Cls`

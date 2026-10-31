@@ -1,6 +1,5 @@
 module
 
-public import CatalanMeasure.GenD.Signed.Phase2Contract
 public import CatalanMeasure.GenD.Signed.SheetNear
 public import OAI.NumberTheory.Catalan.Estimates.RealEnergyDiagonal
 public import CatalanMeasure.GenD.Analytic.GapNodes
@@ -23,6 +22,14 @@ injective sub-families (the top count of a sub-family is at most that of the nod
 namespace CatalanMeasure.Signed
 
 open Set Filter OAI.InternalCatalan
+
+/-- **What `hlink` needs about the actual marked nodes `y`** (all marked rows, both signs): every
+node has `|y| ≥ gs` (this is a property of each node: take it into `G`), every node is at
+distance `≥ umin` from `1`, and the top count `#{i : y_j ≤ y_i} ≤ C1 n (1 - y_j) + 1` for
+`y_j ≥ xc`. -/
+def MarkedCap (gs xc C1 n umin : ℝ) {m : ℕ} (y : Fin m → ℝ) : Prop :=
+  (∀ j, gs ≤ |y j|) ∧ (∀ j, y j ≤ 1 - umin) ∧
+    ∀ j, xc ≤ y j → ((Finset.univ.filter (fun i => y j ≤ y i)).card : ℝ) ≤ C1 * n * (1 - y j) + 1
 
 /-- Cap predicate of a node set `Z : Fin J → ℝ`. -/
 def NodeCap (gs xc C1 n umin : ℝ) {J : ℕ} (Z : Fin J → ℝ) : Prop :=

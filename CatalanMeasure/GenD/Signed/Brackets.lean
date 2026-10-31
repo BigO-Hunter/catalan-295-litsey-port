@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Analytic.Second
 public import CatalanMeasure.GenD.Signed.LemmaK
+public import CatalanMeasure.GenD.Analytic.GroupedProduct
 
 /-!
 # The grouped second-population energy with its squares and field brackets kept (PROOF-A 17.9(a))
@@ -555,6 +556,136 @@ theorem second_energy_sq {P : Parameters} (hP : Admissible P)
   nlinarith only [hb, hconst, hbudget, hfields, hnorm, herror, hεα, hsmall]
 
 
+
+/-! ### Lemma K containment: the spike count of a near-optimal configuration -/
+
+/-- The free-row node function of the bracket (`R - 4T_p - S_v - log(1-x)/(2n)`). -/
+def freeRowX (P : Parameters) (N : ℕ) (p v : ℕ → ℝ) (x : ℝ) : ℝ :=
+  populationPhysicalFreeField P N x - 2 * barrierTrialT p x - 2 * barrierTrialT p x -
+    barrierTrialS v x - Real.log (1 - x) / (2 * (P.n N : ℝ))
+
+/-- Counting: if every term of a bracket is `≥ 0` and the terms on `S` are `≥ d`, then
+`|S| d ≤ ν · bracket`. -/
+theorem card_mul_le_bracket {ν cap d : ℝ} (hν : 0 < ν) {m : ℕ} (X : Fin m → ℝ)
+    (S : Finset (Fin m)) (hX : ∀ i, X i ≤ cap) (hS : ∀ i ∈ S, X i ≤ cap - d) :
+    (S.card : ℝ) * d ≤ ν * bracketSlack ν cap X := by
+  unfold bracketSlack
+  rw [mul_div_cancel₀ _ hν.ne']
+  calc (S.card : ℝ) * d = ∑ i ∈ S, d := by simp
+    _ ≤ ∑ i ∈ S, (cap - X i) := Finset.sum_le_sum fun i hi => by linarith [hS i hi]
+    _ ≤ ∑ i, (cap - X i) :=
+        Finset.sum_le_sum_of_subset_of_nonneg (Finset.subset_univ _)
+          fun i _ _ => sub_nonneg.mpr (hX i)
+
+set_option maxHeartbeats 1600000 in
+/-- **Lemma K containment, spike count (PROOF-A 17.8-17.9, 17.34; NOTES 13.5/13.7).**  Let `D` be
+the old (532) trial and `d` the drop of the free-row node function beyond `1 - θ` below the cap
+`MX + δ/4` (`hsup`, a per-trial sup certificate).  Eventually in `N`, for every grouped
+configuration whose product exceeds the target-`t0` bound (the near-optimal class), the free
+spikes `S = {i : 1 - θ < z_i}` satisfy `|S| d ≤ n (U - V0)`, with `U = -target + log 2/2 + cost α + δ`
+the old route's value and `V0 = -t0 + log 2/2 + c2 N (a+b)/n²` the violated level. -/
+theorem free_spike_count {P : Parameters} (hP : Admissible P)
+    {target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBounds P target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
+    (he : e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hec : e * (4 * (∑' j, |D.p j|) + 4 * (∑' j, |D.v j|) + |D.p 1| + 20) < δ / 2)
+    {θ d t0 c2 : ℝ}
+    (hsup : ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (1 - θ) 1, freeRowX P N D.p D.v x ≤ D.MX + δ / 4 - d) :
+    ∀ᶠ N : ℕ in atTop, ∀ (r a b : ℕ), r + a + b = P.n N →
+      ∀ (z : Fin r → ℝ) (x : Fin a → ℝ) (y : Fin b → ℝ) (s : Fin r → ℝ),
+      (∀ i, z i ∈ Ioo (-1 : ℝ) 1) → (∀ i, z i ≠ 0) →
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, G (x i)) → (∀ i, y i ∈ Ioo (0 : ℝ) 1) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective z →
+      Function.Injective (Fin.append z x) → Function.Injective y → Function.Injective s →
+      Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-t0 + Real.log 2 / 2) + c2 * N * (a + b)) <
+        groupedProduct P N z x y s →
+      ((Finset.univ.filter (fun i => 1 - θ < z i)).card : ℝ) * d ≤
+        (P.n N : ℝ) * ((-target + Real.log 2 / 2 + cost * (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) + δ) -
+          ((-t0 + Real.log 2 / 2) + c2 * N * (a + b) / (P.n N : ℝ) ^ 2)) := by
+  have hε : 0 < δ / 4 := by linarith
+  filter_upwards [second_energy_sq hP D hδ he hec, D.row hε, D.column hε, hsup,
+    log_reciprocal_eventually hP hε, eventually_gt_atTop (0 : ℕ)]
+    with N hE hrow hcol hsupN hl2 hN r a b hcount z x y s hz hz0 hx hxG hy hs hzi hxi hyi hsi hv
+  have hν : 0 < (P.n N : ℝ) := by exact_mod_cast n_pos hP hN
+  have hy' : ∀ i, y i ∈ Ioo (-1 : ℝ) 1 := fun i => ⟨by linarith [(hy i).1], (hy i).2⟩
+  have hE1 := hE r a b hcount z x y s hz hz0 hx hxG hy hs hzi hxi hyi hsi
+  have hpos : 0 < groupedProduct P N z x y s := lt_trans (Real.exp_pos _) hv
+  have hlog := log_groupedProduct hP hN z x y s hz hx hy' hs hz0 (fun i => (hy i).1.ne')
+    hzi hxi hyi hsi
+  set V := groupedValueWithFields (P.n N : ℝ) (groupedConstant P N r a b)
+    (populationPhysicalFreeField P N) (groupedMarkedField P N) (groupedNearField P N)
+    (populationPhysicalColumnField P N (a + b)) z x y s with hV
+  have hV0 : ((P.n0 : ℝ) * N) ^ 2 * (-t0 + Real.log 2 / 2) + c2 * N * (a + b) <
+      (P.n N : ℝ) ^ 2 * V := by
+    rw [← hlog]
+    exact (Real.lt_log_iff_exp_lt hpos).mpr hv
+  have hV1 : (-t0 + Real.log 2 / 2) + c2 * N * (a + b) / (P.n N : ℝ) ^ 2 < V := by
+    have hn2 : 0 < (P.n N : ℝ) ^ 2 := by positivity
+    rw [← n_cast] at hV0
+    have e1 : ((-t0 + Real.log 2 / 2) + c2 * N * (a + b) / (P.n N : ℝ) ^ 2) * (P.n N : ℝ) ^ 2 =
+        (P.n N : ℝ) ^ 2 * (-t0 + Real.log 2 / 2) + c2 * N * (a + b) := by
+      field_simp
+    have h2 : ((-t0 + Real.log 2 / 2) + c2 * N * (a + b) / (P.n N : ℝ) ^ 2) * (P.n N : ℝ) ^ 2 <
+        V * (P.n N : ℝ) ^ 2 := by rw [e1]; linarith
+    exact lt_of_mul_lt_mul_right h2 hn2.le
+  have hzx : ∀ i, Fin.append z x i ∈ Ioo (-1 : ℝ) 1 := by
+    intro i
+    refine Fin.addCases (fun j => ?_) (fun j => ?_) i
+    · simpa using hz j
+    · simpa using hx j
+  have hXz : ∀ i, freeRowX P N D.p D.v (z i) ≤ D.MX + δ / 4 := by
+    intro i
+    have hzi' : z i ∈ Ico (-1 : ℝ) 0 ∪ Ioo 0 1 := by
+      rcases lt_or_gt_of_ne (hz0 i) with h | h
+      · exact Or.inl ⟨(hz i).1.le, h⟩
+      · exact Or.inr ⟨h, (hz i).2⟩
+    have := hrow (z i) hzi'
+    unfold freeRowX
+    linarith
+  have hM : ∀ i, groupedMarkedField P N (x i) - 2 * barrierTrialT D.p (x i) ≤ residual + δ / 4 :=
+    fun i => (D.marked hN ⟨(hx i).1.le, (hx i).2.le⟩ (hxG i)).trans (by linarith)
+  have hL : ∀ i, groupedNearField P N (y i) - D.p 1 * y i ≤ nearCap + δ / 4 :=
+    fun i => (D.near hN (hy i)).trans (by linarith)
+  have hC : ∀ i, populationPhysicalColumnField P N (a + b) (s i) + 2 * barrierTrialT D.v (s i) -
+      Real.log (1 - s i) / (P.n N : ℝ) ≤
+        D.MY + δ / 4 + (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * Real.log 2 := by
+    intro i
+    have h1 := hcol (s i) (hs i)
+    have hl : Real.log (1 + s i) ≤ Real.log 2 :=
+      Real.log_le_log (by linarith [(hs i).1]) (by linarith [(hs i).2])
+    have hα : 0 ≤ (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) := by positivity
+    have hm := mul_le_mul_of_nonneg_left hl hα
+    have e1 : populationPhysicalColumnField P N (a + b) (s i) =
+        populationEndpointColumnField P N 0 (s i) +
+          (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * Real.log (1 + s i) := by
+      unfold populationPhysicalColumnField populationEndpointColumnField
+      push_cast
+      ring
+    rw [e1]
+    linarith
+  have hb2 := bracketSlack_nonneg hν hM
+  have hb3 := bracketSlack_nonneg hν hL
+  have hb4 := bracketSlack_nonneg hν hC
+  have hsq := groupedSquares_nonneg hν he z s hzx hy' D.p D.p D.v D.p_summable
+  have hfree : bracketSlack (P.n N : ℝ) (D.MX + δ / 4)
+      (fun i => populationPhysicalFreeField P N (z i) - 2 * barrierTrialT D.p (z i) -
+        2 * barrierTrialT D.p (z i) - barrierTrialS D.v (z i) -
+        Real.log (1 - z i) / (2 * (P.n N : ℝ))) ≤
+      (-target + Real.log 2 / 2 + cost * (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) + δ) - V := by
+    unfold groupedSlack at hE1
+    linarith
+  have hcnt := card_mul_le_bracket hν
+    (fun i => populationPhysicalFreeField P N (z i) - 2 * barrierTrialT D.p (z i) -
+        2 * barrierTrialT D.p (z i) - barrierTrialS D.v (z i) -
+        Real.log (1 - z i) / (2 * (P.n N : ℝ)))
+    (Finset.univ.filter (fun i => 1 - θ < z i)) hXz
+    (fun i hi => hsupN (z i) ⟨(Finset.mem_filter.mp hi).2, (hz i).2⟩)
+  calc _ ≤ _ := hcnt
+    _ ≤ (P.n N : ℝ) * ((-target + Real.log 2 / 2 +
+          cost * (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) + δ) - V) :=
+        mul_le_mul_of_nonneg_left hfree hν.le
+    _ ≤ _ := mul_le_mul_of_nonneg_left (by linarith) hν.le
+
 end
 
 end CatalanMeasure.Signed
@@ -563,3 +694,4 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.groupedSlack_nonneg
 #print axioms CatalanMeasure.Signed.cosineSquares_nonneg
 #print axioms CatalanMeasure.Signed.grouped_field_caps_bound_sq
+#print axioms CatalanMeasure.Signed.free_spike_count
