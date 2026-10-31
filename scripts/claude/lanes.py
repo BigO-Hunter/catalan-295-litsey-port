@@ -276,6 +276,14 @@ def drive():
                 pick.unlink(missing_ok=True)
                 log(f"refuse-hold {spec['target']}")
                 pick = None
+        if pick and spec.get('cmd') and os.path.basename(str(spec['cmd'][0])).lower() in ('lake', 'lake.exe'):
+            # 31 Oct: a `run` job with a bare `lake.exe` killed the driver (not on PATH); direct lake
+            # builds bypass the guard anyway. Builds go through `submit`.
+            spec.update(rc=94, ended=time.time(), output='lanes: refused: direct lake command; use `submit <Module> <GB>`')
+            (DONE / f'{pick.stem}.json').write_text(json.dumps(spec), encoding='utf-8')
+            pick.unlink(missing_ok=True)
+            log(f"refuse-lake {spec['target']}")
+            pick = None
         if pick and not spec.get('cmd'):
             why = registry_refusal(spec['target'])
             if why:
@@ -314,9 +322,18 @@ def drive():
                 fh = open(spec['out'], 'w', encoding='utf-8')
                 argv = spec.get('cmd') or [str(PY), '-I', 'scripts/claude/run_guarded.py',
                                            spec['target'], 'build', str(int(b))]
-                proc = subprocess.Popen(argv, cwd=spec.get('cwd', str(WORK)),
-                                        stdout=fh, stderr=subprocess.STDOUT,
-                                        env={**os.environ, 'LEAN_NUM_THREADS': THREADS})
+                try:
+                    proc = subprocess.Popen(argv, cwd=spec.get('cwd', str(WORK)),
+                                            stdout=fh, stderr=subprocess.STDOUT,
+                                            env={**os.environ, 'LEAN_NUM_THREADS': THREADS})
+                except OSError as e:
+                    # A bad command must fail its own job, never the driver.
+                    fh.close()
+                    spec.update(rc=127, ended=time.time(), output=f'lanes: could not start: {e}')
+                    (DONE / f'{jid}.json').write_text(json.dumps(spec), encoding='utf-8')
+                    (RUN / pick.name).unlink(missing_ok=True)
+                    log(f"fail-start {spec['target']} {e}")
+                    continue
                 fh.close()
                 spec['started'] = time.time()
                 running[jid] = (proc, spec)
