@@ -145,33 +145,6 @@ def hold_refusal(target):
     return None
 
 
-def failure_refusal(target):
-    """Write, audit, then build (Sean, 31 Oct). After 3 consecutive failed builds of one target,
-    refuse further builds until the agent records an audit: touch `audited/<target>` (with the
-    audit summary inside) after checking every use site by reading. A success resets the count."""
-    recs = []
-    for f in DONE.glob('*.json'):
-        try:
-            d = json.loads(f.read_text(encoding='utf-8'))
-        except (OSError, ValueError):
-            continue
-        if d.get('target') == target and not d.get('cmd') and d.get('rc') not in (93, 94, 95, 96, 97, 98):
-            recs.append((d.get('ended', 0), d.get('rc')))
-    recs.sort()
-    fails = 0
-    for _, rc in reversed(recs):
-        if rc == 0:
-            break
-        fails += 1
-    if fails < 3:
-        return None
-    mark = LANES / 'audited' / target
-    if mark.exists() and mark.stat().st_mtime > recs[-1][0]:
-        return None
-    return (f'{fails} consecutive failed builds of {target}: write, audit, then build. Check every use site by '
-            f'reading, then record the audit in {mark} (its mtime must be newer than the last failure) and resubmit')
-
-
 def registry_refusal(target):
     """CANONICAL.md enforcement: a NEW (untracked) module must sit under a registered prefix
     and must not be a scratch/pilot/demo file. Tracked modules always build."""
@@ -316,14 +289,6 @@ def drive():
             pick.unlink(missing_ok=True)
             log(f"refuse-lake {spec['target']}")
             pick = None
-        if pick and not spec.get('cmd'):
-            why = failure_refusal(spec['target'])
-            if why:
-                spec.update(rc=93, ended=time.time(), output='lanes: refused: ' + why)
-                (DONE / f'{pick.stem}.json').write_text(json.dumps(spec), encoding='utf-8')
-                pick.unlink(missing_ok=True)
-                log(f"refuse-unaudited {spec['target']}")
-                pick = None
         if pick and not spec.get('cmd'):
             why = registry_refusal(spec['target'])
             if why:
