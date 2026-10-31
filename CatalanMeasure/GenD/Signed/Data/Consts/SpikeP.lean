@@ -10,7 +10,8 @@ numerators of the monomial form of `chebPs (bSeq bs)` (checked once by `chebMono
 and one `q`-piece with `rho = r / 2^11`, `kappa = K / 2^14`, `c1 = 2^-j`:
 
 * `floor_sound`: `1/4 <= chebPs (bSeq bs)` on `[-1, 1]` from a cell chain for `Pn - 2^58`;
-* `spikePoly_sound`: the hypothesis `hpoly` of `SpikeTrialCert` from a cell chain for `spikeQ`.
+* `SpikePolyOK`, `spikePolyOK_between`, `floor_between`: the hypotheses `hb`, `hpoly` of `SpikeTrialCert` at the count
+  parameter `l = s_r / x` are affine in `l` (`chebPs_withCount`), so the two endpoints of a block suffice.
 -/
 
 @[expose] public section
@@ -54,41 +55,38 @@ theorem floor_sound {Pn : List ℤ} {S : ℕ} {cs : List ℤ}
   rw [le_div_iff₀ (by positivity), e]
   nlinarith
 
-/-- Integer polynomial of (P') (all scaled by `2^(60+22)`), `rho = r/2^11`, `kappa = K/2^14`,
-`c1 = 2^-j`, `j <= 46`. -/
-def spikeQ (Pn : List ℤ) (r K j : ℕ) : List ℤ :=
-  zAdd (zMulAff (2 ^ 22 + (r : ℤ) ^ 2) (2 * r * 2 ^ 11)
-      (zAdd Pn [-(((2 : ℤ) ^ 14 - K) * 2 ^ (46 - j))]))
-    [-((K : ℤ) * (2 ^ 22 - (r : ℤ) ^ 2) * 2 ^ 46)]
+/-- **The (P') inequality of a spike class at the count parameter `l = s_r / x`**, for the
+denominator trial `chebPs (b_x) = 1 + l (F - 1)` (`F = chebPs b`, `chebPs_withCount`):
+`κ (1 - ρ²) ≤ (1 + l (F - 1) - (1 - κ) c1) (1 + 2 ρ u + ρ²)`. -/
+def SpikePolyOK (F κ ρ c1 l u : ℝ) : Prop :=
+  κ * (1 - ρ ^ 2) ≤ (1 + l * (F - 1) - (1 - κ) * c1) * (1 + 2 * ρ * u + ρ ^ 2)
 
-theorem spikeQ_eval (Pn : List ℤ) (r K j : ℕ) (hj : j ≤ 46) (u : ℝ) :
-    zv (spikeQ Pn r K j) u = 2 ^ 82 *
-      (((zv Pn u / 2 ^ 60) - (1 - (K : ℝ) / 2 ^ 14) * (1 / 2 ^ j)) *
-        (1 + 2 * ((r : ℝ) / 2 ^ 11) * u + ((r : ℝ) / 2 ^ 11) ^ 2) -
-        ((K : ℝ) / 2 ^ 14) * (1 - ((r : ℝ) / 2 ^ 11) ^ 2)) := by
-  have hpow : (2 : ℝ) ^ (46 - j) * 2 ^ j = 2 ^ 46 := by rw [← pow_add, Nat.sub_add_cancel hj]
-  have hj0 : (2 : ℝ) ^ j ≠ 0 := by positivity
-  have e46 : (2 : ℝ) ^ (46 - j) = 2 ^ 46 / 2 ^ j := by
-    rw [eq_div_iff hj0]; exact hpow
-  unfold spikeQ
-  rw [zv_add, zv_mulAff, zv_add, zv_cons, zv_nil, zv_cons, zv_nil]
-  push_cast
-  rw [e46]
-  field_simp
-  ring
+/-- **Interpolation in the count parameter.**  The (P') inequality is affine in `l`, so it holds on
+`[l1, l2]` as soon as it holds at the two endpoints (the generic step that lets the certificates
+cover every Heine count `x` of a block by its two ends). -/
+theorem spikePolyOK_between {F κ ρ c1 l1 l2 l u : ℝ} (h1 : SpikePolyOK F κ ρ c1 l1 u)
+    (h2 : SpikePolyOK F κ ρ c1 l2 u) (hl1 : l1 ≤ l) (hl2 : l ≤ l2) : SpikePolyOK F κ ρ c1 l u := by
+  unfold SpikePolyOK at *
+  set W : ℝ := 1 + 2 * ρ * u + ρ ^ 2 with hW
+  rcases eq_or_lt_of_le (hl1.trans hl2) with h | h
+  · have : l = l1 := by linarith
+    rw [this]; exact h1
+  · have e : ((1 + l * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) * (l2 - l1) =
+        (l2 - l) * ((1 + l1 * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) +
+          (l - l1) * ((1 + l2 * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) := by ring
+    have a1 : 0 ≤ (l2 - l) * ((1 + l1 * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) :=
+      mul_nonneg (by linarith) (by linarith)
+    have a2 : 0 ≤ (l - l1) * ((1 + l2 * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) :=
+      mul_nonneg (by linarith) (by linarith)
+    have h3 : 0 ≤ ((1 + l * (F - 1) - (1 - κ) * c1) * W - κ * (1 - ρ ^ 2)) * (l2 - l1) := by
+      rw [e]; linarith
+    have := nonneg_of_mul_nonneg_left h3 (by linarith : (0 : ℝ) < l2 - l1)
+    linarith
 
-theorem spikePoly_sound {Pn : List ℤ} {S r K j : ℕ} (hj : j ≤ 46) {cs : List ℤ}
-    (h : covM1P1 (spikeQ Pn r K j) S cs = true) :
-    ∀ u ∈ Icc (-1 : ℝ) 1,
-      ((K : ℝ) / 2 ^ 14) * (1 - ((r : ℝ) / 2 ^ 11) ^ 2) ≤
-        ((zv Pn u / 2 ^ 60) - (1 - (K : ℝ) / 2 ^ 14) * (1 / 2 ^ j)) *
-          (1 + 2 * ((r : ℝ) / 2 ^ 11) * u + ((r : ℝ) / 2 ^ 11) ^ 2) := by
-  intro u hu
-  have h1 := covM1P1_sound h u hu
-  rw [spikeQ_eval Pn r K j hj] at h1
-  have : (0 : ℝ) < 2 ^ 82 := by positivity
-  have h2 := (mul_nonneg_iff_of_pos_left this).mp h1
-  linarith
+/-- The floor `F ≥ 1/4` gives `chebPs b_x ≥ 1/4` for every count parameter `0 ≤ l ≤ 1`
+(`chebPs b_x = 1 + l (F - 1)`); so `hb` needs the floor at the reference count only. -/
+theorem floor_between {F l : ℝ} (hF : 1 / 4 ≤ F) (hl0 : 0 ≤ l) (hl1 : l ≤ 1) :
+    1 / 4 ≤ 1 + l * (F - 1) := by nlinarith
 
 theorem floor_chebPs {bs : List ℚ} {Pn : List ℤ} {S : ℕ} {cs : List ℤ}
     (hc : chebMono bs = Pn.map (fun n : ℤ => (n : ℚ) / 2 ^ 60))
@@ -97,16 +95,5 @@ theorem floor_chebPs {bs : List ℚ} {Pn : List ℤ} {S : ℕ} {cs : List ℤ}
   intro u hu
   rw [chebPs_of_int bs Pn 60 hc]
   exact floor_sound h u hu
-
-theorem spikePoly_chebPs {bs : List ℚ} {Pn : List ℤ} {S r K j : ℕ} {cs : List ℤ} (hj : j ≤ 46)
-    (hc : chebMono bs = Pn.map (fun n : ℤ => (n : ℚ) / 2 ^ 60))
-    (h : covM1P1 (spikeQ Pn r K j) S cs = true) :
-    ∀ u ∈ Icc (-1 : ℝ) 1,
-      ((K : ℝ) / 2 ^ 14) * (1 - ((r : ℝ) / 2 ^ 11) ^ 2) ≤
-        (chebPs (bSeq bs) u - (1 - (K : ℝ) / 2 ^ 14) * (1 / 2 ^ j)) *
-          (1 + 2 * ((r : ℝ) / 2 ^ 11) * u + ((r : ℝ) / 2 ^ 11) ^ 2) := by
-  intro u hu
-  rw [chebPs_of_int bs Pn 60 hc]
-  exact spikePoly_sound hj h u hu
 
 end CatalanMeasure.Signed.Consts
