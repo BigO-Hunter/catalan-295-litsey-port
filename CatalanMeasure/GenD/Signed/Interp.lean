@@ -1614,7 +1614,7 @@ def interpCInf (αA αB cP rA rB κ α : ℝ) : ℝ :=
   cP + chord αA αB rA rB α - interpL αA αB α * (1 - interpL αA αB α) * κ
 
 def SignedNearBounds.ofEnds {I : ℕ}
-    (ncount : ℕ → ℕ) (ncount_pos : ∀ N, 0 < ncount N) (B cost α1 : ℝ) (α1_nonneg : 0 ≤ α1)
+    (ncount : ℕ → ℕ) (ncount_pos : ∀ N, 0 < N → 0 < ncount N) (B cost α1 : ℝ) (α1_nonneg : 0 ≤ α1)
     (lo hi : Fin I → ℝ)
     (cover : ∀ α : ℝ, 0 ≤ α → α ≤ α1 → ∃ i, lo i ≤ α ∧ α ≤ hi i)
     (Rf Cf Rm Rn : ℕ → ℝ → ℝ) (constant : ℕ → ℝ → ℝ)
@@ -1660,7 +1660,7 @@ def SignedNearBounds.ofEnds {I : ℕ}
     (cp : Fin I → ℕ → ℝ → ℝ) (cp_pos : ∀ i N α, 0 < cp i N α) (cp_le : ∀ i N α, cp i N α ≤ 1)
     (err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
       ((DA i N).withCount (ncount N)).errJ3 (cp i N α) (ncount N) ≤ ε)
-    (spikeFix : ∀ i N α k q m1 m2,
+    (spikeFix : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α k q m1 m2,
       SpikeCompareFixedCount (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
         (Clsf N k q m1 m2) (LRf N k q m1 m2))
     (fixedSum : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),

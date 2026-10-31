@@ -562,7 +562,7 @@ theorem interp_withCount {DA DB : SignedData} (hsp : DB.sp = DA.sp) (l c : ℝ) 
   simp only [linSeq, hsp]
   ring
 
-/-- **`spikeFix` of `SignedNearBounds.ofEnds`.**  For every interval `i`, every `N` and every `α`,
+/-- **`spikeFix` of `SignedNearBounds.ofEnds`.**  For every interval `i`, all large `N` and every `α`,
 the interpolated trial `interpFamily (αA i) (αB i) (DA i) (DB i) constant N α` satisfies
 `SpikeCompareFixedCount` with the margin `cp i N α` and the class `Clsf`, provided the class gives
 the count condition `0 < sp`, `sp + g ≤ q + m₂` and a witness pair at the endpoint trials at the
@@ -576,15 +576,18 @@ theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → 
     (LRf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ)
     (hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
       logRatioZ (q + m2 - (DA i N).g) (Fin.append xn yn) (Fin.append gp yp))
-    (hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
+    (hCls : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α k q m1 m2 xn gp yn yp,
+      Clsf N k q m1 m2 xn gp yn yp →
       (0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2) ∧
       Nonempty (PairCls ((DA i N).withCount (q + m2 - (DA i N).g))
         ((DB i N).withCount (q + m2 - (DA i N).g)) (cp i N α) xn gp yn yp)) :
-    ∀ i N α k q m1 m2,
+    ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α k q m1 m2,
       SpikeCompareFixedCount (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
         (Clsf N k q m1 m2) (LRf N k q m1 m2) := by
-  intro i N α k q m1 m2
-  refine ⟨fun xn gp yn yp h => (hCls i N α k q m1 m2 xn gp yn yp h).1, ?_⟩
+  intro i
+  filter_upwards [hCls i] with N hN
+  intro α k q m1 m2
+  refine ⟨fun xn gp yn yp h => (hN α k q m1 m2 xn gp yn yp h).1, ?_⟩
   have e : (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α).withCount
       (q + m2 - (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α).g) =
       SignedData.interp ((DA i N).withCount (q + m2 - (DA i N).g))
@@ -599,7 +602,7 @@ theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → 
     ((DB i N).withCount (q + m2 - (DA i N).g)) (l := interpL (αA i) (αB i) α)
     (c := constant N α) (interpL_nonneg (αA i) (αB i) α)
     (interpL_le_one (αA i) (αB i) α) ⟨cp_pos i N α, cp_le i N α⟩ hθ hLR'
-    (fun xn gp yn yp h => (hCls i N α k q m1 m2 xn gp yn yp h).2)
+    (fun xn gp yn yp h => (hN α k q m1 m2 xn gp yn yp h).2)
 
 
 /-! ### 6. Building the pair from ONE single-trial witness -/

@@ -621,7 +621,7 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
     {FixAdm : ∀ (N m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop}
     (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hrc : 0 ≤ rc) (hlo : 0 ≤ lo)
     (hhi : hi ≤ 1)
-    (hn : ∀ N, 0 < ncount N) (hν : ∀ N α, (D N α).ν = (ncount N : ℝ))
+    (hn : ∀ N, 0 < N → 0 < ncount N) (hν : ∀ N α, (D N α).ν = (ncount N : ℝ))
     (hrP : ∀ α ∈ Icc lo hi, rc * α ≤ S.rP α)
     (hrS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, 0 ≤ S.rS α β)
     (umin : ℕ → ℝ) (hum0 : ∀ N, 0 < umin N) (hum1 : ∀ N, umin N ≤ 1) (Bd Rbd : ℝ)
@@ -662,10 +662,10 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
       ((tendsto_const_nhds (x := 2 * Rbd)).mul hlogu)
     simpa using this
   filter_upwards [hneg (ε / 2) hε', hpos (ε / 2) hε', hposTop (ε / 2) hε', hnear (ε / 2) hε',
-    hnearTop (ε / 2) hε', hT.eventually (gt_mem_nhds hε')]
-    with N h1 h2 h3 h4 h5 hfN
+    hnearTop (ε / 2) hε', hT.eventually (gt_mem_nhds hε'), Filter.eventually_gt_atTop 0]
+    with N h1 h2 h3 h4 h5 hfN hN0
   intro α hα m1 m2 s yn yp zp hyn hyp hzp hadm heq
-  have hnN : (0 : ℝ) < (ncount N : ℝ) := by exact_mod_cast hn N
+  have hnN : (0 : ℝ) < (ncount N : ℝ) := by exact_mod_cast hn N hN0
   have hνN : (D N α).ν = (ncount N : ℝ) := hν N α
   have hα0 : 0 ≤ α := hlo.trans hα.1
   have hα1 : α ≤ 1 := hα.2.trans hhi

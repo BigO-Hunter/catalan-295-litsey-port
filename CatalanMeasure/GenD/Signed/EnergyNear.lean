@@ -1190,7 +1190,7 @@ The per-fixed-row cost of the second sheet is the field `cost` of the budget: `b
 right side `B + cost · α`; its `log 2` count of the fixed rows is `fixLog2 ε_i α`. -/
 structure SignedNearBounds (I : ℕ) where
   ncount : ℕ → ℕ
-  ncount_pos : ∀ N, 0 < ncount N
+  ncount_pos : ∀ N, 0 < N → 0 < ncount N
   B : ℝ
   cost : ℝ
   α1 : ℝ
@@ -1238,7 +1238,7 @@ structure SignedNearBounds (I : ℕ) where
   cp_le : ∀ i N α, cp i N α ≤ 1
   err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
     ((D i N α).withCount (ncount N)).errJ3 (cp i N α) (ncount N) ≤ ε
-  spikeFix : ∀ i N α k q m1 m2,
+  spikeFix : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α k q m1 m2,
     SpikeCompareFixedCount (D i N α) (cp i N α) (Clsf N k q m1 m2) (LRf N k q m1 m2)
   rowNeg : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D i N α).fNeg x ≤ MXn i α + ε
@@ -1331,17 +1331,19 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
               ((s : ℝ) / (T.ncount N : ℝ)) + δ / 8) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i), (T.D i N α).constTotal (T.ncount N) ≤ T.cInf i α + δ / 8) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i),
-        ((T.D i N α).withCount (T.ncount N)).errJ3 (T.cp i N α) (T.ncount N) ≤ δ / 8) := by
+        ((T.D i N α).withCount (T.ncount N)).errJ3 (T.cp i N α) (T.ncount N) ≤ δ / 8) ∧
+      (∀ α k q m1 m2, SpikeCompareFixedCount (T.D i N α) (T.cp i N α) (T.Clsf N k q m1 m2)
+        (T.LRf N k q m1 m2)) := by
     rw [Filter.eventually_all]
     intro i
     filter_upwards [T.e_mem i, T.v_summable i, T.p_summable i, T.R_geom i, T.t_geom i,
       T.reference i, T.rowNeg i hε, T.rowPos i hε, T.column i hε, T.fixedSum i hε,
-      T.const_le i hε, T.err_small i hε]
-      with N h1 h2 h2p h3 h4 h5 h6 h7 h8 h9 h10 h11
-    exact ⟨h1, h2, h2p, h3, h4, h5, h6, h7, h8, h9, h10, h11⟩
-  filter_upwards [hall] with N hN k q m1 m2 s hkq hα hκ xn gp yn yp zp sc hxn hgp hyn hyp hzp
-    hinjF hinj hzinj hs hsi hcls hadm
-  have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N
+      T.const_le i hε, T.err_small i hε, T.spikeFix i]
+      with N h1 h2 h2p h3 h4 h5 h6 h7 h8 h9 h10 h11 h12
+    exact ⟨h1, h2, h2p, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12⟩
+  filter_upwards [hall, Filter.eventually_gt_atTop 0] with N hN hN0 k q m1 m2 s hkq hα hκ xn gp
+    yn yp zp sc hxn hgp hyn hyp hzp hinjF hinj hzinj hs hsi hcls hadm
+  have hνp : (0 : ℝ) < (T.ncount N : ℝ) := by exact_mod_cast T.ncount_pos N hN0
   have hkqR : (((k + m1) + (q + (m2 + s)) : ℕ) : ℝ) = (T.ncount N : ℝ) := by exact_mod_cast hkq
   set n : ℝ := (T.ncount N : ℝ) with hn
   set α : ℝ := ((m1 + m2 + s : ℕ) : ℝ) / n with hαdef
@@ -1353,7 +1355,7 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
   have hα1 : α ≤ T.α1 := by rw [hαdef, div_le_iff₀ hνp]; exact hα
   have hβ0 : 0 ≤ β := by rw [hβdef]; positivity
   obtain ⟨i, hlo, hhi⟩ := T.cover α hα0 hα1
-  obtain ⟨h1, h2, h2p, h3, h4, h5, h6, h7, h8, h9, h10, h11⟩ := hN i
+  obtain ⟨h1, h2, h2p, h3, h4, h5, h6, h7, h8, h9, h10, h11, h12⟩ := hN i
   have hαI : α ∈ Icc (T.lo i) (T.hi i) := ⟨hlo, hhi⟩
   obtain ⟨hνD, hRfD, hCfD, hcD⟩ := T.same i N α
   rw [← hn] at hνD
@@ -1384,7 +1386,7 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
   have hε : 0 < 1 - 2 * (T.D i N α).η := by rw [hηD]; linarith
   have hrcD : remC (1 - 2 * (T.D i N α).η) = remC (T.epsSplit i) := by rw [hηD]; ring_nf
   have h := signed_second_energy_near_det (T.D i N α) hν he hallN hv hR ht hμ hC hmass'
-    hη0 hε hpS (T.Rm N) (T.Rn N) α hαD (T.spikeFix i N α k q m1 (m2 + s)) xn gp yn yp zp sc
+    hη0 hε hpS (T.Rm N) (T.Rn N) α hαD (h12 α k q m1 (m2 + s)) xn gp yn yp zp sc
     hxn hgp hyn hyp hzp hinjF hinj hzinj hs hsi hcls
   rw [hrcD] at h
   set κ : ℝ := (k : ℝ) / n with hκdef

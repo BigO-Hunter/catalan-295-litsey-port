@@ -1912,6 +1912,67 @@ structure Family (D : ℕ → SignedData) (F : TrialForm) : Prop where
   hℓ : Tendsto (fun N => Real.log (1 / (1 - (D N).τ ^ 2)) / (D N).ν) atTop (𝓝 0)
   hasum : Summable fun k => |tseq F.a.f F.a.tail k|
 
+/-- **The damping of the trial family**: `e_N = 2^-30/(N+1)`, common to the two endpoint trials of every
+interval.  `e_N ≤ 2^-30` for every `N` (the spike certificates' `emax`, `LinkCert` at `2^-30` via
+`Consts.certH_mul_le_mono`), `e_N → 0` (`err_small`), `τ_N = 1 - e_N → 1` (`Family.hτ`) and
+`log(1/(1-τ_N²))/(c N) → 0` (`Family.hℓ` with `ν = c N`). -/
+def dampE (N : ℕ) : ℝ := 1 / 2 ^ 30 / ((N : ℝ) + 1)
+
+theorem dampE_pos (N : ℕ) : 0 < dampE N := by unfold dampE; positivity
+
+theorem dampE_le (N : ℕ) : dampE N ≤ 1 / 2 ^ 30 := by
+  unfold dampE
+  exact div_le_self (by positivity) (by have : (0 : ℝ) ≤ N := Nat.cast_nonneg N; linarith)
+
+theorem dampE_mem (N : ℕ) : dampE N ∈ Ioo (0 : ℝ) (1 / 8) :=
+  ⟨dampE_pos N, (dampE_le N).trans_lt (by norm_num)⟩
+
+theorem natCast_add_one_tendsto : Tendsto (fun N : ℕ => (N : ℝ) + 1) atTop atTop :=
+  tendsto_natCast_atTop_atTop.atTop_add tendsto_const_nhds
+
+theorem dampE_tendsto : Tendsto dampE atTop (𝓝 0) :=
+  tendsto_const_nhds.div_atTop natCast_add_one_tendsto
+
+theorem dampE_tau_tendsto : Tendsto (fun N => 1 - dampE N) atTop (𝓝 1) := by
+  simpa using (tendsto_const_nhds (x := (1 : ℝ))).sub dampE_tendsto
+
+theorem log_div_natCast_tendsto {c : ℝ} (hc : 0 < c) :
+    Tendsto (fun N : ℕ => Real.log ((N : ℝ) + 1) / (c * N)) atTop (𝓝 0) := by
+  have h := (Real.tendsto_pow_log_div_mul_add_atTop c (-c) 1 hc.ne').comp natCast_add_one_tendsto
+  refine h.congr fun N => ?_
+  simp only [Function.comp, pow_one]
+  congr 1
+  ring
+
+theorem dampE_hℓ {c : ℝ} (hc : 0 < c) :
+    Tendsto (fun N : ℕ => Real.log (1 / (1 - (1 - dampE N) ^ 2)) / (c * N)) atTop (𝓝 0) := by
+  have hup : Tendsto (fun N : ℕ => (30 * Real.log 2) / (c * N) + Real.log ((N : ℝ) + 1) / (c * N))
+      atTop (𝓝 0) := by
+    have h1 : Tendsto (fun N : ℕ => (30 * Real.log 2) / (c * N)) atTop (𝓝 0) :=
+      tendsto_const_nhds.div_atTop (tendsto_natCast_atTop_atTop.const_mul_atTop hc)
+    simpa using h1.add (log_div_natCast_tendsto hc)
+  refine tendsto_of_tendsto_of_tendsto_of_le_of_le tendsto_const_nhds hup (fun N => ?_) (fun N => ?_)
+  · have he := dampE_pos N
+    have he1 : dampE N ≤ 1 := (dampE_le N).trans (by norm_num)
+    have hq : 0 < 1 - (1 - dampE N) ^ 2 := by nlinarith
+    have hq1 : 1 - (1 - dampE N) ^ 2 ≤ 1 := by nlinarith
+    exact div_nonneg (Real.log_nonneg (by rw [le_div_iff₀ hq]; linarith))
+      (mul_nonneg hc.le (Nat.cast_nonneg N))
+  · have he := dampE_pos N
+    have he1 : dampE N ≤ 1 := (dampE_le N).trans (by norm_num)
+    have hq : 0 < 1 - (1 - dampE N) ^ 2 := by nlinarith
+    have hqe : dampE N ≤ 1 - (1 - dampE N) ^ 2 := by nlinarith
+    have hlog : Real.log (1 / (1 - (1 - dampE N) ^ 2)) ≤
+        30 * Real.log 2 + Real.log ((N : ℝ) + 1) := by
+      have e1 : 1 / dampE N = 2 ^ 30 * ((N : ℝ) + 1) := by
+        unfold dampE; field_simp
+      calc Real.log (1 / (1 - (1 - dampE N) ^ 2)) ≤ Real.log (1 / dampE N) :=
+            Real.log_le_log (by positivity) (one_div_le_one_div_of_le he hqe)
+        _ = 30 * Real.log 2 + Real.log ((N : ℝ) + 1) := by
+            rw [e1, Real.log_mul (by positivity) (by positivity), Real.log_pow]; push_cast; ring
+    rw [← add_div]
+    exact div_le_div_of_nonneg_right hlog (mul_nonneg hc.le (Nat.cast_nonneg N))
+
 theorem polyMass_nonneg {qs : List Piece} (hqs : ∀ q ∈ qs, PieceOK q) : 0 ≤ polyMass qs := by
   rw [← integral_const_polyMeas hqs]
   exact integral_nonneg fun _ => zero_le_one
@@ -3853,3 +3914,7 @@ end CatalanMeasure.Signed.FieldForm
 #print axioms CatalanMeasure.Signed.FieldForm.posBlock_eq
 #print axioms CatalanMeasure.Signed.FieldForm.nearBlock_eq
 #print axioms CatalanMeasure.Signed.FieldForm.PieceQ.pot_dil
+#print axioms CatalanMeasure.Signed.FieldForm.dampE_mem
+#print axioms CatalanMeasure.Signed.FieldForm.dampE_tendsto
+#print axioms CatalanMeasure.Signed.FieldForm.dampE_tau_tendsto
+#print axioms CatalanMeasure.Signed.FieldForm.dampE_hℓ

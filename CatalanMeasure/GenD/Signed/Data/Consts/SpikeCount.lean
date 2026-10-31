@@ -31,7 +31,7 @@ interval (`DA`, `DB`) get the same `ρ`.
 
 namespace CatalanMeasure.Signed.Consts
 
-open Set CatalanMeasure.Cert OAI.InternalCatalan
+open Set CatalanMeasure.Cert OAI.InternalCatalan CatalanMeasure.Signed.FieldForm
 
 theorem barrierTrialS_smul (g : ℕ → ℝ) (l z : ℝ) :
     barrierTrialS (fun k => l * g k) z = l * barrierTrialS g z := by
@@ -40,18 +40,19 @@ theorem barrierTrialS_smul (g : ℕ → ℝ) (l z : ℝ) :
   exact tsum_congr fun i => by ring
 
 /-- **The reference trial of one data lane**: `D` is the trial family member at `N` with the reference count
-`s_r = 20 N`, `ν = 58 N`, `θ = 1/1024`, damping `e ≤ 2^-20`, the explicit coefficient lists `bs`, `as` of
-`TrialB/TrialA`, and the phantom-charge inequality `hph` at the reference count (it carries `BR`, `kph`, `cs`,
+`s_r = 20 N`, `ν = 58 N`, `θ = 1/1024`, damping `e ≤ 2^-30`, the explicit coefficient list `bs` of `TrialB` and the trial's actual
+`D.a = tseq (bSeq fa) (ta.map TailQ.toC)` (finite part `fa` and the geometric tail `ta` of `Data/Trial/T{t}Data`; `fQ f = bSeq f`), and the phantom-charge inequality `hph` at the reference count (it carries `BR`, `kph`, `cs`,
 which depend on the trial's `R`).  `CSP` is the per-spike charge (`D.cs ≥ CSP/58`). -/
-structure RefTrial (D : SignedData) (N : ℕ) (bs as : List ℚ) (CSP A1q B1q : ℚ) (BR Kn Tn : ℝ) : Prop where
+structure RefTrial (D : SignedData) (N : ℕ) (bs fa : List ℚ) (ta : List CatalanMeasure.Cert.TailQ) (CSP A1q B1q : ℚ) (BR Kn Tn : ℝ) : Prop where
   hb : D.b = bSeq bs
-  ha : D.a = bSeq as
+  ha : D.a = tseq (bSeq fa) (ta.map CatalanMeasure.Cert.TailQ.toC)
+  hta : tailZB ta = true
   hN : 0 < N
   hsp : D.sp = 20 * N
   hν : D.ν = 58 * (N : ℝ)
   hθ : D.θ = 1 / 1024
   he0 : 0 ≤ D.e
-  he : D.e ≤ 1 / 2 ^ 20
+  he : D.e ≤ 1 / 2 ^ 30
   hcs : ((CSP : ℚ) : ℝ) / 58 ≤ D.cs
   hkph : 0 ≤ D.kph
   hBR : |∑' n : ℕ, D.R n * (D.τ * (1 - D.θ)) ^ (n + 1) / ((n : ℝ) + 1)| ≤ BR
@@ -61,9 +62,9 @@ structure RefTrial (D : SignedData) (N : ℕ) (bs as : List ℚ) (CSP A1q B1q : 
 
 set_option maxHeartbeats 1600000 in
 /-- **The certificate of one (block, piece)** at every count `x ∈ [xa N, xb N]` and `m ∈ [mlo N, mhi N]`,
-from the reference data of `D` (`D.b = bSeq bs`, `D.a = bSeq as`, `s_r = 20 N`, `ν = 58 N`). -/
-theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : ℚ} {BR Kn Tn : ℝ}
-    (T : RefTrial D N bs as CSP A1q B1q BR Kn Tn)
+from the reference data of `D` (`D.b = bSeq bs`, `D.a = tseq (bSeq fa) (ta ..)`, `s_r = 20 N`, `ν = 58 N`). -/
+theorem cert_piece {D : SignedData} {N : ℕ} {bs fa : List ℚ} {ta : List CatalanMeasure.Cert.TailQ} {CSP A1q B1q : ℚ} {BR Kn Tn : ℝ}
+    (T : RefTrial D N bs fa ta CSP A1q B1q BR Kn Tn)
     -- the piece
     {xa xb mlo mhi l1 l2 ρ κ K0 De2 Sg Lq Aq : ℚ}
     (hxa : 0 < xa) (hxa20 : 20 ≤ xa) (hxab : xa ≤ xb) (hl1 : l1 * xb = 20) (hl2 : l2 * xa = 20)
@@ -77,17 +78,17 @@ theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : 
     (hK0 : K0check bs ρ κ l1 l2 K0 = true)
     (hDe : ∀ y : ℝ, 1023 / 1024 ≤ y → y ≤ 1 →
       barrierTrialS (bSeq bs) (-y) - barrierTrialS (bSeq bs) (-(ρ : ℝ)) ≤ (De2 : ℝ))
-    (hA : absq as ≤ Aq) (hA1 : absSq as ≤ A1q) (hB1 : absSq bs ≤ B1q)
-    (hLq : (2 / (1 + (1 - 1 / 2 ^ 20) ^ 2 * (1 - 1 / 1024)) - 1 : ℚ) ≤ Lq) (hLq0 : 0 ≤ Lq)
-    (hY1 : (1 - (1 - 1 / 2 ^ 20) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) ≤ (1 : ℚ))
-    (hY0 : 0 < (1 - (1 - 1 / 2 ^ 20) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2))
-    (hSg : 2 * ((1 - (1 - 1 / 2 ^ 20) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) - 1) /
-      ((1 - (1 - 1 / 2 ^ 20) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) + 1) ≤ Sg) (hSg0 : Sg ≤ 0)
+    (hA : absq fa + tailMaj ta ≤ Aq) (hA1 : absSq fa + 7 * tailW ta ≤ A1q) (hB1 : absSq bs ≤ B1q)
+    (hLq : (2 / (1 + (1 - 1 / 2 ^ 30) ^ 2 * (1 - 1 / 1024)) - 1 : ℚ) ≤ Lq) (hLq0 : 0 ≤ Lq)
+    (hY1 : (1 - (1 - 1 / 2 ^ 30) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) ≤ (1 : ℚ))
+    (hY0 : 0 < (1 - (1 - 1 / 2 ^ 30) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2))
+    (hSg : 2 * ((1 - (1 - 1 / 2 ^ 30) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) - 1) /
+      ((1 - (1 - 1 / 2 ^ 30) ^ 2 * (1 - 1 / 1024) ^ 2) / (1 - ρ ^ 2) + 1) ≤ Sg) (hSg0 : Sg ≤ 0)
     (hK00 : K0 ≤ 0) (hDe0 : 0 ≤ De2) (hAq0 : 0 ≤ Aq)
-    (hratio : 58 * Lq + 40 * De2 + mlo * Sg + 116 * (1 / 2 ^ 20) * Aq ≤ CSP)
+    (hratio : 58 * Lq + 40 * De2 + mlo * Sg + 116 * (1 / 2 ^ 30) * Aq ≤ CSP)
     {x m : ℕ} (hx1 : xa * N ≤ x) (hx2 : (x : ℚ) ≤ xb * N) (hm1 : mlo * N ≤ m) (hm2 : (m : ℚ) ≤ mhi * N) :
     Nonempty (SpikeTrialCert (D.withCount x) m (ρ : ℝ) Kn Tn) := by
-  obtain ⟨hb, ha, hN, hsp, hν, hθ, he0, he, hcs, hkph, hBR, hKn, hph⟩ := T
+  obtain ⟨hb, ha, hta, hN, hsp, hν, hθ, he0, he, hcs, hkph, hBR, hKn, hph⟩ := T
   have hNq : (0 : ℚ) < N := by exact_mod_cast hN
   have hNr : (0 : ℝ) < N := by exact_mod_cast hN
   have hxb : 0 < xb := lt_of_lt_of_le hxa hxab
@@ -156,7 +157,7 @@ theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : 
     rw [chebPs_withCount, ← hl, hb]
     exact h
   · exact_mod_cast hLq0
-  · have h := L_bound (e := D.e) (emax := 1 / 2 ^ 20) (θ := D.θ) he0 he (by norm_num) hθpos hθle
+  · have h := L_bound (e := D.e) (emax := 1 / 2 ^ 30) (θ := D.θ) he0 he (by norm_num) hθpos hθle
     have h2 := (Rat.cast_le (K := ℝ)).mpr hLq
     push_cast at h2
     show Real.log (2 / (1 + (1 - D.e) ^ 2 * (1 - D.θ))) ≤ Lq
@@ -174,19 +175,20 @@ theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : 
     have hY0' := (Rat.cast_lt (K := ℝ)).mpr hY0
     have hSg' := (Rat.cast_le (K := ℝ)).mpr hSg
     push_cast at hY1' hY0' hSg'
-    have h := Sg_bound (e := D.e) (emax := 1 / 2 ^ 20) (θ := D.θ) (ρ := (ρ : ℝ)) he0 he
+    have h := Sg_bound (e := D.e) (emax := 1 / 2 ^ 30) (θ := D.θ) (ρ := (ρ : ℝ)) he0 he
       (by norm_num) hθpos hθle hρabs (by rw [hθ]; exact hY1') (by rw [hθ]; exact hY0')
     show Real.log (1 - (1 - D.e) ^ 2 * (1 - D.θ) ^ 2) - Real.log (1 - (ρ : ℝ) ^ 2) ≤ Sg
     rw [hθ] at h ⊢
     linarith
   · show ∑' j : ℕ, |D.a j| ≤ Aq
-    rw [ha, tsum_abs_bSeq]
+    rw [ha]
+    refine (tsum_abs_tseq_le fa ta hta).trans ?_
     exact_mod_cast hA
   · show costRem (D.withCount x).b (x - m) m (ρ : ℝ) ≤ K0
     rw [hbx]
     refine costRem_le hK0 hκ0 hκ1 hρ2 hl1x hl2x (by omega) ?_
     rw [hmxc]; exact hmκ
-  · have hr : (58 : ℝ) * Lq + 40 * De2 + mlo * Sg + 116 * (1 / 2 ^ 20) * Aq ≤ CSP := by
+  · have hr : (58 : ℝ) * Lq + 40 * De2 + mlo * Sg + 116 * (1 / 2 ^ 30) * Aq ≤ CSP := by
       have := (Rat.cast_le (K := ℝ)).mpr hratio
       push_cast at this
       linarith
@@ -200,7 +202,7 @@ theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : 
     have e1 : 2 * ((x : ℝ) / D.ν) * (l * De2) = 40 / 58 * De2 := by
       rw [hl, hspr, hν]; field_simp; ring
     have key := hfin_of_ratio (ν := D.ν) (Kn := Kn) (sp := (x : ℝ)) (m := (m : ℝ)) (e := D.e)
-      (emax := 1 / 2 ^ 20) (A := (Aq : ℝ)) (L := (Lq : ℝ)) (De2 := l * De2) (Sg := (Sg : ℝ))
+      (emax := 1 / 2 ^ 30) (A := (Aq : ℝ)) (L := (Lq : ℝ)) (De2 := l * De2) (Sg := (Sg : ℝ))
       (K0 := (K0 : ℝ)) (cs := D.cs) (σ := (x : ℝ) / D.ν) (μ := (mlo : ℝ) / 58) hνpos
       (Nat.cast_nonneg m) hKn hLq0' (by rw [div_mul_cancel₀ _ hνpos.ne']) (by positivity)
       (by positivity)
@@ -212,12 +214,15 @@ theorem cert_piece {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : 
     exact key
   · exact hkph
   · show |barrierTrialS D.a (-D.τ * (1 - D.θ))| ≤ A1q
-    have hτ0 : 0 ≤ D.τ := by rw [hτ]; have : D.e ≤ 1 / 2 ^ 20 := he; linarith [(by norm_num : (1 : ℝ) / 2 ^ 20 ≤ 1)]
+    have hτ0 : 0 ≤ D.τ := by rw [hτ]; have : D.e ≤ 1 / 2 ^ 30 := he; linarith [(by norm_num : (1 : ℝ) / 2 ^ 30 ≤ 1)]
     have hτ1 : D.τ ≤ 1 := by rw [hτ]; linarith
-    have hb1 : |(-D.τ * (1 - D.θ))| ≤ 1 := by
-      rw [abs_le]; constructor <;> nlinarith
+    have hb1 : |(-D.τ * (1 - D.θ))| ≤ 1023 / 1024 := by
+      rw [hθ, abs_le]; constructor <;> nlinarith
     rw [ha]
-    exact (abs_barrierTrialS_le as hb1).trans (by exact_mod_cast hA1)
+    refine (abs_barrierTrialS_tseq_le fa ta hta hb1).trans ?_
+    have h := (Rat.cast_le (K := ℝ)).mpr hA1
+    push_cast at h
+    exact h
   · show |barrierTrialS (D.withCount x).b (-(1 - D.θ))| ≤ l * B1q
     rw [hbx, barrierTrialS_smul, abs_mul, abs_of_pos hl0]
     have hb1 : |(-(1 - D.θ))| ≤ 1 := by
@@ -280,14 +285,14 @@ theorem rhoSel_abs_lt (N x m : ℕ) : |rhoSel N x m| < 1 := by
   rw [abs_of_pos h.1]; linarith [h.2]
 
 /-- `ρ ≤ τ² (1 - θ)` (the contract's pole condition) for `e ≤ 2^-20`, `θ = 1/1024`. -/
-theorem rhoSel_le {D : SignedData} (hθ : D.θ = 1 / 1024) (he0 : 0 ≤ D.e) (he : D.e ≤ 1 / 2 ^ 20)
+theorem rhoSel_le {D : SignedData} (hθ : D.θ = 1 / 1024) (he0 : 0 ≤ D.e) (he : D.e ≤ 1 / 2 ^ 30)
     (N x m : ℕ) : rhoSel N x m ≤ D.τ ^ 2 * (1 - D.θ) := by
   have h : rhoSel N x m ≤ 2042 / 2048 := by
     unfold rhoSel rhoB1 rhoB2
     split_ifs <;> norm_num
   have hτ : D.τ = 1 - D.e := rfl
-  have h1 : 1 - 1 / 2 ^ 20 ≤ D.τ := by rw [hτ]; linarith
-  have h2 : (1 - 1 / 2 ^ 20 : ℝ) ^ 2 ≤ D.τ ^ 2 := by
+  have h1 : 1 - 1 / 2 ^ 30 ≤ D.τ := by rw [hτ]; linarith
+  have h2 : (1 - 1 / 2 ^ 30 : ℝ) ^ 2 ≤ D.τ ^ 2 := by
     apply pow_le_pow_left₀ (by norm_num) h1
   rw [hθ]
   nlinarith
@@ -307,8 +312,8 @@ theorem nat_gt_q {m N a b : ℕ} (c : ℚ) (hc : c * a = b) (ha : 0 < a) (h : b 
   nlinarith
 
 /-- The ranges of `x` and `m` as rationals (the form `cert_piece` takes). -/
-theorem count_ranges {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q : ℚ} {BR Kn Tn : ℝ}
-    (T : RefTrial D N bs as CSP A1q B1q BR Kn Tn) {x : ℕ} (hx1 : D.sp ≤ x) (hx2 : (x : ℝ) ≤ D.ν) :
+theorem count_ranges {D : SignedData} {N : ℕ} {bs fa : List ℚ} {ta : List CatalanMeasure.Cert.TailQ} {CSP A1q B1q : ℚ} {BR Kn Tn : ℝ}
+    (T : RefTrial D N bs fa ta CSP A1q B1q BR Kn Tn) {x : ℕ} (hx1 : D.sp ≤ x) (hx2 : (x : ℝ) ≤ D.ν) :
     (20 : ℚ) * N ≤ x ∧ (x : ℚ) ≤ 58 * N := by
   constructor
   · have : 20 * N ≤ x := T.hsp ▸ hx1
@@ -317,31 +322,38 @@ theorem count_ranges {D : SignedData} {N : ℕ} {bs as : List ℚ} {CSP A1q B1q 
     exact_mod_cast this
 
 /-- The pairing used by the contract: the certificates of the two trials of an interval at the common pole. -/
-theorem hcert_of_trials {D1 D2 : SignedData} (hθ : D1.θ = 1 / 1024) (he0 : 0 ≤ D1.e) (he : D1.e ≤ 1 / 2 ^ 20)
+theorem hcert_of_trials {D1 D2 : SignedData} (hθ : D1.θ = 1 / 1024) (he0 : 0 ≤ D1.e) (he : D1.e ≤ 1 / 2 ^ 30)
     {N x m : ℕ} {Kn Tn : ℝ} (h1 : Nonempty (SpikeTrialCert (D1.withCount x) m (rhoSel N x m) Kn Tn))
     (h2 : Nonempty (SpikeTrialCert (D2.withCount x) m (rhoSel N x m) Kn Tn)) :
     ∃ ρ : ℝ, |ρ| < 1 ∧ ρ ≤ D1.τ ^ 2 * (1 - D1.θ) ∧ Nonempty (SpikeTrialCert (D1.withCount x) m ρ Kn Tn) ∧
       Nonempty (SpikeTrialCert (D2.withCount x) m ρ Kn Tn) :=
   ⟨rhoSel N x m, rhoSel_abs_lt N x m, rhoSel_le hθ he0 he N x m, h1, h2⟩
 
-/-- **`hcert` of `hCls_of_cert`, in the contract's exact form.**  `hA`, `hB` are the per-trial certificates
-(`SpikeK{t}.spikeCert{t}`) of the two trials `DA i N`, `DB i N` of an interval; the pole is the common `rhoSel`.
-`hMm` turns `2 m ≤ Mmax N + 1` into the piece range `m ≤ 0.57 N`. -/
+/-- **`hcert` of `hCls_of_cert`, in the contract's form (`∀ i, ∀ᶠ N`).**  `hA`, `hB` are the per-trial
+certificates (`SpikeK{t}.spikeCert{t}`, available for every `N` with a `RefTrial`, i.e. `N ≥ 1`) of the two trials
+`DA i N`, `DB i N` of an interval; the pole is the common `rhoSel`.  `hMm` (eventually) turns `2 m ≤ Mmax N + 1`
+into the piece range `m ≤ 0.57 N`. -/
 theorem hcert_form {I : ℕ} {DA DB : Fin I → ℕ → SignedData} {Kn Tn : ℕ → ℝ} {Mmax : ℕ → ℕ}
     (hθ : ∀ i N, (DA i N).θ = 1 / 1024) (he0 : ∀ i N, 0 ≤ (DA i N).e)
-    (he : ∀ i N, (DA i N).e ≤ 1 / 2 ^ 20) (hMm : ∀ N, 50 * (Mmax N + 1) ≤ 57 * N)
+    (he : ∀ i N, (DA i N).e ≤ 1 / 2 ^ 30)
+    (hMm : ∀ᶠ N : ℕ in Filter.atTop, 50 * (Mmax N + 1) ≤ 57 * N)
     (hνB : ∀ i N, (DB i N).ν = (DA i N).ν) (hspB : ∀ i N, (DB i N).sp = (DA i N).sp)
-    (hA : ∀ i N (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν → 100 * m ≤ 57 * N →
+    (hA : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν →
+      100 * m ≤ 57 * N →
       Nonempty (SpikeTrialCert ((DA i N).withCount x) m (rhoSel N x m) (Kn N) (Tn N)))
-    (hB : ∀ i N (x m : ℕ), (DB i N).sp ≤ x → (x : ℝ) ≤ (DB i N).ν → 100 * m ≤ 57 * N →
+    (hB : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ (x m : ℕ), (DB i N).sp ≤ x → (x : ℝ) ≤ (DB i N).ν →
+      100 * m ≤ 57 * N →
       Nonempty (SpikeTrialCert ((DB i N).withCount x) m (rhoSel N x m) (Kn N) (Tn N))) :
-    ∀ i N (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν → 2 * m ≤ Mmax N + 1 →
+    ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν →
+      2 * m ≤ Mmax N + 1 →
       ∃ ρ : ℝ, |ρ| < 1 ∧ ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
         Nonempty (SpikeTrialCert ((DA i N).withCount x) m ρ (Kn N) (Tn N)) ∧
         Nonempty (SpikeTrialCert ((DB i N).withCount x) m ρ (Kn N) (Tn N)) := by
-  intro i N x m hx1 hx2 hm
-  have hm' : 100 * m ≤ 57 * N := by have := hMm N; omega
-  exact hcert_of_trials (hθ i N) (he0 i N) (he i N) (hA i N x m hx1 hx2 hm')
-    (hB i N x m (by rw [hspB]; exact hx1) (by rw [hνB]; exact hx2) hm')
+  intro i
+  filter_upwards [hMm, hA i, hB i] with N hMN hAN hBN
+  intro x m hx1 hx2 hm
+  have hm' : 100 * m ≤ 57 * N := by omega
+  exact hcert_of_trials (hθ i N) (he0 i N) (he i N) (hAN x m hx1 hx2 hm')
+    (hBN x m (by rw [hspB]; exact hx1) (by rw [hνB]; exact hx2) hm')
 
 end CatalanMeasure.Signed.Consts

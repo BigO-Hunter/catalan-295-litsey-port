@@ -19,8 +19,9 @@ set_option Elab.async false
 
 open CatalanMeasure.Signed OAI.InternalCatalan
 
-theorem A_0 : absq as0 ≤ (349 / 256 : ℚ) := by decide +kernel
-theorem A1_0 : absSq as0 ≤ (255 / 512 : ℚ) := by decide +kernel
+theorem tZB0 : tailZB ta0 = true := by decide +kernel
+theorem A_0 : absq fa0 + tailMaj ta0 ≤ (6940965 / 1024 : ℚ) := by decide +kernel
+theorem A1_0 : absSq fa0 + 7 * tailW ta0 ≤ (469 / 256 : ℚ) := by decide +kernel
 theorem B1_0 : absSq bs0 ≤ (1241 / 1024 : ℚ) := by decide +kernel
 
 theorem Lc0_div : (List.range 120).all (fun i => decide ((((i : ℕ) : ℤ) + 1) ∣ 955888052326228459513511038256280353796626534577600)) = true := by decide +kernel
@@ -132,7 +133,7 @@ theorem De2_0_b2p3 {y : ℝ} (h1 : (1023 : ℝ) / 1024 ≤ y) (h2 : y ≤ 1) :
 
 /-- **The spike certificate of trial 0 at every Heine count `x ∈ [s_r, ν]` and every `m ≤ 0.57 N`**, with the pole `rhoSel N x m`
 (the same for the two trials of an interval).  This is the `Nonempty (SpikeTrialCert ..)` hypothesis of `hCls_of_cert`. -/
-theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N bs0 as0 (21 / 20 : ℚ) (255 / 512 : ℚ) (1241 / 1024 : ℚ) BR Kn Tn) :
+theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N bs0 fa0 ta0 (21 / 20 : ℚ) (469 / 256 : ℚ) (1241 / 1024 : ℚ) BR Kn Tn) :
     ∀ x m : ℕ, D.sp ≤ x → (x : ℝ) ≤ D.ν → 100 * m ≤ 57 * N →
       Nonempty (SpikeTrialCert (D.withCount x) m (rhoSel N x m) Kn Tn) := by
   intro x m hx1 hx2 hm
@@ -144,7 +145,7 @@ theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N
     by_cases h0 : 32 * m ≤ 9 * N
     · rw [rhoSel_b1p0 hB h0]
       exact cert_piece T (xa := (20 : ℚ)) (xb := (63 / 2 : ℚ)) (mlo := (0 : ℚ)) (mhi := (9 / 32 : ℚ)) (l1 := (40 / 63 : ℚ)) (l2 := (1 : ℚ))
-          (ρ := (255 / 256 : ℚ)) (κ := (231 / 16384 : ℚ)) (K0 := (-6415 / 1024 : ℚ)) (De2 := (185 / 8192 : ℚ)) (Sg := (-19635 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (255 / 256 : ℚ)) (κ := (231 / 16384 : ℚ)) (K0 := (-6415 / 1024 : ℚ)) (De2 := (185 / 8192 : ℚ)) (Sg := (-19635 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b1p0lo polyS0_b1p0hi K0chk_0_b1p0 (fun y h1 h2 => De2_0_b1p0 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
@@ -152,14 +153,14 @@ theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N
     by_cases h1 : 32 * m ≤ 15 * N
     · rw [rhoSel_b1p1 hB h0 h1]
       exact cert_piece T (xa := (20 : ℚ)) (xb := (63 / 2 : ℚ)) (mlo := (9 / 32 : ℚ)) (mhi := (15 / 32 : ℚ)) (l1 := (40 / 63 : ℚ)) (l2 := (1 : ℚ))
-          (ρ := (509 / 512 : ℚ)) (κ := (3 / 128 : ℚ)) (K0 := (-5499 / 1024 : ℚ)) (De2 := (271 / 8192 : ℚ)) (Sg := (-11689 / 8192 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (509 / 512 : ℚ)) (κ := (3 / 128 : ℚ)) (K0 := (-5499 / 1024 : ℚ)) (De2 := (271 / 8192 : ℚ)) (Sg := (-11689 / 8192 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b1p1lo polyS0_b1p1hi K0chk_0_b1p1 (fun y h1 h2 => De2_0_b1p1 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           hxlo hxhi (nat_gt_q (a := 32) (b := 9) (9 / 32) (by norm_num) (by norm_num) (by omega)) (nat_le_q (a := 32) (b := 15) (15 / 32) (by norm_num) (by norm_num) (by omega))
     · rw [rhoSel_b1p2 hB h0 h1]
       exact cert_piece T (xa := (20 : ℚ)) (xb := (63 / 2 : ℚ)) (mlo := (15 / 32 : ℚ)) (mhi := (57 / 100 : ℚ)) (l1 := (40 / 63 : ℚ)) (l2 := (1 : ℚ))
-          (ρ := (2033 / 2048 : ℚ)) (κ := (467 / 16384 : ℚ)) (K0 := (-2623 / 512 : ℚ)) (De2 := (667 / 16384 : ℚ)) (Sg := (-25029 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (2033 / 2048 : ℚ)) (κ := (467 / 16384 : ℚ)) (K0 := (-2623 / 512 : ℚ)) (De2 := (667 / 16384 : ℚ)) (Sg := (-25029 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b1p2lo polyS0_b1p2hi K0chk_0_b1p2 (fun y h1 h2 => De2_0_b1p2 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
@@ -169,7 +170,7 @@ theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N
     by_cases h0 : 100 * m ≤ 19 * N
     · rw [rhoSel_b2p0 hB h0]
       exact cert_piece T (xa := (63 / 2 : ℚ)) (xb := (58 : ℚ)) (mlo := (0 : ℚ)) (mhi := (19 / 100 : ℚ)) (l1 := (10 / 29 : ℚ)) (l2 := (40 / 63 : ℚ))
-          (ρ := (1021 / 1024 : ℚ)) (κ := (99 / 16384 : ℚ)) (K0 := (-3301 / 1024 : ℚ)) (De2 := (281 / 16384 : ℚ)) (Sg := (-16359 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (1021 / 1024 : ℚ)) (κ := (99 / 16384 : ℚ)) (K0 := (-3301 / 1024 : ℚ)) (De2 := (281 / 16384 : ℚ)) (Sg := (-16359 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b2p0lo polyS0_b2p0hi K0chk_0_b2p0 (fun y h1 h2 => De2_0_b2p0 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
@@ -177,7 +178,7 @@ theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N
     by_cases h1 : 50 * m ≤ 19 * N
     · rw [rhoSel_b2p1 hB h0 h1]
       exact cert_piece T (xa := (63 / 2 : ℚ)) (xb := (58 : ℚ)) (mlo := (19 / 100 : ℚ)) (mhi := (19 / 50 : ℚ)) (l1 := (10 / 29 : ℚ)) (l2 := (40 / 63 : ℚ))
-          (ρ := (2037 / 2048 : ℚ)) (κ := (99 / 8192 : ℚ)) (K0 := (-1365 / 512 : ℚ)) (De2 := (125 / 4096 : ℚ)) (Sg := (-11329 / 8192 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (2037 / 2048 : ℚ)) (κ := (99 / 8192 : ℚ)) (K0 := (-1365 / 512 : ℚ)) (De2 := (125 / 4096 : ℚ)) (Sg := (-11329 / 8192 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b2p1lo polyS0_b2p1hi K0chk_0_b2p1 (fun y h1 h2 => De2_0_b2p1 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
@@ -185,14 +186,14 @@ theorem spikeCert0 {D : SignedData} {N : ℕ} {BR Kn Tn : ℝ} (T : RefTrial D N
     by_cases h2 : 2 * m ≤ N
     · rw [rhoSel_b2p2 hB h0 h1 h2]
       exact cert_piece T (xa := (63 / 2 : ℚ)) (xb := (58 : ℚ)) (mlo := (19 / 50 : ℚ)) (mhi := (1 / 2 : ℚ)) (l1 := (10 / 29 : ℚ)) (l2 := (40 / 63 : ℚ))
-          (ρ := (1017 / 1024 : ℚ)) (κ := (261 / 16384 : ℚ)) (K0 := (-1221 / 512 : ℚ)) (De2 := (313 / 8192 : ℚ)) (Sg := (-24547 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (1017 / 1024 : ℚ)) (κ := (261 / 16384 : ℚ)) (K0 := (-1221 / 512 : ℚ)) (De2 := (313 / 8192 : ℚ)) (Sg := (-24547 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b2p2lo polyS0_b2p2hi K0chk_0_b2p2 (fun y h1 h2 => De2_0_b2p2 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           hxlo hxhi (nat_gt_q (a := 50) (b := 19) (19 / 50) (by norm_num) (by norm_num) (by omega)) (nat_le_q (a := 2) (b := 1) (1 / 2) (by norm_num) (by norm_num) (by omega))
     · rw [rhoSel_b2p3 hB h0 h1 h2]
       exact cert_piece T (xa := (63 / 2 : ℚ)) (xb := (58 : ℚ)) (mlo := (1 / 2 : ℚ)) (mhi := (57 / 100 : ℚ)) (l1 := (10 / 29 : ℚ)) (l2 := (40 / 63 : ℚ))
-          (ρ := (127 / 128 : ℚ)) (κ := (297 / 16384 : ℚ)) (K0 := (-1161 / 512 : ℚ)) (De2 := (177 / 4096 : ℚ)) (Sg := (-25457 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (349 / 256 : ℚ))
+          (ρ := (127 / 128 : ℚ)) (κ := (297 / 16384 : ℚ)) (K0 := (-1161 / 512 : ℚ)) (De2 := (177 / 4096 : ℚ)) (Sg := (-25457 / 16384 : ℚ)) (Lq := (525569 / 1073741824 : ℚ)) (Aq := (6940965 / 1024 : ℚ))
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
           floorS0 polyS0_b2p3lo polyS0_b2p3hi K0chk_0_b2p3 (fun y h1 h2 => De2_0_b2p3 h1 h2) A_0 A1_0 B1_0
           (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
