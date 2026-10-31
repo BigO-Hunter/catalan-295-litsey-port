@@ -148,6 +148,45 @@ theorem second_budget' {ℓ lo hi c07 c26 res Nn M r nc T cost m a t : ℝ}
   have h7 : 0 ≤ ℓ * t ^ 2 := by positivity
   nlinarith only [hE, h1, h3, h4, h5, h6, h7]
 
+/-- Second-trial budget for the endpoint column field, large marked fraction `a ≥ α1 > 0`: the
+constant term `Nn + M + T - c07 ℓ ≤ u` (`u ≥ 0` may be positive, e.g. after a target shift) is
+absorbed into the linear coefficient, `u ≤ (u / α1) a`, at the price `u / α1` in the cost. -/
+theorem second_budget'_large {ℓ lo hi c07 c26 res Nn M r nc T cost u α1 a t : ℝ}
+    (hlo : 0 < lo) (hl : lo ≤ ℓ) (hh : ℓ ≤ hi) (h07 : 0 ≤ c07) (h26 : 0 ≤ c26 - 1)
+    (hα : 0 < α1) (hu : 0 ≤ u)
+    (hobj : Nn + M + T - c07 * lo ≤ u)
+    (hcost : ((c26 - 1) * hi - M + r - cost) - lo * α1 + u / α1 ≤ 0)
+    (hnear : hi - r + nc ≤ 0) (haα : α1 ≤ a) (ht : 0 ≤ t) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + t - t ^ 2) * ℓ + Nn + (1 - a) * M
+        + (a - t) * r + t * nc + res * a ≤
+      -T + ℓ / 2 + (cost + res) * a := by
+  have hℓ : 0 < ℓ := lt_of_lt_of_le hlo hl
+  have ha : 0 ≤ a := le_trans hα.le haα
+  have hE : (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + t - t ^ 2) * ℓ + Nn + (1 - a) * M
+        + (a - t) * r + t * nc + res * a -
+      (-T + ℓ / 2 + (cost + res) * a) =
+      (Nn + M + T - c07 * ℓ) + a * ((c26 - 1) * ℓ - M + r - cost) - ℓ * a ^ 2
+        + t * (ℓ - r + nc) - ℓ * t ^ 2 := by ring
+  have h1 : Nn + M + T - c07 * ℓ ≤ u := by
+    nlinarith only [hobj, mul_nonneg h07 (sub_nonneg.2 hl)]
+  have h1' : u ≤ a * (u / α1) := by
+    have : u = α1 * (u / α1) := by field_simp
+    have h2 : 0 ≤ u / α1 := div_nonneg hu hα.le
+    nlinarith only [this, h2, haα]
+  have h2 : (c26 - 1) * ℓ - M + r - cost ≤ (c26 - 1) * hi - M + r - cost := by
+    nlinarith only [mul_nonneg h26 (sub_nonneg.2 hh)]
+  have h3 : a * ((c26 - 1) * ℓ - M + r - cost) ≤ a * ((c26 - 1) * hi - M + r - cost) :=
+    mul_le_mul_of_nonneg_left h2 ha
+  have h5 : ℓ * a ^ 2 ≥ lo * α1 * a := by
+    have : lo * α1 ≤ ℓ * a := mul_le_mul hl haα hα.le hℓ.le
+    nlinarith only [this, ha, sq_nonneg a]
+  have h6 : t * (ℓ - r + nc) ≤ 0 :=
+    mul_nonpos_of_nonneg_of_nonpos ht (by linarith only [hh, hnear])
+  have h7 : 0 ≤ ℓ * t ^ 2 := by positivity
+  have h8 : a * (((c26 - 1) * hi - M + r - cost) - lo * α1 + u / α1) ≤ 0 :=
+    mul_nonpos_of_nonneg_of_nonpos ha hcost
+  nlinarith only [hE, h1, h1', h3, h5, h6, h7, h8]
+
 /-- First-trial budget for the endpoint column field (no `a (1 - a) ℓ` term). -/
 theorem first_budget' {ℓ lo hi c07 c26 res n1 F1 Lm T cost1 m a : ℝ}
     (hlo : 0 < lo) (hl : lo ≤ ℓ) (hh : ℓ ≤ hi) (h07 : 0 ≤ c07) (h26 : 0 ≤ c26 - 1)

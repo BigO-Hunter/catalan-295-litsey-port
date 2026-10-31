@@ -137,6 +137,44 @@ theorem first_budget'_log2 (a : ℝ) :
     (by norm_num [c26, hi, lo, n1, F1, target, c07, Lm, firstCost'])
     (by norm_num [c26, lo, F1, Lm, firstCost'])
 
+/-! ### Theorem A: the End budgets at the shifted target `target0` -/
+
+/-- The Theorem A target `target0 = target + A / 58²`, `A = 8.29824` (the gain consumed by
+`Signed.gain_ok410`: `A = 58² (target0 - target)`). -/
+def target0 : ℝ := target + 829824 / 336400000
+
+theorem target0_sub : 58 ^ 2 * (target0 - target) = 829824 / 100000 := by
+  norm_num [target0]
+
+/-- Second budget at `target0` for the marked fraction `a ≥ α₁ = 1/16`: cost `secondCost'`
+(the constant `target0 - target` costs `16 (target0 - target)` in the linear coefficient, covered
+by `secondCost'_ge_alpha1`, which has the larger shift `8.334 / 58²`). -/
+theorem second_budget'_log2_target0 {a tt : ℝ} (ha : 1 / 16 ≤ a) (htt : 0 ≤ tt) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + tt - tt ^ 2) * Real.log 2 + normCap
+        + (1 - a) * fieldCap + (a - tt) * residualCap
+        + tt * nearCap + (9 / 10 : ℝ) * a ≤
+      -target0 + Real.log 2 / 2 + (secondCost' + 9 / 10) * a := by
+  obtain ⟨hl, hh⟩ := log2_bounds
+  exact second_budget'_large (u := normCap + fieldCap + target0 - c07 * lo) (res := 9 / 10)
+    (α1 := 1 / 16) (by norm_num [lo]) hl hh (by norm_num [c07]) (by norm_num [c26])
+    (by norm_num) (by norm_num [normCap, fieldCap, target0, target, c07, lo]) le_rfl
+    (by norm_num [c26, hi, lo, normCap, fieldCap, target0, target, c07, residualCap, secondCost'])
+    (by norm_num [hi, residualCap, nearCap]) ha htt
+
+/-- First budget at `target0`, every `a`, with cost `secondCost'` (the cost of `rhoEnd`; the first
+trial is below it, `firstCost'_le_secondCost'`, but `firstCost'` itself does not fit at
+`target0`). -/
+theorem first_budget'_log2_target0 (a : ℝ) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2) * Real.log 2 + n1 + (1 - a) * F1
+        + a * Lm + (9 / 10 : ℝ) * a ≤
+      -target0 + Real.log 2 / 2 + (secondCost' + 9 / 10) * a := by
+  obtain ⟨hl, hh⟩ := log2_bounds
+  exact first_budget' (m := -(n1 + F1 + target0 - c07 * lo)) (res := 9 / 10)
+    (by norm_num [lo]) hl hh (by norm_num [c07]) (by norm_num [c26]) (by norm_num)
+    (by norm_num [c07, lo, n1, F1, target0, target])
+    (by norm_num [c26, hi, lo, n1, F1, target0, target, c07, Lm, secondCost'])
+    (by norm_num [c26, lo, F1, Lm, secondCost'])
+
 end K590
 
 end

@@ -21,16 +21,40 @@ open scoped Nat Topology BigOperators
 
 noncomputable section
 
-theorem base_bound (P : Parameters) (hP : Admissible P)
+/-- The atom-determinant bound produced by `weighted_atom_det` (from `WeightedAtomPoint`) or by
+`weighted_atom_det_binom` (from `WeightedAtomPointBinom`); `base_bound`, `perturbation` and
+`delta_small` only use this consequence of the weighted atom point. -/
+def AtomDetBound (P : Parameters) (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ)
+    (target ρ : ℝ) : Prop :=
+  ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ f : Fin (P.n N) → Option (Fin ((P.n0 - P.g0) * N)),
+    (∏ k, (f k).elim 1 (fun a => |nodeAtomWeights P τ N a k|)) *
+      |(CatalanMeasure.atomMatrix (realBaseMatrix P N) (nodeAtomVectors P τ N) f).det| ≤
+    atomBaseBoundAt P target N ε * ∏ k, (f k).elim 1 (fun _ => atomColumnCost ρ N)
+
+theorem atomDetBound_of_point (P : Parameters)
     (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
     (hτinj : ∀ N, Function.Injective (τ N))
     (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
     (hτzero : ∀ N i, τ N i ≠ 0)
-    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ) (hpoint : WeightedAtomPoint P τ G target ρ) {ε : ℝ} (hε : 0<ε) :
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
+    (hpoint : WeightedAtomPoint P τ G target ρ) : AtomDetBound P τ target ρ :=
+  fun hε => weighted_atom_det P τ G hτinj hτmem hτzero hτG target ρ hpoint hε
+
+theorem atomDetBound_of_point_binom (P : Parameters)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
+    (hpoint : WeightedAtomPointBinom P τ G target ρ) : AtomDetBound P τ target ρ :=
+  fun hε => weighted_atom_det_binom P τ G hτinj hτmem hτzero hτG target ρ hpoint hε
+
+theorem base_bound_of_det (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (target ρ : ℝ) (hdet : AtomDetBound P τ target ρ) {ε : ℝ} (hε : 0<ε) :
     ∀ᶠ N : ℕ in atTop,|aeval catalan (deltaPoly P N)| ≤
       Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) := by
   have hn0 : 0 < P.n0 := hP.1
-  filter_upwards [weighted_atom_det P τ G hτinj hτmem hτzero hτG target ρ hpoint (show 0<ε/2 by positivity),
+  filter_upwards [hdet (show 0<ε/2 by positivity),
     sheet_prefactor_eventually P hn0 (show 0<ε/2 by positivity),eventually_gt_atTop (0:ℕ)]
     with N hd hp hN
   have hh :=hd (fun _ =>none)
@@ -49,20 +73,18 @@ theorem base_bound (P : Parameters) (hP : Admissible P)
       mul_le_mul_of_nonneg_right hp (Real.exp_pos _).le
     _ = _ :=by rw [← Real.exp_add];congr 1;ring
 
-theorem perturbation (P : Parameters) (hP : Admissible P)
-    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+theorem perturbation_of_det (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ)
     (hτinj : ∀ N, Function.Injective (τ N))
     (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
-    (hτzero : ∀ N i, τ N i ≠ 0)
-    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
-    (hpoint : WeightedAtomPoint P τ G target ρ) {ε : ℝ} (hε : 0 < ε) :
+    (hτzero : ∀ N i, τ N i ≠ 0) (target ρ : ℝ)
+    (hdet : AtomDetBound P τ target ρ) {ε : ℝ} (hε : 0 < ε) :
     ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
       |x-catalan| ≤ Real.exp (-(ρ*(N : ℝ))) →
       |aeval x (deltaPoly P N)-aeval catalan (deltaPoly P N)| ≤
         Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) := by
   have hn0 : 0 < P.n0 := hP.1
-  filter_upwards [weighted_atom_det P τ G hτinj hτmem hτzero hτG target ρ hpoint
-      (show 0 < ε/3 by positivity),
+  filter_upwards [hdet (show 0 < ε/3 by positivity),
     sheet_prefactor_eventually P hn0 (show 0 < ε/3 by positivity),
     joint_factor_of_cost_eventually P hn0 ρ (show 0 < ε/3 by positivity),
     eventually_gt_atTop (0 : ℕ)] with N hd hp hf hN x hx
@@ -93,16 +115,69 @@ theorem perturbation (P : Parameters) (hP : Admissible P)
     _ = _ := by rw [← Real.exp_add, ← Real.exp_add]; congr 1; ring
 
 
-/-- **`delta_small`** (the hypothesis consumed by `GenD.measure_of_design` / `D58.Final`):
-with `tΔ = n0² (target - log 2 / 2)`, `|Δ_N(x)| ≤ exp (-((tΔ - ε) N²))` for `|x - G| ≤ exp (-ρ N)`. -/
-theorem delta_small (P : Parameters) (hP : Admissible P)
+theorem base_bound (P : Parameters) (hP : Admissible P)
     (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
     (hτinj : ∀ N, Function.Injective (τ N))
-    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1 : ℝ) 1)
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
     (hτzero : ∀ N i, τ N i ≠ 0)
-    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ tΔ : ℝ)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ) (hpoint : WeightedAtomPoint P τ G target ρ) {ε : ℝ} (hε : 0<ε) :
+    ∀ᶠ N : ℕ in atTop,|aeval catalan (deltaPoly P N)| ≤
+      Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) :=
+  base_bound_of_det P hP τ target ρ
+    (atomDetBound_of_point P τ G hτinj hτmem hτzero hτG target ρ hpoint) hε
+
+/-- `base_bound` from the binomial weighted atom point. -/
+theorem base_bound_binom (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
+    (hpoint : WeightedAtomPointBinom P τ G target ρ) {ε : ℝ} (hε : 0<ε) :
+    ∀ᶠ N : ℕ in atTop,|aeval catalan (deltaPoly P N)| ≤
+      Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) :=
+  base_bound_of_det P hP τ target ρ
+    (atomDetBound_of_point_binom P τ G hτinj hτmem hτzero hτG target ρ hpoint) hε
+
+theorem perturbation (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
+    (hpoint : WeightedAtomPoint P τ G target ρ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
+      |x-catalan| ≤ Real.exp (-(ρ*(N : ℝ))) →
+      |aeval x (deltaPoly P N)-aeval catalan (deltaPoly P N)| ≤
+        Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) :=
+  perturbation_of_det P hP τ hτinj hτmem hτzero target ρ
+    (atomDetBound_of_point P τ G hτinj hτmem hτzero hτG target ρ hpoint) hε
+
+/-- `perturbation` from the binomial weighted atom point. -/
+theorem perturbation_binom (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1:ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ : ℝ)
+    (hpoint : WeightedAtomPointBinom P τ G target ρ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
+      |x-catalan| ≤ Real.exp (-(ρ*(N : ℝ))) →
+      |aeval x (deltaPoly P N)-aeval catalan (deltaPoly P N)| ≤
+        Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2*(-target+Real.log 2/2+ε)) :=
+  perturbation_of_det P hP τ hτinj hτmem hτzero target ρ
+    (atomDetBound_of_point_binom P τ G hτinj hτmem hτzero hτG target ρ hpoint) hε
+
+/-- **`delta_small`** from the atom-determinant bound, i.e. from either weighted atom point
+(the hypothesis consumed by `GenD.measure_of_design` / `D58.Final`):
+with `tΔ = n0² (target - log 2 / 2)`, `|Δ_N(x)| ≤ exp (-((tΔ - ε) N²))` for `|x - G| ≤ exp (-ρ N)`. -/
+theorem delta_small_of_det (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1 : ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0) (target ρ tΔ : ℝ)
     (hT : tΔ = (P.n0 : ℝ) ^ 2 * (target - Real.log 2 / 2))
-    (hpoint : WeightedAtomPoint P τ G target ρ) :
+    (hdet : AtomDetBound P τ target ρ) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
       |x - catalan| ≤ Real.exp (-(ρ * (N : ℝ))) →
         |aeval x (deltaPoly P N)| ≤ Real.exp (-((tΔ - ε) * (N : ℝ) ^ 2)) := by
@@ -112,8 +187,8 @@ theorem delta_small (P : Parameters) (hP : Admissible P)
   have he0 : 0 < e := by positivity
   have h2 := positive_polynomial_factor_eventually (2 : ℝ) (by norm_num) 0 (ε := ε / 2)
     (by positivity)
-  filter_upwards [perturbation P hP τ G hτinj hτmem hτzero hτG target ρ hpoint he0,
-    base_bound P hP τ G hτinj hτmem hτzero hτG target ρ hpoint he0, h2,
+  filter_upwards [perturbation_of_det P hP τ hτinj hτmem hτzero target ρ hdet he0,
+    base_bound_of_det P hP τ target ρ hdet he0, h2,
     eventually_gt_atTop (0 : ℕ)] with N hpert hbase htwo hN x hx
   have hN1 : (1 : ℝ) ≤ N := by exact_mod_cast hN
   let E : ℝ := ((P.n0 : ℝ) * (N : ℝ)) ^ 2 * (-target + Real.log 2 / 2 + e)
@@ -139,3 +214,33 @@ theorem delta_small (P : Parameters) (hP : Admissible P)
       simp only [E, he, hT]
       field_simp
       ring
+
+theorem delta_small (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1 : ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ tΔ : ℝ)
+    (hT : tΔ = (P.n0 : ℝ) ^ 2 * (target - Real.log 2 / 2))
+    (hpoint : WeightedAtomPoint P τ G target ρ) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
+      |x - catalan| ≤ Real.exp (-(ρ * (N : ℝ))) →
+        |aeval x (deltaPoly P N)| ≤ Real.exp (-((tΔ - ε) * (N : ℝ) ^ 2)) :=
+  delta_small_of_det P hP τ hτinj hτmem hτzero target ρ tΔ hT
+    (atomDetBound_of_point P τ G hτinj hτmem hτzero hτG target ρ hpoint)
+
+/-- **`delta_small` for the binomial route** (S1): the same conclusion from
+`WeightedAtomPointBinom`, as produced by `weighted_atom_point_binom_of_signed`. -/
+theorem delta_small_binom (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hτinj : ∀ N, Function.Injective (τ N))
+    (hτmem : ∀ N i, τ N i ∈ Set.Ioo (-1 : ℝ) 1)
+    (hτzero : ∀ N i, τ N i ≠ 0)
+    (hτG : ∀ N i, G (realCoordinate (τ N i))) (target ρ tΔ : ℝ)
+    (hT : tΔ = (P.n0 : ℝ) ^ 2 * (target - Real.log 2 / 2))
+    (hpoint : WeightedAtomPointBinom P τ G target ρ) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x : ℝ,
+      |x - catalan| ≤ Real.exp (-(ρ * (N : ℝ))) →
+        |aeval x (deltaPoly P N)| ≤ Real.exp (-((tΔ - ε) * (N : ℝ) ^ 2)) :=
+  delta_small_of_det P hP τ hτinj hτmem hτzero target ρ tΔ hT
+    (atomDetBound_of_point_binom P τ G hτinj hτmem hτzero hτG target ρ hpoint)
