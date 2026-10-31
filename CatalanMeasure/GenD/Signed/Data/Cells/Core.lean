@@ -3257,7 +3257,12 @@ theorem blockFacts_of_ok4 (fq : FieldQ) (cb blo bhi : ℚ) (M : ℕ) (CbP : List
   is certified by any cover (`hreg`).  `endOK_sound0`/`endUOK_sound0` for fields without Laurent part.
 * Laurent cells (`lcellW`, `lcellW_sound`, `lBlockOK`, `lBlockFacts_of_ok`): `cellW` plus the Laurent
   coefficients `lCoef`/`lErr` (anchor = entry 0), Laurent block tail `lTailCheck` with logarithm
-  bounds `llbOK`; `jump_le` for the spike jump cell. -/
+  bounds `llbOK`; `jump_le` for the spike jump cell.
+* Laurent end windows at `0` (`l0OK`, `l0_laurent_le`, `endL0OK`, `endL0_sound`, `endL0UOK`,
+  `endL0U_sound`): the dilated block `dilTermsQ` is unbounded term by term at `x → 0`, but the negative
+  powers cancel exactly; one exact computation on the coefficient lists (`l0W`, `l0X`) plus the Taylor
+  remainder of `log|1 - γ x|` bounds the Laurent part by `c_L log|x| + l0Const`, and `endOK` (at
+  `e = lo = 0`, `ts = []`) handles the field part. -/
 
 section Engine
 
@@ -4381,6 +4386,462 @@ theorem jump_le {f : ℝ → ℝ} {S : Set ℝ} {T cs θ : ℝ} (hcs : 0 ≤ cs)
   have := h x hx
   split_ifs <;> linarith
 
+
+/-! ### Laurent end windows at `0` (lane E2, 31 Oct 2026)
+
+`endOK` handles a Laurent term singular at `e` (factor `log|x - e|`) only on a window `lo > 0`.  The
+positive rows (SP) have the dilated block `dilTermsQ` whose terms `a(1/x)`, `a(1/x) log|x|` and
+`a(1/x) log|αx - β|` are individually unbounded at `x → 0`, but their sum is `- m log|x| + O(1)`: the
+negative powers of `x` cancel exactly (the potential of a bounded density at `1/x`).
+
+`l0OK` certifies this on a window `(0, hi]` with ONE exact computation on the coefficient lists
+(`w = 1/x`, `γ = αβ` for the factor `log|αx - β| = log|1 - γ x|`, `β = ±1`):
+
+  `x^n · (Σ_none a(w) - Σ_ser a(w) Hₙ(w)) = x^n W(w)`,  `Hₙ(w) = w^n Sₙ(γ/w)`,  `Sₙ(u) = Σ_{i<n} u^(i+1)/(i+1)`,
+
+so `lfieldTower ts 0 x = x^n W(1/x) + (Σ_logx a)(1/x) · log|x| + Σ_ser a(1/x) (Sₙ(γx) + log|1 - γx|)`.
+`l0OK` checks (exactly, in `ℚ`) that `W` has degree `≤ n` (coefficients of `w^j`, `j > n`, vanish: the
+negative powers cancel) and that `Σ_logx a` is constant `c_L`; the remainder `Sₙ + log` is bounded by the
+Taylor remainder `|u|^(n+1)/(1-|u|)` (`Real.abs_log_sub_add_sum_range_le`).  Conclusion
+(`l0_laurent_le`): `lfieldTower ts 0 x ≤ c_L log|x| + l0Const` on `(0, hi]`. -/
+
+theorem l0_cons (a : ℚ) (as : List ℚ) (x : ℝ) :
+    polyTow (a :: as) 0 x = (a : ℝ) + x * polyTow as 0 x := rfl
+
+theorem l0_nil (x : ℝ) : polyTow [] 0 x = 0 := rfl
+
+theorem l0_vecAdd : ∀ (a b : List ℚ) (x : ℝ),
+    polyTow (vecAdd a b) 0 x = polyTow a 0 x + polyTow b 0 x
+  | [], b, x => by simp [vecAdd, l0_nil]
+  | a :: as, [], x => by simp [vecAdd, l0_nil]
+  | a :: as, b :: bs, x => by
+      simp only [vecAdd, l0_cons, l0_vecAdd as bs x]; push_cast; ring
+
+theorem l0_map_mul (a : ℚ) : ∀ (c : List ℚ) (x : ℝ),
+    polyTow (c.map (fun t => a * t)) 0 x = (a : ℝ) * polyTow c 0 x
+  | [], x => by simp [l0_nil]
+  | t :: ts, x => by
+      simp only [List.map_cons, l0_cons, l0_map_mul a ts x]; push_cast; ring
+
+/-- polynomial product of coefficient lists -/
+def pmulQ : List ℚ → List ℚ → List ℚ
+  | [], _ => []
+  | a :: as, q => vecAdd (q.map (fun t => a * t)) (0 :: pmulQ as q)
+
+theorem l0_pmul : ∀ (p q : List ℚ) (x : ℝ),
+    polyTow (pmulQ p q) 0 x = polyTow p 0 x * polyTow q 0 x
+  | [], q, x => by simp [pmulQ, l0_nil]
+  | a :: as, q, x => by
+      simp only [pmulQ, l0_vecAdd, l0_map_mul, l0_cons, l0_pmul as q x]; push_cast; ring
+
+theorem l0_replicate (w : ℝ) (a : List ℚ) : ∀ n : ℕ,
+    polyTow (List.replicate n 0 ++ a) 0 w = w ^ n * polyTow a 0 w
+  | 0 => by simp
+  | n + 1 => by
+      rw [List.replicate_succ, List.cons_append, l0_cons, l0_replicate w a n]
+      push_cast; ring
+
+/-- `Hₙ`: coefficients (low to high) of `w^n Sₙ(γ/w) = Σ_{j<n} γ^(n-j)/(n-j) w^j`. -/
+def l0H (γ : ℚ) : ℕ → List ℚ
+  | 0 => []
+  | n + 1 => (γ ^ (n + 1) / ((n : ℚ) + 1)) :: l0H γ n
+
+theorem l0_H (γ : ℚ) (x w : ℝ) (hxw : x * w = 1) : ∀ n : ℕ,
+    polyTow (l0H γ n) 0 w =
+      w ^ n * ∑ i ∈ Finset.range n, ((γ : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1)
+  | 0 => by simp [l0H, l0_nil]
+  | n + 1 => by
+      rw [l0H, l0_cons, l0_H γ x w hxw n, Finset.sum_range_succ]
+      push_cast
+      have h2 : w ^ (n + 1) * (((γ : ℝ) * x) ^ (n + 1) / ((n : ℝ) + 1)) =
+          (γ : ℝ) ^ (n + 1) / ((n : ℝ) + 1) * (x * w) ^ (n + 1) := by ring
+      rw [hxw, one_pow, mul_one] at h2
+      linear_combination (-1 : ℝ) * h2
+
+/-- the series class of a term: `γ = αβ` for the factor `log|αx - β|` with `β = ±1` -/
+def l0Ser (t : LTerm) : Option ℚ :=
+  match t.2 with
+  | some (α, β) => if β = 1 ∨ β = -1 then some (α * β) else none
+  | none => none
+
+/-- the contribution of a term to `W` (scaled by `w^n`): `a` for the pure terms, `- a Hₙ(γ)` for the
+series terms, `0` for the `log|x|` terms -/
+def l0Wt (n : ℕ) (t : LTerm) : List ℚ :=
+  match l0Ser t with
+  | some γ => (pmulQ t.1 (l0H γ n)).map (fun s => (-1 : ℚ) * s)
+  | none => match t.2 with
+    | none => List.replicate n 0 ++ t.1
+    | some _ => []
+
+def l0W (n : ℕ) : List LTerm → List ℚ
+  | [] => []
+  | t :: ts => vecAdd (l0Wt n t) (l0W n ts)
+
+/-- the total coefficient of `log|x|` (a polynomial in `w`) -/
+def l0X : List LTerm → List ℚ
+  | [] => []
+  | t :: ts => vecAdd (if t.2 = some (1, 0) then t.1 else []) (l0X ts)
+
+/-- `Σ_j b_j hi^(N-j)` (`b_j = c_j` at `j = N`), `j` the starting index -/
+def l0wB (hi : ℚ) (N : ℕ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | j, c :: cs => (if j = N then c else qabs' c * hi ^ (N - j)) + l0wB hi N (j + 1) cs
+
+/-- the Taylor-remainder bound of a series term -/
+def l0Errt (hi : ℚ) (n : ℕ) (t : LTerm) : ℚ :=
+  match l0Ser t with
+  | some γ => qabs' γ ^ (n + 1) / (1 - qabs' γ * hi) * l0wB hi (n + 1) 0 (t.1.map qabs')
+  | none => 0
+
+def l0Err (hi : ℚ) (n : ℕ) : List LTerm → ℚ
+  | [] => 0
+  | t :: ts => l0Errt hi n t + l0Err hi n ts
+
+def l0TermOk (hi : ℚ) (n : ℕ) (t : LTerm) : Bool :=
+  match t.2 with
+  | none => true
+  | some (α, β) =>
+    decide (α = 1 ∧ β = 0) ||
+      (decide (β = 1 ∨ β = -1) && decide (qabs' (α * β) * hi < 1) && decide (t.1.length ≤ n + 2))
+
+/-- **The checker**: a window `(0, hi]`, every term is pure / `log|x|` / a `±1`-series term with
+`|γ| hi < 1` and degree `≤ n + 1`, the negative powers cancel (`W` has degree `≤ n`) and the coefficient
+of `log|x|` is constant. -/
+def l0OK (ts : List LTerm) (hi : ℚ) (n : ℕ) : Bool :=
+  decide (0 < hi) && ts.all (l0TermOk hi n) &&
+    ((l0X ts).drop 1).all (fun q => decide (q = 0)) &&
+    ((l0W n ts).drop (n + 1)).all (fun q => decide (q = 0))
+
+/-- the constant `c_L` multiplying `log|x|` -/
+def l0C (ts : List LTerm) : ℚ := (l0X ts).headD 0
+
+/-- the constant part: `W_n + Σ_{j<n} |W_j| hi^(n-j)` and the Taylor remainders -/
+def l0Const (ts : List LTerm) (hi : ℚ) (n : ℕ) : ℚ :=
+  l0wB hi n 0 ((l0W n ts).take (n + 1)) + l0Err hi n ts
+
+/-! Real-variable side. -/
+
+theorem l0_zeros : ∀ (l : List ℚ), (∀ q ∈ l, q = 0) → ∀ x : ℝ, polyTow l 0 x = 0
+  | [], _, x => l0_nil x
+  | a :: as, h, x => by
+      rw [l0_cons, h a (by simp), l0_zeros as (fun q hq => h q (by simp [hq])) x]; simp
+
+theorem l0_append : ∀ (l₁ l₂ : List ℚ) (x : ℝ),
+    polyTow (l₁ ++ l₂) 0 x = polyTow l₁ 0 x + x ^ l₁.length * polyTow l₂ 0 x
+  | [], l₂, x => by simp [l0_nil]
+  | a :: as, l₂, x => by
+      simp only [List.cons_append, l0_cons, l0_append as l₂ x, List.length_cons, pow_succ]; ring
+
+theorem l0_take_drop (l : List ℚ) (m : ℕ) (h : ∀ q ∈ l.drop m, q = 0) (x : ℝ) :
+    polyTow l 0 x = polyTow (l.take m) 0 x := by
+  conv_lhs => rw [← List.take_append_drop m l]
+  rw [l0_append, l0_zeros _ h x]; simp
+
+/-- the absolute-coefficient majorant -/
+theorem l0_abs : ∀ (a : List ℚ) (w : ℝ), 0 ≤ w →
+    |polyTow a 0 w| ≤ polyTow (a.map qabs') 0 w
+  | [], w, _ => by simp [l0_nil]
+  | c :: cs, w, hw => by
+      simp only [List.map_cons, l0_cons, qabs'_cast]
+      have ih := l0_abs cs w hw
+      calc |(c : ℝ) + w * polyTow cs 0 w| ≤ |(c : ℝ)| + |w * polyTow cs 0 w| := abs_add_le _ _
+        _ ≤ |(c : ℝ)| + w * polyTow (cs.map qabs') 0 w := by
+          rw [abs_mul, abs_of_nonneg hw]
+          linarith [mul_le_mul_of_nonneg_left ih hw]
+
+/-- the key bound: `x^(N-j) · P(1/x) ≤ l0wB` for `0 < x ≤ hi`, `j + len ≤ N + 1` -/
+theorem l0_shift (hi : ℚ) (x : ℝ) (hx0 : 0 < x) (hxh : x ≤ (hi : ℝ)) (N : ℕ) :
+    ∀ (l : List ℚ) (j : ℕ), j + l.length ≤ N + 1 →
+      x ^ (N - j) * polyTow l 0 x⁻¹ ≤ ((l0wB hi N j l : ℚ) : ℝ)
+  | [], j, _ => by simp [l0_nil, l0wB]
+  | c :: cs, j, hlen => by
+      rw [l0_cons, l0wB]
+      by_cases hjN : j = N
+      · subst hjN
+        have hcs : cs = [] := by
+          rcases cs with _ | ⟨d, ds⟩
+          · rfl
+          · exfalso; simp only [List.length_cons] at hlen; omega
+        subst hcs
+        simp [l0_nil, l0wB]
+      · have hjlt : j < N := by simp only [List.length_cons] at hlen; omega
+        have hlen' : (j + 1) + cs.length ≤ N + 1 := by simp only [List.length_cons] at hlen; omega
+        have ih := l0_shift hi x hx0 hxh N cs (j + 1) hlen'
+        have hN : N - j = (N - (j + 1)) + 1 := by omega
+        have hxw : x * x⁻¹ = 1 := mul_inv_cancel₀ hx0.ne'
+        have e1 : x ^ (N - j) * ((c : ℝ) + x⁻¹ * polyTow cs 0 x⁻¹) =
+            (c : ℝ) * x ^ (N - j) + x ^ (N - (j + 1)) * polyTow cs 0 x⁻¹ := by
+          rw [hN, pow_succ]
+          linear_combination (x ^ (N - (j + 1)) * polyTow cs 0 x⁻¹) * hxw
+        rw [e1]
+        simp only [hjN, ↓reduceIte]
+        push_cast
+        have h3 : (c : ℝ) * x ^ (N - j) ≤ |(c : ℝ)| * (hi : ℝ) ^ (N - j) := by
+          calc (c : ℝ) * x ^ (N - j) ≤ |(c : ℝ)| * x ^ (N - j) :=
+                mul_le_mul_of_nonneg_right (le_abs_self _) (pow_nonneg hx0.le _)
+            _ ≤ |(c : ℝ)| * (hi : ℝ) ^ (N - j) :=
+                mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hx0.le hxh _) (abs_nonneg _)
+        rw [qabs'_cast]
+        linarith
+
+theorem l0_sumX_const : ∀ (l : List ℚ), (∀ q ∈ l.drop 1, q = 0) → ∀ x : ℝ,
+    polyTow l 0 x = ((l.headD 0 : ℚ) : ℝ)
+  | [], _, x => by simp [l0_nil]
+  | a :: as, h, x => by
+      simp only [List.drop_succ_cons, List.drop_zero] at h
+      rw [l0_cons, l0_zeros as h x]; simp
+
+/-- the real remainder of a series term -/
+noncomputable def l0errR (n : ℕ) (t : LTerm) (x : ℝ) : ℝ :=
+  match l0Ser t with
+  | some γ => polyTow t.1 0 x⁻¹ *
+      ((∑ i ∈ Finset.range n, ((γ : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1)) + Real.log |1 - (γ : ℝ) * x|)
+  | none => 0
+
+noncomputable def l0errS (n : ℕ) : List LTerm → ℝ → ℝ
+  | [], _ => 0
+  | t :: ts, x => l0errR n t x + l0errS n ts x
+
+/-- term identity -/
+theorem l0_term (n : ℕ) (x : ℝ) (hx : 0 < x) (t : LTerm)
+    (hcls : t.2 = none ∨ t.2 = some (1, 0) ∨ (l0Ser t).isSome = true) :
+    mulTower (zTow t.1) (lfTower t.2) 0 x =
+      x ^ n * polyTow (l0Wt n t) 0 x⁻¹ +
+        polyTow (if t.2 = some (1, 0) then t.1 else []) 0 x⁻¹ * Real.log |x| + l0errR n t x := by
+  have hxw : x * x⁻¹ = 1 := mul_inv_cancel₀ hx.ne'
+  rw [mulTower_zero, zTow_zero]
+  rcases t with ⟨a, f⟩
+  simp only at hcls ⊢
+  rcases f with _ | ⟨α, β⟩
+  · simp [l0Ser, l0Wt, l0errR, lfTower, oneTower, l0_replicate, l0_nil]
+    rw [← mul_assoc, mul_inv_cancel₀ (pow_ne_zero n hx.ne'), one_mul]
+  · by_cases hb : β = 1 ∨ β = -1
+    · have hne : ¬ ((α, β) = ((1 : ℚ), (0 : ℚ))) := by
+        intro h; simp [Prod.ext_iff] at h; rcases hb with h' | h' <;> simp [h.2] at h'
+      have hS : l0Ser (a, some (α, β)) = some (α * β) := by simp [l0Ser, hb]
+      have hne' : ¬ (some (α, β) = some ((1 : ℚ), (0 : ℚ))) := by simpa using hne
+      simp only [hS, l0Wt, l0errR, hne', ↓reduceIte,
+        l0_nil, zero_mul, add_zero, lfTower, linLogTower, l0_map_mul, l0_pmul]
+      rw [l0_H (α * β) x x⁻¹ hxw n]
+      have habs : |(α : ℝ) * x - (β : ℝ)| = |1 - ((α * β : ℚ) : ℝ) * x| := by
+        rcases hb with rfl | rfl
+        · push_cast; rw [abs_sub_comm]; ring_nf
+        · push_cast; ring_nf
+      rw [habs]
+      have e2 : x ^ n * (x⁻¹ ^ n) = 1 := by rw [← mul_pow, hxw, one_pow]
+      push_cast
+      have key : x ^ n * (((-1 : ℚ) : ℝ) * (polyTow a 0 x⁻¹ * (x⁻¹ ^ n *
+          ∑ i ∈ Finset.range n, (((α * β : ℚ) : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1)))) =
+          -(polyTow a 0 x⁻¹ * ∑ i ∈ Finset.range n, (((α * β : ℚ) : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1)) := by
+        linear_combination (-(polyTow a 0 x⁻¹ * ∑ i ∈ Finset.range n,
+          (((α * β : ℚ) : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1))) * e2
+      push_cast at key ⊢
+      rw [key]; ring
+    · have h10 : (α, β) = ((1 : ℚ), (0 : ℚ)) := by
+        rcases hcls with h | h | h
+        · simp at h
+        · simpa using h
+        · simp [l0Ser, hb] at h
+      obtain ⟨rfl, rfl⟩ := Prod.mk.inj h10
+      have hS : l0Ser (a, some ((1 : ℚ), (0 : ℚ))) = none := by simp [l0Ser]
+      simp [hS, l0Wt, l0errR, lfTower, linLogTower, l0_nil]
+
+theorem l0_ident (n : ℕ) (x : ℝ) (hx : 0 < x) : ∀ (ts : List LTerm),
+    (∀ t ∈ ts, t.2 = none ∨ t.2 = some (1, 0) ∨ (l0Ser t).isSome = true) →
+    lfieldTower ts 0 x = x ^ n * polyTow (l0W n ts) 0 x⁻¹ + polyTow (l0X ts) 0 x⁻¹ * Real.log |x| +
+      l0errS n ts x
+  | [], _ => by simp [lfieldTower, l0W, l0X, l0errS, l0_nil]
+  | t :: ts, h => by
+      have ih := l0_ident n x hx ts (fun s hs => h s (by simp [hs]))
+      have ht := l0_term n x hx t (h t (by simp))
+      have e1 : lfieldTower (t :: ts) 0 x = mulTower (zTow t.1) (lfTower t.2) 0 x + lfieldTower ts 0 x := by
+        simp [lfieldTower]
+      rw [e1, ih, ht, l0W, l0X, l0errS, l0_vecAdd, l0_vecAdd]
+      ring
+
+theorem l0errR_le (hi : ℚ) (n : ℕ) (x : ℝ) (hx0 : 0 < x) (hxh : x ≤ (hi : ℝ)) (t : LTerm)
+    (hok : l0TermOk hi n t = true) : l0errR n t x ≤ ((l0Errt hi n t : ℚ) : ℝ) := by
+  rcases t with ⟨a, f⟩
+  unfold l0errR l0Errt
+  rcases hS : l0Ser (a, f) with _ | γ
+  · simp
+  · simp only
+    -- here `f = some (α, β)` with `β = ±1`, `γ = α β`
+    obtain ⟨α, β, hf, hβ, hγ⟩ : ∃ α β, f = some (α, β) ∧ (β = 1 ∨ β = -1) ∧ γ = α * β := by
+      rcases f with _ | ⟨α, β⟩
+      · simp [l0Ser] at hS
+      · by_cases hb : β = 1 ∨ β = -1
+        · refine ⟨α, β, rfl, hb, ?_⟩
+          simp [l0Ser, hb] at hS; exact hS.symm
+        · simp [l0Ser, hb] at hS
+    subst hf
+    have hok' : qabs' (α * β) * hi < 1 ∧ a.length ≤ n + 2 := by
+      simp only [l0TermOk, Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq] at hok
+      rcases hok with h | ⟨⟨_, h1⟩, h2⟩
+      · exfalso; obtain ⟨h1, h2⟩ := h; rcases hβ with h | h <;> simp [h] at h2
+      · exact ⟨h1, h2⟩
+    rw [hγ]
+    obtain ⟨hlt, hlen⟩ := hok'
+    set g : ℚ := α * β with hg
+    have hgh : |(g : ℝ)| * x < 1 := by
+      have h1 : |(g : ℝ)| * (hi : ℝ) < 1 := by
+        have := (Rat.cast_lt (K := ℝ)).mpr hlt; push_cast at this; rwa [qabs'_cast] at this
+      have h2 : |(g : ℝ)| * x ≤ |(g : ℝ)| * (hi : ℝ) := mul_le_mul_of_nonneg_left hxh (abs_nonneg _)
+      linarith
+    have hgx : |(g : ℝ) * x| < 1 := by
+      rw [abs_mul, abs_of_pos hx0]; exact hgh
+    have hE := Real.abs_log_sub_add_sum_range_le hgx n
+    have hlog : Real.log |1 - (g : ℝ) * x| = Real.log (1 - (g : ℝ) * x) := Real.log_abs _
+    rw [hlog]
+    set E := (∑ i ∈ Finset.range n, ((g : ℝ) * x) ^ (i + 1) / ((i : ℝ) + 1)) + Real.log (1 - (g : ℝ) * x) with hEdef
+    have hE' : |E| ≤ (|(g : ℝ)| * x) ^ (n + 1) / (1 - |(g : ℝ)| * x) := by
+      have : |(g : ℝ) * x| = |(g : ℝ)| * x := by rw [abs_mul, abs_of_pos hx0]
+      rw [this] at hE; exact hE
+    have hP := l0_abs a x⁻¹ (inv_nonneg.mpr hx0.le)
+    have hP0 : 0 ≤ polyTow (a.map qabs') 0 x⁻¹ := (abs_nonneg _).trans hP
+    -- the shift bound for the absolute majorant
+    have hsh := l0_shift hi x hx0 hxh (n + 1) (a.map qabs') 0 (by simpa using hlen)
+    simp only [Nat.sub_zero] at hsh
+    have hden : 0 < 1 - |(g : ℝ)| * x := by linarith
+    have hden2 : 0 < 1 - |(g : ℝ)| * (hi : ℝ) := by
+      have := (Rat.cast_lt (K := ℝ)).mpr hlt; push_cast at this; rw [qabs'_cast] at this; linarith
+    calc polyTow a 0 x⁻¹ * E ≤ |polyTow a 0 x⁻¹ * E| := le_abs_self _
+      _ = |polyTow a 0 x⁻¹| * |E| := abs_mul _ _
+      _ ≤ polyTow (a.map qabs') 0 x⁻¹ * ((|(g : ℝ)| * x) ^ (n + 1) / (1 - |(g : ℝ)| * x)) :=
+          mul_le_mul hP hE' (abs_nonneg _) hP0
+      _ ≤ polyTow (a.map qabs') 0 x⁻¹ * ((|(g : ℝ)| * x) ^ (n + 1) / (1 - |(g : ℝ)| * (hi : ℝ))) := by
+          apply mul_le_mul_of_nonneg_left _ hP0
+          apply div_le_div_of_nonneg_left (by positivity) hden2
+          have : |(g : ℝ)| * x ≤ |(g : ℝ)| * (hi : ℝ) := mul_le_mul_of_nonneg_left hxh (abs_nonneg _)
+          linarith
+      _ = (|(g : ℝ)| ^ (n + 1) / (1 - |(g : ℝ)| * (hi : ℝ))) *
+            (x ^ (n + 1) * polyTow (a.map qabs') 0 x⁻¹) := by
+          rw [mul_pow]; ring
+      _ ≤ (|(g : ℝ)| ^ (n + 1) / (1 - |(g : ℝ)| * (hi : ℝ))) * ((l0wB hi (n + 1) 0 (a.map qabs') : ℚ) : ℝ) :=
+          mul_le_mul_of_nonneg_left hsh (by positivity)
+      _ = _ := by push_cast; rw [qabs'_cast]
+
+theorem l0errS_le (hi : ℚ) (n : ℕ) (x : ℝ) (hx0 : 0 < x) (hxh : x ≤ (hi : ℝ)) :
+    ∀ ts : List LTerm, (∀ t ∈ ts, l0TermOk hi n t = true) →
+      l0errS n ts x ≤ ((l0Err hi n ts : ℚ) : ℝ)
+  | [], _ => by simp [l0errS, l0Err]
+  | t :: ts, h => by
+      have h1 := l0errR_le hi n x hx0 hxh t (h t (by simp))
+      have h2 := l0errS_le hi n x hx0 hxh ts (fun s hs => h s (by simp [hs]))
+      simp only [l0errS, l0Err]; push_cast; linarith
+
+theorem l0_class (hi : ℚ) (n : ℕ) (t : LTerm) (h : l0TermOk hi n t = true) :
+    t.2 = none ∨ t.2 = some (1, 0) ∨ (l0Ser t).isSome = true := by
+  rcases t with ⟨a, f⟩
+  rcases f with _ | ⟨α, β⟩
+  · left; rfl
+  · simp only [l0TermOk, Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq] at h
+    right
+    rcases h with ⟨h1, h2⟩ | ⟨⟨h1, _⟩, _⟩
+    · left; subst h1; subst h2; rfl
+    · right; simp [l0Ser, h1]
+
+/-- **The Laurent part near `0`**: on `(0, hi]` the Laurent field is at most `c_L log|x|` plus the
+constant `l0Const`. -/
+theorem l0_laurent_le (ts : List LTerm) (hi : ℚ) (n : ℕ) (h : l0OK ts hi n = true) :
+    ∀ x : ℝ, 0 < x → x ≤ (hi : ℝ) →
+      lfieldTower ts 0 x ≤ ((l0C ts : ℚ) : ℝ) * Real.log |x| + ((l0Const ts hi n : ℚ) : ℝ) := by
+  unfold l0OK at h
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at h
+  obtain ⟨⟨⟨h0, hts⟩, hX⟩, hW⟩ := h
+  intro x hx0 hxh
+  have hcls : ∀ t ∈ ts, t.2 = none ∨ t.2 = some (1, 0) ∨ (l0Ser t).isSome = true :=
+    fun t ht => l0_class hi n t (hts t ht)
+  rw [l0_ident n x hx0 ts hcls]
+  have hXc := l0_sumX_const (l0X ts) (fun q hq => by simpa using hX q hq) x⁻¹
+  rw [hXc]
+  have hWt := l0_take_drop (l0W n ts) (n + 1) (fun q hq => by simpa using hW q hq) x⁻¹
+  rw [hWt]
+  have hsh := l0_shift hi x hx0 hxh n ((l0W n ts).take (n + 1)) 0 (by simp [List.length_take])
+  simp only [Nat.sub_zero] at hsh
+  have herr := l0errS_le hi n x hx0 hxh ts hts
+  unfold l0Const l0C
+  push_cast
+  linarith
+
+theorem l0OK_pos (ts : List LTerm) (hi : ℚ) (n : ℕ) (h : l0OK ts hi n = true) : 0 < hi := by
+  unfold l0OK at h
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at h
+  exact h.1.1.1
+
+/-- **End window `[0, hi]` for a field with a Laurent part** (SP at `0`): the field part by `endOK` at
+`e = 0 = lo` (the pieces `P log|x|`, `c log|x|` of real poles at `0`; no singular Laurent term, so `lo = 0`
+is allowed), the Laurent part by the exact cancellation `l0OK`. -/
+def endL0OK (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k n : ℕ) (U : ℚ) : Bool :=
+  endOK fq [] 0 0 hi k U && l0OK ts hi n
+
+/-- **Soundness, log form** (the `hsing` shape `≤ Tr + c log|x|` of `fPosS_cell_zero`): the regular part
+`regQ fq 0` is bounded by `TR` on `[0, hi]` by any cover; the total coefficient of `log|x|` is
+`endC fq [] 0 + l0C ts`. -/
+theorem endL0_sound (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k n : ℕ) (U TR : ℚ)
+    (hchk : endL0OK fq ts hi k n U = true)
+    (hreg : ∀ x ∈ Icc (((0 : ℚ) : ℝ)) (hi : ℝ),
+      fieldTower (regQ fq 0) (poleF (regQ fq 0).poles) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Ioc (0 : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤
+      (TR : ℝ) + (U : ℝ) + (l0Const ts hi n : ℝ) +
+        ((endC fq [] 0 + l0C ts : ℚ) : ℝ) * Real.log |x| := by
+  unfold endL0OK at hchk
+  simp only [Bool.and_eq_true] at hchk
+  obtain ⟨h1, h2⟩ := hchk
+  intro x hx
+  have a := endOK_sound0 fq 0 0 hi k U TR h1 hreg x ⟨by simpa using hx.1.le, hx.2⟩
+  have b := l0_laurent_le ts hi n h2 x hx.1 hx.2
+  simp only [Rat.cast_zero, sub_zero] at a
+  push_cast
+  linarith
+
+/-- the uniform form: `hi ≤ 2^-kR`, total coefficient `c ≥ 0` of `log|x|`: the field is at most `T` on
+`(0, hi]`. -/
+def endL0UOK (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k kR n : ℕ) (U TR T : ℚ) : Bool :=
+  endL0OK fq ts hi k n U && decide (0 ≤ endC fq [] 0 + l0C ts) && decide (hi ≤ (1 / 2) ^ kR) &&
+    decide (TR + U + l0Const ts hi n - (endC fq [] 0 + l0C ts) * (69 / 100 * (kR : ℚ)) ≤ T)
+
+theorem endL0U_sound (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k kR n : ℕ) (U TR T : ℚ)
+    (hchk : endL0UOK fq ts hi k kR n U TR T = true)
+    (hreg : ∀ x ∈ Icc (((0 : ℚ) : ℝ)) (hi : ℝ),
+      fieldTower (regQ fq 0) (poleF (regQ fq 0).poles) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Ioc (0 : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤ (T : ℝ) := by
+  unfold endL0UOK at hchk
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨h1, hc⟩, hRk⟩, hT⟩ := hchk
+  have hb := endL0_sound fq ts hi k n U TR h1 hreg
+  have hipos : 0 < hi := by
+    unfold endL0OK at h1
+    simp only [Bool.and_eq_true] at h1
+    exact l0OK_pos ts hi n h1.2
+  intro x hx
+  have hpos : 0 < |x| := abs_pos.mpr hx.1.ne'
+  have hxa : |x| = x := abs_of_pos hx.1
+  have hlog1 : Real.log |x| ≤ Real.log (hi : ℝ) := by
+    rw [hxa]; exact Real.log_le_log hx.1 hx.2
+  have hlog2 : Real.log (hi : ℝ) ≤ -(69 / 100 * (kR : ℝ)) := by
+    have h2 : (hi : ℝ) ≤ ((1 : ℝ) / 2) ^ kR := by
+      have := (Rat.cast_le (K := ℝ)).mpr hRk; push_cast at this; exact this
+    have hR0' : (0 : ℝ) < (hi : ℝ) := by exact_mod_cast hipos
+    have h3 := Real.log_le_log hR0' h2
+    rw [Real.log_pow, one_div, Real.log_inv] at h3
+    have := Real.log_two_gt_d9
+    have hk0 : (0 : ℝ) ≤ kR := Nat.cast_nonneg kR
+    nlinarith
+  have hc' : (0 : ℝ) ≤ ((endC fq [] 0 + l0C ts : ℚ) : ℝ) := by exact_mod_cast hc
+  have hT' : ((TR + U + l0Const ts hi n - (endC fq [] 0 + l0C ts) * (69 / 100 * (kR : ℚ)) : ℚ) : ℝ) ≤ (T : ℝ) := by
+    exact_mod_cast hT
+  push_cast at hT'
+  have := hb x hx
+  have hm : ((endC fq [] 0 + l0C ts : ℚ) : ℝ) * Real.log |x| ≤
+      ((endC fq [] 0 + l0C ts : ℚ) : ℝ) * (-(69 / 100 * (kR : ℝ))) :=
+    mul_le_mul_of_nonneg_left (hlog1.trans hlog2) hc'
+  push_cast at hm this ⊢
+  linarith
+
+#print axioms l0_laurent_le
+#print axioms endL0_sound
+#print axioms endL0U_sound
 
 end Engine
 
