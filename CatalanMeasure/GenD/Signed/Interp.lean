@@ -1108,6 +1108,173 @@ theorem constTotal_interp_le {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (h
   nlinarith [hq', hcv]
 
 
+/-! ### 10b. The curvature `curvQ` as three bilinear blocks
+
+`restQ` is a quadratic form in the data `(v, a, R, t, μ, μf, b)` plus an affine part.  Write
+`curvBlock Z X Y` for its bilinear form (scalars `ν, sp, K, τ` of `Z`, left argument `X`, right
+argument `Y`).  Then `curvQ DA DB = AA - AB - BA + BB` with `AA = curvBlock DA DA DA`,
+`AB = curvBlock DA DA DB`, and so on (`curvQ_blocks`).  `AA` and `BB` depend on one trial only
+(shared between neighbouring intervals), `AB` and `BA` on the pair. -/
+
+/-- The pairing `Σ u(n+1)/(n+1) · v(n+1)` underlying `barrierTrialNormSq`. -/
+def nsqBil (u v : ℕ → ℝ) : ℝ := ∑' n, wsh u n * sh v n
+
+/-- The pairing `Σ refTilt R (n+1) · a (n+1)` of the reference tilt with the trial `a`. -/
+def raBil (R a : ℕ → ℝ) : ℝ := ∑' n, rt R n * sh a n
+
+/-- The weighted bilinear `b`-sum. -/
+def sumBil (w : ℕ → ℝ) (K : ℕ) (b b' : ℕ → ℝ) : ℝ :=
+  ∑ i ∈ Finset.range K, w i * (b (i + 1) * b' (i + 1))
+
+/-- The weights of the quadratic part of `-denConst`. -/
+def denW (D : SignedData) (i : ℕ) : ℝ :=
+  ((D.sp : ℝ) * ((D.sp : ℝ) - 1) / D.ν ^ 2) * (2 / ((i + 1 : ℕ) : ℝ)) + 2 * (D.sp : ℝ) / D.ν ^ 2
+
+/-- The bilinear form of the quadratic part `restQ`, with the scalars of `Z`, the left data of `X`
+and the right data of `Y`. -/
+def curvBlock (Z X Y : SignedData) : ℝ :=
+  (1 / 2) * nsqBil X.v Y.v + 2 * nsqBil X.a Y.a + (1 / 2) * refBil X.μ Y.μ +
+    (1 / 2) * refBil X.μf Y.μf - 2 * raBil X.R Y.a + sumBil (denW Z) Z.K X.b Y.b +
+    (1 / 2) * ip X.R Y.R - (1 / 2) * ip (mpos X.μ Z.τ) (mpos Y.μ Z.τ) +
+    (1 / 2) * ip X.t Y.t - (1 / 2) * ip (mneg X.μ Z.τ) (mneg Y.μ Z.τ)
+
+/-- The part of `restQ` that is affine in the data. -/
+def restLin (D : SignedData) (p : ℕ) : ℝ :=
+  -((p : ℝ) / D.ν) ^ 2 * Real.log 2 + pinZeroError D.ν D.e + D.eD7 p + D.eD7f p +
+    (2 * (-(1 / 2 : ℝ) * ((D.sp : ℝ) / D.ν) ^ 2 * Real.log 2 +
+      ((Real.log 2 - 2 * Real.log (1 - realEnergyTau D.e ^ 2)) / (2 * D.ν) + 2 * D.e)) +
+      (D.sp : ℝ) * Real.log Real.pi / D.ν ^ 2) + 2 * ((D.sp : ℝ) / D.ν) * D.Sup -
+    (((D.sp : ℝ) * ((D.sp : ℝ) - 1) * (-Real.log 2) + (D.sp : ℝ) * Real.log Real.pi) / D.ν ^ 2)
+
+theorem sumBil_denW_self (D : SignedData) :
+    sumBil (denW D) D.K D.b D.b =
+      ((D.sp : ℝ) * ((D.sp : ℝ) - 1) / D.ν ^ 2) *
+          (∑ i ∈ Finset.range D.K, 2 * D.b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+        (2 * (D.sp : ℝ) / D.ν ^ 2) * ∑ i ∈ Finset.range D.K, D.b (i + 1) ^ 2 := by
+  unfold sumBil denW
+  rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl (fun i _ => by ring)
+
+/-- `restQ` is the affine part plus the diagonal of the bilinear form. -/
+theorem restQ_eq_lin_block (D : SignedData) (p : ℕ) :
+    restQ D p = restLin D p + curvBlock D D D := by
+  have hra : D.ra = raBil D.R D.a := rfl
+  unfold restQ restLin curvBlock
+  rw [sumBil_denW_self, hra, refEnergy_eq_refBil, refEnergy_eq_refBil]
+  simp only [nsq_eq_tsum, nsqBil, raBil, SignedData.Kq, SignedData.denConst]
+  ring
+
+theorem restLin_interp {DA DB : SignedData} (hc : InterpCompat DA DB) (l c : ℝ) (p : ℕ) :
+    restLin (SignedData.interp DA DB l c) p =
+      (1 - l) * restLin DA p + l * restLin DB p := by
+  have hν : DB.ν = DA.ν := hc.ν
+  have he : DB.e = DA.e := hc.e
+  have hsp : DB.sp = DA.sp := hc.sp
+  have h1 := eD7_interp hc l c p
+  have h2 := eD7f_interp hc l c p
+  unfold restLin
+  rw [h1, h2, interp_ν, interp_e, interp_sp, interp_Sup, hν, he, hsp]
+  ring
+
+theorem sumBil_linSeq (w : ℕ → ℝ) (K : ℕ) (b b' : ℕ → ℝ) (l : ℝ) :
+    sumBil w K (linSeq l b b') (linSeq l b b') =
+      (1 - l) * (1 - l) * sumBil w K b b + (1 - l) * l * sumBil w K b b' +
+        l * (1 - l) * sumBil w K b' b + l * l * sumBil w K b' b' := by
+  have e : ∀ i, w i * (linSeq l b b' (i + 1) * linSeq l b b' (i + 1)) =
+      (1 - l) * (1 - l) * (w i * (b (i + 1) * b (i + 1))) +
+        (1 - l) * l * (w i * (b (i + 1) * b' (i + 1))) +
+        l * (1 - l) * (w i * (b' (i + 1) * b (i + 1))) +
+        l * l * (w i * (b' (i + 1) * b' (i + 1))) := fun i => by
+    simp only [linSeq]; ring
+  unfold sumBil
+  rw [Finset.sum_congr rfl (fun i _ => e i)]
+  simp only [Finset.sum_add_distrib, ← Finset.mul_sum]
+
+theorem nsqBil_linSeq {u v : ℕ → ℝ} (hu : Summable fun k => |u k|) (hv : Summable fun k => |v k|)
+    (l : ℝ) :
+    nsqBil (linSeq l u v) (linSeq l u v) =
+      (1 - l) * (1 - l) * nsqBil u u + (1 - l) * l * nsqBil u v +
+        l * (1 - l) * nsqBil v u + l * l * nsqBil v v := by
+  unfold nsqBil
+  rw [wsh_linSeq, sh_linSeq]
+  exact tsum_linSeq_mul l (summable_mul_bdd (abs_wsh_le hu) (summable_abs_sh hu))
+    (summable_mul_bdd (abs_wsh_le hu) (summable_abs_sh hv))
+    (summable_mul_bdd (abs_wsh_le hv) (summable_abs_sh hu))
+    (summable_mul_bdd (abs_wsh_le hv) (summable_abs_sh hv))
+
+theorem raBil_linSeq {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {R R' a a' : ℕ → ℝ} (hR : IsGeom τ R)
+    (hR' : IsGeom τ R') (ha : Summable fun k => |a k|) (ha' : Summable fun k => |a' k|) (l : ℝ) :
+    raBil (linSeq l R R') (linSeq l a a') =
+      (1 - l) * (1 - l) * raBil R a + (1 - l) * l * raBil R a' +
+        l * (1 - l) * raBil R' a + l * l * raBil R' a' := by
+  obtain ⟨M, hM⟩ := abs_rt_le hτ hR
+  obtain ⟨M', hM'⟩ := abs_rt_le hτ hR'
+  unfold raBil
+  rw [rt_linSeq, sh_linSeq]
+  exact tsum_linSeq_mul l (summable_mul_bdd hM (summable_abs_sh ha))
+    (summable_mul_bdd hM (summable_abs_sh ha')) (summable_mul_bdd hM' (summable_abs_sh ha))
+    (summable_mul_bdd hM' (summable_abs_sh ha'))
+
+theorem refBil_mix_pair {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ}
+    {CA CB : ℝ} (hCA : 0 ≤ CA) (hA : ∀ τ, BD (μA τ) CA) (hB : ∀ τ, BD (μB τ) CB) :
+    refBil (mixFam l μA μB) (mixFam l μA μB) =
+      (1 - l) * (1 - l) * refBil μA μA + (1 - l) * l * refBil μA μB +
+        l * (1 - l) * refBil μB μA + l * l * refBil μB μB :=
+  refBil_mix hl0 hl1 (hCA.trans (le_max_left CA CB))
+    (fun τ => BD_mono (hA τ) (le_max_left _ _)) (fun τ => BD_mono (hB τ) (le_max_right _ _))
+    (fun τ => BD_mono (hA τ) (le_max_left _ _)) (fun τ => BD_mono (hB τ) (le_max_right _ _))
+
+/-- Four-term expansion of the bilinear form along the segment. -/
+theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1)
+    (hc : InterpCompat DA DB) (rA : SignedRegular DA) (rB : SignedRegular DB) :
+    curvBlock DA (SignedData.interp DA DB l c) (SignedData.interp DA DB l c) =
+      (1 - l) * (1 - l) * curvBlock DA DA DA + (1 - l) * l * curvBlock DA DA DB +
+        l * (1 - l) * curvBlock DA DB DA + l * l * curvBlock DA DB DB := by
+  have hτ := rA.tau
+  have gR := SignedRegular.hRτ hc rB
+  have gt := SignedRegular.htτ hc rB
+  have gp1 : IsGeom DA.τ (mpos DA.μ DA.τ) := isGeom_refMoment (rA.hμ true) hτ.1
+  have gp2 : IsGeom DA.τ (mpos DB.μ DA.τ) := isGeom_refMoment (rB.hμ true) hτ.1
+  have gn1 : IsGeom DA.τ (mneg DA.μ DA.τ) := isGeom_mneg (rA.hμ false) hτ.1
+  have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg (rB.hμ false) hτ.1
+  have n1 := nsqBil_linSeq rA.hv rB.hv l
+  have n2 := nsqBil_linSeq rA.ha rB.ha l
+  have r1 := refBil_mix_pair hl0 hl1 rA.hC rA.hμ rB.hμ
+  have r2 := refBil_mix_pair hl0 hl1 rA.hCf rA.hμf rB.hμf
+  have r3 := raBil_linSeq hτ rA.hR gR rA.ha rB.ha l
+  have r4 := sumBil_linSeq (denW DA) DA.K DA.b DB.b l
+  have i1 := ip_linSeq hτ rA.hR gR rA.hR gR l
+  have i2 := ip_linSeq hτ rA.ht gt rA.ht gt l
+  have i3 := ip_linSeq hτ gp1 gp2 gp1 gp2 l
+  have i4 := ip_linSeq hτ gn1 gn2 gn1 gn2 l
+  unfold curvBlock
+  simp only [interp_v, interp_a, interp_R, interp_t, interp_b, interp_μ, interp_μf, interp_τ,
+    mpos_mix hl0 hl1 (rA.hμ true) (rB.hμ true), mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
+  rw [n1, n2, r1, r2, r3, r4, i1, i2, i3, i4]
+  ring
+
+/-- **The curvature as three bilinear blocks.**  `curvQ = AA - AB - BA + BB`, where `AA`
+(`curvBlock DA DA DA`) and `BB` depend on one endpoint trial each and `AB`, `BA` on the pair. -/
+theorem curvQ_blocks {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : SignedRegular DA)
+    (rB : SignedRegular DB) (p : ℕ) :
+    curvQ DA DB p = curvBlock DA DA DA - curvBlock DA DA DB - curvBlock DA DB DA +
+      curvBlock DA DB DB := by
+  have key : ∀ l : ℝ, 0 ≤ l → l ≤ 1 → restQ (SignedData.interp DA DB l 0) p =
+      (1 - l) * restLin DA p + l * restLin DB p +
+        ((1 - l) * (1 - l) * curvBlock DA DA DA + (1 - l) * l * curvBlock DA DA DB +
+          l * (1 - l) * curvBlock DA DB DA + l * l * curvBlock DA DB DB) := by
+    intro l hl0 hl1
+    rw [restQ_eq_lin_block, restLin_interp hc, ← curvBlock_interp (c := 0) hl0 hl1 hc rA rB]
+    rfl
+  have h0 := key 0 le_rfl zero_le_one
+  have h1 := key 1 zero_le_one le_rfl
+  have h2 := key (1 / 2) (by norm_num) (by norm_num)
+  rw [restQ_interp_zero] at h0
+  rw [restQ_interp_one hc] at h1
+  unfold curvQ
+  rw [h0, h1, h2]
+  ring
+
 /-! ### 11. Summing the fixed-row fields -/
 
 theorem fixedFields_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1)
@@ -1614,6 +1781,7 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.refBil_mix
 #print axioms CatalanMeasure.Signed.isQuadOn_restQ
 #print axioms CatalanMeasure.Signed.constTotal_interp_le
+#print axioms CatalanMeasure.Signed.curvQ_blocks
 #print axioms CatalanMeasure.Signed.IntervalEnds.e_mem
 #print axioms CatalanMeasure.Signed.IntervalEnds.v_summable
 #print axioms CatalanMeasure.Signed.IntervalEnds.R_geom
