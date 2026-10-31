@@ -578,6 +578,75 @@ theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → 
     (fun xn gp yn yp h => hCls i N α k q m1 m2 xn gp yn yp h)
 
 
+/-! ### 6. Building the pair from ONE single-trial witness -/
+
+/-- The margin only concerns the negatives `xn` (it is a property of the configuration, not of the
+trial), so a pair at margin `c'` is a pair at every smaller margin. -/
+def SpikePair.monoMargin {DA DB : SignedData} {c' c'' : ℝ} {k q : ℕ} {xn : Fin k → ℝ}
+    {gp : Fin q → ℝ} (P : SpikePair DA DB c' xn gp) (h : c'' ≤ c') :
+    SpikePair DA DB c'' xn gp :=
+  { P with hxcap := fun i => by linarith [P.hxcap i] }
+
+def PairCls.monoMargin {DA DB : SignedData} {c' c'' bcap : ℝ} {k q m1 m2 : ℕ}
+    {xn : Fin k → ℝ} {gp : Fin q → ℝ} {yn : Fin m1 → ℝ} {yp : Fin m2 → ℝ}
+    (C : PairCls DA DB c' bcap xn gp yn yp) (h : c'' ≤ c') :
+    PairCls DA DB c'' bcap xn gp yn yp :=
+  { C with P := C.P.monoMargin h }
+
+/-- **The pair from one single-trial witness.**  A spike witness `WA` of the trial `DA` (the
+existing class `SpikeCls`) fixes the configuration (split, `m`, phantom, pole `ρ`, margin); the
+only extra data for `DB` are its own `(P')` constant `c1B` and its own cost condition for the SAME
+configuration (the cost condition contains the trial's spike constant `cs`).  The margin is that of
+the witness (it does not depend on the trial). -/
+def SpikePair.ofWitness {DA DB : SignedData} {c' : ℝ} {k q : ℕ} {xn : Fin k → ℝ} {gp : Fin q → ℝ}
+    (WA : SpikeWitness DA c' xn gp) (c1B : ℝ) (hc1B : 0 < c1B)
+    (hPB : SpikeChebOK DB WA.m WA.ρ c1B)
+    (hcostB : SpikeCostOK DB WA.m xn WA.y WA.z WA.zph WA.ρ) : SpikePair DA DB c' xn gp where
+  q' := WA.q'
+  M := WA.M
+  m := WA.m
+  y := WA.y
+  z := WA.z
+  zph := WA.zph
+  σ := WA.σ
+  hσ := WA.hσ
+  hM := WA.hM
+  hm := WA.hm
+  hxcap := WA.hxcap
+  hy_not_spike := WA.hy_not_spike
+  hz_spike := WA.hz_spike
+  hzph := WA.hzph
+  ρ := WA.ρ
+  c1A := WA.c1
+  c1B := c1B
+  hρ := WA.hρ
+  hρd := WA.hρd
+  hc1A := WA.hc1
+  hc1B := hc1B
+  hPA := WA.hP
+  hPB := hPB
+  hcostA := WA.hcost
+  hcostB := hcostB
+
+/-- `PairCls` from a single-trial witness `WA` plus the endpoint-`B` ingredients on the same
+configuration, the environments and the cap. -/
+def PairCls.ofWitness {DA DB : SignedData} {c' bcap : ℝ} {k q m1 m2 : ℕ} {xn : Fin k → ℝ}
+    {gq : Fin q → ℝ} {yn : Fin m1 → ℝ} {yp : Fin m2 → ℝ}
+    (hc : InterpCompat DA DB) (rA : SignedRegular DA) (rB : SignedRegular DB) (EA : SpikeEnv DA)
+    (EB : SpikeEnv DB) (WA : SpikeWitness DA c' (Fin.append xn yn) (Fin.append gq yp))
+    (c1B : ℝ) (hc1B : 0 < c1B) (hPB : SpikeChebOK DB WA.m WA.ρ c1B)
+    (hcostB : SpikeCostOK DB WA.m (Fin.append xn yn) WA.y WA.z WA.zph WA.ρ)
+    (hbcap : DA.θ < bcap) (hyp : ∀ p, yp p ≤ 1 - bcap) :
+    PairCls DA DB c' bcap xn gq yn yp where
+  compat := hc
+  rA := rA
+  rB := rB
+  EA := EA
+  EB := EB
+  P := SpikePair.ofWitness WA c1B hc1B hPB hcostB
+  hbcap := hbcap
+  hyp := hyp
+
 end
 
 end CatalanMeasure.Signed
@@ -603,3 +672,5 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.SpikePair.toWitness
 #print axioms CatalanMeasure.Signed.spikeCompareFixed_interp
 #print axioms CatalanMeasure.Signed.spikeFix_of_ends
+#print axioms CatalanMeasure.Signed.SpikePair.monoMargin
+#print axioms CatalanMeasure.Signed.PairCls.ofWitness
