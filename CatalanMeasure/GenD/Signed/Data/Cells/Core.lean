@@ -3240,4 +3240,1148 @@ theorem blockFacts_of_ok4 (fq : FieldQ) (cb blo bhi : ℚ) (M : ℕ) (CbP : List
   simp only [blockOK3, blockTailCheck3, Bool.and_eq_true, decide_eq_true_eq]
   refine ⟨⟨⟨⟨hcb, ⟨⟨⟨⟨⟨⟨hbb, hM⟩, hlen⟩, e2⟩, hpl'⟩, hpd⟩, hBM⟩⟩, hlb⟩, hpoles⟩, hpd⟩
 
+
+/-! ## Engine: field splitting, box bounds `V`, end cells (`u log u`), Laurent cells (31 Oct 2026)
+
+* `fqKeep`/`fqDrop`, `fieldTower_split`, `lfieldTower_split`: a field is the sum of the field of the
+  kept pieces and of the dropped pieces (any Boolean predicates).
+* Box `V` (`boxOK`, `boxOK_sound`): exact polynomial range `s₀ + Σ |s_k| r^k` (`polyTow_taylor`,
+  `polyTow_range`), crude logarithmic pieces `|P| 7k/10` (`plogBox`), and per pole the unimodal range
+  (`poleG_le_cand`: the maximum of `Re[ρ log(x - p)]` on an interval avoiding `p` is at an end or, if
+  `rr < 0`, at the critical point `pr + ri pi / rr`), each value bounded by the integer pole
+  logarithm `poleTermI` (`ptUB`, `poleBox`, `poleBox_spec`).  `hybOK`: any certificate of the field
+  without its near poles plus the boxed near poles.
+* End cells (`endOK`, `endOK_sound`, `endUOK`, `endUOK_sound`): the pieces singular at `e` (log pieces
+  at `e`, real poles at `e`, Laurent terms with factor `log|x - e|`) are `c log|x - e|` plus a
+  `u log u` remainder `≤ G₁ R 7k/10` (`sing_piece_le`, `ulog_le`); the regular part `regQ`/`regL`
+  is certified by any cover (`hreg`).  `endOK_sound0`/`endUOK_sound0` for fields without Laurent part.
+* Laurent cells (`lcellW`, `lcellW_sound`, `lBlockOK`, `lBlockFacts_of_ok`): `cellW` plus the Laurent
+  coefficients `lCoef`/`lErr` (anchor = entry 0), Laurent block tail `lTailCheck` with logarithm
+  bounds `llbOK`; `jump_le` for the spike jump cell. -/
+
+section Engine
+
+/-! ### Splitting a field -/
+
+theorem sum_map_filter_split {α : Type} (l : List α) (p : α → Bool) (f : α → ℝ) :
+    (l.map f).sum = ((l.filter p).map f).sum + ((l.filter (fun a => !p a)).map f).sum := by
+  induction l with
+  | nil => simp
+  | cons a l ih =>
+    cases h : p a
+    · simp [h, ih]; ring
+    · simp [h, ih]; ring
+
+def fqKeep (fq : FieldQ) (pl : List ℚ × ℚ → Bool) (pp : PoleR → Bool) : FieldQ :=
+  ⟨fq.poly, fq.plogs.filter pl, fq.poles.filter pp⟩
+
+def fqDrop (fq : FieldQ) (pl : List ℚ × ℚ → Bool) (pp : PoleR → Bool) : FieldQ :=
+  ⟨[], fq.plogs.filter (fun t => !pl t), fq.poles.filter (fun q => !pp q)⟩
+
+theorem fieldTower_split (fq : FieldQ) (pl : List ℚ × ℚ → Bool) (pp : PoleR → Bool) (x : ℝ) :
+    fieldTower fq (poleF fq.poles) 0 x =
+      fieldTower (fqKeep fq pl pp) (poleF (fqKeep fq pl pp).poles) 0 x +
+        fieldTower (fqDrop fq pl pp) (poleF (fqDrop fq pl pp).poles) 0 x := by
+  simp only [fieldTower, plogSumTower, poleTower_zero, poleF, fqKeep, fqDrop]
+  rw [sum_map_filter_split fq.plogs pl, sum_map_filter_split fq.poles pp]
+  simp only [polyTow]
+  ring
+
+theorem lfieldTower_split (ts : List LTerm) (p : LTerm → Bool) (x : ℝ) :
+    lfieldTower ts 0 x = lfieldTower (ts.filter p) 0 x + lfieldTower (ts.filter (fun t => !p t)) 0 x := by
+  unfold lfieldTower
+  exact sum_map_filter_split ts p _
+
+/-! ### Exact Taylor identity of a polynomial, and its range on an interval -/
+
+theorem polyTow_taylor (p : List ℚ) (c : ℚ) (x : ℝ) :
+    polyTow p 0 x = ∑ j ∈ Finset.range (p.length + 1),
+      (((shiftL c p.length p).getD j 0 : ℚ) : ℝ) * (x - c) ^ j := by
+  have hx : x ∈ Icc ((c : ℝ) - (|x - c| + 1)) ((c : ℝ) + (|x - c| + 1)) := by
+    constructor <;> linarith [le_abs_self (x - c), neg_abs_le (x - c)]
+  have hT := isTower_polyTow p (c : ℝ) (|x - c| + 1) (p.length + 1)
+  have key := taylor_tower' (c : ℝ) (|x - c| + 1) 0 (p.length + 1) (polyTow p) hT.cont
+    (fun j hj y hy => hT.der j hj y hy)
+    (fun y _ => by rw [polyTow_eq_zero p (p.length + 1) (by omega) y]; simp) x hx
+  simp only [zero_mul, zero_div] at key
+  have e := abs_nonpos_iff.mp key
+  rw [sub_eq_zero] at e
+  rw [e]
+  refine Finset.sum_congr rfl (fun j hj => ?_)
+  have hj' : j ≤ p.length := Nat.lt_succ_iff.mp (Finset.mem_range.mp hj)
+  rw [shiftL_spec c p.length p j hj']
+  ring
+
+/-- `Σ_i |a_i| r^(k+i)` -/
+def apSum (r : ℚ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | k, a :: as => qabs' a * r ^ k + apSum r (k + 1) as
+
+theorem apSum_cast (r : ℚ) : ∀ (l : List ℚ) (k : ℕ),
+    ((apSum r k l : ℚ) : ℝ) = ∑ i ∈ Finset.range l.length, |((l.getD i 0 : ℚ) : ℝ)| * (r : ℝ) ^ (k + i) := by
+  intro l
+  induction l with
+  | nil => intro k; simp [apSum]
+  | cons a as ih =>
+    intro k
+    rw [apSum, List.length_cons, Finset.sum_range_succ']
+    push_cast
+    rw [ih (k + 1), qabs'_cast]
+    simp only [List.getD_cons_zero, List.getD_cons_succ, add_zero]
+    rw [add_comm]
+    congr 1
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [show k + 1 + i = k + (i + 1) by omega]
+
+/-- Upper and absolute bounds of a polynomial on `[c - r, c + r]` from the exact shift at `c`:
+`s₀ + Σ_{k ≥ 1} |s_k| r^k` and `|s₀| + Σ_{k ≥ 1} |s_k| r^k`. -/
+def polyUB (p : List ℚ) (c r : ℚ) : ℚ :=
+  match shiftLK c p.length p with
+  | [] => 0
+  | s0 :: ss => s0 + apSum r 1 ss
+
+def polyAB (p : List ℚ) (c r : ℚ) : ℚ :=
+  match shiftLK c p.length p with
+  | [] => 0
+  | s0 :: ss => qabs' s0 + apSum r 1 ss
+
+theorem polyTow_range (p : List ℚ) (c r : ℚ) (x : ℝ) (hx : |x - c| ≤ r) :
+    polyTow p 0 x ≤ ((polyUB p c r : ℚ) : ℝ) ∧ |polyTow p 0 x| ≤ ((polyAB p c r : ℚ) : ℝ) := by
+  have hr : (0 : ℝ) ≤ r := (abs_nonneg _).trans hx
+  rw [polyTow_taylor p c x]
+  unfold polyUB polyAB
+  rw [shiftLK_eq']
+  have hlen := shiftL_length c p.length p
+  rcases hs : shiftL c p.length p with _ | ⟨s0, ss⟩
+  · rw [hs] at hlen; simp at hlen
+  · rw [hs] at hlen
+    simp only [List.length_cons] at hlen
+    have hss : ss.length = p.length := by omega
+    have hcast := apSum_cast r ss 1
+    rw [hss] at hcast
+    rw [Finset.sum_range_succ']
+    simp only [List.getD_cons_succ, List.getD_cons_zero, pow_zero, mul_one]
+    have hterm : ∀ i ∈ Finset.range p.length,
+        |((ss.getD i 0 : ℚ) : ℝ) * (x - c) ^ (i + 1)| ≤ |((ss.getD i 0 : ℚ) : ℝ)| * (r : ℝ) ^ (1 + i) := by
+      intro i _
+      rw [abs_mul, abs_pow, add_comm 1 i]
+      exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ (abs_nonneg _) hx _) (abs_nonneg _)
+    have hsum : |∑ i ∈ Finset.range p.length, ((ss.getD i 0 : ℚ) : ℝ) * (x - c) ^ (i + 1)| ≤
+        ((apSum r 1 ss : ℚ) : ℝ) := by
+      rw [hcast]
+      exact (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum hterm)
+    have h1 := abs_le.mp hsum
+    push_cast
+    rw [qabs'_cast]
+    constructor
+    · linarith [h1.2]
+    · refine (abs_add_le _ _).trans ?_
+      linarith [hsum]
+
+/-! ### Box bound of a pole term: unimodal on an interval avoiding the pole -/
+
+theorem qt_zero_eq (q : PoleR) (x : ℝ) :
+    qt q 0 x = ((q.rr : ℝ) * (x - q.pr) - (q.ri : ℝ) * q.pi) / ((x - q.pr) ^ 2 + (q.pi : ℝ) ^ 2) := by
+  unfold qt qe
+  have hz : ((x : ℂ) - q.pc) = ⟨x - q.pr, -(q.pi : ℝ)⟩ := by
+    apply Complex.ext <;> simp [PoleR.pc]
+  rw [hz]
+  simp only [pow_zero, Nat.factorial_zero, Nat.cast_one, mul_one, zero_add, pow_one, PoleR.rho,
+    Complex.mul_re, Complex.inv_re, Complex.inv_im, Complex.normSq_mk]
+  ring
+
+theorem le_of_deriv_nonneg_Icc {g g' : ℝ → ℝ} {a b : ℝ} (hab : a ≤ b)
+    (hd : ∀ y ∈ Icc a b, HasDerivAt g (g' y) y) (hs : ∀ y ∈ Icc a b, 0 ≤ g' y) : g a ≤ g b := by
+  have hc : ContinuousOn g (Icc a b) := fun y hy => (hd y hy).continuousAt.continuousWithinAt
+  have hm := monotoneOn_of_deriv_nonneg (convex_Icc a b) hc
+    (fun y hy => by
+      rw [interior_Icc] at hy
+      exact (hd y ⟨hy.1.le, hy.2.le⟩).differentiableAt.differentiableWithinAt)
+    (fun y hy => by
+      rw [interior_Icc] at hy
+      rw [(hd y ⟨hy.1.le, hy.2.le⟩).deriv]
+      exact hs y ⟨hy.1.le, hy.2.le⟩)
+  exact hm ⟨le_rfl, hab⟩ ⟨hab, le_rfl⟩ hab
+
+theorem le_of_deriv_nonpos_Icc {g g' : ℝ → ℝ} {a b : ℝ} (hab : a ≤ b)
+    (hd : ∀ y ∈ Icc a b, HasDerivAt g (g' y) y) (hs : ∀ y ∈ Icc a b, g' y ≤ 0) : g b ≤ g a := by
+  have := le_of_deriv_nonneg_Icc (g := fun y => -g y) (g' := fun y => -g' y) hab
+    (fun y hy => (hd y hy).neg) (fun y hy => by linarith [hs y hy])
+  linarith
+
+/-- the critical point of a pole term (`Re[ρ/(x - p)] = 0`) -/
+def poleXs (q : PoleR) : ℚ := q.pr + q.ri * q.pi / q.rr
+
+/-- The candidate points of the maximum of a pole term on `[lo, hi]`. -/
+def poleCands (q : PoleR) (lo hi : ℚ) : List ℚ :=
+  if q.rr < 0 ∧ lo ≤ poleXs q ∧ poleXs q ≤ hi then [lo, hi, poleXs q] else [lo, hi]
+
+noncomputable def poleG (q : PoleR) (y : ℝ) : ℝ := (q.rho * Complex.log ((y : ℂ) - q.pc)).re
+
+/-- **The unimodal range of a pole term**: on an interval avoiding the pole, the term is at most
+its value at one of the candidate points (the ends, and the critical point if it is a maximum). -/
+theorem poleG_le_cand (q : PoleR) (hreal : q.pi = 0 → q.ri = 0) (lo hi : ℚ)
+    (havoid : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), (y : ℂ) ≠ q.pc) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), ∃ y ∈ poleCands q lo hi, poleG q x ≤ poleG q (y : ℝ) := by
+  intro x hx
+  have hd : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), HasDerivAt (poleG q) (qt q 0 y) y :=
+    fun y hy => hasDerivAt_pole_term q hreal y (havoid y hy)
+  have hD : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), 0 < (y - q.pr) ^ 2 + (q.pi : ℝ) ^ 2 := by
+    intro y hy
+    by_cases hpi : (q.pi : ℝ) = 0
+    · have : y - q.pr ≠ 0 := by
+        intro h0; apply havoid y hy
+        apply Complex.ext
+        · simp [PoleR.pc]; linarith
+        · simp [PoleR.pc]; exact_mod_cast hpi.symm
+      positivity
+    · positivity
+  have hsign : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ),
+      (0 ≤ (q.rr : ℝ) * (y - q.pr) - (q.ri : ℝ) * q.pi → 0 ≤ qt q 0 y) ∧
+      ((q.rr : ℝ) * (y - q.pr) - (q.ri : ℝ) * q.pi ≤ 0 → qt q 0 y ≤ 0) := by
+    intro y hy
+    rw [qt_zero_eq]
+    exact ⟨fun h => div_nonneg h (hD y hy).le, fun h => div_nonpos_of_nonpos_of_nonneg h (hD y hy).le⟩
+  have sub1 : ∀ a b : ℝ, (lo : ℝ) ≤ a → b ≤ hi → Icc a b ⊆ Icc (lo : ℝ) (hi : ℝ) :=
+    fun a b ha hb y hy => ⟨ha.trans hy.1, hy.2.trans hb⟩
+  by_cases hrr : 0 ≤ q.rr
+  · have hrr' : (0 : ℝ) ≤ q.rr := by exact_mod_cast hrr
+    by_cases hsx : 0 ≤ (q.rr : ℝ) * (x - q.pr) - (q.ri : ℝ) * q.pi
+    · refine ⟨hi, by unfold poleCands; split_ifs <;> simp, ?_⟩
+      refine le_of_deriv_nonneg_Icc hx.2 (fun y hy => hd y (sub1 _ _ hx.1 le_rfl hy))
+        (fun y hy => (hsign y (sub1 _ _ hx.1 le_rfl hy)).1 ?_)
+      nlinarith [hy.1]
+    · push Not at hsx
+      refine ⟨lo, by unfold poleCands; split_ifs <;> simp, ?_⟩
+      refine le_of_deriv_nonpos_Icc hx.1 (fun y hy => hd y (sub1 _ _ le_rfl hx.2 hy))
+        (fun y hy => (hsign y (sub1 _ _ le_rfl hx.2 hy)).2 ?_)
+      nlinarith [hy.2]
+  · push Not at hrr
+    have hrr' : (q.rr : ℝ) < 0 := by exact_mod_cast hrr
+    have hxs : ((poleXs q : ℚ) : ℝ) = q.pr + q.ri * q.pi / q.rr := by unfold poleXs; push_cast; ring
+    have hs_eq : ∀ y : ℝ, (q.rr : ℝ) * (y - q.pr) - (q.ri : ℝ) * q.pi =
+        (q.rr : ℝ) * (y - (poleXs q : ℝ)) := by
+      intro y; rw [hxs]; have hne : (q.rr : ℝ) ≠ 0 := hrr'.ne; field_simp; ring
+    by_cases h1 : (lo : ℝ) ≤ (poleXs q : ℝ) ∧ ((poleXs q : ℚ) : ℝ) ≤ hi
+    · have hin : q.rr < 0 ∧ lo ≤ poleXs q ∧ poleXs q ≤ hi :=
+        ⟨hrr, by exact_mod_cast h1.1, by exact_mod_cast h1.2⟩
+      refine ⟨poleXs q, by unfold poleCands; rw [if_pos hin]; simp, ?_⟩
+      by_cases hle : x ≤ (poleXs q : ℝ)
+      · refine le_of_deriv_nonneg_Icc hle (fun y hy => hd y (sub1 _ _ hx.1 h1.2 hy))
+          (fun y hy => (hsign y (sub1 _ _ hx.1 h1.2 hy)).1 ?_)
+        rw [hs_eq y]; nlinarith [hy.2]
+      · push Not at hle
+        refine le_of_deriv_nonpos_Icc hle.le (fun y hy => hd y (sub1 _ _ h1.1 hx.2 hy))
+          (fun y hy => (hsign y (sub1 _ _ h1.1 hx.2 hy)).2 ?_)
+        rw [hs_eq y]; nlinarith [hy.1]
+    · rcases not_and_or.mp h1 with h2 | h2
+      · push Not at h2
+        refine ⟨lo, by unfold poleCands; split_ifs <;> simp, ?_⟩
+        refine le_of_deriv_nonpos_Icc hx.1 (fun y hy => hd y (sub1 _ _ le_rfl hx.2 hy))
+          (fun y hy => (hsign y (sub1 _ _ le_rfl hx.2 hy)).2 ?_)
+        rw [hs_eq y]; nlinarith [hy.1]
+      · push Not at h2
+        refine ⟨hi, by unfold poleCands; split_ifs <;> simp, ?_⟩
+        refine le_of_deriv_nonneg_Icc hx.2 (fun y hy => hd y (sub1 _ _ hx.1 le_rfl hy))
+          (fun y hy => (hsign y (sub1 _ _ hx.1 le_rfl hy)).1 ?_)
+        rw [hs_eq y]; nlinarith [hy.2]
+
+/-- an upper bound of a pole term at a rational point (integer logarithms, grid `2^-Pg`) -/
+def ptUB (Pg : ℕ) (q : PoleR) (y : ℚ) : Option ℚ :=
+  match poleTermI Pg q y with
+  | some (w, e) => some (((w + e : ℤ) : ℚ) / 2 ^ Pg)
+  | none => none
+
+theorem ptUB_spec (Pg : ℕ) (hPg : Pg ≤ 56) (q : PoleR) (y v : ℚ) (h : ptUB Pg q y = some v) :
+    poleG q (y : ℝ) ≤ (v : ℝ) := by
+  unfold ptUB at h
+  split at h
+  · rename_i w e hw
+    simp only [Option.some.injEq] at h
+    subst h
+    have := poleTermI_spec Pg hPg q y w e hw
+    have h2 := (abs_le.mp this).2
+    unfold poleG
+    have e1 : (((((w + e : ℤ) : ℚ) / 2 ^ Pg : ℚ)) : ℝ) = (w : ℝ) / 2 ^ Pg + (e : ℝ) / 2 ^ Pg := by
+      push_cast; ring
+    rw [e1]; linarith
+  · simp at h
+
+/-- the maximum of the candidate values -/
+def candMax (Pg : ℕ) (q : PoleR) : List ℚ → Option ℚ
+  | [] => none
+  | y :: ys => match ptUB Pg q y, ys with
+    | some a, [] => some a
+    | some a, _ :: _ => (candMax Pg q ys).map (fun b => max a b)
+    | none, _ => none
+
+theorem candMax_spec (Pg : ℕ) (hPg : Pg ≤ 56) (q : PoleR) : ∀ (ys : List ℚ) (V : ℚ),
+    candMax Pg q ys = some V → ∀ y ∈ ys, poleG q (y : ℝ) ≤ (V : ℝ) := by
+  intro ys
+  induction ys with
+  | nil => intro V h; simp [candMax] at h
+  | cons y ys ih =>
+    intro V h z hz
+    simp only [candMax] at h
+    split at h
+    · rename_i a ha
+      simp only [Option.some.injEq] at h
+      subst h
+      simp only [List.mem_singleton] at hz; subst hz
+      exact ptUB_spec Pg hPg q _ a ha
+    · rename_i a y2 ys2 ha
+      obtain ⟨b, hb, rfl⟩ := Option.map_eq_some_iff.mp h
+      push_cast
+      rcases List.mem_cons.mp hz with rfl | hz'
+      · exact (ptUB_spec Pg hPg q _ a ha).trans (le_max_left _ _)
+      · exact (ih b hb z hz').trans (le_max_right _ _)
+    · simp at h
+
+/-- **Box bound of a pole sum** on `[lo, hi]` (every pole avoided). -/
+def poleBox (Pg : ℕ) (lo hi : ℚ) : List PoleR → Option ℚ
+  | [] => some 0
+  | q :: qs => match candMax Pg q (poleCands q lo hi), poleBox Pg lo hi qs with
+    | some a, some b => some (a + b)
+    | _, _ => none
+
+theorem poleBox_spec (Pg : ℕ) (hPg : Pg ≤ 56) (lo hi : ℚ) : ∀ (poles : List PoleR) (V : ℚ),
+    (∀ q ∈ poles, q.pi = 0 → q.ri = 0) → (∀ q ∈ poles, 0 < poleDist q lo hi) →
+    poleBox Pg lo hi poles = some V → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), poleF poles x ≤ (V : ℝ) := by
+  intro poles
+  induction poles with
+  | nil => intro V _ _ h x _; simp [poleBox] at h; subst h; simp [poleF]
+  | cons q qs ih =>
+    intro V hreal hdist h x hx
+    simp only [poleBox] at h
+    split at h
+    · rename_i a b ha hb
+      simp only [Option.some.injEq] at h
+      subst h
+      have havoid : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), (y : ℂ) ≠ q.pc := by
+        intro y hy heq
+        have := poleDist_le_norm q lo hi y hy.1 hy.2
+        rw [heq, sub_self, norm_zero] at this
+        have h2 : (0 : ℝ) < ((poleDist q lo hi : ℚ) : ℝ) := by exact_mod_cast hdist q (by simp)
+        linarith
+      obtain ⟨y, hy, hle⟩ := poleG_le_cand q (hreal q (by simp)) lo hi havoid x hx
+      have h1 := candMax_spec Pg hPg q _ a ha y hy
+      have h2 := ih b (fun r hr => hreal r (by simp [hr])) (fun r hr => hdist r (by simp [hr])) hb x hx
+      have e : poleF (q :: qs) x = poleG q x + poleF qs x := by simp [poleF, poleG]
+      rw [e]; push_cast; linarith
+    · simp at h
+
+/-! ### The box checker `V` of a field, and the hybrid cell (Taylor part plus boxed near poles) -/
+
+theorem logTower_zero_eq (e x : ℝ) : logTower e 0 x = Real.log |x - e| := rfl
+
+/-- crude bound of the logarithmic pieces on a box avoiding them: `|P| · 7k/10` -/
+def plogBox (lo hi : ℚ) : List (List ℚ × ℚ) → List ℕ → Option ℚ
+  | [], [] => some 0
+  | t :: ts, k :: ks =>
+    if ((decide ((1 / 2 : ℚ) ^ k ≤ t.2 - hi) || decide ((1 / 2 : ℚ) ^ k ≤ lo - t.2)) &&
+        decide (qabs' (lo - t.2) ≤ 2 ^ k) && decide (qabs' (hi - t.2) ≤ 2 ^ k)) = true then
+      (plogBox lo hi ts ks).map
+        (fun b => polyAB t.1 ((lo + hi) / 2) ((hi - lo) / 2) * (7 * (k : ℚ) / 10) + b)
+    else none
+  | _, _ => none
+
+theorem cell_abs (lo hi : ℚ) (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    |x - (((lo + hi) / 2 : ℚ) : ℝ)| ≤ (((hi - lo) / 2 : ℚ) : ℝ) := by
+  rw [abs_le]; push_cast; constructor <;> linarith [hx.1, hx.2]
+
+theorem plogBox_spec (lo hi : ℚ) : ∀ (plogs : List (List ℚ × ℚ)) (ks : List ℕ) (V : ℚ),
+    plogBox lo hi plogs ks = some V → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      plogSumTower plogs 0 x ≤ (V : ℝ) ∧ ∀ t ∈ plogs, x ≠ (t.2 : ℝ) := by
+  intro plogs
+  induction plogs with
+  | nil =>
+    intro ks V h x _
+    cases ks with
+    | nil => simp [plogBox] at h; subst h; simp [plogSumTower]
+    | cons => simp [plogBox] at h
+  | cons t ts ih =>
+    intro ks V h x hx
+    cases ks with
+    | nil => simp [plogBox] at h
+    | cons k ks =>
+      simp only [plogBox] at h
+      split_ifs at h with hc
+      obtain ⟨b, hb, rfl⟩ := Option.map_eq_some_iff.mp h
+      obtain ⟨h1, h2⟩ := ih ks b hb x hx
+      simp only [Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at hc
+      obtain ⟨⟨hside, hd2⟩, hd3⟩ := hc
+      have hlow : ((1 : ℝ) / 2) ^ k ≤ |x - (t.2 : ℝ)| := by
+        rcases hside with h | h
+        · have h' : (((1 / 2 : ℚ) ^ k : ℚ) : ℝ) ≤ (t.2 : ℝ) - (hi : ℝ) := by exact_mod_cast h
+          push_cast at h'
+          rw [abs_sub_comm]
+          exact h'.trans ((by linarith [hx.2] : (t.2 : ℝ) - hi ≤ t.2 - x).trans (le_abs_self _))
+        · have h' : (((1 / 2 : ℚ) ^ k : ℚ) : ℝ) ≤ (lo : ℝ) - (t.2 : ℝ) := by exact_mod_cast h
+          push_cast at h'
+          exact h'.trans ((by linarith [hx.1] : (lo : ℝ) - t.2 ≤ x - t.2).trans (le_abs_self _))
+      have hup : |x - (t.2 : ℝ)| ≤ 2 ^ k := by
+        have u1 : ((qabs' (lo - t.2) : ℚ) : ℝ) ≤ 2 ^ k := by exact_mod_cast hd2
+        have u2 : ((qabs' (hi - t.2) : ℚ) : ℝ) ≤ 2 ^ k := by exact_mod_cast hd3
+        rw [qabs'_cast] at u1 u2
+        push_cast at u1 u2
+        rw [abs_le]
+        have w1 := abs_le.mp u1
+        have w2 := abs_le.mp u2
+        constructor <;> linarith [hx.1, hx.2, w1.1, w2.2]
+      have hlog := abs_log_le_of_pow k _ hlow hup
+      have hP := (polyTow_range t.1 ((lo + hi) / 2) ((hi - lo) / 2) x (cell_abs lo hi x hx)).2
+      have hne : x ≠ (t.2 : ℝ) := by
+        intro h0; rw [h0, sub_self, abs_zero] at hlow
+        have : (0 : ℝ) < ((1 : ℝ) / 2) ^ k := by positivity
+        linarith
+      refine ⟨?_, ?_⟩
+      · have e : plogSumTower (t :: ts) 0 x = polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)| +
+            plogSumTower ts 0 x := by
+          simp [plogSumTower, mulTower_zero, logTower_zero_eq]
+        rw [e]
+        push_cast
+        have hm0 : polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)| ≤
+            |polyTow t.1 0 x| * abs (Real.log |x - (t.2 : ℝ)|) := by
+          rw [← abs_mul]; exact le_abs_self _
+        have hm1 := mul_le_mul hP hlog (abs_nonneg _) ((abs_nonneg _).trans hP)
+        linarith
+      · intro s hs
+        rcases List.mem_cons.mp hs with rfl | hs'
+        · exact hne
+        · exact h2 s hs'
+
+/-- **The box checker** of a field on `[lo, hi]`: polynomial range + crude logarithmic pieces +
+unimodal pole ranges, against `T`. -/
+def boxOK (fq : FieldQ) (Pg : ℕ) (lo hi : ℚ) (ks : List ℕ) (T : ℚ) : Bool :=
+  decide (lo ≤ hi) && decide (Pg ≤ 56) &&
+  fq.poles.all (fun q => decide (q.pi ≠ 0 ∨ q.ri = 0)) &&
+  fq.poles.all (fun q => decide (0 < poleDist q lo hi)) &&
+  (match plogBox lo hi fq.plogs ks, poleBox Pg lo hi fq.poles with
+   | some a, some b => decide (polyUB fq.poly ((lo + hi) / 2) ((hi - lo) / 2) + a + b ≤ T)
+   | _, _ => false)
+
+theorem real_of_all {poles : List PoleR}
+    (h : ∀ q ∈ poles, q.pi ≠ 0 ∨ q.ri = 0) : ∀ q ∈ poles, q.pi = 0 → q.ri = 0 := by
+  intro q hq hpi
+  rcases h q hq with h1 | h1
+  · exact absurd hpi h1
+  · exact h1
+
+theorem boxOK_sound (fq : FieldQ) (Pg : ℕ) (lo hi : ℚ) (ks : List ℕ) (T : ℚ)
+    (h : boxOK fq Pg lo hi ks T = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
+  unfold boxOK at h
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at h
+  obtain ⟨⟨⟨⟨_, hPg⟩, hreal⟩, hdist⟩, hm⟩ := h
+  intro x hx
+  split at hm
+  · rename_i a b ha hb
+    simp only [decide_eq_true_eq] at hm
+    have h1 := (polyTow_range fq.poly ((lo + hi) / 2) ((hi - lo) / 2) x (cell_abs lo hi x hx)).1
+    have h2 := (plogBox_spec lo hi fq.plogs ks a ha x hx).1
+    have h3 := poleBox_spec Pg hPg lo hi fq.poles b (real_of_all hreal)
+      (fun q hq => by simpa using hdist q hq) hb x hx
+    have hT : (((polyUB fq.poly ((lo + hi) / 2) ((hi - lo) / 2) + a + b : ℚ)) : ℝ) ≤ (T : ℝ) := by
+      exact_mod_cast hm
+    push_cast at hT
+    have e : fieldTower fq (poleF fq.poles) 0 x =
+        polyTow fq.poly 0 x + plogSumTower fq.plogs 0 x + poleF fq.poles x := rfl
+    rw [e]; linarith
+  · simp at hm
+
+/-- **The hybrid cell**: the poles failing `pp` (the near ones) are bounded by their unimodal ranges,
+the rest of the field (`fqKeep fq _ pp`) by any certificate `hA` with threshold `TA`. -/
+def hybOK (fq : FieldQ) (pp : PoleR → Bool) (Pg : ℕ) (lo hi TA T : ℚ) : Bool :=
+  decide (Pg ≤ 56) &&
+  (fq.poles.filter (fun q => !pp q)).all (fun q => decide (q.pi ≠ 0 ∨ q.ri = 0)) &&
+  (fq.poles.filter (fun q => !pp q)).all (fun q => decide (0 < poleDist q lo hi)) &&
+  (match poleBox Pg lo hi (fq.poles.filter (fun q => !pp q)) with
+   | some b => decide (TA + b ≤ T)
+   | none => false)
+
+theorem hybOK_sound (fq : FieldQ) (pp : PoleR → Bool) (Pg : ℕ) (lo hi TA T : ℚ)
+    (h : hybOK fq pp Pg lo hi TA T = true)
+    (hA : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower (fqKeep fq (fun _ => true) pp) (poleF (fqKeep fq (fun _ => true) pp).poles) 0 x ≤ (TA : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
+  unfold hybOK at h
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at h
+  obtain ⟨⟨⟨hPg, hreal⟩, hdist⟩, hm⟩ := h
+  intro x hx
+  split at hm
+  · rename_i b hb
+    simp only [decide_eq_true_eq] at hm
+    have h3 := poleBox_spec Pg hPg lo hi _ b (real_of_all hreal)
+      (fun q hq => by simpa using hdist q hq) hb x hx
+    rw [fieldTower_split fq (fun _ => true) pp x]
+    have e : fieldTower (fqDrop fq (fun _ => true) pp) (poleF (fqDrop fq (fun _ => true) pp).poles) 0 x =
+        poleF (fq.poles.filter (fun q => !pp q)) x := by
+      simp [fieldTower, fqDrop, plogSumTower, polyTow, poleTower_zero]
+    rw [e]
+    have hT : ((TA + b : ℚ) : ℝ) ≤ (T : ℝ) := by exact_mod_cast hm
+    push_cast at hT
+    linarith [hA x hx]
+  · simp at hm
+
+/-! ### End and gap cells: the `u log u` lemma
+
+Near a logarithmic singularity `e` the field is `F = F_reg + S(x) log|x - e|` with `S` the sum of the
+pieces singular at `e` (polynomials `P` of the pieces `P log|x - e|`, real weights of the real poles at
+`e`, Laurent polynomials `a(1/x)` of the terms `a(1/x) log|x - e|`).  With `c = S(e)`:
+`S(x) log|x - e| = c log|x - e| + (S(x) - S(e)) log|x - e|` and
+`|(S(x) - S(e)) log|x - e|| ≤ G₁ |x - e| |log |x - e|| ≤ G₁ R |log R|` (mean value theorem, `|S'| ≤ G₁`;
+`u |log u|` increases on `(0, 1/e]`).  The regular part is certified by any cover (`hreg`). -/
+
+theorem one_le_log_three : 1 ≤ Real.log 3 := by
+  rw [Real.le_log_iff_exp_le (by norm_num)]
+  have := Real.exp_one_lt_d9
+  linarith
+
+/-- `u |log u| ≤ R L` for `0 ≤ u ≤ R ≤ 1/3`, `-log R ≤ L`. -/
+theorem ulog_le {u R L : ℝ} (hu : 0 ≤ u) (huR : u ≤ R) (hR3 : R ≤ 1 / 3) (hL : -Real.log R ≤ L) :
+    u * |Real.log u| ≤ R * L := by
+  have hR0 : 0 ≤ R := hu.trans huR
+  have hL0 : 0 ≤ L := by
+    have := Real.log_nonpos hR0 (by linarith)
+    linarith
+  rcases hu.eq_or_lt with rfl | hu0
+  · rw [zero_mul]; exact mul_nonneg hR0 hL0
+  · have hR0 : 0 < R := lt_of_lt_of_le hu0 huR
+    have hlogu : Real.log u < 0 := Real.log_neg hu0 (by linarith)
+    rw [abs_of_neg hlogu]
+    -- `-y log y` is nondecreasing on `[u, R]`
+    have hmono := le_of_deriv_nonneg_Icc (g := fun y => -(y * Real.log y))
+      (g' := fun y => -(Real.log y + 1)) huR
+      (fun y hy => (Real.hasDerivAt_mul_log (lt_of_lt_of_le hu0 hy.1).ne').neg)
+      (fun y hy => by
+        have hy0 : 0 < y := lt_of_lt_of_le hu0 hy.1
+        have h1 : Real.log y ≤ Real.log (1 / 3) := Real.log_le_log hy0 (hy.2.trans hR3)
+        have h2 : Real.log (1 / 3 : ℝ) = -Real.log 3 := by
+          rw [one_div, Real.log_inv]
+        have := one_le_log_three
+        linarith)
+    have hRL : R * (-Real.log R) ≤ R * L := mul_le_mul_of_nonneg_left hL hR0.le
+    nlinarith [hmono]
+
+/-- **The singular piece**: `g(x) log|x - e| ≤ g(e) log|x - e| + G (R L)` on a window around `e`. -/
+theorem sing_piece_le {g g' : ℝ → ℝ} {e lo hi G R L : ℝ}
+    (hd : ∀ y ∈ Icc lo hi, HasDerivAt g (g' y) y) (hG : ∀ y ∈ Icc lo hi, |g' y| ≤ G)
+    (he : e ∈ Icc lo hi) (hR : ∀ x ∈ Icc lo hi, |x - e| ≤ R) (hR3 : R ≤ 1 / 3)
+    (hL : -Real.log R ≤ L) :
+    ∀ x ∈ Icc lo hi, g x * Real.log |x - e| ≤ g e * Real.log |x - e| + G * (R * L) := by
+  intro x hx
+  have hmv : |g x - g e| ≤ G * |x - e| := by
+    have := (convex_Icc lo hi).norm_image_sub_le_of_norm_hasDerivWithin_le
+      (f := g) (f' := g') (C := G) (fun y hy => (hd y hy).hasDerivWithinAt)
+      (fun y hy => by simpa using hG y hy) he hx
+    simpa using this
+  have hG0 : 0 ≤ G := (abs_nonneg _).trans (hG e he)
+  have hu := ulog_le (abs_nonneg (x - e)) (hR x hx) hR3 hL
+  have key : abs ((g x - g e) * Real.log |x - e|) ≤ G * (R * L) := by
+    rw [abs_mul]
+    have k1 := mul_le_mul_of_nonneg_right hmv (abs_nonneg (Real.log |x - e|))
+    have k2 := mul_le_mul_of_nonneg_left hu hG0
+    nlinarith [k1, k2]
+  have := (abs_le.mp key).2
+  have e1 : g x * Real.log |x - e| = g e * Real.log |x - e| + (g x - g e) * Real.log |x - e| := by
+    ring
+  linarith
+
+/-- pieces singular at `e` -/
+def atPlog (e : ℚ) (t : List ℚ × ℚ) : Bool := decide (t.2 = e)
+def atPole (e : ℚ) (q : PoleR) : Bool := decide (q.pr = e) && decide (q.pi = 0) && decide (q.ri = 0)
+def atL (e : ℚ) (t : LTerm) : Bool := decide (t.2 = some (1, e))
+
+/-- the regular part at `e` -/
+def regQ (fq : FieldQ) (e : ℚ) : FieldQ := fqKeep fq (fun t => !atPlog e t) (fun q => !atPole e q)
+def regL (ts : List LTerm) (e : ℚ) : List LTerm := ts.filter (fun t => !atL e t)
+
+/-- the coefficient `c = S(e)` of `log|x - e|` -/
+def endC (fq : FieldQ) (ts : List LTerm) (e : ℚ) : ℚ :=
+  ((fq.plogs.filter (atPlog e)).map (fun t => evalQ t.1 e)).sum +
+    ((fq.poles.filter (atPole e)).map (fun q => q.rr)).sum +
+    ((ts.filter (atL e)).map (fun t => evalQ t.1 e⁻¹)).sum
+
+/-- `|P'| ≤ polyG1 P lo hi` on `[lo, hi]` (Taylor majorant from the exact shift at the centre) -/
+def polyG1 (P : List ℚ) (lo hi : ℚ) : ℚ :=
+  majQ ((hi - lo) / 2) 1 0 (((shiftLK ((lo + hi) / 2) P.length P).map qabs').drop 1)
+
+/-- the total derivative bound of the singular part -/
+def endG1 (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ) : ℚ :=
+  ((fq.plogs.filter (atPlog e)).map (fun t => polyG1 t.1 lo hi)).sum +
+    ((ts.filter (atL e)).map (fun t => polyG1 t.1 hi⁻¹ lo⁻¹ * lo⁻¹ ^ 2)).sum
+
+/-- the window radius `R = max (e - lo) (hi - e)` -/
+def endR (e lo hi : ℚ) : ℚ := qmax (e - lo) (hi - e)
+
+/-- **The end-cell checker**: `e ∈ [lo, hi]`, `0 < R ≤ 1/3`, `2^-k ≤ R` (so `-log R ≤ 7k/10`),
+the window is positive if there are singular Laurent terms (their derivative bound is that of the
+polynomial `a(z)` on `[1/hi, 1/lo]` times `1/lo²`), and `G₁ R 7k/10 ≤ U`. -/
+def endOK (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ) (k : ℕ) (U : ℚ) : Bool :=
+  decide (lo ≤ e) && decide (e ≤ hi) && decide (0 < endR e lo hi) && decide (endR e lo hi ≤ 1 / 3) &&
+  decide ((1 / 2 : ℚ) ^ k ≤ endR e lo hi) &&
+  ((ts.filter (atL e)).isEmpty || decide (0 < lo)) &&
+  decide (endG1 fq ts e lo hi * (endR e lo hi * (7 * (k : ℚ) / 10)) ≤ U)
+
+theorem polyBnd_abs (P : List ℚ) (cb : ℚ) :
+    PolyBnd P (cb : ℝ) ((shiftLK cb P.length P).map qabs') := by
+  rw [shiftLK_eq']
+  refine ⟨by simp [shiftL_length], fun k hk => ?_⟩
+  simp only [List.length_map, shiftL_length] at hk
+  have h2 := shiftL_spec cb P.length P k (by omega)
+  have e : ((shiftL cb P.length P).map qabs').getD k 0 = qabs' ((shiftL cb P.length P).getD k 0) := by
+    simp [List.getD_eq_getElem?_getD, hk, shiftL_length]
+  rw [e, qabs'_cast, h2, abs_div, Nat.abs_cast]
+
+theorem polyG1_spec (P : List ℚ) (lo hi : ℚ) :
+    ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), |polyTow P 1 y| ≤ ((polyG1 P lo hi : ℚ) : ℝ) := by
+  intro y hy
+  have hb := polyBnd_abs P ((lo + hi) / 2)
+  have := polyTow_block hb ((hi - lo) / 2) rfl 1 y ⟨by push_cast; linarith [hy.1, hy.2],
+    by push_cast; linarith [hy.1, hy.2]⟩
+  simpa [polyG1] using this
+
+theorem hasDerivAt_zTow0 (a : List ℚ) (x : ℝ) (hx : x ≠ 0) :
+    HasDerivAt (zTow a 0) (zTow a 1 x) x := by
+  have hr : 0 < |x| / 2 := by positivity
+  have h0 : ∀ y ∈ Icc (x - |x| / 2) (x + |x| / 2), y ≠ 0 := by
+    intro y hy h
+    subst h
+    rcases lt_or_gt_of_ne hx with h | h
+    · rw [abs_of_neg h] at hy; linarith [hy.2]
+    · rw [abs_of_pos h] at hy; linarith [hy.1]
+  exact (isTower_zTow a x (|x| / 2) 1 h0).der 0 (by norm_num) x ⟨by linarith, by linarith⟩
+
+theorem filter_not_not {α : Type} (l : List α) (p : α → Bool) :
+    l.filter (fun a => !!p a) = l.filter p := by simp
+
+/-- the window data in real form -/
+theorem endR_facts (e lo hi : ℚ) (k : ℕ) (hle : lo ≤ e) (hel : e ≤ hi) (hR0 : 0 < endR e lo hi)
+    (hR3 : endR e lo hi ≤ 1 / 3) (hk : (1 / 2 : ℚ) ^ k ≤ endR e lo hi) :
+    (∀ x ∈ Icc (lo : ℝ) (hi : ℝ), |x - (e : ℝ)| ≤ (endR e lo hi : ℝ)) ∧
+      ((endR e lo hi : ℚ) : ℝ) ≤ 1 / 3 ∧ -Real.log (endR e lo hi : ℝ) ≤ 7 * (k : ℝ) / 10 := by
+  have hm : ((endR e lo hi : ℚ) : ℝ) = max ((e : ℝ) - lo) ((hi : ℝ) - e) := by
+    unfold endR; rw [qmax_cast]; push_cast; rfl
+  have hR3r : ((endR e lo hi : ℚ) : ℝ) ≤ 1 / 3 := by
+    have := (Rat.cast_le (K := ℝ)).mpr hR3; push_cast at this; exact this
+  refine ⟨fun x hx => ?_, hR3r, ?_⟩
+  · rw [hm, abs_le]
+    constructor <;> linarith [le_max_left ((e : ℝ) - lo) ((hi : ℝ) - e),
+      le_max_right ((e : ℝ) - lo) ((hi : ℝ) - e), hx.1, hx.2]
+  · have h1 : ((1 : ℝ) / 2) ^ k ≤ (endR e lo hi : ℝ) := by
+      have := (Rat.cast_le (K := ℝ)).mpr hk; push_cast at this; exact this
+    have h2 : ((endR e lo hi : ℚ) : ℝ) ≤ 2 ^ k := by
+      have : (1 : ℝ) ≤ 2 ^ k := one_le_pow₀ (by norm_num)
+      linarith
+    have := abs_log_le_of_pow k _ h1 h2
+    linarith [neg_abs_le (Real.log (endR e lo hi : ℝ))]
+
+theorem plogs_at_le (e : ℚ) (lo hi : ℚ) (R L : ℝ) (he : (e : ℝ) ∈ Icc (lo : ℝ) (hi : ℝ))
+    (hR : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), |x - (e : ℝ)| ≤ R) (hR3 : R ≤ 1 / 3)
+    (hL : -Real.log R ≤ L) :
+    ∀ (l : List (List ℚ × ℚ)), (∀ t ∈ l, t.2 = e) → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      plogSumTower l 0 x ≤ (((l.map (fun t => evalQ t.1 e)).sum : ℚ) : ℝ) * Real.log |x - (e : ℝ)| +
+        (((l.map (fun t => polyG1 t.1 lo hi)).sum : ℚ) : ℝ) * (R * L) := by
+  intro l
+  induction l with
+  | nil => intro _ x _; simp [plogSumTower]
+  | cons t ts ih =>
+    intro hat x hx
+    have h1 := ih (fun s hs => hat s (by simp [hs])) x hx
+    have hte : t.2 = e := hat t (by simp)
+    have h2 := sing_piece_le (g := polyTow t.1 0) (g' := polyTow t.1 1)
+      (fun y _ => hasDerivAt_polyTow t.1 0 y) (polyG1_spec t.1 lo hi) he hR hR3 hL x hx
+    rw [polyTow_zero_cast] at h2
+    have e1 : plogSumTower (t :: ts) 0 x = polyTow t.1 0 x * Real.log |x - (e : ℝ)| +
+        plogSumTower ts 0 x := by
+      simp [plogSumTower, mulTower_zero, logTower_zero_eq, hte]
+    rw [e1]
+    simp only [List.map_cons, List.sum_cons]
+    rw [Rat.cast_add, Rat.cast_add]
+    linarith [h1, h2]
+
+theorem poles_at_eq (e : ℚ) : ∀ (l : List PoleR), (∀ q ∈ l, atPole e q = true) → ∀ x : ℝ,
+    poleF l x = (((l.map (fun q => q.rr)).sum : ℚ) : ℝ) * Real.log |x - (e : ℝ)| := by
+  intro l
+  induction l with
+  | nil => intro _ x; simp [poleF]
+  | cons q qs ih =>
+    intro hat x
+    have hq := hat q (by simp)
+    simp only [atPole, Bool.and_eq_true, decide_eq_true_eq] at hq
+    obtain ⟨⟨hpr, hpi⟩, hri⟩ := hq
+    have h1 := ih (fun r hr => hat r (by simp [hr])) x
+    have e1 : poleF (q :: qs) x = (q.rho * Complex.log ((x : ℂ) - q.pc)).re + poleF qs x := by
+      simp [poleF]
+    rw [e1, re_clog_real q hpi hri x, h1, hpr]
+    simp only [List.map_cons, List.sum_cons]
+    push_cast; ring
+
+theorem lterms_at_le (e : ℚ) (lo hi : ℚ) (R L : ℝ) (he : (e : ℝ) ∈ Icc (lo : ℝ) (hi : ℝ))
+    (hR : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), |x - (e : ℝ)| ≤ R) (hR3 : R ≤ 1 / 3)
+    (hL : -Real.log R ≤ L) (hlo : 0 < lo) :
+    ∀ (l : List LTerm), (∀ t ∈ l, atL e t = true) → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      lfieldTower l 0 x ≤ (((l.map (fun t => evalQ t.1 e⁻¹)).sum : ℚ) : ℝ) * Real.log |x - (e : ℝ)| +
+        (((l.map (fun t => polyG1 t.1 hi⁻¹ lo⁻¹ * lo⁻¹ ^ 2)).sum : ℚ) : ℝ) * (R * L) := by
+  have hlo' : (0 : ℝ) < lo := by exact_mod_cast hlo
+  have hpos : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ), 0 < y := fun y hy => lt_of_lt_of_le hlo' hy.1
+  intro l
+  induction l with
+  | nil => intro _ x _; simp [lfieldTower]
+  | cons t ts ih =>
+    intro hat x hx
+    have h1 := ih (fun s hs => hat s (by simp [hs])) x hx
+    have hte : t.2 = some (1, e) := by
+      have := hat t (by simp); simpa [atL] using this
+    have hG : ∀ y ∈ Icc (lo : ℝ) (hi : ℝ),
+        |polyTow t.1 1 y⁻¹ * (-(y ^ 2)⁻¹)| ≤ ((polyG1 t.1 hi⁻¹ lo⁻¹ * lo⁻¹ ^ 2 : ℚ) : ℝ) := by
+      intro y hy
+      have hy0 := hpos y hy
+      have hinv : y⁻¹ ∈ Icc ((hi⁻¹ : ℚ) : ℝ) ((lo⁻¹ : ℚ) : ℝ) := by
+        push_cast
+        exact ⟨inv_anti₀ hy0 hy.2, inv_anti₀ hlo' hy.1⟩
+      have g1 := polyG1_spec t.1 hi⁻¹ lo⁻¹ y⁻¹ hinv
+      have g2 : (y ^ 2)⁻¹ ≤ ((lo : ℝ)⁻¹) ^ 2 := by
+        rw [← inv_pow]; exact pow_le_pow_left₀ (inv_nonneg.mpr hy0.le) (inv_anti₀ hlo' hy.1) 2
+      rw [abs_mul, abs_neg, abs_of_pos (by positivity : (0 : ℝ) < (y ^ 2)⁻¹)]
+      push_cast
+      exact mul_le_mul g1 g2 (by positivity) ((abs_nonneg _).trans g1)
+    have h2 := sing_piece_le (g := fun y => polyTow t.1 0 y⁻¹)
+      (g' := fun y => polyTow t.1 1 y⁻¹ * (-(y ^ 2)⁻¹))
+      (G := ((polyG1 t.1 hi⁻¹ lo⁻¹ * lo⁻¹ ^ 2 : ℚ) : ℝ))
+      (fun y hy => (hasDerivAt_polyTow t.1 0 y⁻¹).comp y (hasDerivAt_inv (hpos y hy).ne'))
+      hG he hR hR3 hL x hx
+    have hz : polyTow t.1 0 ((e : ℝ))⁻¹ = ((evalQ t.1 e⁻¹ : ℚ) : ℝ) := by
+      rw [← polyTow_zero_cast]; push_cast; rfl
+    rw [hz] at h2
+    have e1 : lfieldTower (t :: ts) 0 x = polyTow t.1 0 x⁻¹ * Real.log |x - (e : ℝ)| +
+        lfieldTower ts 0 x := by
+      simp only [lfieldTower, List.map_cons, List.sum_cons, mulTower_zero, hte, lfTower, linLogTower,
+        zTow_zero]
+      push_cast; ring_nf
+    rw [e1]
+    simp only [List.map_cons, List.sum_cons]
+    rw [Rat.cast_add, Rat.cast_add]
+    linarith [h1, h2]
+
+/-- **Soundness of the end cell**: on the window, the field (with its Laurent part) is at most the
+bound `TR` of the regular part, plus `U`, plus `c log|x - e|` (`c = endC`). -/
+theorem endOK_sound (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ) (k : ℕ) (U TR : ℚ)
+    (hchk : endOK fq ts e lo hi k U = true)
+    (hreg : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower (regQ fq e) (poleF (regQ fq e).poles) 0 x + lfieldTower (regL ts e) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤
+      (TR : ℝ) + (U : ℝ) + (endC fq ts e : ℝ) * Real.log |x - (e : ℝ)| := by
+  unfold endOK at hchk
+  simp only [Bool.and_eq_true, decide_eq_true_eq, Bool.or_eq_true, List.isEmpty_iff] at hchk
+  obtain ⟨⟨⟨⟨⟨⟨hle, hel⟩, hR0⟩, hR3⟩, hk⟩, hLc⟩, hU⟩ := hchk
+  obtain ⟨hR, hR3', hL⟩ := endR_facts e lo hi k hle hel hR0 hR3 hk
+  have he : (e : ℝ) ∈ Icc (lo : ℝ) (hi : ℝ) := ⟨by exact_mod_cast hle, by exact_mod_cast hel⟩
+  intro x hx
+  -- split the field
+  have s1 := fieldTower_split fq (fun t => !atPlog e t) (fun q => !atPole e q) x
+  have s2 := lfieldTower_split ts (fun t => !atL e t) x
+  have d1 : fieldTower (fqDrop fq (fun t => !atPlog e t) (fun q => !atPole e q))
+      (poleF (fqDrop fq (fun t => !atPlog e t) (fun q => !atPole e q)).poles) 0 x =
+      plogSumTower (fq.plogs.filter (atPlog e)) 0 x + poleF (fq.poles.filter (atPole e)) x := by
+    simp only [fieldTower, fqDrop, filter_not_not, polyTow, poleTower_zero]; ring
+  rw [filter_not_not] at s2
+  have hP := plogs_at_le e lo hi _ _ he hR hR3' hL (fq.plogs.filter (atPlog e))
+    (fun t ht => by have := (List.mem_filter.mp ht).2; simpa [atPlog] using this) x hx
+  have hQ := poles_at_eq e (fq.poles.filter (atPole e)) (fun q hq => (List.mem_filter.mp hq).2) x
+  have hLt : lfieldTower (ts.filter (atL e)) 0 x ≤
+      ((((ts.filter (atL e)).map (fun t => evalQ t.1 e⁻¹)).sum : ℚ) : ℝ) * Real.log |x - (e : ℝ)| +
+        ((((ts.filter (atL e)).map (fun t => polyG1 t.1 hi⁻¹ lo⁻¹ * lo⁻¹ ^ 2)).sum : ℚ) : ℝ) *
+          ((endR e lo hi : ℝ) * (7 * (k : ℝ) / 10)) := by
+    rcases hLc with h0 | hlo
+    · rw [h0]; simp [lfieldTower]
+    · exact lterms_at_le e lo hi _ _ he hR hR3' hL hlo _
+        (fun t ht => (List.mem_filter.mp ht).2) x hx
+  have hreg' := hreg x hx
+  unfold regQ regL at hreg'
+  have hU' : ((endG1 fq ts e lo hi * (endR e lo hi * (7 * (k : ℚ) / 10)) : ℚ) : ℝ) ≤ (U : ℝ) := by
+    exact_mod_cast hU
+  unfold endG1 at hU'
+  rw [Rat.cast_mul, Rat.cast_add, add_mul] at hU'
+  have hRL : (((endR e lo hi * (7 * (k : ℚ) / 10) : ℚ)) : ℝ) = (endR e lo hi : ℝ) * (7 * (k : ℝ) / 10) := by
+    push_cast; ring
+  rw [hRL] at hU'
+  unfold endC
+  rw [Rat.cast_add, Rat.cast_add, add_mul, add_mul]
+  rw [s1, s2, d1, hQ]
+  linarith [hP, hLt, hreg', hU']
+
+/-- **The uniform form** (`c ≥ 0`, `R ≤ 2^-kR`): for `x ≠ e` in the window the field is at most
+`TR + U - c (69/100) kR`, checked against `T`. -/
+def endUOK (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ) (k kR : ℕ) (U TR T : ℚ) : Bool :=
+  endOK fq ts e lo hi k U && decide (0 ≤ endC fq ts e) && decide (endR e lo hi ≤ (1 / 2) ^ kR) &&
+    decide (TR + U - endC fq ts e * (69 / 100 * (kR : ℚ)) ≤ T)
+
+theorem endUOK_sound (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ) (k kR : ℕ) (U TR T : ℚ)
+    (hchk : endUOK fq ts e lo hi k kR U TR T = true)
+    (hreg : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower (regQ fq e) (poleF (regQ fq e).poles) 0 x + lfieldTower (regL ts e) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), x ≠ (e : ℝ) →
+      fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤ (T : ℝ) := by
+  unfold endUOK at hchk
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨h1, hc⟩, hRk⟩, hT⟩ := hchk
+  have hb := endOK_sound fq ts e lo hi k U TR h1 hreg
+  have h1' := h1
+  unfold endOK at h1'
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at h1'
+  obtain ⟨⟨⟨⟨⟨⟨hle, hel⟩, hR0⟩, hR3⟩, hk⟩, -⟩, -⟩ := h1'
+  obtain ⟨hR, _, _⟩ := endR_facts e lo hi k hle hel hR0 hR3 hk
+  intro x hx hxe
+  have hpos : 0 < |x - (e : ℝ)| := abs_pos.mpr (sub_ne_zero.mpr hxe)
+  have hlog1 : Real.log |x - (e : ℝ)| ≤ Real.log (endR e lo hi : ℝ) := Real.log_le_log hpos (hR x hx)
+  have hlog2 : Real.log ((endR e lo hi : ℚ) : ℝ) ≤ -(69 / 100 * (kR : ℝ)) := by
+    have h2 : ((endR e lo hi : ℚ) : ℝ) ≤ ((1 : ℝ) / 2) ^ kR := by
+      have := (Rat.cast_le (K := ℝ)).mpr hRk; push_cast at this; exact this
+    have hR0' : (0 : ℝ) < (endR e lo hi : ℝ) := by exact_mod_cast hR0
+    have h3 := Real.log_le_log hR0' h2
+    rw [Real.log_pow, one_div, Real.log_inv] at h3
+    have := Real.log_two_gt_d9
+    have hk0 : (0 : ℝ) ≤ kR := Nat.cast_nonneg kR
+    nlinarith
+  have hc' : (0 : ℝ) ≤ (endC fq ts e : ℝ) := by exact_mod_cast hc
+  have hT' : ((TR + U - endC fq ts e * (69 / 100 * (kR : ℚ)) : ℚ) : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+  push_cast at hT'
+  have := hb x hx
+  have hm : (endC fq ts e : ℝ) * Real.log |x - (e : ℝ)| ≤ (endC fq ts e : ℝ) * (-(69 / 100 * (kR : ℝ))) :=
+    mul_le_mul_of_nonneg_left (hlog1.trans hlog2) hc'
+  linarith
+
+/-! ### Laurent cells: `fieldTower fq + lfieldTower ts` (the dilated block `Wmp` of the positive rows)
+
+The cell checker `lcellW` is `cellW` with the Laurent coefficients `lCoef`/`lErr` added to the
+coefficient and error vectors (the Laurent anchor is their entry `0`); the block facts of the Laurent
+part come from `lTailCheck` plus the logarithm bounds `llbOK` (`lBlockOK`), and the two block tails add
+(`BM1 + BM2`). -/
+
+/-- the logarithm literals `(L, ε)` of the Laurent factors at `c` (checked against `logAbsQ`) -/
+def llogsCheck (nL : ℕ) (c : ℚ) : List LTerm → List (ℚ × ℚ) → Bool
+  | [], [] => true
+  | t :: ts, v :: vs =>
+    (match t.2 with
+     | none => true
+     | some ab =>
+       match logAbsQ nL (ab.1 * c - ab.2) with
+       | some (w, e) => decide (qabs' (w - v.1) + e ≤ v.2)
+       | none => false) && llogsCheck nL c ts vs
+  | _, _ => false
+
+theorem llogsCheck_spec (nL : ℕ) (c : ℚ) : ∀ (ts : List LTerm) (vs : List (ℚ × ℚ)),
+    llogsCheck nL c ts vs = true → LLogVals c ts vs := by
+  intro ts
+  induction ts with
+  | nil => intro vs h; cases vs <;> simp_all [llogsCheck, LLogVals]
+  | cons t ts ih =>
+    intro vs h
+    cases vs with
+    | nil => simp [llogsCheck] at h
+    | cons v vs =>
+      simp only [llogsCheck, Bool.and_eq_true] at h
+      obtain ⟨h1, h2⟩ := h
+      refine ⟨fun ab hab => ?_, ih vs h2⟩
+      rw [hab] at h1
+      simp only at h1
+      split at h1
+      · rename_i w e hw
+        simp only [decide_eq_true_eq] at h1
+        have hE := (logAbsQ_spec hw).2
+        unfold Enc at hE
+        have e1 : ((ab.1 * c - ab.2 : ℚ) : ℝ) = (ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ) := by push_cast; ring
+        rw [e1] at hE
+        have h1' : |(w : ℝ) - (v.1 : ℝ)| + (e : ℝ) ≤ (v.2 : ℝ) := by
+          have := (Rat.cast_le (K := ℝ)).mpr h1
+          rw [Rat.cast_add, qabs'_cast] at this
+          push_cast at this
+          exact this
+        generalize Real.log |(ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ)| = lg at hE ⊢
+        have w1 := abs_le.mp hE
+        have w2 := abs_le.mp (le_refl |(w : ℝ) - (v.1 : ℝ)|)
+        rw [abs_le]
+        constructor <;> linarith [w1.1, w1.2, w2.1, w2.2]
+      · simp at h1
+
+/-- logarithm bounds `Lb = 7k/10` of the Laurent factors on a block -/
+def llbOK (blo bhi : ℚ) : List LTerm → List LBlk → List ℕ → Bool
+  | [], [], [] => true
+  | t :: ts, b :: bs, k :: ks =>
+    (match t.2 with
+     | none => true
+     | some ab =>
+       decide (b.Lb = 7 * (k : ℚ) / 10) && decide ((1 / 2 : ℚ) ^ k ≤ b.dm) &&
+         decide (qabs' (ab.1 * blo - ab.2) ≤ 2 ^ k) && decide (qabs' (ab.1 * bhi - ab.2) ≤ 2 ^ k)) &&
+    llbOK blo bhi ts bs ks
+  | _, _, _ => false
+
+theorem llogBnd_of_ok (blo bhi : ℚ) : ∀ (ts : List LTerm) (bs : List LBlk) (ks : List ℕ),
+    lBlkOK blo bhi ts bs = true → llbOK blo bhi ts bs ks = true → LLogBnd blo bhi ts bs := by
+  intro ts
+  induction ts with
+  | nil => intro bs ks h1 h2; cases bs <;> cases ks <;> simp_all [LLogBnd, llbOK, lBlkOK]
+  | cons t ts ih =>
+    intro bs ks h1 h2
+    cases bs with
+    | nil => simp [lBlkOK] at h1
+    | cons b bs =>
+      cases ks with
+      | nil => simp [llbOK] at h2
+      | cons k ks =>
+        simp only [lBlkOK, Bool.and_eq_true] at h1
+        simp only [llbOK, Bool.and_eq_true] at h2
+        refine ⟨fun ab hab x hx => ?_, ih bs ks h1.2 h2.2⟩
+        have hl := linOK_sound blo bhi b.dm t.2 h1.1 ab hab
+        have h3 := h2.1
+        rw [hab] at h3
+        simp only [Bool.and_eq_true, decide_eq_true_eq] at h3
+        obtain ⟨⟨⟨hLb, hd1⟩, hd2⟩, hd3⟩ := h3
+        have hlow : ((1 : ℝ) / 2) ^ k ≤ |(ab.1 : ℝ) * x - (ab.2 : ℝ)| := by
+          refine le_trans ?_ (hl.2 x hx)
+          have := (Rat.cast_le (K := ℝ)).mpr hd1; push_cast at this; exact this
+        have hup : |(ab.1 : ℝ) * x - (ab.2 : ℝ)| ≤ 2 ^ k := by
+          have u1 : ((qabs' (ab.1 * blo - ab.2) : ℚ) : ℝ) ≤ 2 ^ k := by exact_mod_cast hd2
+          have u2 : ((qabs' (ab.1 * bhi - ab.2) : ℚ) : ℝ) ≤ 2 ^ k := by exact_mod_cast hd3
+          rw [qabs'_cast] at u1 u2
+          push_cast at u1 u2
+          have w1 := abs_le.mp u1
+          have w2 := abs_le.mp u2
+          rw [abs_le]
+          exact ⟨lin_ge _ _ _ _ x _ hx.1 hx.2 w1.1 w2.1, lin_le _ _ _ _ x _ hx.1 hx.2 w1.2 w2.2⟩
+        have := abs_log_le_of_pow k _ hlow hup
+        rw [hLb]; push_cast; exact this
+
+/-- the block facts of a Laurent part -/
+structure LBlockFacts (ts : List LTerm) (blo bhi : ℚ) (M : ℕ) (BM : ℚ) : Prop where
+  tail : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), |lfieldTower ts M x| / ((M.factorial : ℕ) : ℝ) ≤ (BM : ℝ)
+  avoid0 : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), x ≠ 0
+  avoidL : ∀ t ∈ ts, ∀ ab, t.2 = some ab → ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+    (ab.1 : ℝ) * x - (ab.2 : ℝ) ≠ 0
+
+def lBlockOK (ts : List LTerm) (blo bhi mx : ℚ) (M : ℕ) (bs : List LBlk) (ks : List ℕ) (BM : ℚ) : Bool :=
+  lTailCheck blo bhi mx M ts bs BM && llbOK blo bhi ts bs ks
+
+theorem lBlkOK_avoid (blo bhi : ℚ) : ∀ (ts : List LTerm) (bs : List LBlk), lBlkOK blo bhi ts bs = true →
+    ∀ t ∈ ts, ∀ ab, t.2 = some ab → ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), (ab.1 : ℝ) * x - (ab.2 : ℝ) ≠ 0 := by
+  intro ts
+  induction ts with
+  | nil => intro bs _ t ht; simp at ht
+  | cons t0 ts ih =>
+    intro bs h t ht ab hab x hx h0
+    cases bs with
+    | nil => simp [lBlkOK] at h
+    | cons b bs =>
+      simp only [lBlkOK, Bool.and_eq_true] at h
+      rcases List.mem_cons.mp ht with rfl | ht'
+      · have hl := linOK_sound blo bhi b.dm t.2 h.1 ab hab
+        have h1 := hl.2 x hx
+        rw [h0, abs_zero] at h1
+        have : (0 : ℝ) < b.dm := by exact_mod_cast hl.1
+        linarith
+      · exact ih bs h.2 t ht' ab hab x hx h0
+
+theorem lBlockFacts_of_ok (ts : List LTerm) (blo bhi mx : ℚ) (M : ℕ) (bs : List LBlk) (ks : List ℕ)
+    (BM : ℚ) (h : lBlockOK ts blo bhi mx M bs ks BM = true) : LBlockFacts ts blo bhi M BM := by
+  simp only [lBlockOK, Bool.and_eq_true] at h
+  obtain ⟨ht, hl⟩ := h
+  have ht' := ht
+  simp only [lTailCheck, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at ht'
+  obtain ⟨⟨⟨⟨_, hmx⟩, hside⟩, hok⟩, _⟩ := ht'
+  have hlog := llogBnd_of_ok blo bhi ts bs ks hok hl
+  refine ⟨lTailCheck_sound blo bhi mx M ts bs BM ht hlog, fun x hx h0 => ?_,
+    lBlkOK_avoid blo bhi ts bs hok⟩
+  subst h0
+  have hmx' : (0 : ℝ) < mx := by exact_mod_cast hmx
+  rcases hside with h | h
+  · have : (mx : ℝ) ≤ blo := by exact_mod_cast h
+    linarith [hx.1]
+  · have : (bhi : ℝ) ≤ -(mx : ℝ) := by exact_mod_cast h
+    linarith [hx.2]
+
+/-- the Laurent coefficient and error vectors (orders `0..N`) -/
+def lVec (ts : List LTerm) (Lv : List (ℚ × ℚ)) (c : ℚ) (N : ℕ) : List ℚ :=
+  (List.range (N + 1)).map (lCoef ts Lv c)
+def lEVec (ts : List LTerm) (Lv : List (ℚ × ℚ)) (c : ℚ) (N : ℕ) : List ℚ :=
+  (List.range (N + 1)).map (lErr ts Lv c)
+
+/-- **One Laurent cell**: `cellW` for `fieldTower fq + lfieldTower ts` (block tails `BM1` of the field
+part, `BM2` of the Laurent part). -/
+def lcellW (fq : FieldQ) (ts : List LTerm) (nLc Pg Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi lo hi : ℚ)
+    (Ls εs : List ℚ) (Lv : List (ℚ × ℚ)) (A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM1 BM2 T : ℚ) : Bool :=
+  decide (cc = (lo + hi) / 2) && decide (Pg ≤ 56) && logsCheck nLc cc fq.plogs Ls εs &&
+  llogsCheck nLc cc ts Lv &&
+  (match poleSumI Pg cc fq.poles with
+   | some (S, E) => decide (
+        (vecAdd (fieldCoefsT fq Ls cc (Bl.length + 2) Q K0 MiF WiF) (lVec ts Lv cc (Bl.length + 2))).getD 0 0 +
+        (vecAdd (errVecT cc (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF
+          (fq.poles.length - fq.poles.countP (isFar Q MiF WiF cc)) (fq.poles.countP (isFar Q MiF WiF cc)))
+          (lEVec ts Lv cc (Bl.length + 2))).getD 0 0 +
+        ((S + E : ℤ) : ℚ) / 2 ^ Pg ≤ A0)
+   | none => false) &&
+  decide (blo ≤ lo) && decide (hi ≤ bhi) &&
+  fq.poles.all (fun q => isFar Q MiF WiF cc q || fpPoleOK Q Mi Wi q cc) &&
+  decide (2 ^ Q ≤ Mi + 4) && decide (2 ^ Q ≤ MiF + 4) &&
+  coefTestR l1 u1 A2 Bl
+    (vecAdd (fieldCoefsT fq Ls cc (Bl.length + 2) Q K0 MiF WiF) (lVec ts Lv cc (Bl.length + 2)))
+    (vecAdd (errVecT cc (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF
+      (fq.poles.length - fq.poles.countP (isFar Q MiF WiF cc)) (fq.poles.countP (isFar Q MiF WiF cc)))
+      (lEVec ts Lv cc (Bl.length + 2))) &&
+  decide (tmUBQ A0 l1 u1 A2 ((hi - lo) / 2) Bl (BM1 + BM2) ≤ T)
+
+theorem lcellW_sound (fq : FieldQ) (ts : List LTerm) (nLc Pg Q Mi Wi K0 MiF WiF : ℕ)
+    (cc blo bhi lo hi : ℚ) (Ls εs : List ℚ) (Lv : List (ℚ × ℚ)) (A0 l1 u1 A2 : ℚ) (Bl : List ℚ)
+    (BM1 BM2 T : ℚ)
+    (hchk : lcellW fq ts nLc Pg Q Mi Wi K0 MiF WiF cc blo bhi lo hi Ls εs Lv A0 l1 u1 A2 Bl BM1 BM2 T = true)
+    (hB : BlockFacts fq blo bhi (Bl.length + 3) BM1) (hLB : LBlockFacts ts blo bhi (Bl.length + 3) BM2) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤ (T : ℝ) := by
+  unfold lcellW at hchk
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hcc, hPg⟩, hlc⟩, hllc⟩, hanch⟩, hb1⟩, hb2⟩, hpok⟩, hMi⟩, hMiF⟩, htest⟩, hT⟩ := hchk
+  subst hcc
+  set c : ℚ := (lo + hi) / 2 with hc
+  set r : ℚ := (hi - lo) / 2 with hr
+  have hnear : ∀ q ∈ fq.poles, isFar Q MiF WiF c q = false → fpPoleOK Q Mi Wi q c = true := by
+    intro q hq hf
+    rw [List.all_eq_true] at hpok
+    have := hpok q hq
+    rw [hf, Bool.false_or] at this
+    exact this
+  obtain ⟨hl1, hu1, hA2, hL⟩ := coefTestR_spec _ _ _ _ _ _ htest
+  have hLs := logsCheck_spec nLc c fq.plogs Ls εs hlc
+  have hLv := llogsCheck_spec nLc c ts Lv hllc
+  obtain ⟨S, E, hSE, hanch2⟩ : ∃ S E, poleSumI Pg c fq.poles = some (S, E) ∧
+      (vecAdd (fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF) (lVec ts Lv c (Bl.length + 2))).getD 0 0 +
+        (vecAdd (errVecT c (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF (fq.poles.length - (fq.poles.countP (isFar Q MiF WiF c))) (fq.poles.countP (isFar Q MiF WiF c)))
+          (lEVec ts Lv c (Bl.length + 2))).getD 0 0 + ((S + E : ℤ) : ℚ) / 2 ^ Pg ≤ A0 := by
+    revert hanch
+    cases hh : poleSumI Pg c fq.poles with
+    | none => simp
+    | some p => intro h; exact ⟨p.1, p.2, rfl, by simpa using h⟩
+  have e1 : (c : ℝ) - (r : ℝ) = (lo : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have e2 : (c : ℝ) + (r : ℝ) = (hi : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have hcell : Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)) = Icc (lo : ℝ) (hi : ℝ) := by
+    rw [e1, e2]
+  have hsub : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), x ∈ Icc (blo : ℝ) (bhi : ℝ) := by
+    intro x hx
+    exact ⟨le_trans (by exact_mod_cast hb1) hx.1, le_trans hx.2 (by exact_mod_cast hb2)⟩
+  have hsub' : ∀ x ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)), x ∈ Icc (blo : ℝ) (bhi : ℝ) := by
+    intro x hx; rw [hcell] at hx; exact hsub x hx
+  intro x hx
+  have hle : (lo : ℝ) ≤ hi := le_trans hx.1 hx.2
+  have hcm : (c : ℝ) ∈ Icc (blo : ℝ) (bhi : ℝ) :=
+    hsub' _ ⟨by simp only [hr]; push_cast; linarith, by simp only [hr]; push_cast; linarith⟩
+  have hnec : ∀ t ∈ fq.plogs, c - t.2 ≠ 0 := by
+    intro t ht hz
+    apply hB.plog t ht c hcm
+    have : c = t.2 := by linarith
+    rw [this]
+  have hc0 : c ≠ 0 := by
+    intro h; apply hLB.avoid0 _ hcm; rw [h]; simp
+  have hneQ : ∀ t ∈ ts, ∀ ab, t.2 = some ab → ab.1 * c - ab.2 ≠ 0 := by
+    intro t ht ab hab h
+    apply hLB.avoidL t ht ab hab _ hcm
+    have : (ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ) = 0 := by exact_mod_cast h
+    exact this
+  have hT1 := isTower_fieldTower fq (poleF fq.poles) (c : ℝ) (r : ℝ) (Bl.length + 3)
+    (fun t ht y hy => hB.plog t ht y (hsub' y hy))
+    (fun y hy q hq => hB.pole q hq y (hsub' y hy))
+    (fun y hy => hB.deriv y (hsub' y hy))
+  have hT2 := isTower_lfieldTower ts (c : ℝ) (r : ℝ) (Bl.length + 3)
+    (fun y hy => hLB.avoid0 y (hsub' y hy))
+    (fun t ht ab hab y hy => hLB.avoidL t ht ab hab y (hsub' y hy))
+  have hTT : IsTower (fun j x => fieldTower fq (poleF fq.poles) j x + lfieldTower ts j x) (c : ℝ) (r : ℝ)
+      (Bl.length + 3) := hT1.add hT2
+  have hspec : ∀ k, 1 ≤ k → k ≤ Bl.length + 2 →
+      |(fieldTower fq (poleF fq.poles) k (c : ℝ) + lfieldTower ts k (c : ℝ)) / ((k.factorial : ℕ) : ℝ) -
+        (((vecAdd (fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF) (lVec ts Lv c (Bl.length + 2))).getD k 0 : ℚ) : ℝ)| ≤
+      (((vecAdd (errVecT c (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF (fq.poles.length - (fq.poles.countP (isFar Q MiF WiF c))) (fq.poles.countP (isFar Q MiF WiF c)))
+        (lEVec ts Lv c (Bl.length + 2))).getD k 0 : ℚ) : ℝ) := by
+    intro k hk1 hk
+    rw [vecAdd_getD, vecAdd_getD, errVecT_getD _ _ _ _ _ _ _ _ _ _ _ _ _ hk]
+    unfold lVec lEVec
+    rw [getD_map_range _ _ _ (by omega), getD_map_range _ _ _ (by omega)]
+    have a1 := fieldCoefsT_approx fq (poleF fq.poles) Ls εs c (Bl.length + 2) Q Mi Wi K0 MiF WiF hLs hnec
+      hMi hMiF hnear k hk1 hk
+    have a2 := lfield_approx c hc0 ts Lv hLv hneQ k
+    have e : (fieldTower fq (poleF fq.poles) k (c : ℝ) + lfieldTower ts k (c : ℝ)) / ((k.factorial : ℕ) : ℝ) -
+        (((fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF).getD k 0 + lCoef ts Lv c k : ℚ) : ℝ) =
+        (fieldTower fq (poleF fq.poles) k (c : ℝ) / ((k.factorial : ℕ) : ℝ) -
+          (((fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF).getD k 0 : ℚ) : ℝ)) +
+        (lfieldTower ts k (c : ℝ) / ((k.factorial : ℕ) : ℝ) - ((lCoef ts Lv c k : ℚ) : ℝ)) := by
+      push_cast; ring
+    rw [e]
+    refine (abs_add_le _ _).trans ?_
+    have := add_le_add a1 a2
+    push_cast at this ⊢
+    linarith
+  -- the anchor
+  have h0a := anchorI_sound fq Ls εs c (Bl.length + 2) Q Mi Wi K0 MiF WiF (fq.poles.length - (fq.poles.countP (isFar Q MiF WiF c))) (fq.poles.countP (isFar Q MiF WiF c)) Pg
+    (by simpa using hPg) hLs hnec S E hSE _ le_rfl
+  have h0b := lfield_approx c hc0 ts Lv hLv hneQ 0
+  simp only [Nat.factorial_zero, Nat.cast_one, div_one] at h0b
+  have h0 : fieldTower fq (poleF fq.poles) 0 (c : ℝ) + lfieldTower ts 0 (c : ℝ) ≤ (A0 : ℝ) := by
+    have hA : (((vecAdd (fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF) (lVec ts Lv c (Bl.length + 2))).getD 0 0 +
+        (vecAdd (errVecT c (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF (fq.poles.length - (fq.poles.countP (isFar Q MiF WiF c))) (fq.poles.countP (isFar Q MiF WiF c)))
+          (lEVec ts Lv c (Bl.length + 2))).getD 0 0 + ((S + E : ℤ) : ℚ) / 2 ^ Pg : ℚ) : ℝ) ≤ (A0 : ℝ) := by
+      exact_mod_cast hanch2
+    rw [vecAdd_getD, vecAdd_getD] at hA
+    unfold lVec lEVec at hA
+    rw [getD_map_range _ _ _ (by omega), getD_map_range _ _ _ (by omega)] at hA
+    push_cast at hA h0a
+    have := (abs_le.mp h0b).2
+    linarith
+  have hBM : ∀ y ∈ Icc (blo : ℝ) (bhi : ℝ),
+      |fieldTower fq (poleF fq.poles) (Bl.length + 3) y + lfieldTower ts (Bl.length + 3) y| /
+        ((Bl.length + 3).factorial : ℝ) ≤ ((BM1 + BM2 : ℚ) : ℝ) := by
+    intro y hy
+    push_cast
+    exact lTail_add (hB.tail y hy) (hLB.tail y hy)
+  exact cellCore (f := fun j x => fieldTower fq (poleF fq.poles) j x + lfieldTower ts j x)
+    lo hi A0 l1 u1 A2 Bl (BM1 + BM2) T _ _ hTT hspec hl1 hu1 hA2
+    (absLeAllE_of_L Bl _ _ hL) hT h0 blo bhi hb1 hb2 hBM x hx
+
+/-! ### Consumer forms -/
+
+theorem lfieldTower_nil_zero (x : ℝ) : lfieldTower [] 0 x = 0 := by simp [lfieldTower]
+
+/-- `endOK_sound` for a field without Laurent part (`ts = []`). -/
+theorem endOK_sound0 (fq : FieldQ) (e lo hi : ℚ) (k : ℕ) (U TR : ℚ)
+    (hchk : endOK fq [] e lo hi k U = true)
+    (hreg : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower (regQ fq e) (poleF (regQ fq e).poles) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤
+      (TR : ℝ) + (U : ℝ) + (endC fq [] e : ℝ) * Real.log |x - (e : ℝ)| := by
+  intro x hx
+  have := endOK_sound fq [] e lo hi k U TR hchk
+    (fun y hy => by simpa [regL, lfieldTower_nil_zero] using hreg y hy) x hx
+  simpa [lfieldTower_nil_zero] using this
+
+/-- `endUOK_sound` for a field without Laurent part (`ts = []`). -/
+theorem endUOK_sound0 (fq : FieldQ) (e lo hi : ℚ) (k kR : ℕ) (U TR T : ℚ)
+    (hchk : endUOK fq [] e lo hi k kR U TR T = true)
+    (hreg : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower (regQ fq e) (poleF (regQ fq e).poles) 0 x ≤ (TR : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), x ≠ (e : ℝ) → fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
+  intro x hx hxe
+  have := endUOK_sound fq [] e lo hi k kR U TR T hchk
+    (fun y hy => by simpa [regL, lfieldTower_nil_zero] using hreg y hy) x hx hxe
+  simpa [lfieldTower_nil_zero] using this
+
+theorem endOK_of_endUOK {fq : FieldQ} {ts : List LTerm} {e lo hi : ℚ} {k kR : ℕ} {U TR T : ℚ}
+    (h : endUOK fq ts e lo hi k kR U TR T = true) : endOK fq ts e lo hi k U = true := by
+  unfold endUOK at h
+  simp only [Bool.and_eq_true] at h
+  exact h.1.1.1
+
+/-- **The spike jump cell**: a bound `T - cs` on the cell gives `T` for the field plus the jump
+`cs · 1[θ < x]` (`cs ≥ 0`). -/
+theorem jump_le {f : ℝ → ℝ} {S : Set ℝ} {T cs θ : ℝ} (hcs : 0 ≤ cs) (h : ∀ x ∈ S, f x ≤ T - cs) :
+    ∀ x ∈ S, f x + cs * (if θ < x then 1 else 0) ≤ T := by
+  intro x hx
+  have := h x hx
+  split_ifs <;> linarith
+
+
+end Engine
+
 end CatalanMeasure.GenD.Signed.Data.Cells
