@@ -83,4 +83,113 @@ noncomputable def arithmeticRegion {Fr : CatalanCore.Frame} {q o p : ℕ} [Fact 
       hrootp := hkp.le
       hroot := hk }
 
+/-! ## The checker supplier, parametrised by the retained-set input
+
+`catValid_prefix_of` turns the stronger layer theorem into the validity of
+any prefix branch whose expression evaluates to `priceG cr`.  The retained
+bound enters only through `WrapPrefixLayer.Supply`: route R1 (the credited
+interval alone) is instantiated below, the routes with outside kills reuse
+the same supplier with larger credits. -/
+
+section Supplier
+
+open Polynomial Finset CatalanCore CatalanCore.Basic CatalanCore.Arith.Hybrid CatalanCore.Rect
+  CatalanCore.Uniform CatalanCore.Uniform.Content.UFMoments
+  CatalanCore.Uniform.Content.Member CatalanCore.Uniform.Content.Shape CatalanCore.Uniform.Content.Smith
+  CatalanCore.Uniform.Content.BankShared CatalanCore.Uniform.Content.BankShared.TwoTerm
+
+/-- The core of the supplier, with the border size abstract. -/
+theorem prefix_core {Fr : Frame} {q o : ℕ} (T : TwoTermData Fr q o) {nm : ℕ}
+    (hnorm : Fr.norm=(nm:ℚ)) {p : ℕ} [Fact p.Prime] (hpn : ¬p∣nm) (hqp : q<p)
+    (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsup : WrapPrefixLayer.Supply Fr q o cr)
+    (r m n k j : ℕ) (hn : 1≤n) (hqN : q*(r+2*m)<p*p) (hm : m=n*p+m%p)
+    (hk0 : 1≤k) (hkp : k<p) (hk : q*k=j*p+o) (S : Finset (Fin r)) :
+    GLE p (WrapPrefixLayer.priceG cr r p m k n) (commonMinorPoly Fr r m S) := by
+  have A := arithmeticRegion T hnorm r m n k j hn hqp hqN hm hk0 hkp hk hpn
+  have hrho : p∣q*k-o := ⟨j,by rw [hk,Nat.add_sub_cancel,Nat.mul_comm]⟩
+  have hg := WrapPrefixLayer.commonMinor_gle_G cr hsup A k hk0 hkp hrho S
+  rw [← hm] at hg
+  exact hg
+
+/-- Validity of a prefix branch with expression `E = priceG cr` for every
+strip `n ≥ 1`, from the retained-set input `Supply Fr q o cr`. -/
+theorem catValid_prefix_of (c : ℚ) (hc : 0<c) {Fr : Frame} {q o : ℕ}
+    (T : TwoTermData Fr q o) {nm : ℕ} (hnorm : Fr.norm=(nm:ℚ))
+    (depth Pbad N0 n : ℕ) (hn : 1≤n)
+    (hP : ∀ p : ℕ,p.Prime → Pbad<p → ¬p∣nm ∧ q<p)
+    (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsup : WrapPrefixLayer.Supply Fr q o cr) (E : Expr)
+    (hE : ∀ r p m k,E.evalN r p m k=WrapPrefixLayer.priceG cr r p m k n) :
+    CatValid c hc Fr depth q o Pbad N0 [(⟨E,[prefixLo n,prefixHi n],0⟩ : Branch)] := by
+  intro b hb i hi hr0 p _ hPb _ hqN j k hk hj0 hjq hk0 hkp hcond
+  simp only [List.mem_cons,List.not_mem_nil,or_false] at hb
+  subst hb
+  obtain ⟨hpn,hqp⟩ := hP p Fact.out hPb
+  have hp0 := (Fact.out:p.Prime).pos
+  have hlo := hcond (prefixLo n) (by simp)
+  have hhi := hcond (prefixHi n) (by simp)
+  obtain ⟨-,hm,-⟩ := strip_decomposition i.1 p _ k n hp0 hlo hhi
+  have hg := prefix_core T hnorm hpn hqp cr hsup i.1 ((altGeom c hc).borderSize i.1) n k j hn hqN hm hk0 hkp hk
+    (retainedFin (altGeom_hybShape c hc hi.2) i.2)
+  have he := altGeom_member_commonMinor c hc Fr depth hi.2 i.2
+  refine ⟨WrapPrefixLayer.priceG cr i.1 p ((altGeom c hc).borderSize i.1) k n,?_,?_⟩
+  · exact he.symm ▸ hg
+  · simp [hE]
+
+/-- **Route R1**: the branch with the credited-interval price, the outside
+kill term `2d - β` dropped. -/
+def eBound1 (t0 tv w0 : Expr) : Expr :=
+  Expr.tsub (Expr.smul 2 (Expr.add WrapExpr.eA WrapExpr.eD))
+    (Expr.add (Expr.add WrapExpr.eD
+        (Expr.tsub (Expr.tsub (Expr.mn (Expr.add tv (Expr.cst 1)) WrapExpr.eN) t0) WrapExpr.eD))
+      (Expr.tsub (Expr.tsub (Expr.tsub (Expr.mn (Expr.add tv (Expr.cst 1)) WrapExpr.eN) t0) WrapExpr.eD)
+        (Expr.tsub Expr.vp (Expr.tsub (Expr.add tv (Expr.cst 1)) w0))))
+
+def eCandidate1 (n j : ℕ) (z : Bool) : Expr :=
+  let B := Expr.add Expr.ap (Expr.smul (n+j) Expr.vp)
+  let lo := if z then Expr.vk else Expr.cst 0
+  let hi := if z then Expr.tsub Expr.vp (Expr.cst 1) else Expr.tsub Expr.vk (Expr.cst 1)
+  let tv := Expr.mn (Expr.add B hi) (Expr.tsub (Expr.add WrapExpr.eA Expr.vp) (Expr.cst 1))
+  eBound1 (Expr.mx WrapExpr.eA (Expr.add B lo)) tv (Expr.add B lo)
+
+def tWrap1 (n : ℕ) : Expr :=
+  Expr.mn (Expr.mn (Expr.mn (eCandidate1 n 0 false) (eCandidate1 n 0 true))
+    (Expr.mn (eCandidate1 n 1 false) (eCandidate1 n 1 true)))
+    (Expr.mn (eCandidate1 n 2 false) (eCandidate1 n 2 true))
+
+theorem evalN_eCandidate1 (r p m k n j : ℕ) (z : Bool) :
+    (eCandidate1 n j z).evalN r p m k=WrapPrefixLayer.candG WrapPrefixLayer.cr1 r p m k n j z := by
+  cases z <;> rfl
+
+theorem evalN_tWrap1 (r p m k n : ℕ) :
+    (tWrap1 n).evalN r p m k=WrapPrefixLayer.priceG WrapPrefixLayer.cr1 r p m k n := by
+  simp only [tWrap1,Expr.evalN,evalN_eCandidate1,WrapPrefixLayer.priceG]
+
+/-- The R1 prefix branch (debit zero). -/
+def brPrefix1 (n : ℕ) : Branch := ⟨tWrap1 n,[prefixLo n,prefixHi n],0⟩
+
+/-- **R1 instance**: every original prefix strip `n ≥ 1` with the closed
+credited-interval price, from built theorems only. -/
+theorem catValid_prefix_R1 (c : ℚ) (hc : 0<c) {Fr : Frame} {q o : ℕ}
+    (T : TwoTermData Fr q o) {nm : ℕ} (hnorm : Fr.norm=(nm:ℚ))
+    (depth Pbad N0 n : ℕ) (hn : 1≤n)
+    (hP : ∀ p : ℕ,p.Prime → Pbad<p → ¬p∣nm ∧ q<p) :
+    CatValid c hc Fr depth q o Pbad N0 [brPrefix1 n] :=
+  catValid_prefix_of c hc T hnorm depth Pbad N0 n hn hP WrapPrefixLayer.cr1
+    (WrapPrefixLayer.supply_R1 Fr q o) (tWrap1 n) (fun r p m k => evalN_tWrap1 r p m k n)
+
+/-- The full checker branch `brPrefix n` (expression `tWrap n`, the
+`(2d - β)` credit) is valid as soon as the retained-set input is supplied
+for the credit `cr3`: this is the target of routes R2 and R3. -/
+theorem catValid_prefix (c : ℚ) (hc : 0<c) {Fr : Frame} {q o : ℕ}
+    (T : TwoTermData Fr q o) {nm : ℕ} (hnorm : Fr.norm=(nm:ℚ))
+    (depth Pbad N0 n : ℕ) (hn : 1≤n)
+    (hP : ∀ p : ℕ,p.Prime → Pbad<p → ¬p∣nm ∧ q<p)
+    (hsup : WrapPrefixLayer.Supply Fr q o WrapPrefixLayer.cr3) :
+    CatValid c hc Fr depth q o Pbad N0 [brPrefix n] :=
+  catValid_prefix_of c hc T hnorm depth Pbad N0 n hn hP WrapPrefixLayer.cr3 hsup
+    (WrapExpr.tWrap n) (fun r p m k => by
+      rw [WrapExpr.evalN_tWrap,WrapPrefixLayer.price_eq_priceG])
+
+end Supplier
+
 end CatalanCore.Uniform.Content.UFSimple.WrapPrefixCheck
