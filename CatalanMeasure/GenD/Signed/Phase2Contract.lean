@@ -1742,9 +1742,13 @@ structure LinkCert {I : ℕ} (D : Phase2Data I) (P : Parameters) (target residua
   hKn : ∀ N, (P.n N : ℝ) ≤ Kn N
   hTn : ∀ N, (P.n N : ℝ) + 1 ≤ Tn N
   hMmax : ∀ N, (Dtop / dsp + D.C1 * θ0) * (P.n N : ℝ) + 1 ≤ (Mmax N : ℝ)
-  -- the Heine count: offset `g` of the problem, reference count `0 < sp ≤ g` (NOTES-ETA §5.1)
+  -- the Heine count: offset `g` of the problem, reference count `0 < sp` with `sp + g` below the
+  -- certified lower bound of the free positive count `q` on every interval (NOTES-ETA §5.7)
   hgA : ∀ i N, (D.DA i N).g = P.g N
-  hspA : ∀ i N, 0 < (D.DA i N).sp ∧ (D.DA i N).sp ≤ P.g N
+  hspA : ∀ i N, 0 < (D.DA i N).sp
+  hspq : ∀ i i0 N, ∀ α ∈ Icc (D.lo i0) (D.hi i0),
+    ((D.DA i N).sp : ℝ) + P.g N ≤
+      ((1 - α) * (Cp i0).c0 + certMean (Cp i0).K (Cp i0).G D0.p - sP i0) * P.n N
   hClsf : ∀ N k q m1 m2 xn gp yn yp,
     ClsfCanon (fun i N => (D.DA i N).θ) (fun i N => (D.DA i N).sp) (fun i N => (D.DA i N).g)
       (fun i N => (D.DA i N).ν) Kn Tn Mmax N k q m1 m2 xn gp yn yp →
@@ -1882,10 +1886,18 @@ theorem Phase2Data.hlink_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters} (
         σx σy τ hxneg hxpos hyneg hypos (L.hKn N) (L.hTn N) ?_ ?_ ?_
       rotate_left
       · intro i
-        obtain ⟨h0, h1⟩ := L.hspA i N
-        refine ⟨h0, ?_⟩
+        refine ⟨L.hspA i N, ?_⟩
         rw [L.hgA i N]
-        omega
+        obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+        have hs := (hsign i0 ⟨h1, h2⟩).1
+        have hb := L.hspq i i0 N α ⟨h1, h2⟩
+        have h3 : ((L.Cp i0).c0 * (1 - α) + certMean (L.Cp i0).K (L.Cp i0).G D0.p - L.sP i0) *
+            (P.n N : ℝ) ≤ q := by
+          have := mul_le_mul_of_nonneg_right hs hνpos.le
+          rw [div_mul_cancel₀ _ hνpos.ne'] at this
+          linarith
+        have h4 : ((D.DA i N).sp : ℝ) + P.g N ≤ q := by linarith
+        exact_mod_cast h4
       · intro i
         rw [D.hν i N, hνD]
       intro i
