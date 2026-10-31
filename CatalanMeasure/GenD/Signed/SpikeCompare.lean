@@ -156,11 +156,69 @@ theorem pair_le_jTwoRhs {ν e : ℝ} (hν : 0 < ν)
   unfold jTwoRhs
   linarith
 
-/-- Numerator: `log heineZ n f ≤ n log π + 2ν² J2 + J3err`. -/
+/-- J3, one-sided and without margin: `crossLog x u ≤ crossLog (D x) u - log D` for `|x| < 1`,
+`D ∈ (0, 1]` (indeed `D (1 + 2xu + x²) ≤ 1 + 2Dxu + D²x²`, the difference being
+`(1 - D)(1 - D x²) ≥ 0`).  Rows entering with a POSITIVE weight (the negatives) need no margin. -/
+theorem crossLog_le_dilate {D x u : ℝ} (hD : D ∈ Ioc (0 : ℝ) 1) (hx : |x| < 1)
+    (hu : u ∈ Icc (-1 : ℝ) 1) :
+    crossLog x u ≤ crossLog (D * x) u - Real.log D := by
+  have hA := cross_pos hx hu
+  have hDx : |D * x| < 1 := by
+    rw [abs_mul, abs_of_pos hD.1]
+    nlinarith [abs_nonneg x, hD.2, hD.1]
+  have hB := cross_pos hDx hu
+  unfold crossLog
+  rw [← Real.log_div hB.ne' hD.1.ne']
+  apply Real.log_le_log hA
+  rw [le_div_iff₀ hD.1]
+  have hx2 : x ^ 2 ≤ 1 := by
+    have := sq_abs x
+    nlinarith [abs_nonneg x]
+  have h1 : 0 ≤ (1 - D) * (1 - D * x ^ 2) :=
+    mul_nonneg (by linarith [hD.2]) (by nlinarith [hD.2, hD.1])
+  nlinarith [h1]
+
+/-- With `D = (1 - e)²`: `-log D ≤ 4e`. -/
+theorem neg_log_tau_sq_le {e : ℝ} (he : e ∈ Ioo (0 : ℝ) (1 / 8)) :
+    -Real.log ((1 - e) ^ 2) ≤ 4 * e := by
+  have hD : 0 < (1 - e) ^ 2 := by nlinarith [he.2]
+  have h := Real.one_sub_inv_le_log_of_pos hD
+  have h2 : (1 - e) ^ 2 ≥ 49 / 64 := by nlinarith [he.1, he.2]
+  have h3 : ((1 - e) ^ 2)⁻¹ - 1 ≤ 4 * e := by
+    rw [inv_eq_one_div, div_sub_one hD.ne', div_le_iff₀ hD]
+    nlinarith [he.1, he.2]
+  linarith
+
+/-- J3, one-sided field form: only the rows with NEGATIVE weight need the margin `c'`. -/
+theorem cross_field_sub_dilate_le_one_sided {n : ℕ} {c' e u : ℝ} (hc' : c' ∈ Ioc (0 : ℝ) 1)
+    (he : e ∈ Ioo (0 : ℝ) (1 / 8)) (w y : Fin n → ℝ) (hy1 : ∀ l, |y l| < 1)
+    (hy : ∀ l, w l < 0 → |y l| ≤ 1 - c') (hu : u ∈ Icc (-1 : ℝ) 1) :
+    ∑ l, w l * crossLog (y l) u - ∑ l, w l * crossLog ((1 - e) ^ 2 * y l) u ≤
+      (∑ l, |w l|) * (4 * e / c') := by
+  rw [← Finset.sum_sub_distrib, Finset.sum_mul]
+  refine Finset.sum_le_sum fun l _ => ?_
+  rw [← mul_sub]
+  have h4 : 4 * e ≤ 4 * e / c' := by
+    rw [le_div_iff₀ hc'.1]; nlinarith [he.1, hc'.2]
+  rcases lt_or_ge (w l) 0 with hw | hw
+  · have h := abs_crossLog_sub_dilate_le_of_tau hc' he (hy l hw) hu
+    calc w l * (crossLog (y l) u - crossLog ((1 - e) ^ 2 * y l) u)
+        ≤ |w l * (crossLog (y l) u - crossLog ((1 - e) ^ 2 * y l) u)| := le_abs_self _
+      _ = |w l| * |crossLog (y l) u - crossLog ((1 - e) ^ 2 * y l) u| := abs_mul _ _
+      _ ≤ |w l| * (4 * e / c') := mul_le_mul_of_nonneg_left h (abs_nonneg _)
+  · have hD : (1 - e) ^ 2 ∈ Ioc (0 : ℝ) 1 :=
+      ⟨by nlinarith [he.1, he.2], by nlinarith [he.1, he.2]⟩
+    have h := crossLog_le_dilate hD (hy1 l) hu
+    have h2 := neg_log_tau_sq_le he
+    rw [abs_of_nonneg hw]
+    exact mul_le_mul_of_nonneg_left (by linarith) hw
+
+/-- Numerator: `log heineZ n f ≤ n log π + 2ν² J2 + J3err`.  The margin `c'` is needed only for
+the rows of negative weight (the positives); the others only need `|y| < 1`. -/
 theorem log_heineZ_le {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ) (1 / 8))
     (hc' : c' ∈ Ioc (0 : ℝ) 1) {n N : ℕ} (hn : (n : ℝ) ≤ ν)
     (a : ℕ → ℝ) (ha : Summable (fun k => |a k|)) (w y : Fin N → ℝ)
-    (hw : ∀ l, |2 * ν * w l| = 1) (hy : ∀ l, |y l| ≤ 1 - c')
+    (hw : ∀ l, |2 * ν * w l| = 1) (hy1 : ∀ l, |y l| < 1) (hy : ∀ l, w l < 0 → |y l| ≤ 1 - c')
     (r : ℕ → ℝ) (hr : Summable (fun k : ℕ => ((k + 1 : ℕ) : ℝ) * r (k + 1) ^ 2))
     (hra : Summable (fun k : ℕ => r (k + 1) * a (k + 1)))
     (Qref : ℝ → ℝ)
@@ -171,7 +229,6 @@ theorem log_heineZ_le {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ) (
       f u = Real.exp (∑ l, 2 * ν * w l * crossLog (y l) u)) :
     0 < heineZ n f ∧ Real.log (heineZ n f) ≤ (n : ℝ) * Real.log Real.pi +
       2 * ν ^ 2 * jTwoRhs ν e a r ℓ N n w y + (n : ℝ) * ((N : ℝ) * (4 * e / c')) := by
-  have hy1 : ∀ l, |y l| < 1 := fun l => by linarith [hy l, hc'.1]
   set Q : ℝ → ℝ := fun u => ∑ l, 2 * ν * w l * crossLog (y l) u with hQdef
   have hQm : Measurable Q := by
     refine Finset.measurable_sum _ fun l _ => ?_
@@ -197,10 +254,14 @@ theorem log_heineZ_le {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ) (
     have hu : ∀ i, Real.cos (θ i) ∈ Ioo (-1 : ℝ) 1 := fun i => cos_mem_Ioo_of_mem_Ioo (hI i)
     have hJ2 := pair_le_jTwoRhs hν he hn (u := fun l => Real.cos (θ l)) hu hinj a ha w y hy1 r hr
       hra Qref hQ hℓ
-    have hJ3 : ∀ i, |∑ l, (2 * ν * w l) * crossLog (y l) (Real.cos (θ i)) -
-        ∑ l, (2 * ν * w l) * crossLog (realEnergyTau e ^ 2 * y l) (Real.cos (θ i))| ≤
+    have hJ3 : ∀ i, ∑ l, (2 * ν * w l) * crossLog (y l) (Real.cos (θ i)) -
+        ∑ l, (2 * ν * w l) * crossLog (realEnergyTau e ^ 2 * y l) (Real.cos (θ i)) ≤
         (∑ l, |2 * ν * w l|) * (4 * e / c') := fun i =>
-      abs_cross_field_sub_dilate_le hc' he (fun l => 2 * ν * w l) y hy
+      cross_field_sub_dilate_le_one_sided hc' he (fun l => 2 * ν * w l) y hy1
+        (fun l hl => hy l (by
+          by_contra hc
+          have : 0 ≤ 2 * ν * w l := mul_nonneg (by positivity) (not_lt.mp hc)
+          linarith))
         ⟨Real.neg_one_le_cos _, Real.cos_le_one _⟩
     have hsumw : (∑ l : Fin N, |2 * ν * w l|) = N := by simp [hw]
     rw [denEnergy_eq]
@@ -226,7 +287,6 @@ theorem log_heineZ_le {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ) (
           rw [Finset.mul_sum]
           exact Finset.sum_congr rfl fun l _ => by ring
         rw [h4] at this
-        have := (abs_le.mp this).2
         simp only [hQdef]
         linarith
       calc _ ≤ ∑ i : Fin n, (2 * ν * (∑ l, w l *
@@ -864,7 +924,7 @@ theorem spike_compare_exact {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : 
     (hP : ∀ u ∈ Icc (-1 : ℝ) 1,
       (s' : ℝ) * c1 ≤ ((s' + m : ℕ) : ℝ) * chebPs b u - m * chebPs (poisSeq ρ) u)
     {k q : ℕ} (x : Fin k → ℝ) (y : Fin q → ℝ) (z : Fin (2 * m) → ℝ)
-    (hx : ∀ i, |x i| ≤ 1 - c') (hy : ∀ j, |y j| ≤ 1 - c') (hz : ∀ p, |z p| < 1)
+    (hx : ∀ i, |x i| < 1) (hy : ∀ j, |y j| ≤ 1 - c') (hz : ∀ p, |z p| < 1)
     {fN fD : ℝ → ℝ}
     (hfN : ∀ u ∈ Icc (-1 : ℝ) 1,
       fN u = Real.exp (∑ i, crossLog (x i) u - ∑ j, crossLog (y j) u))
@@ -874,16 +934,27 @@ theorem spike_compare_exact {ν e c' : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : 
         (s' : ℝ) * (((k + q : ℕ) : ℝ) * (4 * e / c')) + spikeCostNet ν e a b s' m ρ x y z := by
   have hτ := realEnergyTau_bounds he
   have hτ' : realEnergyTau e ∈ Ioo (0 : ℝ) 1 := ⟨hτ.1, hτ.2⟩
-  have hxy : ∀ l, |Fin.append x y l| ≤ 1 - c' :=
-    fin_append_forall x y (fun t => |t| ≤ 1 - c') hx hy
-  have hxy1 : ∀ l, |Fin.append x y l| < 1 := fun l => by linarith [hxy l, hc'.1]
   have hy1 : ∀ j, |y j| < 1 := fun j => by linarith [hy j, hc'.1]
+  have hxy1 : ∀ l, |Fin.append x y l| < 1 :=
+    fin_append_forall x y (fun t => |t| < 1) hx hy1
+  have hxy : ∀ l, negPosW ν k q l < 0 → |Fin.append x y l| ≤ 1 - c' := by
+    intro l
+    refine Fin.addCases (fun i => ?_) (fun j => ?_) l
+    · intro h
+      exfalso
+      unfold negPosW at h
+      rw [Fin.append_left] at h
+      have : (0 : ℝ) < 1 / (2 * ν) := by positivity
+      linarith
+    · intro _
+      rw [Fin.append_right]
+      exact hy j
   have hs'R : (0 : ℝ) < s' := by exact_mod_cast hs'
   have hcast : (((s' + m : ℕ)) : ℝ) = (s' : ℝ) + m := by push_cast; ring
   have hs's : (s' : ℝ) ≤ ν := hsν
   -- numerator
   have hnum := log_heineZ_le (n := s') (N := k + q) hν he hc' hs's a ha (negPosW ν k q)
-    (Fin.append x y) (abs_negPosW hν k q) hxy r hr hra Qref hQ hℓ (f := fN)
+    (Fin.append x y) (abs_negPosW hν k q) hxy1 hxy r hr hra Qref hQ hℓ (f := fN)
     (fun u hu => by rw [hfN u hu, sum_negPos hν x y u])
   -- the J2 difference
   have hJ := jTwo_diff hν he a r hr ℓ (s' + m) s' (negPosW ν k q) (Fin.append x y) hxy1 z hz
@@ -1241,7 +1312,7 @@ theorem spike_compare {ν e c' d : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ)
     (hP : ∀ u ∈ Icc (-1 : ℝ) 1,
       (s' : ℝ) * c1 ≤ ((s' + m : ℕ) : ℝ) * chebPs b u - m * chebPs (poisSeq ρ) u)
     {k q : ℕ} (x : Fin k → ℝ) (y : Fin q → ℝ) (z : Fin (2 * m) → ℝ)
-    (hx : ∀ i, |x i| ≤ 1 - c') (hy : ∀ j, |y j| ≤ 1 - c') (hz : ∀ p, |z p| < 1)
+    (hx1 : ∀ i, -1 < x i) (hy : ∀ j, |y j| ≤ 1 - c') (hz : ∀ p, |z p| < 1)
     (hx0 : ∀ i, x i ≤ 0) (hy0 : ∀ j, 0 ≤ y j) (hzd : ∀ p, d ≤ z p)
     {fN fD : ℝ → ℝ}
     (hfN : ∀ u ∈ Icc (-1 : ℝ) 1,
@@ -1250,11 +1321,9 @@ theorem spike_compare {ν e c' d : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : ℝ)
     (m : ℝ) * ∑ i, crossLog (x i) (-1) + (Real.log (heineZ s' fN) - Real.log (heineZ s' fD)) ≤
       spikeNumB ν e a r ℓ (s' + m) x y z - spikeDenB b (s' + m) y z +
         (s' : ℝ) * (((k + q : ℕ) : ℝ) * (4 * e / c')) + spikeCost ν e a b s' m ρ d k z := by
+  have hx : ∀ i, |x i| < 1 := fun i => abs_lt.mpr ⟨hx1 i, by linarith [hx0 i]⟩
   have h1 := spike_compare_exact hν he hc' hs' hsν a r ha hr hra Qref hQ hℓ hb hρ hc1 hP x y z hx
     hy hz hfN hfD
-  have hx1 : ∀ i, -1 < x i := fun i => by
-    have := (abs_le.mp (hx i)).1
-    linarith [hc'.1]
   have hy1 : ∀ j, y j < 1 := fun j => by
     have := (abs_le.mp (hy j)).2
     linarith [hc'.1]
@@ -1267,6 +1336,8 @@ end
 
 end CatalanMeasure.Signed
 
+#print axioms CatalanMeasure.Signed.crossLog_le_dilate
+#print axioms CatalanMeasure.Signed.cross_field_sub_dilate_le_one_sided
 #print axioms CatalanMeasure.Signed.log_heineZ_le
 #print axioms CatalanMeasure.Signed.jTwo_diff
 #print axioms CatalanMeasure.Signed.screening

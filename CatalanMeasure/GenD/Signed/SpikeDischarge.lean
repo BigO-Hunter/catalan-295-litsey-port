@@ -234,8 +234,8 @@ structure SpikeEnv (D : SignedData) where
 
 /-- **The concrete class.**  A witness that the configuration `(xn, gp)` is in the spike class:
 the positives are split (`σ`) into the rest `y` (non-spikes, `y ≤ 1 - θ`) and the `M` spikes `z`
-(`1 - θ < z`); `M = 2m` or `M + 1 = 2m` (phantom `zph` in the odd case); the negatives have margin
-`c'`; the denominator trial `D.b` with removal scale `ρ ≤ τ² (1 - θ)` satisfies (P') with `c1 > 0`;
+(`1 - θ < z`); `M = 2m` or `M + 1 = 2m` (phantom `zph` in the odd case); the negatives need NO margin (one-sided
+J3, `crossLog_le_dilate`; `c'` is the margin of the non-spike positives, `c' ≤ θ`); the denominator trial `D.b` with removal scale `ρ ≤ τ² (1 - θ)` satisfies (P') with `c1 > 0`;
 and `hcost` is the cost bound: the cost `spikeCost` of the (extended) spike family, together with
 the change of `NumB - DenB` caused by the phantom, is at most `ν cs M` (`cs` per capped positive). -/
 structure SpikeWitness (D : SignedData) (c' : ℝ) {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) where
@@ -249,7 +249,6 @@ structure SpikeWitness (D : SignedData) (c' : ℝ) {k q : ℕ} (xn : Fin k → �
   hσ : ∀ i, gp (σ i) = Fin.append y z i
   hM : M = 2 * m ∨ M + 1 = 2 * m
   hm : m < D.sp
-  hxcap : ∀ i, -(1 - c') ≤ xn i
   hy_not_spike : ∀ j, y j ≤ 1 - D.θ
   hz_spike : ∀ i, 1 - D.θ < z i
   hzph : 1 - D.θ ≤ zph ∧ zph < 1
@@ -316,8 +315,6 @@ theorem spikeCompare_of_class (D : SignedData) (E : SpikeEnv D) {c' : ℝ}
   have hcard : W.q' + W.M = q := by simpa using Fintype.card_congr W.σ
   have hext : ∀ p, 1 - D.θ ≤ extFam W.z W.zph W.m p ∧ extFam W.z W.zph W.m p < 1 :=
     extFam_mem W.z W.zph (1 - D.θ) (fun i => ⟨(W.hz_spike i).le, hz1 i⟩) W.hzph
-  have hx : ∀ i, |xn i| ≤ 1 - c' := fun i =>
-    abs_le.mpr ⟨W.hxcap i, by linarith [(hxn i).2, hc'.2]⟩
   have hy : ∀ j, |W.y j| ≤ 1 - c' := fun j =>
     abs_le.mpr ⟨by linarith [hy0 j, hc'.2], by linarith [W.hy_not_spike j, hcθ]⟩
   have hzext : ∀ p, |extFam W.z W.zph W.m p| < 1 := fun p =>
@@ -348,7 +345,7 @@ theorem spikeCompare_of_class (D : SignedData) (E : SpikeEnv D) {c' : ℝ}
     exact W.hP u hu
   have hcmp := spike_compare (s' := D.sp - W.m) (m := W.m) E.hν E.he hc' hd hs'pos hsν D.a
     (refTilt D.R) E.ha E.hr E.hra E.Qref E.hQ E.hℓ hb W.hρ W.hρd W.hc1 hP' xn W.y
-    (extFam W.z W.zph W.m) hx hy hzext (fun i => (hxn i).2.le) (fun j => (hy0 j).le)
+    (extFam W.z W.zph W.m) (fun i => (hxn i).1) hy hzext (fun i => (hxn i).2.le) (fun j => (hy0 j).le)
     (fun p => (hext p).1)
     (fN := fun u => (∏ b, (1 + 2 * xn b * u + xn b ^ 2)) *
       ∏ p, (1 + 2 * W.y p * u + W.y p ^ 2)⁻¹)

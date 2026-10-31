@@ -507,6 +507,61 @@ theorem Phase2Data.signedSecondSheetNear {I : ℕ} (D : Phase2Data I) {P : Param
   _root_.CatalanMeasure.Signed.signedSecondSheetNear hP G target0 c2 Cls D.toBounds hn hconst hRf hRm hRn hCf hLRf hB hcost
     hnon hlink
 
+/-- **The near-optimal class (the dichotomy of PROOF-A 17.9(a), Lemma 4).**  A free configuration
+`z` is in the class when SOME marked selection `(x, y)` and column configuration `s` violate the
+old-route (grouped-product) bound at `target`, with no `ε`.  Off the class the old route holds by
+definition, so the non-class branch `hnon` is automatic (`hnon_nearOpt`); all the content is in the
+class branch (`hlink`: Lemma K containment, spike witnesses).  See `SPIKE-CLASS.md` §1. -/
+def nearOptCls (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
+    ∀ (N r : ℕ), (Fin r → ℝ) → Prop :=
+  fun N r z => ∃ (a b : ℕ) (_ : r + a + b = P.n N) (x : Fin a → ℝ) (y : Fin b → ℝ)
+    (s : Fin r → ℝ),
+    (∀ i, z i ∈ Ioo (-1 : ℝ) 1) ∧ (∀ i, z i ≠ 0) ∧ (∀ i, x i ∈ Ioo (-1 : ℝ) 1) ∧
+    (∀ i, G (x i)) ∧ (∀ i, y i ∈ Ioo (0 : ℝ) 1) ∧ (∀ i, s i ∈ Ioo (0 : ℝ) 1) ∧
+    Function.Injective z ∧ Function.Injective (Fin.append z x) ∧ Function.Injective y ∧
+    Function.Injective s ∧
+    Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2) + cost * N * (a + b)) <
+      groupedProduct P N z x y s
+
+/-- The non-class branch for the near-optimal class: no hypothesis. -/
+theorem hnon_nearOpt (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
+    GroupedMarkedProductCostOnRestr P target cost G
+      (fun N r _ _ z _ _ _ => ¬ nearOptCls P target cost G N r z) := by
+  intro ε hε
+  refine Filter.Eventually.of_forall fun N r a b hrab z x y s hz hz0 hx hxG hy hs hzi hzxi hyi hsi
+    hQ => ?_
+  by_contra h0
+  have h := lt_of_not_ge h0
+  apply hQ
+  refine ⟨a, b, hrab, x, y, s, hz, hz0, hx, hxG, hy, hs, hzi, hzxi, hyi, hsi,
+    lt_of_le_of_lt ?_ h⟩
+  apply Real.exp_le_exp.mpr
+  have h0 : 0 ≤ ((P.n0 : ℝ) * N) ^ 2 * ε := by positivity
+  have e : ((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) =
+      ((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2) + ((P.n0 : ℝ) * N) ^ 2 * ε := by ring
+  rw [e]
+  linarith
+
+/-- **End-to-end with the near-optimal class:** `hnon` discharged; what remains is the data `D`,
+the identification and the class link for `nearOptCls`. -/
+theorem Phase2Data.signedSecondSheetNear_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters}
+    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (hlink : SignedNearClassLink P D.toBounds (nearOptCls P target0 c2 G) G) :
+    SignedSecondSheetCore P G target0 c2 D.α1 :=
+  D.signedSecondSheetNear hP G target0 c2 _ hn hconst hRf hRm hRn hCf hLRf hB hcost
+    (hnon_nearOpt P target0 c2 G) hlink
+
 end Sheet
 
 end
@@ -521,3 +576,5 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.FixAdmCap_mono
 #print axioms CatalanMeasure.Signed.Phase2Data.hFix
 #print axioms CatalanMeasure.Signed.fixAdmCap_of_marked
+#print axioms CatalanMeasure.Signed.hnon_nearOpt
+#print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNear_nearOpt

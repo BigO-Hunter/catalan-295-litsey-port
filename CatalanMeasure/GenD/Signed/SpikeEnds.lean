@@ -457,7 +457,6 @@ structure SpikePair (DA DB : SignedData) (c' : ℝ) {k q : ℕ} (xn : Fin k → 
   hσ : ∀ i, gp (σ i) = Fin.append y z i
   hM : M = 2 * m ∨ M + 1 = 2 * m
   hm : m < DA.sp
-  hxcap : ∀ i, -(1 - c') ≤ xn i
   hy_not_spike : ∀ j, y j ≤ 1 - DA.θ
   hz_spike : ∀ i, 1 - DA.θ < z i
   hzph : 1 - DA.θ ≤ zph ∧ zph < 1
@@ -490,7 +489,6 @@ def SpikePair.toWitness {DA DB : SignedData} {l c c' : ℝ} {k q : ℕ} {xn : Fi
   hσ := P.hσ
   hM := P.hM
   hm := P.hm
-  hxcap := P.hxcap
   hy_not_spike := P.hy_not_spike
   hz_spike := P.hz_spike
   hzph := P.hzph
@@ -580,12 +578,12 @@ theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → 
 
 /-! ### 6. Building the pair from ONE single-trial witness -/
 
-/-- The margin only concerns the negatives `xn` (it is a property of the configuration, not of the
-trial), so a pair at margin `c'` is a pair at every smaller margin. -/
+/-- No field of the pair depends on the margin any more (the negatives need no margin: one-sided
+J3, `crossLog_le_dilate`), so a pair at margin `c'` is a pair at every margin. -/
 def SpikePair.monoMargin {DA DB : SignedData} {c' c'' : ℝ} {k q : ℕ} {xn : Fin k → ℝ}
-    {gp : Fin q → ℝ} (P : SpikePair DA DB c' xn gp) (h : c'' ≤ c') :
+    {gp : Fin q → ℝ} (P : SpikePair DA DB c' xn gp) (_h : c'' ≤ c') :
     SpikePair DA DB c'' xn gp :=
-  { P with hxcap := fun i => by linarith [P.hxcap i] }
+  { P with }
 
 def PairCls.monoMargin {DA DB : SignedData} {c' c'' bcap : ℝ} {k q m1 m2 : ℕ}
     {xn : Fin k → ℝ} {gp : Fin q → ℝ} {yn : Fin m1 → ℝ} {yp : Fin m2 → ℝ}
@@ -612,7 +610,6 @@ def SpikePair.ofWitness {DA DB : SignedData} {c' : ℝ} {k q : ℕ} {xn : Fin k 
   hσ := WA.hσ
   hM := WA.hM
   hm := WA.hm
-  hxcap := WA.hxcap
   hy_not_spike := WA.hy_not_spike
   hz_spike := WA.hz_spike
   hzph := WA.hzph
@@ -647,6 +644,24 @@ def PairCls.ofWitness {DA DB : SignedData} {c' bcap : ℝ} {k q m1 m2 : ℕ} {xn
   hbcap := hbcap
   hyp := hyp
 
+/-! ### 7. The cost condition for an even number of spikes -/
+
+theorem extFam_even {m : ℕ} (z : Fin (2 * m) → ℝ) (zph : ℝ) : extFam z zph m = z := by
+  funext i
+  simp [extFam, i.isLt]
+
+/-- **Even case of the cost condition.**  For `M = 2m` spikes there is no phantom
+(`extFam z zph m = z`), the numerator and denominator differences cancel, and `SpikeCostOK` is
+exactly the bound `spikeCost ≤ ν M cs` (the per-spike constant of the trial). -/
+theorem SpikeCostOK.of_even (D : SignedData) {k q' m : ℕ} (xn : Fin k → ℝ) (y : Fin q' → ℝ)
+    (z : Fin (2 * m) → ℝ) (zph ρ : ℝ)
+    (h : spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k z ≤
+      D.ν * (((2 * m : ℕ) : ℝ) * D.cs)) :
+    SpikeCostOK D m xn y z zph ρ := by
+  unfold SpikeCostOK
+  rw [extFam_even]
+  linarith
+
 end
 
 end CatalanMeasure.Signed
@@ -674,3 +689,4 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.spikeFix_of_ends
 #print axioms CatalanMeasure.Signed.SpikePair.monoMargin
 #print axioms CatalanMeasure.Signed.PairCls.ofWitness
+#print axioms CatalanMeasure.Signed.SpikeCostOK.of_even
