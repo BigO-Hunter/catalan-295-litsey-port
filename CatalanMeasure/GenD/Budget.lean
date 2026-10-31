@@ -105,6 +105,81 @@ theorem first_budget {ℓ lo hi c07 c26 res n1 F1 Lm T cost1 m a : ℝ}
     have h7 : 0 ≤ ℓ * a ^ 2 := by positivity
     nlinarith only [hE, h1, h3, h7, hm]
 
+/-- Curvature `-ℓ` version of `quad_nonpos` (no `a (1 - a) ℓ` term in the energy). -/
+theorem quad_nonpos' {ℓ A s a : ℝ} (hℓ : 0 < ℓ) (hd : s ^ 2 + 4 * ℓ * A ≤ 0) :
+    A + s * a - ℓ * a ^ 2 ≤ 0 := by
+  have h : 4 * ℓ * (A + s * a - ℓ * a ^ 2) ≤ 0 := by
+    nlinarith only [hd, sq_nonneg (2 * ℓ * a - s)]
+  by_contra hc
+  push Not at hc
+  have h8 : (0 : ℝ) < 4 * ℓ := by positivity
+  have := mul_pos h8 hc
+  linarith only [this, h]
+
+/-- Second-trial budget for the endpoint column field (energy without the `α log (1 + s)` term,
+hence without `a (1 - a) ℓ`): leading coefficient `-ℓ`, discriminant with `4 ℓ m`, and the
+linear coefficient `(c26 - 1) ℓ`. -/
+theorem second_budget' {ℓ lo hi c07 c26 res Nn M r nc T cost m a t : ℝ}
+    (hlo : 0 < lo) (hl : lo ≤ ℓ) (hh : ℓ ≤ hi) (h07 : 0 ≤ c07) (h26 : 0 ≤ c26 - 1)
+    (hobj : Nn + M + T - c07 * lo ≤ -m)
+    (hdisc : ((c26 - 1) * hi - M + r - cost) ^ 2 ≤ 4 * lo * m)
+    (hnear : hi - r + nc ≤ 0) (ha : 0 ≤ a) (ht : 0 ≤ t) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + t - t ^ 2) * ℓ + Nn + (1 - a) * M
+        + (a - t) * r + t * nc + res * a ≤
+      -T + ℓ / 2 + (cost + res) * a := by
+  have hℓ : 0 < ℓ := lt_of_lt_of_le hlo hl
+  have hE : (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + t - t ^ 2) * ℓ + Nn + (1 - a) * M
+        + (a - t) * r + t * nc + res * a -
+      (-T + ℓ / 2 + (cost + res) * a) =
+      (Nn + M + T - c07 * ℓ) + a * ((c26 - 1) * ℓ - M + r - cost) - ℓ * a ^ 2
+        + t * (ℓ - r + nc) - ℓ * t ^ 2 := by ring
+  have h1 : Nn + M + T - c07 * ℓ ≤ -m := by
+    nlinarith only [hobj, mul_nonneg h07 (sub_nonneg.2 hl)]
+  have h2 : (c26 - 1) * ℓ - M + r - cost ≤ (c26 - 1) * hi - M + r - cost := by
+    nlinarith only [mul_nonneg h26 (sub_nonneg.2 hh)]
+  have h3 : a * ((c26 - 1) * ℓ - M + r - cost) ≤ a * ((c26 - 1) * hi - M + r - cost) :=
+    mul_le_mul_of_nonneg_left h2 ha
+  have h4 : -m + ((c26 - 1) * hi - M + r - cost) * a - lo * a ^ 2 ≤ 0 :=
+    quad_nonpos' (A := -m) hlo (by nlinarith only [hdisc])
+  have h5 : -(ℓ * a ^ 2) ≤ -(lo * a ^ 2) := by
+    nlinarith only [mul_nonneg (sub_nonneg.2 hl) (sq_nonneg a)]
+  have h6 : t * (ℓ - r + nc) ≤ 0 :=
+    mul_nonpos_of_nonneg_of_nonpos ht (by linarith only [hh, hnear])
+  have h7 : 0 ≤ ℓ * t ^ 2 := by positivity
+  nlinarith only [hE, h1, h3, h4, h5, h6, h7]
+
+/-- First-trial budget for the endpoint column field (no `a (1 - a) ℓ` term). -/
+theorem first_budget' {ℓ lo hi c07 c26 res n1 F1 Lm T cost1 m a : ℝ}
+    (hlo : 0 < lo) (hl : lo ≤ ℓ) (hh : ℓ ≤ hi) (h07 : 0 ≤ c07) (h26 : 0 ≤ c26 - 1)
+    (hobj : n1 + F1 + T - c07 * lo ≤ -m) (hm : 0 ≤ m)
+    (hdisc : ((c26 - 1) * hi - F1 + Lm - cost1) ^ 2 ≤ 4 * lo * m)
+    (hneg : cost1 ≤ (c26 - 1) * lo - F1 + Lm) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2) * ℓ + n1 + (1 - a) * F1
+        + a * Lm + res * a ≤
+      -T + ℓ / 2 + (cost1 + res) * a := by
+  have hℓ : 0 < ℓ := lt_of_lt_of_le hlo hl
+  have hE : (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2) * ℓ + n1 + (1 - a) * F1
+        + a * Lm + res * a - (-T + ℓ / 2 + (cost1 + res) * a) =
+      (n1 + F1 + T - c07 * ℓ) + a * ((c26 - 1) * ℓ - F1 + Lm - cost1) - ℓ * a ^ 2 := by ring
+  have h1 : n1 + F1 + T - c07 * ℓ ≤ -m := by
+    nlinarith only [hobj, mul_nonneg h07 (sub_nonneg.2 hl)]
+  rcases le_or_gt 0 a with ha | ha
+  · have h2 : (c26 - 1) * ℓ - F1 + Lm - cost1 ≤ (c26 - 1) * hi - F1 + Lm - cost1 := by
+      nlinarith only [mul_nonneg h26 (sub_nonneg.2 hh)]
+    have h3 : a * ((c26 - 1) * ℓ - F1 + Lm - cost1) ≤ a * ((c26 - 1) * hi - F1 + Lm - cost1) :=
+      mul_le_mul_of_nonneg_left h2 ha
+    have h4 : -m + ((c26 - 1) * hi - F1 + Lm - cost1) * a - lo * a ^ 2 ≤ 0 :=
+      quad_nonpos' (A := -m) hlo (by nlinarith only [hdisc])
+    have h5 : -(ℓ * a ^ 2) ≤ -(lo * a ^ 2) := by
+      nlinarith only [mul_nonneg (sub_nonneg.2 hl) (sq_nonneg a)]
+    nlinarith only [hE, h1, h3, h4, h5]
+  · have h2 : 0 ≤ (c26 - 1) * ℓ - F1 + Lm - cost1 := by
+      nlinarith only [hneg, mul_nonneg h26 (sub_nonneg.2 hl)]
+    have h3 : a * ((c26 - 1) * ℓ - F1 + Lm - cost1) ≤ 0 :=
+      mul_nonpos_of_nonpos_of_nonneg ha.le h2
+    have h7 : 0 ≤ ℓ * a ^ 2 := by positivity
+    nlinarith only [hE, h1, h3, h7, hm]
+
 /-- Hypotheses of the recycled-polynomial criterion in the design's own unit, with recycling
 window `(p, θ p]` (`θ = 2` is `irrationality_measure_of_recycled_polynomials_square_pnt`). -/
 def Pay (θ d0 ρ η χ κ δ B : ℝ) : Prop :=

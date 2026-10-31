@@ -82,6 +82,61 @@ theorem first_budget_log2 (a : ℝ) :
     (by norm_num [c26, hi, lo, n1, F1, target, c07, Lm, firstCost])
     (by norm_num [c26, lo, F1, Lm, firstCost])
 
+/-! ### ρ-saving S1: costs for the endpoint column field (budgets without `a (1 - a) log 2`) -/
+
+/-- Second cost for the energy without the `α log (1 + s)` term:
+`≥ (47/29) hi + 2.53949899 - 0.0631062 - 2 √(lo m') = 3.5968919…`. -/
+def secondCost' : ℝ := 3596893 / 1000000
+/-- First cost for the endpoint column field, `≥ 3.5495414…`. -/
+def firstCost' : ℝ := 3549542 / 1000000
+
+/-- Column cost `ρ' = 58 · max(c₁', c₂'') + Ψ` with `c₂'' = secondCost'` (the `max` is
+`secondCost'`, see `firstCost'_le_secondCost'`), as a function of the weight-plus-binomial
+exponent `Ψ`. -/
+def rhoEnd (Ψ : ℝ) : ℝ := 58 * max firstCost' secondCost' + Ψ
+
+theorem firstCost'_le_secondCost' : firstCost' ≤ secondCost' := by
+  norm_num [firstCost', secondCost']
+
+theorem rhoEnd_eq (Ψ : ℝ) : rhoEnd Ψ = 58 * secondCost' + Ψ := by
+  unfold rhoEnd; rw [max_eq_right firstCost'_le_secondCost']
+
+theorem rhoEnd_val (Ψ : ℝ) : rhoEnd Ψ = 208619794 / 1000000 + Ψ := by
+  rw [rhoEnd_eq]; norm_num [secondCost']
+
+/-- The Theorem A cost at `α₁ = 1/16` (`g = 8.334`, `G = g/58²`) is covered by `secondCost'`. -/
+theorem secondCost'_ge_alpha1 :
+    c26 * hi - fieldCap + residualCap - hi - lo * (1 / 16) +
+        ((8334 / 1000) / 58 ^ 2 - -(normCap + fieldCap + target - c07 * lo)) / (1 / 16) ≤
+      secondCost' := by
+  norm_num [c26, hi, lo, fieldCap, residualCap, normCap, target, c07, secondCost']
+
+theorem rhoEnd_at_Psi0 (Ψ : ℝ) (hΨ : Ψ = 879663 / 10000) :
+    rhoEnd Ψ ≤ 2965861 / 10000 := by
+  rw [rhoEnd_val, hΨ]; norm_num
+
+theorem second_budget'_log2 {a tt : ℝ} (ha : 0 ≤ a) (htt : 0 ≤ tt) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2 + tt - tt ^ 2) * Real.log 2 + normCap
+        + (1 - a) * fieldCap + (a - tt) * residualCap
+        + tt * nearCap + (9 / 10 : ℝ) * a ≤
+      -target + Real.log 2 / 2 + (secondCost' + 9 / 10) * a := by
+  obtain ⟨hl, hh⟩ := log2_bounds
+  exact second_budget' (m := -(normCap + fieldCap + target - c07 * lo)) (res := 9 / 10)
+    (by norm_num [lo]) hl hh (by norm_num [c07]) (by norm_num [c26]) (by norm_num)
+    (by norm_num [c26, hi, lo, normCap, fieldCap, target, c07, residualCap, secondCost'])
+    (by norm_num [hi, residualCap, nearCap]) ha htt
+
+theorem first_budget'_log2 (a : ℝ) :
+    (-(c07 - 1 / 2) + (c26 - 1) * a - a ^ 2) * Real.log 2 + n1 + (1 - a) * F1
+        + a * Lm + (9 / 10 : ℝ) * a ≤
+      -target + Real.log 2 / 2 + (firstCost' + 9 / 10) * a := by
+  obtain ⟨hl, hh⟩ := log2_bounds
+  exact first_budget' (m := -(n1 + F1 + target - c07 * lo)) (res := 9 / 10)
+    (by norm_num [lo]) hl hh (by norm_num [c07]) (by norm_num [c26]) (by norm_num)
+    (by norm_num [c07, lo, n1, F1, target])
+    (by norm_num [c26, hi, lo, n1, F1, target, c07, Lm, firstCost'])
+    (by norm_num [c26, lo, F1, Lm, firstCost'])
+
 end K590
 
 end
