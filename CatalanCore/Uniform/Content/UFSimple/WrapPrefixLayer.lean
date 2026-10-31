@@ -2104,6 +2104,1421 @@ theorem reference0_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod 
 
 end TwoParameterCoupling
 
+section BorderedResidue
+
+/-- Schur form of the image of a bordered determinant under a ring map to a
+field (stated generically: no concrete residue instances are unfolded). -/
+theorem map_bordered_det {R K β : Type*} [CommRing R] [Field K] [Fintype β] [DecidableEq β]
+    (f : R →+* K) (P : Matrix β β R) (L σ : β → R) (c : R) (hP : (P.map f).det≠0) :
+    f (Matrix.fromBlocks P (Matrix.of fun i (_:Unit) => L i) (Matrix.of fun (_:Unit) j => σ j)
+      (Matrix.of fun (_:Unit) (_:Unit) => c)).det=
+      (P.map f).det*(f c-(fun j => f (σ j)) ⬝ᵥ (P.map f)⁻¹ *ᵥ (fun i => f (L i))) := by
+  rw [RingHom.map_det,RingHom.mapMatrix_apply,Matrix.fromBlocks_map]
+  have h1 : (Matrix.of fun i (_:Unit) => L i).map f=Matrix.of fun i (_:Unit) => f (L i) := by
+    ext i j; rfl
+  have h2 : (Matrix.of fun (_:Unit) j => σ j).map f=Matrix.of fun (_:Unit) j => f (σ j) := by
+    ext i j; rfl
+  have h3 : (Matrix.of fun (_:Unit) (_:Unit) => c).map f=Matrix.of fun (_:Unit) (_:Unit) => f c := by
+    ext i j; rfl
+  rw [h1,h2,h3]
+  exact bordered_det _ hP _ _ _
+
+end BorderedResidue
+
+section BorderedResidueActual
+variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+variable {k n : ℕ} (cn : Fin k → ℕ) (xr yc : Fin n → ℕ) (z : ℕ)
+
+/-- Residue of the ORIGINAL bordered fibre determinant in Schur form. -/
+theorem residue_ringSystem_det (s u : GaussLoc p) (load : Bool)
+    (hP : ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p)).det≠0) :
+    TwoTermDeformation.residue p (ringSystem p q o cn xr yc z s u load).det=
+      ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p)).det*
+        (TwoTermDeformation.residue p (if load then TwoTermDeformation.constants p u*
+          TwoTermDeformation.load p q o z else 1)-
+          (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u z (Sum.elim cn yc j))) ⬝ᵥ
+            ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+            (fun i => TwoTermDeformation.residue p (if load then TwoTermDeformation.constants p u*
+              TwoTermDeformation.load p q o (Sum.elim cn xr i) else 1))) := by
+  rw [← Matrix.det_submatrix_equiv_self (bordEquiv k n),ringSystem_reindex]
+  exact map_bordered_det (TwoTermDeformation.residue p) _ _ _ _ hP
+
+end BorderedResidueActual
+
+section FibreBinding
+variable {p : ℕ} [Fact p.Prime]
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+include H in
+theorem hodd : p%2=1 := by have := H.hp; omega
+
+/-- The actual whole-fibre equivalence, typed by the setup colour. -/
+noncomputable def fibreEquiv (γ : ZMod p)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠γ) :
+    (Fin (WrapJointProfile.count p r γ.val) ⊕ Fin n) ≃ {a // H.colour a=γ} :=
+  WrapJointProfile.wholeEquiv p r n e b d H.hp2 H.er γ hres
+
+theorem fibre_row (γ : ZMod p)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠γ)
+    (i : Fin (WrapJointProfile.count p r γ.val) ⊕ Fin n) :
+    Sum.elim (fun j:Fin r => (j:ℕ)) H.xs (fibreEquiv H γ hres i).1=
+      Sum.elim (fun j:Fin (WrapJointProfile.count p r γ.val) => γ.val+(j:ℕ)*p)
+        (fun c:Fin n => WrapJointProfile.rowProfile p r γ.val c) i :=
+  WrapJointProfile.whole_row p r n e b d H.hp2 (hodd H) H.er γ hres i
+
+theorem fibre_col (γ : ZMod p)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠γ)
+    (i : Fin (WrapJointProfile.count p r γ.val) ⊕ Fin n) :
+    Sum.elim (fun j:Fin r => (j:ℕ)) H.ys (fibreEquiv H γ hres i).1=
+      Sum.elim (fun j:Fin (WrapJointProfile.count p r γ.val) => γ.val+(j:ℕ)*p)
+        (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) i :=
+  WrapJointProfile.whole_col p r n e b d shift H.hp H.hp2 H.er H.ec γ hres i
+
+/-- The actual two-parameter colour block is the ORIGINAL two-parameter
+profile core, under the exact original fibre equivalence. -/
+theorem whole_core2 (γ : ZMod p) (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠γ) (s u : GaussLoc p) :
+    (TwoTermDeformation.prefixCore p H s u).submatrix
+        (fun i => (fibreEquiv H γ hres i).1)
+        (fun j => (fibreEquiv H γ hres j).1)=
+      TwoTermDeformation.mixedCore p q o s u
+        (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
+        (fun c:Fin n => WrapJointProfile.rowProfile p r γ.val c)
+        (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) := by
+  classical
+  have he (i j : Fin (WrapJointProfile.count p r γ.val) ⊕ Fin n) :
+      TwoTermDeformation.entry p q o u
+        (Sum.elim (fun i:Fin r => (i:ℕ)) (WrapPrefixCoreGeometry.xs p (n:=n) r H.er)
+          (WrapJointProfile.wholeEquiv p r n e b d H.hp2 H.er γ hres i).1)
+        (Sum.elim (fun i:Fin r => (i:ℕ)) (WrapPrefixCoreGeometry.ys p (n:=n) r (Fact.out:p.Prime).pos shift H.ec)
+          (WrapJointProfile.wholeEquiv p r n e b d H.hp2 H.er γ hres j).1)=
+      TwoTermDeformation.entry p q o u
+        (Sum.elim (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
+          (fun c:Fin n => WrapJointProfile.rowProfile p r γ.val c) i)
+        (Sum.elim (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
+          (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) j) := by
+    rw [WrapJointProfile.whole_row p r n e b d H.hp2 (hodd H) H.er γ hres i,
+      WrapJointProfile.whole_col p r n e b d shift H.hp H.hp2 H.er H.ec γ hres j]
+  ext i j
+  simp only [TwoTermDeformation.prefixCore,TwoTermDeformation.mixedCore,Matrix.submatrix_apply,
+    Matrix.add_apply,Matrix.of_apply,Matrix.map_apply]
+  congr 1
+  · exact he i j
+  rcases i with i|i <;> rcases j with j|j
+  · change TwoTermDeformation.coefficient p ((WrapOwnCore.constants p s • (1:Matrix (Fin r) (Fin r) _))
+        (WrapJointProfile.commonEquiv p r γ i).1 (WrapJointProfile.commonEquiv p r γ j).1)=
+      TwoTermDeformation.coefficient p ((WrapOwnCore.constants p s • (1:Matrix _ _ _)) i j)
+    have heq : (WrapJointProfile.commonEquiv p r γ i).1=(WrapJointProfile.commonEquiv p r γ j).1 ↔ i=j :=
+      ⟨fun h => (WrapJointProfile.commonEquiv p r γ).injective (Subtype.ext h),fun h => by rw [h]⟩
+    simp only [Matrix.smul_apply,Matrix.one_apply,heq]
+  · rfl
+  · rfl
+  · rfl
+
+theorem rowProfile_eq (γ : ℕ) (c : Fin n) :
+    WrapJointProfile.rowProfile p r γ c=pxr p γ (WrapJointProfile.count p r γ) (WrapJointProfile.bit p r γ) n c := by
+  unfold WrapJointProfile.rowProfile WrapJointProfile.lower pxr
+  ring
+
+theorem colProfile_eq (γ : ℕ) (c : Fin n) :
+    WrapJointProfile.colProfile p r γ c=pyc p γ (WrapJointProfile.count p r γ) (WrapJointProfile.bit p r γ) n c := by
+  unfold WrapJointProfile.colProfile WrapJointProfile.lower pyc
+  ring
+
+end FibreBinding
+
+
+section RowSeparation
+variable {p : ℕ} [Fact p.Prime]
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+/-- Profile nodes of the actual fibre of an original node `t`. -/
+noncomputable def fibreCore (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (s u : GaussLoc p) (t : ℕ) :=
+  TwoTermDeformation.mixedCore p q o s u
+    (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+    (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (WrapJointProfile.bit p r (t:ZMod p).val) n)
+    (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (WrapJointProfile.bit p r (t:ZMod p).val) n)
+
+/-- The reduced actual colour block is the reduced ORIGINAL profile core. -/
+theorem fibre_blk (s u : GaussLoc p) (t : ℕ) (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p)).submatrix
+        (fibreEquiv H (t:ZMod p) hres)
+        (fibreEquiv H (t:ZMod p) hres)=
+      (fibreCore H s u t).map (TwoTermDeformation.residue p) := by
+  rw [UFMoments.blk,Matrix.submatrix_submatrix,coreBar,Matrix.submatrix_map]
+  have hw := whole_core2 H (t:ZMod p) hres s u
+  rw [show ((Subtype.val ∘ ⇑(fibreEquiv H (t:ZMod p) hres)):_ → _)=
+    (fun i => (fibreEquiv H (t:ZMod p) hres i).1) from rfl,hw]
+  congr 1
+  unfold fibreCore
+  congr 1
+  · funext c; exact rowProfile_eq (p:=p) _ c
+  · funext c; exact colProfile_eq (p:=p) _ c
+
+theorem fibreCore_det_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    ((fibreCore H s u t).map (TwoTermDeformation.residue p)).det≠0 := by
+  rw [← fibre_blk H s u t hres,Matrix.det_submatrix_equiv_self]
+  have hb : ∀ a c,H.colour a≠H.colour c → coreBar H s u a c=0 := fun a c h => core_cross_zero H s u a c h
+  exact (UFMoments.inv_restrict (coreBar H s u) H.colour
+    (isUnit_iff_ne_zero.mpr (coreBar_det H s u hs hu huc)) hb (t:ZMod p)).1.ne_zero
+
+/-- The actual reduced response of node `t` is its ORIGINAL profile response. -/
+theorem fibre_moment (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) (f : ℕ → TwoTermDeformation.Ring p) :
+    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i)))=
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+            (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+              (WrapJointProfile.bit p r (t:ZMod p).val) n) j))) ⬝ᵥ
+        ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (f (Sum.elim
+          (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+          (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+            (WrapJointProfile.bit p r (t:ZMod p).val) n) i))) := by
+  classical
+  have hb : ∀ a c,H.colour a≠H.colour c → coreBar H s u a c=0 := by
+    intro a c h
+    exact core_cross_zero H s u a c h
+  have hsz : ∀ a,H.colour a≠(t:ZMod p) → TwoTermDeformation.residue p (sigma2 H u t a)=0 :=
+    fun a h => sigma_cross_zero H u t ht a h
+  rw [fibre_response (coreBar H s u) H.colour (coreBar_det H s u hs hu huc) hb (t:ZMod p) _ _ hsz]
+  rw [← WrapTransport.response_reindex (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p))
+    (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)]
+  have hl : (fun i:{a // H.colour a=(t:ZMod p)} => TwoTermDeformation.residue p (sigma2 H u t i.1)) ∘
+      ⇑(fibreEquiv H (t:ZMod p) hres)=
+      fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+            (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+              (WrapJointProfile.bit p r (t:ZMod p).val) n) j)) := by
+    funext j
+    simp only [Function.comp_apply,sigma2]
+    rw [fibre_col H (t:ZMod p) hres j]
+    rcases j with j|j
+    · rfl
+    · simp only [Sum.elim_inr]
+      rw [colProfile_eq]
+  have hr : (fun i:{a // H.colour a=(t:ZMod p)} =>
+      TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i.1))) ∘
+      ⇑(fibreEquiv H (t:ZMod p) hres)=
+      fun i => TwoTermDeformation.residue p (f (Sum.elim
+          (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+          (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+            (WrapJointProfile.bit p r (t:ZMod p).val) n) i)) := by
+    funext i
+    simp only [Function.comp_apply]
+    rw [fibre_row H (t:ZMod p) hres i]
+    rcases i with i|i
+    · rfl
+    · simp only [Sum.elim_inr]
+      rw [rowProfile_eq]
+  rw [fibre_blk H s u t hres,hl,hr]
+
+/-- Profile border of node `t`. -/
+noncomputable def fibreSigma (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (u : GaussLoc p) (t : ℕ) :
+    Fin (WrapJointProfile.count p r (t:ZMod p).val) ⊕ Fin n → TwoTermDeformation.Residue p :=
+  fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+    (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+      (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+        (WrapJointProfile.bit p r (t:ZMod p).val) n) j))
+
+noncomputable def fibreLoad (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (u : GaussLoc p) (t : ℕ) :
+    Fin (WrapJointProfile.count p r (t:ZMod p).val) ⊕ Fin n → TwoTermDeformation.Residue p :=
+  fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
+    (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
+      (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
+        (WrapJointProfile.bit p r (t:ZMod p).val) n) i))
+
+theorem fibre_load (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixRowLoad p H u i))=
+      fibreSigma H u t ⬝ᵥ ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ fibreLoad H u t :=
+  fibre_moment H s u hs hu huc t ht hres
+    (fun a => TwoTermDeformation.constants p u*TwoTermDeformation.load p q o a)
+
+theorem fibre_one (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1=
+      fibreSigma H u t ⬝ᵥ ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1 := by
+  have h := fibre_moment H s u hs hu huc t ht hres (fun _ => (1:TwoTermDeformation.Ring p))
+  simp only [map_one] at h
+  exact h
+
+end RowSeparation
+
+
+section RowSeparationFinal
+variable {p : ℕ} [Fact p.Prime]
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+theorem rfH_eq (z : ZMod p) : CatalanCore.Uniform.Content.Hybrid.rfH p z=RatFunc.C z := by
+  simp [CatalanCore.Uniform.Content.Hybrid.rfH,RatFunc.algebraMap_C]
+
+theorem residue_constants (u : GaussLoc p) (u0 : ZMod p) (h : res p u=CatalanCore.Uniform.Content.Hybrid.rfH p u0) :
+    TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)) := by
+  rw [TwoTermDeformation.constants,RingHom.comp_apply,TwoTermDeformation.coefficient_residue,
+    TwoTermDeformation.first_constant_residue,h,rfH_eq]
+
+theorem lower_window (A K n p t k : ℕ) (htip : t=A+(K+2*n)*p) (h1 : t<k) (h2 : k≤t+p) :
+    A+((K+n+1)-1)*p<k-n*p ∧ k-n*p≤A+(K+n+1)*p := by
+  have e1 : (K+2*n)*p=(K+n)*p+n*p := by ring
+  have e2 : (K+n+1)*p=(K+n)*p+p := by ring
+  have e3 : K+n+1-1=K+n := by omega
+  rw [e3,e2]
+  rw [e1] at htip
+  omega
+
+theorem upper_window (A K n p t k : ℕ) (hn : 1≤n) (htip : t=A+(K+2*n)*p) (h1 : t<k+p) (h2 : k≤t)
+    (hk : n*p≤k) :
+    A+((K+n)-1)*p<k-n*p ∧ k-n*p≤A+(K+n)*p := by
+  obtain ⟨m,hm⟩ : ∃ m,K+n=m+1 := ⟨K+n-1,by omega⟩
+  have e1 : (K+2*n)*p=m*p+p+n*p := by
+    have : K+2*n=m+1+n := by omega
+    rw [this]; ring
+  have e2 : (K+n)*p=m*p+p := by rw [hm]; ring
+  have e3 : K+n-1=m := by omega
+  rw [e3,e2]
+  rw [e1] at htip
+  omega
+
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+theorem fibre_tip (t : ℕ) (hlo : r+2*n*p≤t) (hhi : t<r+2*n*p+p) :
+    pz p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) n=t := by
+  unfold pz
+  exact (WrapPrefixWindow.original_tip p r n t hlo hhi).symm
+
+/-- A surplus row colour is never a residual balanced colour. -/
+theorem surplus_not_residual (z : Fin d) (i : Fin b) :
+    (WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(WrapPrefixSchur.surplusRow H z:ZMod p) := by
+  have hs : Function.Injective (fun x:Fin b ⊕ Fin d => (H.er x:ℕ)) := by
+    intro x y he
+    exact H.er.injective (Fin.ext he)
+  have hh := WrapFibreCount.residual_injective p (r+2*n*p) H.hp2
+    (fun x:Fin b ⊕ Fin d => (H.er x:ℕ)) hs (fun x => lt_trans (H.er x).2 H.he)
+  intro he
+  have hx : WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i)=r+2*n*p+2*(H.er (Sum.inl i):ℕ) := by
+    simp only [WrapPrefixCoreGeometry.xs_eq,WrapFibreCount.balancedRow]
+  have hz : WrapPrefixSchur.surplusRow H z=r+2*n*p+2*(H.er (Sum.inr z):ℕ) := by
+    unfold WrapPrefixSchur.surplusRow
+    exact WrapPrefixGeometry.row_surplus r H.er z
+  rw [hx,hz] at he
+  exact Sum.inl_ne_inr (hh he)
+
+theorem bit_le (γ : ℕ) : WrapJointProfile.bit p r γ≤1 := by
+  unfold WrapJointProfile.bit
+  have := Nat.mod_lt (WrapJointProfile.lower p r γ-r) (show 0<2 by norm_num)
+  omega
+
+set_option maxHeartbeats 2000000 in
+/-- Section 8.3 at an actual outside node `v` with fibre bit `η` (the row
+fibre has the actual bit, the column fibre the complementary bit): a
+separating original pole of either family, each with its own deformation
+parameter, makes the actual reduced coupling against the original anchor
+nonzero. No inverse pivot is specialized. -/
+theorem node_coupling_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (v k η : ℕ) (hη : η≤1)
+    (hk : p∣k ∨ p∣q*k-o)
+    (hsep : (v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v))
+    (hvlo : r+2*n*p≤v) (hvhi : v<r+2*n*p+p) (hvN : v<N)
+    (hPv : ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p)).det≠0) :
+    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o v)-
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+      (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
+        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))-
+    TwoTermDeformation.residue p (TwoTermDeformation.prefixAnchor p H s u)*
+    (1-(fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1)≠0 := by
+  classical
+  obtain ⟨u0,hu0'⟩ := huc
+  have huc : WrapConstant.Has p u := ⟨u0,hu0'⟩
+  have hu0 := residue_constants u u0 hu0'
+  have hu00 : u0≠0 := by
+    intro h; apply hu; rw [hu0',h,map_zero]
+  have ht0N : H.t0<N := lt_of_le_of_lt H.hle H.htvN
+  have ht0lo := H.hlo
+  have ht0hi : H.t0<r+2*n*p+p := lt_of_le_of_lt H.hle H.hhi
+  have hres0 : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(H.t0:ZMod p) :=
+    fun i => H.hfree H.t0 (mem_Icc.mpr ⟨le_rfl,H.hle⟩) i
+  have ho0 : 0<o := by
+    rcases Nat.eq_zero_or_pos o with h|h
+    · exact absurd (by rw [h]; simp) H.ho
+    · exact h
+  have htv := (fibre_tip (p:=p) (r:=r) (n:=n) v hvlo hvhi).symm
+  have ht0 := (fibre_tip (p:=p) (r:=r) (n:=n) H.t0 ht0lo ht0hi).symm
+  unfold pz at htv ht0
+  have hNp : N<p*p := single_bound H
+  have hkv : WrapJointProfile.count p r (v:ZMod p).val+2*n<p := by
+    by_contra hc
+    have : p*p≤(WrapJointProfile.count p r (v:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
+    omega
+  have hk0 : WrapJointProfile.count p r (H.t0:ZMod p).val+2*n<p := by
+    by_contra hc
+    have : p*p≤(WrapJointProfile.count p r (H.t0:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
+    omega
+  have hnp : n*p≤k := by
+    have : n*p≤2*n*p := by nlinarith
+    rcases hsep with h|h <;> omega
+  have hts1 : 1≤k-n*p := by
+    have : n*p+n*p=2*n*p := by ring
+    rcases hsep with h|h <;> omega
+  have htsN : k-n*p≤N := by rcases hsep with h|h <;> omega
+  have hfam : p∣k-n*p ∨ (¬p∣k-n*p ∧ p∣q*(k-n*p)-o) := by
+    have hle : o≤q*(k-n*p) := by
+      have := Nat.le_mul_of_pos_right q hts1
+      have := H.hoq
+      omega
+    rcases hk with hI|hF
+    · exact Or.inl (Nat.dvd_sub hI (Dvd.intro_left n rfl))
+    · have hqk : q*(k-n*p)-o=(q*k-o)-q*n*p := by
+        rw [Nat.mul_sub]
+        have : q*(n*p)=q*n*p := by ring
+        rw [this]
+        have : q*n*p≤q*k := by rw [mul_assoc]; exact Nat.mul_le_mul_left q hnp
+        omega
+      have hF' : p∣q*(k-n*p)-o := by
+        rw [hqk]
+        exact Nat.dvd_sub hF (Dvd.intro_left (q*n) (by ring))
+      refine Or.inr ⟨fun hI => not_both p q o (k-n*p) H.hqp ho0 H.hoq hle hI hF',hF'⟩
+  have hpzv : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n=v := by
+    unfold pz; exact htv.symm
+  have hpz0 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n=H.t0 := by
+    unfold pz; exact ht0.symm
+  have hz1 : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n≤N := by
+    rw [hpzv]; exact hvN.le
+  have hz2 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n≤N := by
+    rw [hpz0]; exact ht0N.le
+  obtain ⟨cut1,cut2,hcase,hw1,hw2⟩ : ∃ cut1 cut2,
+      ((cut1=WrapJointProfile.count p r (v:ZMod p).val+n+1 ∧ cut2=WrapJointProfile.count p r (H.t0:ZMod p).val+n) ∨
+        (cut1=WrapJointProfile.count p r (v:ZMod p).val+n ∧ cut2=WrapJointProfile.count p r (H.t0:ZMod p).val+n+1)) ∧
+      ((v:ZMod p).val+(cut1-1)*p<k-n*p ∧ k-n*p≤(v:ZMod p).val+cut1*p) ∧
+      ((H.t0:ZMod p).val+(cut2-1)*p<k-n*p ∧ k-n*p≤(H.t0:ZMod p).val+cut2*p) := by
+    rcases hsep with ⟨h1,h2⟩|⟨h1,h2⟩
+    · exact ⟨_,_,Or.inl ⟨rfl,rfl⟩,lower_window _ _ n p v k htv h1 (by omega),
+        upper_window _ _ n p H.t0 k H.hn ht0 (by omega) h2 hnp⟩
+    · exact ⟨_,_,Or.inr ⟨rfl,rfl⟩,upper_window _ _ n p v k H.hn htv (by omega) h2 hnp,
+        lower_window _ _ n p H.t0 k ht0 h1 (by omega)⟩
+  have hps := profile_separation p q o (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)
+    η (H.t0:ZMod p).val
+    (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val)
+    n N (k-n*p) cut1 cut2 s u u0 (ZMod.val_lt _) (ZMod.val_lt _) hη (bit_le _) H.hn hkv hk0
+    hz1 hz2 H.hN H.hq0 H.hqp ho0 H.hoq hs hu0 hu00 (mem_Icc.mpr ⟨hts1,htsN⟩) hfam hcase hw1 hw2
+  rw [hpzv,hpz0] at hps
+  have hP0 := fibreCore_det_ne H s u hs hu huc H.t0 hres0
+  have hRvT := residue_ringSystem_det p q o _ _ _ v s u true hPv
+  have hRvF := residue_ringSystem_det p q o _ _ _ v s u false hPv
+  have hR0T := residue_ringSystem_det p q o _ _ _ H.t0 s u true hP0
+  have hR0F := residue_ringSystem_det p q o _ _ _ H.t0 s u false hP0
+  simp only [↓reduceIte,Bool.false_eq_true,map_one] at hRvT hRvF hR0T hR0F
+  have hr0 := reference0_ne H s u hs hu huc
+  rw [fibre_one H s u hs hu huc H.t0 ht0N hres0] at hr0
+  rw [residue_anchor H s u hs hu huc,fibre_load H s u hs hu huc H.t0 ht0N hres0,
+    fibre_one H s u hs hu huc H.t0 ht0N hres0]
+  intro hc
+  apply hps
+  rw [map_sub,map_mul,map_mul]
+  have key := coupling_cross ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p)).det
+    ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p)).det
+    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o v)-
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+      (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
+        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))
+    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o H.t0)-
+      fibreSigma H u H.t0 ⬝ᵥ ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p))⁻¹ *ᵥ fibreLoad H u H.t0)
+    (1-(fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1)
+    (1-fibreSigma H u H.t0 ⬝ᵥ ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1) hr0
+  rw [hc,zero_mul,zero_mul,zero_mul] at key
+  rw [hRvT,hRvF,hR0T,hR0F]
+  exact key.symm
+
+/-- Section 8.3, ACTUAL prefix binding: an outside surplus row separated
+from the anchor by an original pole of either family (each family with its
+own deformation parameter) has a NONZERO actual two-parameter coupling.
+No inverse pivot is specialized; the conclusion is generic nonvanishing. -/
+theorem rowCoupling2_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (z : Fin d) (k : ℕ)
+    (hk : p∣k ∨ p∣q*k-o)
+    (hsep : (WrapPrefixSchur.surplusRow H z<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusRow H z))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusRow H z)
+    (hvhi : WrapPrefixSchur.surplusRow H z<r+2*n*p+p) :
+    rowCoupling2 H s u z≠0 := by
+  have hvN : WrapPrefixSchur.surplusRow H z<N := WrapPrefixSchur.surplus_row_bound H z
+  have hresv := surplus_not_residual H z
+  unfold rowCoupling2
+  rw [map_sub,map_mul,residue_rowMoment2 H s u hs hu huc,residue_rowRef2 H s u hs hu huc,
+    fibre_load H s u hs hu huc _ hvN hresv,fibre_one H s u hs hu huc _ hvN hresv]
+  exact node_coupling_ne H s u hs hu huc _ k _ (bit_le _) hk hsep hvlo hvhi hvN
+    (fibreCore_det_ne H s u hs hu huc _ hresv)
+
+end RowSeparationFinal
+
+
+section ColumnCoupling
+variable {p : ℕ} [Fact p.Prime]
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+/-- Actual two-parameter column border of an original node `t`. -/
+noncomputable def colSigma2 (u : GaussLoc p) (t : ℕ) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
+    TwoTermDeformation.Ring p :=
+  TwoTermDeformation.entry p q o u (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i) t
+
+noncomputable def colMoment2 (s u : GaussLoc p) (t : ℕ) :=
+  TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t-
+    TwoTermDeformation.prefixColLoad p H u ⬝ᵥ (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ colSigma2 H u t
+
+noncomputable def colRef2 (s u : GaussLoc p) (t : ℕ) :=
+  1-(1:Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b) → TwoTermDeformation.Ring p) ⬝ᵥ
+    (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ colSigma2 H u t
+
+/-- The actual two-parameter outside column coupling against the actual
+original (row) anchor. -/
+noncomputable def colCoupling2 (s u : GaussLoc p) (y : Fin d) :=
+  TwoTermDeformation.residue p (colMoment2 H s u (WrapPrefixSchur.surplusCol H y)-
+    TwoTermDeformation.prefixAnchor p H s u*colRef2 H s u (WrapPrefixSchur.surplusCol H y))
+
+/-- Two-parameter cleared reference identity at a shared original node:
+the row and column directions agree, with no column-reference unit. -/
+theorem shared_moments2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N) :
+    rowRef2 H s u t*colMoment2 H s u t=rowMoment2 H s u t*colRef2 H s u t := by
+  have hN := single_bound H
+  apply WrapPrefixSchur.scaled_cross_direction (R:=TwoTermDeformation.Ring p) (TwoTermDeformation.uniformizer p)
+    (TwoTermDeformation.parameterPrime p).ne_zero
+    (TwoTermDeformation.prefixCore p H s u) (TwoTermDeformation.prefixCore_unit p H s u hs hu huc)
+    (fun i => ((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):TwoTermDeformation.Ring p))
+    (fun i => ((Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i:ℕ):TwoTermDeformation.Ring p))
+    (TwoTermDeformation.prefixRowLoad p H u) (TwoTermDeformation.prefixColLoad p H u)
+    (sigma2 H u t) (colSigma2 H u t) (t:TwoTermDeformation.Ring p)
+    (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t)
+  · intro i j
+    have he := TwoTermDeformation.mixedCore_commutator p q o N hN s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
+      H.common_bound H.row_bound H.col_bound i j
+    simpa only [mul_sub,TwoTermDeformation.prefixRowLoad,TwoTermDeformation.prefixColLoad,
+      TwoTermDeformation.prefixCore] using he
+  · intro i
+    have he := TwoTermDeformation.commutator p q o N u hN t _ ht
+      (UFMember.colNode_lt H.common_bound H.col_bound i)
+    simp only [UFMember.colNode] at he
+    simp only [sigma2,TwoTermDeformation.prefixColLoad,← mul_sub]
+    exact he
+  · intro i
+    have he := TwoTermDeformation.commutator p q o N u hN _ t
+      (UFMember.rowNode_lt H.common_bound H.row_bound i) ht
+    simp only [UFMember.rowNode] at he
+    simp only [colSigma2,TwoTermDeformation.prefixRowLoad,← mul_sub]
+    exact he
+
+theorem col_sigma_cross_zero (u : GaussLoc p) (t : ℕ) (ht : t<N) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b))
+    (hi : H.colour i≠(t:ZMod p)) : TwoTermDeformation.residue p (colSigma2 H u t i)=0 := by
+  have hrow := (UFMember.rowNode_lt H.common_bound H.row_bound i)
+  have hc := congrArg (TwoTermDeformation.residue p)
+    (TwoTermDeformation.commutator p q o N u (single_bound H) _ t hrow ht)
+  rw [map_mul,map_mul,residue_uniformizer,zero_mul,map_sub,map_natCast,map_natCast] at hc
+  have hne := residue_nat_sub_ne (p:=p) _ _
+    (show (t:ZMod p)≠((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):ZMod p) by
+      rw [rowNode_colour]; exact fun h => hi h.symm)
+  exact (mul_eq_zero.mp hc).resolve_left hne
+
+theorem dot_transpose {K α : Type*} [CommRing K] [Fintype α] (a b : α → K) (M : Matrix α α K) :
+    a ⬝ᵥ M *ᵥ b=b ⬝ᵥ Mᵀ *ᵥ a := by
+  rw [Matrix.dotProduct_mulVec,Matrix.mulVec_transpose,dotProduct_comm]
+
+theorem residue_colMoment2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
+    TwoTermDeformation.residue p (colMoment2 H s u t)=
+      TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t)-
+        (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
+          (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixColLoad p H u i)) := by
+  rw [colMoment2,map_sub,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc),
+    dot_transpose,Matrix.transpose_nonsing_inv]
+  rfl
+
+theorem residue_colRef2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
+    TwoTermDeformation.residue p (colRef2 H s u t)=
+      1-(fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ 1 := by
+  rw [colRef2,map_sub,map_one,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc),
+    dot_transpose,Matrix.transpose_nonsing_inv]
+  simp only [Pi.one_apply,map_one]
+  rfl
+
+theorem mixedCore_transpose {ι κ : Type} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
+    (s u : GaussLoc p) (c : ι → ℕ) (xs ys : κ → ℕ) :
+    (TwoTermDeformation.mixedCore p q o s u c xs ys)ᵀ=TwoTermDeformation.mixedCore p q o s u c ys xs := by
+  ext i j
+  simp only [Matrix.transpose_apply,TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.of_apply,
+    Matrix.map_apply]
+  rw [TwoTermDeformation.entry_symm]
+  congr 1
+  rcases i with i|i <;> rcases j with j|j <;>
+    simp [Matrix.fromBlocks_apply₁₁,Matrix.one_apply,eq_comm]
+
+/-- A surplus column colour is never a residual balanced colour. -/
+theorem surplus_col_not_residual (y : Fin d) (i : Fin b) :
+    (WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(WrapPrefixSchur.surplusCol H y:ZMod p) := by
+  have hs : Function.Injective (fun x:Fin b ⊕ Fin d => (H.ec x:ℕ)) := by
+    intro x z he
+    exact H.ec.injective (Fin.ext he)
+  have hh := WrapFibreCount.residual_injective p (r+2*n*p+1) H.hp2
+    (fun x:Fin b ⊕ Fin d => (H.ec x:ℕ)) hs (fun x => lt_trans (H.ec x).2 H.he)
+  intro he
+  have hx : WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i)=r+2*n*p+2*(H.er (Sum.inl i):ℕ) := by
+    simp only [WrapPrefixCoreGeometry.xs_eq,WrapFibreCount.balancedRow]
+  have hz : WrapPrefixSchur.surplusCol H y=r+2*n*p+2*(H.ec (Sum.inr y):ℕ)+1 := by
+    unfold WrapPrefixSchur.surplusCol
+    exact WrapPrefixGeometry.col_surplus r (Fact.out:p.Prime).pos shift H.ec y
+  have hr := H.hres i
+  rw [hx] at he
+  rw [he,hz] at hr
+  have : ((r+2*n*p+1+2*(H.ec (Sum.inl i):ℕ):ℕ):ZMod p)=((r+2*n*p+1+2*(H.ec (Sum.inr y):ℕ):ℕ):ZMod p) := by
+    rw [show r+2*n*p+1+2*(H.ec (Sum.inl i):ℕ)=r+2*n*p+2*(H.ec (Sum.inl i):ℕ)+1 by ring,
+      show r+2*n*p+1+2*(H.ec (Sum.inr y):ℕ)=r+2*n*p+2*(H.ec (Sum.inr y):ℕ)+1 by ring]
+    exact hr.symm
+  exact Sum.inl_ne_inr (hh this)
+
+end ColumnCoupling
+
+section ColumnSeparation
+variable {p : ℕ} [Fact p.Prime]
+
+attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
+
+omit [Fact p.Prime] in
+theorem pxr_flip (γ k η n : ℕ) (c : Fin n) : pxr p γ k (1-η) n c=pyc p γ k η n c := rfl
+
+omit [Fact p.Prime] in
+theorem pyc_flip (γ k η n : ℕ) (hη : η≤1) (c : Fin n) : pyc p γ k (1-η) n c=pxr p γ k η n c := by
+  unfold pyc pxr
+  have : 1-(1-η)=η := by omega
+  rw [this]
+
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+/-- The transposed actual fibre is the actual fibre with the complementary bit. -/
+theorem fibreCore_transpose (s u : GaussLoc p) (t : ℕ) :
+    (fibreCore H s u t)ᵀ=TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) := by
+  unfold fibreCore
+  rw [mixedCore_transpose,_root_.funext (pxr_flip (p:=p) _ _ _ n),_root_.funext (pyc_flip (p:=p) _ _ _ n (bit_le _))]
+
+/-- The actual reduced COLUMN response of node `t` is the ORIGINAL profile
+response of its fibre with the complementary bit. -/
+theorem col_fibre_moment (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p))
+    (f : ℕ → TwoTermDeformation.Ring p) :
+    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i)))=
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
+        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (f (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i))) := by
+  classical
+  have hbT : ∀ a c,H.colour a≠H.colour c → (coreBar H s u)ᵀ a c=0 :=
+    fun a c h => core_cross_zero H s u c a (Ne.symm h)
+  have hdetT : (coreBar H s u)ᵀ.det≠0 := by
+    rw [Matrix.det_transpose]; exact coreBar_det H s u hs hu huc
+  have hsz : ∀ a,H.colour a≠(t:ZMod p) → TwoTermDeformation.residue p (colSigma2 H u t a)=0 :=
+    fun a h => col_sigma_cross_zero H u t ht a h
+  rw [fibre_response (coreBar H s u)ᵀ H.colour hdetT hbT (t:ZMod p) _ _ hsz]
+  rw [← WrapTransport.response_reindex (UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p))
+    (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)]
+  have hblk : (UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p)).submatrix
+      (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)=
+      (TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p) := by
+    have h1 : UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p)=
+        (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p))ᵀ := rfl
+    rw [h1,← Matrix.transpose_submatrix,fibre_blk H s u t hres,← Matrix.transpose_map,fibreCore_transpose]
+  have hl : (fun i:{a // H.colour a=(t:ZMod p)} => TwoTermDeformation.residue p (colSigma2 H u t i.1)) ∘
+      ⇑(fibreEquiv H (t:ZMod p) hres)=
+      fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j)) := by
+    funext j
+    simp only [Function.comp_apply,colSigma2]
+    rw [fibre_row H (t:ZMod p) hres j,TwoTermDeformation.entry_symm]
+    rcases j with j|j
+    · rfl
+    · simp only [Sum.elim_inr]
+      rw [rowProfile_eq,pyc_flip _ _ _ _ (bit_le _)]
+  have hr : (fun i:{a // H.colour a=(t:ZMod p)} =>
+      TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i.1))) ∘
+      ⇑(fibreEquiv H (t:ZMod p) hres)=
+      fun i => TwoTermDeformation.residue p (f (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i)) := by
+    funext i
+    simp only [Function.comp_apply]
+    rw [fibre_col H (t:ZMod p) hres i]
+    rcases i with i|i
+    · rfl
+    · simp only [Sum.elim_inr]
+      rw [colProfile_eq,pxr_flip]
+  rw [hblk,hl,hr]
+
+theorem col_fibre_load (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixColLoad p H u i))=
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
+        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
+        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i))) :=
+  col_fibre_moment H s u hs hu huc t ht hres
+    (fun a => TwoTermDeformation.constants p u*TwoTermDeformation.load p q o a)
+
+theorem col_fibre_one (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ 1=
+      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
+          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
+        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1 := by
+  have h := col_fibre_moment H s u hs hu huc t ht hres (fun _ => (1:TwoTermDeformation.Ring p))
+  simp only [map_one] at h
+  exact h
+
+/-- The transposed actual fibre stays nonsingular after reduction. -/
+theorem colFibre_det_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ)
+    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
+    ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p)).det≠0 := by
+  rw [← fibreCore_transpose,Matrix.transpose_map,Matrix.det_transpose]
+  exact fibreCore_det_ne H s u hs hu huc t hres
+
+/-- Section 8.3, ACTUAL prefix binding for an outside surplus COLUMN:
+its independently loaded column fibre is the actual fibre with the
+complementary bit, and a separating original pole of either family makes
+its actual two-parameter coupling nonzero. -/
+theorem colCoupling2_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (y : Fin d) (k : ℕ)
+    (hk : p∣k ∨ p∣q*k-o)
+    (hsep : (WrapPrefixSchur.surplusCol H y<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusCol H y))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusCol H y)
+    (hvhi : WrapPrefixSchur.surplusCol H y<r+2*n*p+p) :
+    colCoupling2 H s u y≠0 := by
+  have hvN : WrapPrefixSchur.surplusCol H y<N := WrapPrefixSchur.surplus_col_bound H y
+  have hresv := surplus_col_not_residual H y
+  unfold colCoupling2
+  rw [map_sub,map_mul,residue_colMoment2 H s u hs hu huc,residue_colRef2 H s u hs hu huc,
+    col_fibre_load H s u hs hu huc _ hvN hresv,col_fibre_one H s u hs hu huc _ hvN hresv]
+  exact node_coupling_ne H s u hs hu huc _ k _ (by omega) hk hsep hvlo hvhi hvN
+    (colFibre_det_ne H s u hs hu huc _ hresv)
+
+end ColumnSeparation
+
+namespace TwoTermDeformation
+section TwoParameterTransport
+variable (p : ℕ) [Fact p.Prime]
+
+attribute [local instance] coefficientDomain ringDomain
+
+/-- An ORIGINAL nonpole integer reciprocal keeps its first-order value
+under the independent integer deformation, modulo the uniformizer squared. -/
+theorem integer_nonpole_congr (t : ℕ) (ht : res p (t:GaussLoc p)≠0) :
+    uniformizer p^2∣integerNormalized p (t:GaussLoc p)-
+      constants p (WrapPole.originalNormalized p (t:GaussLoc p)) := by
+  have hu : IsUnit (WrapOwnCore.constants p (t:GaussLoc p)) := (isUnit_of_res_ne _ ht).map _
+  have h := originalScaledPoleInverse_nonpole_congr (WrapDeform.residue p)
+    (WrapOwnCore.constants p (UFMoments.piL p)) (WrapOwnCore.constants p (t:GaussLoc p))
+    (WrapOwnCore.constants p 1) hu
+  rw [integerNormalized,dif_neg ht,WrapPole.originalNormalized,dif_neg ht]
+  have he : constants p (UFMoments.piL p*Ring.inverse (t:GaussLoc p))=
+      algebraMap (WrapDeform.Extension p)[X] (Ring p)
+        (Polynomial.C (WrapOwnCore.constants p (UFMoments.piL p)*
+          Ring.inverse (WrapOwnCore.constants p (t:GaussLoc p)))) := by
+    have ht' : IsUnit (t:GaussLoc p) := isUnit_of_res_ne _ ht
+    have hinv : WrapOwnCore.constants p (Ring.inverse (t:GaussLoc p))=
+        Ring.inverse (WrapOwnCore.constants p (t:GaussLoc p)) :=
+      map_ring_inverse_of_unit (WrapOwnCore.constants p) (t:GaussLoc p) ht'
+    rw [← hinv,← map_mul]
+    rfl
+  rw [he]
+  exact h
+
+/-- Two-parameter regular increments: the coefficient image of the
+one-parameter regular increment. -/
+noncomputable def regular (q o t : ℕ) : Ring p := coefficient p (WrapPrefixSource.regular p q o t)
+
+theorem delta_congr (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0) :
+    uniformizer p^2∣delta p q o t-coefficient p (WrapIncrement.delta p q o t) := by
+  have e1 : coefficient p (WrapIncrement.delta p q o t)=
+      constants p (WrapPole.originalNormalized p (t:GaussLoc p))-
+        coefficient p (WrapOwnCore.constants p (q:GaussLoc p))*
+          coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p)) := by
+    unfold WrapIncrement.delta
+    rw [map_sub,map_mul]
+    rfl
+  obtain ⟨z,hz⟩ := integer_nonpole_congr p t ht
+  rw [e1]
+  refine ⟨z,?_⟩
+  unfold delta
+  linear_combination hz
+
+theorem delta_factor (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0)
+    (ha : res p (WrapIncrement.argument p q o t)≠0) :
+    ∃ e : Ring p,delta p q o t=uniformizer p*regular p q o t+uniformizer p^2*e := by
+  obtain ⟨z,hz⟩ := delta_congr p q o t ht
+  have hf := congrArg (coefficient p) (WrapPrefixSource.delta_factor p q o t ht ha)
+  rw [map_mul] at hf
+  refine ⟨z,?_⟩
+  change delta p q o t=coefficient p (WrapDeform.uniformizer p)*regular p q o t+
+    coefficient p (WrapDeform.uniformizer p)^2*z
+  change delta p q o t-coefficient p (WrapIncrement.delta p q o t)=
+    coefficient p (WrapDeform.uniformizer p)^2*z at hz
+  unfold regular
+  linear_combination hz+hf
+
+theorem dsq_dvd (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0)
+    (ha : res p (WrapIncrement.argument p q o t)≠0) :
+    uniformizer p^2∣dsq p q o t := by
+  classical
+  obtain ⟨z,hz⟩ := integer_nonpole_congr p t ht
+  have h1 : constants p (WrapPole.originalNormalized p (t:GaussLoc p))=
+      uniformizer p*constants p (Ring.inverse (t:GaussLoc p)) := by
+    unfold WrapPole.originalNormalized
+    rw [dif_neg ht,map_mul]
+    rfl
+  have h2 : coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p))=
+      uniformizer p*coefficient p (Ring.inverse
+        (WrapPole.denominator p (WrapIncrement.argument p q o t) (q:GaussLoc p))) := by
+    unfold WrapPole.normalizedInverse
+    rw [dif_neg ha,map_mul]
+    rfl
+  have hiN : integerNormalized p (t:GaussLoc p)=
+      uniformizer p*(constants p (Ring.inverse (t:GaussLoc p))+uniformizer p*z) := by
+    linear_combination hz+h1
+  unfold dsq
+  rw [hiN,h2]
+  exact ⟨(constants p (Ring.inverse (t:GaussLoc p))+uniformizer p*z)^2-
+    coefficient p (WrapOwnCore.constants p ((q:GaussLoc p)^2))*
+      coefficient p (Ring.inverse (WrapPole.denominator p (WrapIncrement.argument p q o t) (q:GaussLoc p)))^2,
+    by ring⟩
+
+theorem increment_congr (q o a b : ℕ) (hat : res p (a:GaussLoc p)≠0)
+    (hbt : res p (b:GaussLoc p)≠0)
+    (haa : res p (WrapIncrement.argument p q o a)≠0)
+    (hba : res p (WrapIncrement.argument p q o b)≠0)
+    (hcol : (a:ZMod p)=(b:ZMod p)) :
+    uniformizer p^2∣delta p q o a-delta p q o b := by
+  obtain ⟨za,hza⟩ := delta_congr p q o a hat
+  obtain ⟨zb,hzb⟩ := delta_congr p q o b hbt
+  obtain ⟨w,hw⟩ := WrapPrefixSource.increment_congr p q o a b hat hbt haa hba hcol
+  have hw' := congrArg (coefficient p) hw
+  rw [map_sub,map_mul,map_pow] at hw'
+  refine ⟨za-zb+coefficient p w,?_⟩
+  change _=coefficient p (WrapDeform.uniformizer p)^2*_
+  change _=coefficient p (WrapDeform.uniformizer p)^2*_ at hza hzb
+  linear_combination hza-hzb+hw'
+
+theorem load_shift_congr (q o a b d : ℕ)
+    (hcol : (a:ZMod p)=(b:ZMod p))
+    (ha : ∀ h∈Icc 1 d,res p ((a+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (a+h))≠0)
+    (hb : ∀ h∈Icc 1 d,res p ((b+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (b+h))≠0) :
+    uniformizer p^2∣(load p q o (a+d)-load p q o a)-(load p q o (b+d)-load p q o b) := by
+  rw [prefix_sub p q o a (a+d) (by omega),prefix_sub p q o b (b+d) (by omega),
+    WrapPrefixSource.window_sum,WrapPrefixSource.window_sum,← Finset.sum_sub_distrib]
+  apply Finset.dvd_sum
+  intro h hh
+  apply increment_congr p q o (a+h) (b+h) (ha h hh).1 (hb h hh).1 (ha h hh).2 (hb h hh).2
+  simpa only [Nat.cast_add,hcol]
+
+theorem diagonal_shift_congr (q o a d : ℕ) (u : GaussLoc p)
+    (ha : ∀ t∈Ioc a (a+d),res p (t:GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o t)≠0) :
+    uniformizer p^2∣entry p q o u (a+d) (a+d)-entry p q o u a a := by
+  classical
+  have he (n : ℕ) : Icc 1 n=Ioc 0 n := by
+    ext t; simp only [mem_Icc,mem_Ioc]; omega
+  have hs : uniformizer p^2∣∑ t∈Ioc a (a+d),dsq p q o t := by
+    apply Finset.dvd_sum
+    intro t ht
+    exact dsq_dvd p q o t (ha t ht).1 (ha t ht).2
+  obtain ⟨z,hz⟩ := hs
+  refine ⟨-(coefficient p (WrapOwnCore.constants p u)*z),?_⟩
+  simp only [entry,↓reduceIte,he,
+    ← Finset.sum_Ioc_consecutive _ (Nat.zero_le a) (show a≤a+d by omega)]
+  rw [hz]
+  ring
+
+theorem entry_shift_congr (q o a b d : ℕ) (u : GaussLoc p)
+    (hcol : (a:ZMod p)=(b:ZMod p))
+    (ha : ∀ h∈Icc 1 d,res p ((a+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (a+h))≠0)
+    (hb : ∀ h∈Icc 1 d,res p ((b+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (b+h))≠0) :
+    uniformizer p^2∣entry p q o u (a+d) (b+d)-entry p q o u a b := by
+  classical
+  have hoff (a b : ℕ) (hab : a<b)
+      (hs : uniformizer p^2∣(load p q o (b+d)-load p q o b)-(load p q o (a+d)-load p q o a)) :
+      uniformizer p^2∣entry p q o u (a+d) (b+d)-entry p q o u a b := by
+    obtain ⟨z,hz⟩ := hs
+    have he : b+d-(a+d)=b-a := by omega
+    simp only [entry,hab.ne,(show a+d≠b+d by omega),↓reduceIte,
+      min_eq_left hab.le,max_eq_right hab.le,
+      min_eq_left (show a+d≤b+d by omega),max_eq_right (show a+d≤b+d by omega),he]
+    rw [← prefix_sub p q o (a+d) (b+d) (by omega),← prefix_sub p q o a b hab.le]
+    refine ⟨coefficient p (WrapOwnCore.constants p u)*
+      coefficient p (WrapOwnCore.constants p (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p)))*z,?_⟩
+    linear_combination coefficient p (WrapOwnCore.constants p u)*
+      coefficient p (WrapOwnCore.constants p (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p)))*hz
+  rcases lt_trichotomy a b with hab|hab|hba
+  · exact hoff a b hab (load_shift_congr p q o b a d hcol.symm hb ha)
+  · subst b
+    apply diagonal_shift_congr p q o a d u
+    intro t ht
+    have h : t-a∈Icc 1 d := by simp only [mem_Ioc] at ht; simp only [mem_Icc]; omega
+    have he : a+(t-a)=t := by simp only [mem_Ioc] at ht; omega
+    simpa only [he] using ha (t-a) h
+  · rw [entry_symm p q o u (a+d) (b+d),entry_symm p q o u a b]
+    exact hoff b a hba (load_shift_congr p q o a b d hcol ha hb)
+
+theorem load_shift_factor (q o t d : ℕ) (u : GaussLoc p)
+    (ht : ∀ h∈Icc 1 d,res p ((t+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (t+h))≠0) :
+    ∃ e : Ring p,constants p u*(load p q o (t+d)-load p q o t)=
+      uniformizer p*(constants p u*∑ h∈Icc 1 d,regular p q o (t+h))+uniformizer p^2*e := by
+  classical
+  rw [prefix_sub p q o t (t+d) (by omega),WrapPrefixSource.window_sum]
+  have hf : ∀ h∈Icc 1 d,∃ e : Ring p,delta p q o (t+h)=uniformizer p*regular p q o (t+h)+uniformizer p^2*e :=
+    fun h hh => delta_factor p q o (t+h) (ht h hh).1 (ht h hh).2
+  choose! E hE using hf
+  refine ⟨constants p u*∑ h∈Icc 1 d,E h,?_⟩
+  rw [Finset.sum_congr rfl hE,Finset.sum_add_distrib,← Finset.mul_sum,← Finset.mul_sum]
+  ring
+
+set_option maxHeartbeats 1000000 in
+/-- Two-parameter own-block transport across a regular window: the
+two-parameter congruences replace the one-parameter exact load step. -/
+theorem actual_own_transport {α : Type*} [Fintype α] [DecidableEq α]
+    (q o t d : ℕ) (u : GaussLoc p) (rows cols : α → ℕ)
+    (P : Matrix α α (Ring p))
+    (hr : ∀ i,(rows i:ZMod p)=(t:ZMod p))
+    (hc : ∀ i,(cols i:ZMod p)=(t:ZMod p))
+    (ht : ∀ h∈Icc 1 d,res p ((t+h:ℕ):GaussLoc p)≠0 ∧
+      res p (WrapIncrement.argument p q o (t+h))≠0)
+    (Q0 Q1 : Matrix α α (Ring p))
+    (h0 : ∀ i j,Q0 i j=entry p q o u (rows i) (cols j)+P i j)
+    (h1 : ∀ i j,Q1 i j=entry p q o u (rows i+d) (cols j+d)+P i j)
+    (hQ0 : IsUnit Q0.det) (hQ1 : IsUnit Q1.det) (direction : Ring p)
+    (hz : (constants p u*load p q o t-direction)-
+      (fun i => entry p q o u t (cols i)) ⬝ᵥ Q0⁻¹ *ᵥ
+        (fun i => constants p u*load p q o (rows i)-direction)=0) :
+    ∃ e : Ring p,
+      (constants p u*load p q o (t+d)-direction)-
+        (fun i => entry p q o u (t+d) (cols i+d)) ⬝ᵥ Q1⁻¹ *ᵥ
+          (fun i => constants p u*load p q o (rows i+d)-direction)=
+      (constants p u*∑ h∈Icc 1 d,regular p q o (t+h))*
+        (1-∑ i,((fun j => entry p q o u t (cols j)) ᵥ* Q0⁻¹) i)*
+          uniformizer p+uniformizer p^2*e := by
+  classical
+  have hw (a : ℕ) (hcol : (a:ZMod p)=(t:ZMod p)) :=
+    WrapPrefixSource.regular_window_of_colour p q o a t d hcol ht
+  have hd : ∀ i j,∃ z,Q1 i j=Q0 i j+uniformizer p^2*z := by
+    intro i j
+    obtain ⟨z,hz⟩ := entry_shift_congr p q o (rows i) (cols j) d u
+      ((hr i).trans (hc j).symm) (hw _ (hr i)) (hw _ (hc j))
+    refine ⟨z,?_⟩
+    rw [h1,h0]
+    linear_combination hz
+  have hs : ∀ i,∃ z,entry p q o u (t+d) (cols i+d)=entry p q o u t (cols i)+uniformizer p^2*z := by
+    intro i
+    obtain ⟨z,hz⟩ := entry_shift_congr p q o t (cols i) d u (hc i).symm ht (hw _ (hc i))
+    exact ⟨z,sub_eq_iff_eq_add.mp hz |>.trans (add_comm _ _)⟩
+  let step := constants p u*(load p q o (t+d)-load p q o t)
+  have hl : ∀ i,∃ z,constants p u*load p q o (rows i+d)=
+      constants p u*load p q o (rows i)+step+uniformizer p^2*z := by
+    intro i
+    obtain ⟨z,hz⟩ := load_shift_congr p q o (rows i) t d (hr i) (hw _ (hr i)) ht
+    refine ⟨constants p u*z,?_⟩
+    dsimp only [step]
+    linear_combination constants p u*hz
+  choose ED hED using hd
+  choose es hes using hs
+  choose el hel using hl
+  have hm : Q1=Q0+uniformizer p^2 • Matrix.of ED := by
+    ext i j
+    exact hED i j
+  have hsig : (fun i => entry p q o u (t+d) (cols i+d))=
+      (fun i => entry p q o u t (cols i))+uniformizer p^2 • es := by
+    funext i
+    exact hes i
+  have hunit : IsUnit (Q0+uniformizer p^2 • Matrix.of ED).det := by
+    rw [← hm]; exact hQ1
+  obtain ⟨e,he⟩ := own_shift (uniformizer p) Q0 (Matrix.of ED) hQ0 hunit
+    (fun i => entry p q o u t (cols i)) es
+    (fun i => constants p u*load p q o (rows i)) el
+    (constants p u*load p q o t) 0 direction step
+  obtain ⟨e0,he0⟩ := load_shift_factor p q o t d u ht
+  refine ⟨e+e0*(1-∑ i,((fun j => entry p q o u t (cols j)) ᵥ* Q0⁻¹) i),?_⟩
+  have htload : constants p u*load p q o (t+d)=constants p u*load p q o t+step := by dsimp only [step]; ring
+  rw [htload,hm,hsig,Matrix.dotProduct_mulVec,dotProduct]
+  simp_rw [hel]
+  rw [dotProduct_mulVec,dotProduct] at hz
+  simp only [mul_zero,add_zero] at he
+  rw [hz] at he
+  rw [he,zero_add]
+  dsimp only [step]
+  rw [he0]
+  ring
+
+end TwoParameterTransport
+end TwoTermDeformation
+
+namespace TwoTermDeformation
+section TwoParameterSource
+variable (p : ℕ) [Fact p.Prime]
+
+attribute [local instance] coefficientDomain ringDomain
+
+/-- Residue-field image of an original colour. -/
+noncomputable def residueNode : ZMod p →+* Residue p :=
+  (RatFunc.C:WrapPoleResidue.Residue p →+* Residue p).comp
+    ((RatFunc.C:RatFunc (ZMod p) →+* WrapPoleResidue.Residue p).comp RatFunc.C)
+
+theorem residueNode_injective : Function.Injective (residueNode p) :=
+  RatFunc.C_injective.comp (RatFunc.C_injective.comp RatFunc.C_injective)
+
+theorem residueNode_nat (a : ℕ) : residueNode p (a:ZMod p)=(a:Residue p) := map_natCast _ a
+
+theorem residue_zero_iff (a : Ring p) : residue p a=0 ↔ uniformizer p∣a :=
+  WrapParameter.residue_zero_iff (WrapDeform.residue p) (WrapDeform.uniformizer p)
+    (WrapDeform.residue_zero_iff p) a
+
+theorem unit_of_residue_ne (a : Ring p) (h : residue p a≠0) : IsUnit a :=
+  WrapUnits.of_residue_ne (R:=WrapDeform.Extension p) (K:=WrapPoleResidue.Residue p)
+    (WrapDeform.residue p) a h
+
+theorem residue_pi : residue p (uniformizer p)=0 := (residue_zero_iff p _).mpr (dvd_refl _)
+
+theorem uniformizer_ne : uniformizer p≠0 := (parameterPrime p).ne_zero
+
+variable {ι : Type} [Fintype ι] [DecidableEq ι]
+
+theorem split (col : ι → ZMod p) (Q : Matrix ι ι (Ring p))
+    (hzero : ∀ i j,col i≠col j → residue p (Q i j)=0) :
+    ∃ E : Matrix ι ι (Ring p),Q=own p col Q+uniformizer p • E ∧
+      (∀ i j,col i=col j → E i j=0) := by
+  classical
+  have hz : ∀ i j,uniformizer p∣Q i j-own p col Q i j := by
+    intro i j
+    apply (residue_zero_iff p _).mp
+    by_cases h : col i=col j
+    · simp only [own,Matrix.of_apply,if_pos h,sub_self,map_zero]
+    · simp only [own,Matrix.of_apply,if_neg h,sub_zero]
+      exact hzero i j h
+  choose E hE using hz
+  refine ⟨Matrix.of E,?_,?_⟩
+  · ext i j
+    simp only [Matrix.add_apply,Matrix.smul_apply,Matrix.of_apply,smul_eq_mul]
+    exact sub_eq_iff_eq_add.mp (hE i j) |>.trans (add_comm _ _)
+  · intro i j hij
+    have he := hE i j
+    simp only [own,Matrix.of_apply,if_pos hij,sub_self] at he
+    exact (mul_eq_zero.mp he.symm).resolve_left (uniformizer_ne p)
+
+theorem own_unit (col : ι → ZMod p) (Q : Matrix ι ι (Ring p)) (hQ : IsUnit Q.det)
+    (hzero : ∀ i j,col i≠col j → residue p (Q i j)=0) :
+    IsUnit (own p col Q).det := by
+  classical
+  have he : (own p col Q).map (residue p)=Q.map (residue p) := by
+    ext i j
+    by_cases h : col i=col j
+    · simp only [Matrix.map_apply,own,Matrix.of_apply,if_pos h]
+    · simp only [Matrix.map_apply,own,Matrix.of_apply,if_neg h,map_zero,hzero i j h]
+  apply unit_of_residue_ne p
+  have hh := (hQ.map (residue p)).ne_zero
+  rw [RingHom.map_det] at hh ⊢
+  change ((own p col Q).map (residue p)).det≠0
+  rw [he]
+  exact hh
+
+theorem cross_residue (col : ι → ZMod p) (Q E : Matrix ι ι (Ring p))
+    (hQE : Q=own p col Q+uniformizer p • E)
+    (xi : Matrix ι ι (Ring p)) (yR yC : ι → Ring p)
+    (hdisp : ∀ i j,xi i j*Q i j=uniformizer p*(yC j-yR i))
+    (hxi : ∀ i j,residue p (xi i j)=residueNode p (col j)-residueNode p (col i))
+    (i j : ι) (hcol : col i≠col j) :
+    residue p (E i j)=(residue p (yC j)-residue p (yR i))/
+      (residueNode p (col j)-residueNode p (col i)) := by
+  classical
+  have he : Q i j=uniformizer p*E i j := by
+    rw [hQE]
+    simp only [Matrix.add_apply,own,Matrix.of_apply,if_neg hcol,zero_add,
+      Matrix.smul_apply,smul_eq_mul]
+  have hd := hdisp i j
+  rw [he] at hd
+  have hc : xi i j*E i j=yC j-yR i := by
+    apply mul_left_cancel₀ (uniformizer_ne p)
+    calc
+      _=xi i j*(uniformizer p*E i j) := by ring
+      _=_ := hd
+  have hh := congrArg (residue p) hc
+  rw [map_mul,hxi,map_sub] at hh
+  have hden : residueNode p (col j)-residueNode p (col i)≠0 := by
+    apply sub_ne_zero.mpr
+    intro heq
+    exact hcol ((residueNode_injective p heq).symm)
+  apply (eq_div_iff hden).mpr
+  simpa only [mul_comm] using hh
+
+theorem nat_residue_ne (a b : ℕ) (h : (a:ZMod p)≠(b:ZMod p)) :
+    (a:Residue p)-(b:Residue p)≠0 := by
+  intro hz
+  apply h
+  apply residueNode_injective p
+  simpa only [residueNode_nat] using sub_eq_zero.mp hz
+
+set_option maxHeartbeats 1000000 in
+theorem entry_source (q o N a b : ℕ) (u : GaussLoc p) (hN : N<p*p)
+    (ha : a<N) (hb : b<N) (hcol : (a:ZMod p)≠(b:ZMod p)) :
+    ∃ e : Ring p,entry p q o u a b=uniformizer p*e ∧
+      residue p e=(residue p (constants p u*load p q o b)-residue p (constants p u*load p q o a))/
+        ((b:Residue p)-(a:Residue p)) := by
+  have hd := commutator p q o N u hN a b ha hb
+  have hne := nat_residue_ne p b a (Ne.symm hcol)
+  have hz : residue p (entry p q o u a b)=0 := by
+    have h := congrArg (residue p) hd
+    rw [map_mul,map_mul,residue_pi,zero_mul,map_sub,map_natCast,map_natCast] at h
+    exact (mul_eq_zero.mp h).resolve_left hne
+  obtain ⟨e,he⟩ := (residue_zero_iff p _).mp hz
+  refine ⟨e,he,?_⟩
+  rw [he] at hd
+  have hc : ((b:Ring p)-(a:Ring p))*e=constants p u*load p q o b-constants p u*load p q o a := by
+    apply mul_left_cancel₀ (uniformizer_ne p)
+    linear_combination hd
+  have hh := congrArg (residue p) hc
+  simp only [map_mul,map_sub,map_natCast] at hh
+  apply (eq_div_iff hne).mpr
+  simpa only [map_mul,mul_comm] using hh
+
+section Core
+variable {β : Type} [Fintype β] [DecidableEq β]
+
+set_option maxHeartbeats 1000000 in
+theorem core_cross_residue (q o N : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
+    (hN : N<p*p) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
+    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p)) (i j : ι ⊕ β)
+    (hij : WrapFibreIndex.colour p c xs i≠WrapFibreIndex.colour p c xs j) :
+    residue p (mixedCore p q o s u c xs ys i j)=0 := by
+  have hcc : ((Sum.elim c ys j:ℕ):ZMod p)=WrapFibreIndex.colour p c xs j := by
+    cases j with
+    | inl j => rfl
+    | inr j => exact (hcol j).symm
+  have hrr : ((Sum.elim c xs i:ℕ):ZMod p)=WrapFibreIndex.colour p c xs i := by cases i <;> rfl
+  have h := congrArg (residue p) (mixedCore_commutator p q o N hN s u c xs ys hc hx hy i j)
+  rw [map_mul,map_mul,residue_pi,zero_mul,map_sub,map_natCast,map_natCast] at h
+  have hne := nat_residue_ne p (Sum.elim c ys j) (Sum.elim c xs i) (by rw [hcc,hrr]; exact Ne.symm hij)
+  exact (mul_eq_zero.mp h).resolve_left hne
+
+set_option maxHeartbeats 1000000 in
+theorem actual_core_source (q o N : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
+    (hN : N<p*p) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
+    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
+    (hQ : IsUnit (mixedCore p q o s u c xs ys).det) :
+    ∃ E : Matrix (ι ⊕ β) (ι ⊕ β) (Ring p),
+      mixedCore p q o s u c xs ys=own p (WrapFibreIndex.colour p c xs) (mixedCore p q o s u c xs ys)+
+        uniformizer p • E ∧
+      IsUnit (own p (WrapFibreIndex.colour p c xs) (mixedCore p q o s u c xs ys)).det ∧
+      (∀ i j,WrapFibreIndex.colour p c xs i=WrapFibreIndex.colour p c xs j → E i j=0) ∧
+      (∀ i j,WrapFibreIndex.colour p c xs i≠WrapFibreIndex.colour p c xs j →
+        residue p (E i j)=
+          (residue p (constants p u*load p q o (Sum.elim c ys j))-
+            residue p (constants p u*load p q o (Sum.elim c xs i)))/
+          (residueNode p (WrapFibreIndex.colour p c xs j)-residueNode p (WrapFibreIndex.colour p c xs i))) := by
+  classical
+  let Q := mixedCore p q o s u c xs ys
+  let col := WrapFibreIndex.colour p c xs
+  have hz : ∀ i j,col i≠col j → residue p (Q i j)=0 :=
+    fun i j hij => core_cross_residue p q o N s u c xs ys hN hc hx hy hcol i j hij
+  obtain ⟨E,hE,hE0⟩ := split p col Q hz
+  refine ⟨E,hE,own_unit p col Q hQ hz,hE0,?_⟩
+  intro i j hij
+  apply cross_residue p col Q E hE
+    (Matrix.of fun i j => ((Sum.elim c ys j:ℕ):Ring p)-((Sum.elim c xs i:ℕ):Ring p))
+    (fun i => constants p u*load p q o (Sum.elim c xs i))
+    (fun i => constants p u*load p q o (Sum.elim c ys i))
+    (fun i j => by
+      simpa only [Matrix.of_apply,mul_sub] using mixedCore_commutator p q o N hN s u c xs ys hc hx hy i j) ?_ i j hij
+  intro a b
+  have hr : ((Sum.elim c xs a:ℕ):ZMod p)=col a := by cases a <;> rfl
+  have hcc : ((Sum.elim c ys b:ℕ):ZMod p)=col b := by
+    cases b with
+    | inl b => rfl
+    | inr b => exact (hcol b).symm
+  simp only [Matrix.of_apply,map_sub,map_natCast,← residueNode_nat,hr,hcc]
+
+end Core
+
+theorem actual_border_source {α : Type*} [Fintype α] [DecidableEq α]
+    (q o N t : ℕ) (u : GaussLoc p) (cols : α → ℕ)
+    (hN : N<p*p) (ht : t<N) (hc : ∀ i,cols i<N) :
+    ∃ e : α → Ring p,
+      (fun i => entry p q o u t (cols i))=
+        (fun i => if (cols i:ZMod p)=(t:ZMod p) then entry p q o u t (cols i) else 0)+uniformizer p • e ∧
+      (∀ i,(cols i:ZMod p)=(t:ZMod p) → e i=0) ∧
+      (∀ i,(cols i:ZMod p)≠(t:ZMod p) → residue p (e i)=
+        (residue p (constants p u*load p q o (cols i))-residue p (constants p u*load p q o t))/
+          ((cols i:Residue p)-(t:Residue p))) := by
+  classical
+  have hs : ∀ i,∃ e : Ring p,
+      entry p q o u t (cols i)=(if (cols i:ZMod p)=(t:ZMod p) then entry p q o u t (cols i) else 0)+
+        uniformizer p*e ∧
+      ((cols i:ZMod p)=(t:ZMod p) → e=0) ∧
+      ((cols i:ZMod p)≠(t:ZMod p) → residue p e=
+        (residue p (constants p u*load p q o (cols i))-residue p (constants p u*load p q o t))/
+          ((cols i:Residue p)-(t:Residue p))) := by
+    intro i
+    by_cases he : (cols i:ZMod p)=(t:ZMod p)
+    · exact ⟨0,by simp only [he,↓reduceIte,mul_zero,add_zero],fun _ => rfl,fun hn => False.elim (hn he)⟩
+    · obtain ⟨e,heq,her⟩ := entry_source p q o N t (cols i) u hN ht (hc i) (Ne.symm he)
+      refine ⟨e,?_,fun hh => False.elim (he hh),fun _ => her⟩
+      simpa only [if_neg he,zero_add] using heq
+  choose e he he0 her using hs
+  refine ⟨e,?_,he0,her⟩
+  funext i
+  exact he i
+
+section Node
+variable {β : Type} [Fintype β] [DecidableEq β]
+
+set_option maxHeartbeats 1000000 in
+theorem actual_node_source (q o N t : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
+    (hN : N<p*p) (ht : t<N) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
+    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
+    (hQ : IsUnit (mixedCore p q o s u c xs ys).det)
+    (direction G1 : Ring p) :
+    let Q := mixedCore p q o s u c xs ys
+    let col := WrapFibreIndex.colour p c xs
+    let D := own p col Q
+    let sig := fun i => entry p q o u t (Sum.elim c ys i)
+    let sigOwn := fun i => if col i=(t:ZMod p) then sig i else 0
+    let yR := fun i => constants p u*load p q o (Sum.elim c xs i)-direction
+    let yC := fun i => constants p u*load p q o (Sum.elim c ys i)-direction
+    let yt := constants p u*load p q o t-direction
+    yt-(sigOwn ᵥ* D⁻¹) ⬝ᵥ yR=uniformizer p*G1 →
+      ∃ Bk Rem : Ring p,
+        yt-sig ⬝ᵥ Q⁻¹ *ᵥ yR=uniformizer p*(G1-Bk+uniformizer p*Rem) ∧
+        residue p Bk=residue p (1-∑ j,(sigOwn ᵥ* D⁻¹) j)*
+          ∑ colour : ZMod p,if colour=(t:ZMod p) then 0 else
+            (∑ a∈univ.filter (fun a => col a=colour),
+              residue p ((D⁻¹ *ᵥ yR) a)*residue p (yC a))/
+                (residueNode p colour-residueNode p (t:ZMod p)) := by
+  classical
+  let Q := mixedCore p q o s u c xs ys
+  let col := WrapFibreIndex.colour p c xs
+  let D := own p col Q
+  let sig : ι ⊕ β → Ring p := fun i => entry p q o u t (Sum.elim c ys i)
+  let sigOwn : ι ⊕ β → Ring p := fun i => if col i=(t:ZMod p) then sig i else 0
+  let yR : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c xs i)-direction
+  let yC : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c ys i)-direction
+  let yt := constants p u*load p q o t-direction
+  change yt-(sigOwn ᵥ* D⁻¹) ⬝ᵥ yR=uniformizer p*G1 → _
+  intro hG
+  obtain ⟨E,hQE,hD,hE0,hE⟩ := actual_core_source p q o N s u c xs ys hN hc hx hy hcol hQ
+  have hcols (i : ι ⊕ β) : ((Sum.elim c ys i:ℕ):ZMod p)=col i := by
+    cases i with
+    | inl i => rfl
+    | inr i => exact (hcol i).symm
+  have hcolN : ∀ i:ι ⊕ β,Sum.elim c ys i<N := by
+    intro i
+    cases i with
+    | inl i => exact hc i
+    | inr i => exact hy i
+  obtain ⟨sp,hsp,hsp0,hspr⟩ := actual_border_source p q o N t u (Sum.elim c ys) hN ht hcolN
+  have hsplit : sig=sigOwn+uniformizer p • sp := by
+    simpa only [hcols] using hsp
+  have hxsolve : D *ᵥ (Q⁻¹ *ᵥ yR)+uniformizer p • (E *ᵥ (Q⁻¹ *ᵥ yR))=yR := by
+    rw [← Matrix.smul_mulVec,← Matrix.add_mulVec,← hQE,
+      Matrix.mulVec_mulVec,Matrix.mul_nonsing_inv Q hQ,Matrix.one_mulVec]
+  have hDb : ∀ a b,col a≠col b → D a b=0 := by
+    intro a b hab
+    exact if_neg hab
+  have hs0 : ∀ a,col a≠(t:ZMod p) → sigOwn a=0 := by
+    intro a ha
+    exact if_neg ha
+  have hspr' : ∀ a,col a≠(t:ZMod p) → residue p (sp a)=
+      (residue p (yC a)-residue p yt)/(residueNode p (col a)-residueNode p (t:ZMod p)) := by
+    intro a ha
+    have hh := hspr a (by rw [hcols]; exact ha)
+    have heq : ((Sum.elim c ys a:ℕ):Residue p)=residueNode p (col a) := by
+      rw [← hcols,residueNode_nat]
+    rw [heq,← residueNode_nat p t] at hh
+    dsimp only [yC,yt]
+    rw [map_sub,map_sub,sub_sub_sub_cancel_right]
+    exact hh
+  have hE' : ∀ a b,col a≠col b → residue p (E a b)=
+      (residue p (yC b)-residue p (yR a))/(residueNode p (col b)-residueNode p (col a)) := by
+    intro a b hab
+    dsimp only [yC,yR]
+    rw [map_sub,map_sub,sub_sub_sub_cancel_right]
+    exact hE a b hab
+  obtain ⟨Bk,Rem,hm,hr⟩ := WrapMoments.mixed_phi2_expansion (uniformizer p)
+    (residue p) (residue_pi p) (residueNode p) (residueNode_injective p) col (t:ZMod p) D E hD hDb yR yC yt hE0 hE'
+    sigOwn sp hs0 (fun a ha => hsp0 a (by rw [hcols]; exact ha)) hspr'
+    (Q⁻¹ *ᵥ yR) hxsolve G1 hG
+  refine ⟨Bk,Rem,?_,hr⟩
+  rw [← hsplit] at hm
+  exact hm
+
+end Node
+
+theorem normalized_response {α : Type*} [Fintype α] [DecidableEq α]
+    (Q : Matrix α α (Ring p)) (sigma y : α → Ring p) (yt direction W : Ring p)
+    (hunit : IsUnit (1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1))
+    (hm : (yt-direction)-sigma ⬝ᵥ Q⁻¹ *ᵥ (fun i => y i-direction)=uniformizer p*W) :
+    ∃ F : Ring p,
+      yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*(1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1)+
+        uniformizer p*((1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1)*F) ∧
+      residue p F=residue p W/residue p (1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1) := by
+  let A := 1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1
+  have hv : (fun i => y i-direction)=y-direction • (1:α → Ring p) := by
+    funext i
+    simp only [Pi.sub_apply,Pi.smul_apply,Pi.one_apply,smul_eq_mul,mul_one]
+  rw [hv,Matrix.mulVec_sub,Matrix.mulVec_smul,dotProduct_sub,dotProduct_smul] at hm
+  simp only [smul_eq_mul] at hm
+  have he : yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*A+uniformizer p*W := by
+    dsimp only [A]
+    linear_combination hm
+  have hi : A*Ring.inverse A=1 := Ring.mul_inverse_cancel A hunit
+  refine ⟨W*Ring.inverse A,?_,?_⟩
+  · change yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*A+uniformizer p*(A*(W*Ring.inverse A))
+    rw [he]
+    have hc : A*(W*Ring.inverse A)=W := by
+      calc
+        _=W*(A*Ring.inverse A) := by ring
+        _=W := by rw [hi,mul_one]
+    rw [hc]
+  · rw [map_mul,rational_map_inverse (residue p) A hunit,div_eq_mul_inv]
+
+section Normalized
+variable {β : Type} [Fintype β] [DecidableEq β]
+
+set_option maxHeartbeats 1000000 in
+/-- Two-parameter normalized source of an ACTUAL original prefix node:
+the transported own coefficient plus all cross-colour corrections. -/
+theorem actual_normalized_source (q o N t : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
+    (hN : N<p*p) (ht : t<N) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
+    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
+    (hQ : IsUnit (mixedCore p q o s u c xs ys).det)
+    (direction G1 : Ring p) (K0 : Residue p) :
+    let Q := mixedCore p q o s u c xs ys
+    let col := WrapFibreIndex.colour p c xs
+    let D := own p col Q
+    let sig := fun i => entry p q o u t (Sum.elim c ys i)
+    let sigOwn := fun i => if col i=(t:ZMod p) then sig i else 0
+    let LR := fun i => constants p u*load p q o (Sum.elim c xs i)
+    let LC := fun i => constants p u*load p q o (Sum.elim c ys i)
+    let Lt := constants p u*load p q o t
+    let B := 1-∑ j,(sigOwn ᵥ* D⁻¹) j
+    (Lt-direction)-(sigOwn ᵥ* D⁻¹) ⬝ᵥ (fun i => LR i-direction)=uniformizer p*G1 →
+    residue p G1=K0*residue p B → residue p B≠0 →
+    ∃ F : Ring p,
+      Lt-sig ⬝ᵥ Q⁻¹ *ᵥ LR=direction*(1-sig ⬝ᵥ Q⁻¹ *ᵥ 1)+
+        uniformizer p*((1-sig ⬝ᵥ Q⁻¹ *ᵥ 1)*F) ∧
+      residue p F=K0-
+        ∑ colour : ZMod p,if colour=(t:ZMod p) then 0 else
+          (∑ a∈univ.filter (fun a => col a=colour),
+            residue p ((D⁻¹ *ᵥ (fun i => LR i-direction)) a)*residue p (LC a-direction))/
+              (residueNode p colour-residueNode p (t:ZMod p)) := by
+  classical
+  let Q := mixedCore p q o s u c xs ys
+  let col := WrapFibreIndex.colour p c xs
+  let D := own p col Q
+  let sig : ι ⊕ β → Ring p := fun i => entry p q o u t (Sum.elim c ys i)
+  let sigOwn : ι ⊕ β → Ring p := fun i => if col i=(t:ZMod p) then sig i else 0
+  let LR : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c xs i)
+  let LC : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c ys i)
+  let Lt := constants p u*load p q o t
+  let B := 1-∑ j,(sigOwn ᵥ* D⁻¹) j
+  change (Lt-direction)-(sigOwn ᵥ* D⁻¹) ⬝ᵥ (fun i => LR i-direction)=uniformizer p*G1 →
+    residue p G1=K0*residue p B → residue p B≠0 → _
+  intro hG hGres hB
+  obtain ⟨Bk,Rem,hm,hBk⟩ := actual_node_source p q o N t s u c xs ys
+    hN ht hc hx hy hcol hQ direction G1 hG
+  obtain ⟨E,hQE,hD,hE0,hE⟩ := actual_core_source p q o N s u c xs ys hN hc hx hy hcol hQ
+  have hmap : Q.map (residue p)=D.map (residue p) := by
+    ext i j
+    have he := congrArg (fun M : Matrix (ι ⊕ β) (ι ⊕ β) (Ring p) => residue p (M i j)) hQE
+    simpa only [Matrix.map_apply,Matrix.add_apply,Matrix.smul_apply,smul_eq_mul,
+      map_add,map_mul,residue_pi,zero_mul,add_zero] using he
+  have hcols (i : ι ⊕ β) : ((Sum.elim c ys i:ℕ):ZMod p)=col i := by
+    cases i with
+    | inl i => rfl
+    | inr i => exact (hcol i).symm
+  have hcolN : ∀ i:ι ⊕ β,Sum.elim c ys i<N := by
+    intro i
+    cases i with
+    | inl i => exact hc i
+    | inr i => exact hy i
+  obtain ⟨sp,hsp,hsp0,hspr⟩ := actual_border_source p q o N t u (Sum.elim c ys) hN ht hcolN
+  have hsplit : sig=sigOwn+uniformizer p • sp := by simpa only [hcols] using hsp
+  have hsig : ∀ i,residue p (sig i)=residue p (sigOwn i) := by
+    intro i
+    have he := congrArg (fun v : ι ⊕ β → Ring p => residue p (v i)) hsplit
+    simpa only [Pi.add_apply,Pi.smul_apply,smul_eq_mul,map_add,map_mul,residue_pi,zero_mul,add_zero] using he
+  have hA := WrapPrefixType.reference_map_congr (residue p) Q D hQ hD sig sigOwn hmap hsig
+  have hBref : 1-sigOwn ⬝ᵥ D⁻¹ *ᵥ 1=B := by
+    rw [dotProduct_mulVec,dotProduct]
+    simp only [Pi.one_apply,mul_one]
+    rfl
+  rw [hBref] at hA
+  have hunit : IsUnit (1-sig ⬝ᵥ Q⁻¹ *ᵥ 1) :=
+    unit_of_residue_ne p _ (by rw [hA]; exact hB)
+  obtain ⟨F,hF,hr⟩ := normalized_response p Q sig LR Lt direction (G1-Bk+uniformizer p*Rem) hunit hm
+  refine ⟨F,hF,?_⟩
+  rw [hr,map_add,map_sub,map_mul,residue_pi,zero_mul,add_zero,hGres,hBk,hA]
+  field_simp [hB]
+  <;> ring
+
+end Normalized
+
+end TwoParameterSource
+end TwoTermDeformation
+
+
 
 
 
@@ -2118,5 +3533,11 @@ end TwoParameterCoupling
 #print axioms ringSystem_reindex
 #print axioms residue_anchor
 #print axioms coupling_cross
+#print axioms rowCoupling2_ne
+#print axioms colCoupling2_ne
+#print axioms TwoTermDeformation.actual_own_transport
+#print axioms TwoTermDeformation.actual_normalized_source
+#print axioms shared_moments2
+#print axioms residue_ringSystem_det
 
 end CatalanCore.Uniform.Content.UFSimple.WrapPrefixClosed
