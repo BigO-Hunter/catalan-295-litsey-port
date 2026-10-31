@@ -763,11 +763,14 @@ rows `y` (all in `G`) and a free class configuration `Cls N p x`:
 * for every sign split of the free rows and of the marked rows: at least one free negative, more
   than `2g` free positives, the negative-fraction range of every α-interval containing
   `α = (m₁ + m₂')/n`, and for every splitting `τ` of the marked positives into first-kind and
-  near rows, membership in `T.Clsf` and `T.FixAdm`. -/
+  near rows, membership in `T.Clsf` and `T.FixAdm`.  The link is only asked for marked counts
+`m ≤ α₁ n` (the hypothesis `hmle` of the consumer): for larger `m` the free-count clauses
+(`2g < q`, the κ-range) are not true of the near-optimal class. -/
 def SignedNearClassLinkNd (P : Parameters) {I : ℕ} (T : SignedNearBounds I)
     (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) (G : ℝ → Prop)
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop) : Prop :=
-  ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ),
+  ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (hpm : p + m = P.n N), (m : ℝ) ≤ T.α1 * (T.ncount N : ℝ) →
+    ∀ (x : Fin p → ℝ) (y : Fin m → ℝ),
     (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) → (∀ j, y j ∈ Ioo (-1 : ℝ) 1) →
     (∀ j, y j ≠ 0) → (∀ j, G (y j)) → Nd N m y → Function.Injective (Fin.append x y) →
     Cls N p x →
@@ -857,7 +860,7 @@ theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ �
     with N hnonN hE hl hN0 p m hpm x y s hmle hx hx0 hy hy0 hyG hNd hs hzi hsi hcase
   by_cases hc : Cls N p x
   · -- class branch
-    obtain ⟨hT, hrest⟩ := hl p m hpm x y hx hx0 hy hy0 hyG hNd hzi hc
+    obtain ⟨hT, hrest⟩ := hl p m hpm (by rw [hn]; exact hmle) x y hx hx0 hy hy0 hyG hNd hzi hc
     obtain ⟨k, q, σx, hxneg, hxpos⟩ := exists_sign_split x hx0
     obtain ⟨m1, m2', σy, hyneg, hypos⟩ := exists_sign_split y hy0
     obtain ⟨hk, hq, hκ, hcl⟩ := hrest k q m1 m2' σx σy hxneg hxpos hyneg hypos
