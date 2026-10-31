@@ -86,7 +86,15 @@ namespace CatalanMeasure.Signed.Consts
 #print axioms tgR_cover
 #print axioms excess_const
 #print axioms excess_le_of_ends
+#print axioms excess_le_dtop410
+#print axioms mmaxOf_ge
+#print axioms mmaxOf_hMm
+#print axioms mmax410_hMm
 #print axioms certH_mul_le
+#print axioms Hq_mono
+#print axioms certH_mul_le_mono
+#print axioms tsum_abs_tseq_le
+#print axioms abs_barrierTrialS_tseq_le
 #print axioms Cp_neg
 #print axioms Cp_pos
 #print axioms Cm_neg
@@ -143,6 +151,7 @@ namespace CatalanMeasure.Signed.Consts
 #print axioms slope23_stat
 #print axioms cheb0
 #print axioms floorS0
+#print axioms tZB0
 #print axioms A_0
 #print axioms A1_0
 #print axioms B1_0
@@ -184,6 +193,7 @@ namespace CatalanMeasure.Signed.Consts
 #print axioms De2_0_b2p3
 #print axioms cheb1
 #print axioms floorS1
+#print axioms tZB1
 #print axioms A_1
 #print axioms A1_1
 #print axioms B1_1
@@ -225,6 +235,7 @@ namespace CatalanMeasure.Signed.Consts
 #print axioms De2_1_b2p3
 #print axioms cheb2
 #print axioms floorS2
+#print axioms tZB2
 #print axioms A_2
 #print axioms A1_2
 #print axioms B1_2
