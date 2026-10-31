@@ -178,8 +178,9 @@ theorem Kt_eq_log (t : Bool) (u y : ℝ) :
       rw [← Real.log_neg_eq_log (u - y)]
       congr 2; ring
 
-theorem rowRef_eq_log (μ : Bool → Measure ℝ) (u : ℝ) :
-    rowRef μ u = ∑ t, ∫ y, -Real.log (u - sgnR t * y) ∂(μ t) := by
+theorem rowRef_eq_log (μ : SRef) (u : ℝ) :
+    rowRef μ u = ∑ t, (∫ y, -Real.log (u - sgnR t * y) ∂(μ.P t) -
+      ∫ y, -Real.log (u - sgnR t * y) ∂(μ.N t)) := by
   unfold rowRef
   simp_rw [Kt_eq_log]
 
@@ -191,10 +192,11 @@ theorem log_le_log_two_of_mem {a c : ℝ} (ha : a ∈ Icc (-1 : ℝ) 1) (hc : c 
   · exact Real.log_le_log (abs_pos.mpr h)
       (abs_le.mpr ⟨by linarith [ha.1, hc.2], by linarith [ha.2, hc.1]⟩)
 
-/-- `∫ rowRef μ (cos θ) dθ/π = log 2 · |μ|`. -/
-theorem arcLaw_rowRef {μ : Bool → Measure ℝ} {C : ℝ} (hμ : ∀ t, BD (μ t) C) :
-    Integrable (fun θ => rowRef μ (Real.cos θ)) arcLaw ∧
-      ∫ θ, rowRef μ (Real.cos θ) ∂arcLaw = Real.log 2 * ∑ t, (μ t).real univ := by
+/-- `∫ ∑_t ∫ -log(cos θ - sgn_t y) dμ_t(y) dθ/π = log 2 · |μ|` for one nonnegative family. -/
+theorem arcLaw_logsum {μ : Bool → Measure ℝ} {C : ℝ} (hμ : ∀ t, BD (μ t) C) :
+    Integrable (fun θ => ∑ t, ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ t)) arcLaw ∧
+      ∫ θ, ∑ t, ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ t) ∂arcLaw =
+        Real.log 2 * ∑ t, (μ t).real univ := by
   haveI := arcLaw_prob
   have hcos : ∀ θ : ℝ, Real.cos θ ∈ Icc (-1 : ℝ) 1 :=
     fun θ => ⟨Real.neg_one_le_cos θ, Real.cos_le_one θ⟩
@@ -248,16 +250,26 @@ theorem arcLaw_rowRef {μ : Bool → Measure ℝ} {C : ℝ} (hμ : ∀ t, BD (μ
       refine integral_congr_ae ?_
       filter_upwards [(hμ t).ae_mem] with y hy using (hin y hy).2
     rw [this, integral_const, smul_eq_mul, mul_comm]
-  have hf : (fun θ => rowRef μ (Real.cos θ)) =
-      fun θ => ∑ t, ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ t) := by
-    funext θ; exact rowRef_eq_log μ _
-  rw [hf]
   have hI : ∀ t ∈ (Finset.univ : Finset Bool),
       Integrable (fun θ => ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ t)) arcLaw :=
     fun t _ => by haveI := (hμ t).finite; exact (key t).1.integral_prod_left
   refine ⟨integrable_finsetSum _ hI, ?_⟩
   rw [integral_finsetSum _ hI, Finset.mul_sum]
   exact Finset.sum_congr rfl fun t _ => (key t).2
+
+/-- `∫ rowRef μ (cos θ) dθ/π = log 2 · (|P| - |N|)` for the signed reference `μ = P - N`. -/
+theorem arcLaw_rowRef {μ : SRef} {C : ℝ} (hμ : μ.OK C) :
+    Integrable (fun θ => rowRef μ (Real.cos θ)) arcLaw ∧
+      ∫ θ, rowRef μ (Real.cos θ) ∂arcLaw = Real.log 2 * μ.mass := by
+  obtain ⟨hP1, hP2⟩ := arcLaw_logsum hμ.hP
+  obtain ⟨hN1, hN2⟩ := arcLaw_logsum hμ.hN
+  have hf : (fun θ => rowRef μ (Real.cos θ)) = fun θ =>
+      (∑ t, ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ.P t)) -
+        ∑ t, ∫ y, -Real.log (Real.cos θ - sgnR t * y) ∂(μ.N t) := by
+    funext θ; rw [rowRef_eq_log, Finset.sum_sub_distrib]
+  rw [hf]
+  refine ⟨hP1.sub hN1, ?_⟩
+  rw [integral_sub hP1 hN1, hP2, hN2]; unfold SRef.mass; ring
 
 /-! ### Phantom configurations -/
 
@@ -459,11 +471,11 @@ theorem sq_integral_le_integral_sq {Ω : Type*} [MeasurableSpace Ω] {P : Measur
 /-! ### The species sums of D7.1 -/
 
 theorem Lpart_summable {ι : Type*} [Fintype ι] (w a : ι → ℝ) (σ : ι → Bool)
-    (μ : Bool → Measure ℝ) {C τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) (hw : ∀ i, 0 ≤ w i)
-    (ha : ∀ i, a i ∈ Icc (0 : ℝ) 1) (t : Bool) (hμ : BD (μ t) C) :
+    (μ : SRef) {C τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) (hw : ∀ i, 0 ≤ w i)
+    (ha : ∀ i, a i ∈ Icc (0 : ℝ) 1) (t : Bool) (hμ : μ.OK C) :
     Summable (fun k : ℕ => (1 / ((k : ℝ) + 1)) *
       ((∑ i, if σ i = t then w i * (τ * a i) ^ (k + 1) else 0) -
-        ∫ y, (τ * y) ^ (k + 1) ∂(μ t)) ^ 2) := by
+        ∫ y, (τ * y) ^ (k + 1) ∂(μ.P t) + ∫ y, (τ * y) ^ (k + 1) ∂(μ.N t)) ^ 2) := by
   have hS : IsGeom τ (fun k : ℕ => ∑ i, if σ i = t then w i * (τ * a i) ^ (k + 1) else 0) := by
     refine ⟨∑ i, w i, fun k => ?_⟩
     calc |∑ i, if σ i = t then w i * (τ * a i) ^ (k + 1) else 0|
@@ -476,8 +488,8 @@ theorem Lpart_summable {ι : Type*} [Fintype ι] (w a : ι → ℝ) (σ : ι →
               (mul_le_of_le_one_right hτ.1.le (ha i).2) _) (hw i)
           · simp only [abs_zero]; exact mul_nonneg (hw i) (pow_nonneg hτ.1.le _)
       _ = (∑ i, w i) * τ ^ (k + 1) := by rw [Finset.sum_mul]
-  have hD := (hS.sub (isGeom_refMoment hμ hτ.1)).summable_mul hτ
-    (hS.sub (isGeom_refMoment hμ hτ.1))
+  have hG := (hS.sub (isGeom_refMoment (hμ.hP t) hτ.1)).add (isGeom_refMoment (hμ.hN t) hτ.1)
+  have hD := hG.summable_mul hτ hG
   refine hD.congr fun k => ?_
   ring
 
@@ -549,8 +561,8 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     (hφ : (s : ℝ) * ω = φ)
     (hXN : ∀ i, XN i ∈ Ioo (-1 : ℝ) 0) (hGP : ∀ i, GP i ∈ Ioo (0 : ℝ) 1)
     (hinj : Function.Injective (Fin.append XN GP))
-    (μ : Bool → Measure ℝ) {C : ℝ} (hμ : ∀ t, BD (μ t) C) (hC : 0 ≤ C)
-    (hmass : (∑ i, Fin.append wN wG i) + (s : ℝ) * ω = ∑ t, (μ t).real univ) :
+    (μ : SRef) {C : ℝ} (hμ : μ.OK C) (hC : 0 ≤ C)
+    (hmass : (∑ i, Fin.append wN wG i) + (s : ℝ) * ω = μ.mass) :
     (∑ i, ∑ j ∈ Finset.Ioi i, Fin.append wN wG i * Fin.append wN wG j *
         Real.log |Fin.append XN GP j - Fin.append XN GP i|) ≤
       -(1 / 2) * ip (fun n => wpow τ wG GP n + φ * arcPos τ n - mpos μ τ n)
@@ -560,9 +572,9 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
       + (1 / 2) * (∑ i, Fin.append wN wG i ^ 2 * (-Real.log |Fin.append XN GP i| +
           Real.log (1 / (1 - τ ^ 2))))
       + (1 / 2) * ((s : ℝ) * ω ^ 2) * Real.log (1 / (1 - τ ^ 2))
-      + (1 / 2) * (8 * ((∑ i, Fin.append wN wG i) + (s : ℝ) * ω) * C * (1 - τ ^ 2) *
+      + (1 / 2) * (12 * ((∑ i, Fin.append wN wG i) + (s : ℝ) * ω + 1) * C * (1 - τ ^ 2) *
           (1 + Real.log (1 / (1 - τ ^ 2))) +
-          2 * (1 - τ ^ 2) * (2 * ((∑ i, Fin.append wN wG i) + (s : ℝ) * ω)) ^ 2)
+          2 * (1 - τ ^ 2) * (2 * ((∑ i, Fin.append wN wG i) + (s : ℝ) * ω + 1)) ^ 2)
       - (∑ i, Fin.append wN wG i * rowRef μ (Fin.append XN GP i)) + (1 / 2) * refEnergy μ := by
   subst hφ
   classical
@@ -606,7 +618,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
   set c : Bool → ℕ → ℝ := fun t k =>
     (∑ i, if decide (0 < Fin.append XN GP i) = t then
         Fin.append wN wG i * (τ * |Fin.append XN GP i|) ^ (k + 1) else 0) -
-      ∫ y, (τ * y) ^ (k + 1) ∂(μ t) with hc
+      (∫ y, (τ * y) ^ (k + 1) ∂(μ.P t) - ∫ y, (τ * y) ^ (k + 1) ∂(μ.N t)) with hc
   set X : Bool → ℕ → (Fin s → ℝ) → ℝ := fun t k θ => ω * ∑ j, arcH τ t k (θ j) with hX
   have hXm : ∀ t k, Measurable (X t k) := fun t k =>
     measurable_const.mul (Finset.measurable_sum _ fun j _ =>
@@ -703,7 +715,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     simp only [fun j => integral_single_denPi isTrial_arcsine (s := s) j hdg.aestronglyMeasurable,
       hdgI, Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
   have IR : ∫ θ, ∑ j, rowRef μ (Real.cos (θ j)) ∂(phLaw s) =
-      (s : ℝ) * (Real.log 2 * ∑ t, (μ t).real univ) := by
+      (s : ℝ) * (Real.log 2 * μ.mass) := by
     rw [integral_finsetSum _ fun j _ => integrable_phEval j hR1]
     simp only [fun j => integral_single_denPi isTrial_arcsine (s := s) j
       (g := fun u => rowRef μ (Real.cos u)) hR1.aestronglyMeasurable, hR2, Finset.sum_const,
@@ -734,8 +746,8 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
   set Wt : ℝ := (∑ i, Fin.append wN wG i) + (s : ℝ) * ω with hWt
   set c0 : ℝ := (1 / 2) * (∑ i, Fin.append wN wG i ^ 2 * (-Real.log |Fin.append XN GP i| +
         Real.log (1 / (1 - τ ^ 2)))) +
-      (1 / 2) * (8 * Wt * C * (1 - τ ^ 2) * (1 + Real.log (1 / (1 - τ ^ 2))) +
-        2 * (1 - τ ^ 2) * (2 * Wt) ^ 2) -
+      (1 / 2) * (12 * (Wt + 1) * C * (1 - τ ^ 2) * (1 + Real.log (1 / (1 - τ ^ 2))) +
+        2 * (1 - τ ^ 2) * (2 * (Wt + 1)) ^ 2) -
       (∑ i, Fin.append wN wG i * rowRef μ (Fin.append XN GP i)) + (1 / 2) * refEnergy μ with hc0
   -- the main bound, for each truncation `K`
   have hK : ∀ K : ℕ, Vz ≤ c0 - (1 / 2) * ∑ k ∈ Finset.range K, A k +
@@ -770,7 +782,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
       have hVw : ∀ i, 0 < Fin.append (Fin.append wN wG) (fun _ : Fin s => ω) i :=
         pos_append_weights hW (fun _ => hω)
       have hmassY : ∑ i, Fin.append (Fin.append wN wG) (fun _ : Fin s => ω) i =
-          ∑ t, (μ t).real univ := by
+          μ.mass := by
         rw [Fin.sum_univ_add]
         simp only [Fin.append_left, Fin.append_right, Finset.sum_const, Finset.card_univ,
           Fintype.card_fin, nsmul_eq_mul]
@@ -816,13 +828,13 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
           Lpart (Fin.append (Fin.append wN wG) (fun _ : Fin s => ω))
             (fun i => |Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i|)
             (fun i => decide (0 < Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i))
-            μ (τ ^ 2) t := by
+            μ.P μ.N (τ ^ 2) t := by
         intro t
         have hsum := Lpart_summable (Fin.append (Fin.append wN wG) (fun _ : Fin s => ω))
           (fun i => |Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i|)
           (fun i => decide (0 < Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i)) μ hτ
           (fun i => (hVw i).le)
-          (fun i => ⟨abs_nonneg _, (abs_lt.mpr (hYm i)).le⟩) t (hμ t)
+          (fun i => ⟨abs_nonneg _, (abs_lt.mpr (hYm i)).le⟩) t hμ
         unfold Lpart
         rw [hsq]
         refine le_trans (le_of_eq ?_) (hsum.sum_le_tsum (Finset.range K)
@@ -835,7 +847,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
           ∑ t, Lpart (Fin.append (Fin.append wN wG) (fun _ : Fin s => ω))
             (fun i => |Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i|)
             (fun i => decide (0 < Fin.append (Fin.append XN GP) (fun j => Real.cos (θ j)) i))
-            μ (τ ^ 2) t := by
+            μ.P μ.N (τ ^ 2) t := by
         rw [Finset.sum_comm]
         exact Finset.sum_le_sum fun t _ => hLp t
       simp only [hF, hVz, hc0, hWt]
@@ -850,7 +862,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     have hFI : ∫ θ, F θ ∂(phLaw s) = c0 - (1 / 2) * (∫ θ, ∑ k ∈ Finset.range K, ∑ t,
           (1 / ((k : ℝ) + 1)) * (c t k + X t k θ) ^ 2 ∂(phLaw s)) +
         (1 / 2) * ((s : ℝ) * (ω ^ 2 * (Real.log 2 + Real.log (1 / (1 - τ ^ 2))))) -
-        ω * ((s : ℝ) * (Real.log 2 * ∑ t, (μ t).real univ)) -
+        ω * ((s : ℝ) * (Real.log 2 * μ.mass)) -
         ω * ((∑ i, Fin.append wN wG i) * ((s : ℝ) * (-Real.log 2))) -
         (ω * ω) * (∑ j : Fin s, ((Finset.Ioi j).card : ℝ) * (-Real.log 2)) := by
       have e1 := integral_sub i5 (iP.const_mul (ω * ω))
@@ -913,11 +925,11 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
   have hPg : IsGeom τ (fun n => wpow τ wG GP n + ((s : ℝ) * ω) * arcPos τ n - mpos μ τ n) :=
     ((isGeom_wpow hτ.1 wG GP fun p =>
       (abs_lt.mpr ⟨by linarith [(hGP p).1], (hGP p).2⟩).le).add
-      ((isGeom_arcPos hτ).const_mul _)).sub (isGeom_refMoment (hμ true) hτ.1)
+      ((isGeom_arcPos hτ).const_mul _)).sub (isGeom_mpos hμ hτ.1)
   have hNg : IsGeom τ (fun n => wpow τ wN XN n + ((s : ℝ) * ω) * arcNeg τ n - mneg μ τ n) :=
     ((isGeom_wpow hτ.1 wN XN fun p =>
       (abs_lt.mpr ⟨(hXN p).1, by linarith [(hXN p).2]⟩).le).add
-      ((isGeom_arcNeg hτ).const_mul _)).sub (isGeom_mneg (hμ false) hτ.1)
+      ((isGeom_arcNeg hτ).const_mul _)).sub (isGeom_mneg hμ hτ.1)
   have hAsum : HasSum A
       (ip (fun n => wpow τ wG GP n + ((s : ℝ) * ω) * arcPos τ n - mpos μ τ n)
         (fun n => wpow τ wG GP n + ((s : ℝ) * ω) * arcPos τ n - mpos μ τ n) +
@@ -933,7 +945,7 @@ theorem rows_vandermonde_phantom {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     have hsg : ((-1 : ℝ) ^ (k + 1)) ^ 2 = 1 := by rw [← pow_mul, mul_comm, pow_mul]; simp
     linear_combination (1 / ((k : ℝ) + 1)) * (wpow τ wN XN k ^ 2 -
       (((s : ℝ) * ω) * (∫ u, arcH τ false k u ∂arcLaw) -
-        ∫ y, (τ * y) ^ (k + 1) ∂(μ false)) ^ 2) * hsg
+        (∫ y, (τ * y) ^ (k + 1) ∂(μ.P false) - ∫ y, (τ * y) ^ (k + 1) ∂(μ.N false))) ^ 2) * hsg
   rw [hAsum.tsum_eq, hc0] at htsum
   linarith
 

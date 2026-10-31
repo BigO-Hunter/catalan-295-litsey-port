@@ -124,27 +124,53 @@ theorem sum_offdiag_eq_two_mul {p : ℕ} (g : Fin p → Fin p → ℝ) (hg : ∀
     Finset.sum_congr rfl fun j _ => Finset.sum_congr rfl fun i _ => hg i j
   rw [this]; ring
 
-/-- The row field of the reference: `x ↦ ∑_τ ∫ K(x, y) dμ_τ(y)` in folded coordinates. -/
-def rowRef (μ : Bool → Measure ℝ) (x : ℝ) : ℝ :=
-  ∑ τ, ∫ y, Kt (decide (0 < x)) τ |x| y ∂(μ τ)
+/-- **A signed reference** `P - N` (the paper's `c_r = t μ_r + (α/2) σ_r` as a difference of two
+nonnegative measures per species; Theorem 7.1 needs no sign of `c_r`). -/
+structure SRef where
+  P : Bool → Measure ℝ
+  N : Bool → Measure ℝ
 
-/-- The constant `∑ ∬ K dμ dμ` of the reference. -/
-def refEnergy (μ : Bool → Measure ℝ) : ℝ :=
-  ∑ τ, ∑ τ', ∫ x, ∫ y, Kt τ τ' x y ∂(μ τ') ∂(μ τ)
+/-- Admissible signed reference: both parts of density `≤ C` on `(0,1)`, and `|N| ≤ 1`. -/
+structure SRef.OK (μ : SRef) (C : ℝ) : Prop where
+  hP : ∀ τ, BD (μ.P τ) C
+  hN : ∀ τ, BD (μ.N τ) C
+  hNm : ∑ τ, (μ.N τ).real univ ≤ 1
+
+/-- The total (signed) mass `|P| - |N|`. -/
+def SRef.mass (μ : SRef) : ℝ := ∑ τ, (μ.P τ).real univ - ∑ τ, (μ.N τ).real univ
+
+/-- The row field of the reference: `x ↦ ∑_τ ∫ K(x, y) d(P_τ - N_τ)(y)` in folded coordinates. -/
+def rowRef (μ : SRef) (x : ℝ) : ℝ :=
+  ∑ τ, (∫ y, Kt (decide (0 < x)) τ |x| y ∂(μ.P τ) - ∫ y, Kt (decide (0 < x)) τ |x| y ∂(μ.N τ))
+
+/-- The constant `∬ K d(P - N) d(P - N)` of the reference. -/
+def refEnergy (μ : SRef) : ℝ :=
+  pairI μ.P μ.P Kt - pairI μ.P μ.N Kt - pairI μ.N μ.P Kt + pairI μ.N μ.N Kt
+
+theorem err_W_mono {W n C ρ : ℝ} (hW : 0 ≤ W) (hn0 : 0 ≤ n) (hn1 : n ≤ 1) (hC : 0 ≤ C) (hρ0 : 0 < ρ)
+    (hρ1 : ρ < 1) :
+    12 * (W + n) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))) + 2 * (1 - ρ) * (2 * (W + n)) ^ 2 ≤
+      12 * (W + 1) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))) + 2 * (1 - ρ) * (2 * (W + 1)) ^ 2 := by
+  have hε : 0 ≤ 1 - ρ := by linarith
+  have hL : 0 ≤ Real.log (1 / (1 - ρ)) :=
+    Real.log_nonneg (by rw [le_div_iff₀ (by linarith)]; linarith)
+  have h1 : 0 ≤ C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))) := by positivity
+  have h2 : (2 * (W + n)) ^ 2 ≤ (2 * (W + 1)) ^ 2 := by nlinarith
+  nlinarith [mul_le_mul_of_nonneg_left h2 hε, mul_le_mul_of_nonneg_right (by linarith : W + n ≤ W + 1) h1]
 
 /-- **The rows' weighted Vandermonde through D7.1**: with positive node weights `w` of total
-mass that of the reference `μ`, the weighted self-energy `Σ_{i<j} w_i w_j log|x_j - x_i|` is
-bounded by the `L`-terms against `μ`, the weighted reference field and constant, the weighted
-diagonal cost and the explicit error. -/
+mass that of the signed reference `μ = P - N`, the weighted self-energy
+`Σ_{i<j} w_i w_j log|x_j - x_i|` is bounded by the `L`-terms against `μ`, the weighted reference
+field and constant, the weighted diagonal cost and the explicit error (at `W + 1 ≥ W + |N|`). -/
 theorem rows_vandermonde_le_w {p : ℕ} (x : Fin p → ℝ) (w : Fin p → ℝ) (hw : ∀ i, 0 < w i)
     (hx0 : ∀ i, x i ≠ 0) (hx : ∀ i, x i ∈ Ioo (-1 : ℝ) 1) (hxi : Function.Injective x)
-    (μ : Bool → Measure ℝ) {C : ℝ} (h : ∀ τ, BD (μ τ) C) (hC : 0 ≤ C)
-    (hmass : ∑ i, w i = ∑ τ, (μ τ).real univ) {ρ : ℝ} (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    (μ : SRef) {C : ℝ} (h : μ.OK C) (hC : 0 ≤ C)
+    (hmass : ∑ i, w i = μ.mass) {ρ : ℝ} (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
     (∑ i, ∑ j ∈ Finset.Ioi i, w i * w j * Real.log |x j - x i|) ≤
-      -(1 / 2) * (∑ τ, Lpart w (fun i => |x i|) (fun i => decide (0 < x i)) μ ρ τ)
+      -(1 / 2) * (∑ τ, Lpart w (fun i => |x i|) (fun i => decide (0 < x i)) μ.P μ.N ρ τ)
       + (1 / 2) * (∑ i, w i ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - ρ))))
-      + (1 / 2) * (8 * (∑ i, w i) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
-          + 2 * (1 - ρ) * (2 * (∑ i, w i)) ^ 2)
+      + (1 / 2) * (12 * (∑ i, w i + 1) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
+          + 2 * (1 - ρ) * (2 * (∑ i, w i + 1)) ^ 2)
       - (∑ i, w i * rowRef μ (x i)) + (1 / 2) * refEnergy μ := by
   have ha : ∀ i, |x i| ∈ Ioo (0 : ℝ) 1 := fun i =>
     ⟨abs_pos.mpr (hx0 i), abs_lt.mpr ⟨(hx i).1, (hx i).2⟩⟩
@@ -159,8 +185,10 @@ theorem rows_vandermonde_le_w {p : ℕ} (x : Fin p → ℝ) (w : Fin p → ℝ) 
       rw [abs_of_neg h1, abs_of_neg h2] at habs; linarith
     · have h2 : 0 < x j := hs'.mp h1
       rw [abs_of_pos h1, abs_of_pos h2] at habs; exact habs
+  have hm : ∑ i, w i + ∑ τ, (μ.N τ).real univ = ∑ τ, (μ.P τ).real univ := by
+    rw [hmass]; unfold SRef.mass; ring
   have hD := reflection_energy (w := w) (a := fun i => |x i|)
-    (σ := fun i => decide (0 < x i)) (μ := μ) hw ha hinj h hC hmass hρ0 hρ1
+    (σ := fun i => decide (0 < x i)) (P := μ.P) (N := μ.N) hw ha hinj h.hP h.hN hC hm hρ0 hρ1
   unfold Ioff Ex at hD
   simp only [Kt_abs_eq (hx0 _) (hx0 _)] at hD
   have hoff := sum_offdiag_eq_two_mul (p := p)
@@ -174,68 +202,52 @@ theorem rows_vandermonde_le_w {p : ℕ} (x : Fin p → ℝ) (w : Fin p → ℝ) 
     rw [← Finset.sum_neg_distrib]
     refine Finset.sum_congr rfl fun j _ => ?_
     rw [abs_sub_comm]; ring
-  have e2 : (∑ i : Fin p, w i * ∑ τ, ∫ y, Kt (decide (0 < x i)) τ |x i| y ∂(μ τ)) =
-      ∑ i, w i * rowRef μ (x i) := rfl
-  rw [e1, e2] at hD
+  have e2 : rowI w (fun i => |x i|) (fun i => decide (0 < x i)) μ.P Kt -
+      rowI w (fun i => |x i|) (fun i => decide (0 < x i)) μ.N Kt = ∑ i, w i * rowRef μ (x i) := by
+    unfold rowI rowRef
+    rw [← Finset.sum_sub_distrib]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    rw [← mul_sub, ← Finset.sum_sub_distrib]
+  rw [e1] at hD
+  have hW : 0 ≤ ∑ i, w i := Finset.sum_nonneg (fun i _ => (hw i).le)
+  have hn0 : 0 ≤ ∑ τ, (μ.N τ).real univ := Finset.sum_nonneg (fun τ _ => measureReal_nonneg)
+  have hmono := err_W_mono hW hn0 h.hNm hC hρ0 hρ1
   unfold refEnergy
-  linarith only [hD]
+  linarith only [hD, e2, hmono]
 
 /-- The rows' Vandermonde through D7.1: with weights `1/ν`, the self-energy of the rows is
 bounded by the `L`-terms against the reference `μ`, the reference field and constant, the diagonal
 cost and the explicit error. -/
 theorem rows_vandermonde_le {ν : ℝ} (hν : 0 < ν) {p : ℕ} (x : Fin p → ℝ)
     (hx0 : ∀ i, x i ≠ 0) (hx : ∀ i, x i ∈ Ioo (-1 : ℝ) 1) (hxi : Function.Injective x)
-    (μ : Bool → Measure ℝ) {C : ℝ} (h : ∀ τ, BD (μ τ) C) (hC : 0 ≤ C)
-    (hmass : (p : ℝ) / ν = ∑ τ, (μ τ).real univ) {ρ : ℝ} (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    (μ : SRef) {C : ℝ} (h : μ.OK C) (hC : 0 ≤ C)
+    (hmass : (p : ℝ) / ν = μ.mass) {ρ : ℝ} (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
     (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |x j - x i|) / ν ^ 2 ≤
       -(1 / 2) * (∑ τ, Lpart (fun _ : Fin p => 1 / ν) (fun i => |x i|)
-          (fun i => decide (0 < x i)) μ ρ τ)
+          (fun i => decide (0 < x i)) μ.P μ.N ρ τ)
       + (1 / 2) * (∑ i : Fin p, (1 / ν) ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - ρ))))
-      + (1 / 2) * (8 * ((p : ℝ) / ν) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
-          + 2 * (1 - ρ) * (2 * ((p : ℝ) / ν)) ^ 2)
+      + (1 / 2) * (12 * ((p : ℝ) / ν + 1) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
+          + 2 * (1 - ρ) * (2 * ((p : ℝ) / ν + 1)) ^ 2)
       - (∑ i, rowRef μ (x i)) / ν + (1 / 2) * refEnergy μ := by
   have hw : ∀ _i : Fin p, (0 : ℝ) < 1 / ν := fun _ => by positivity
-  have ha : ∀ i, |x i| ∈ Ioo (0 : ℝ) 1 := fun i =>
-    ⟨abs_pos.mpr (hx0 i), abs_lt.mpr ⟨(hx i).1, (hx i).2⟩⟩
-  have hinj : ∀ i j, i ≠ j → decide (0 < x i) = decide (0 < x j) → |x i| ≠ |x j| := by
-    intro i j hij hs habs
-    apply hij
-    apply hxi
-    have hs' : (0 < x i ↔ 0 < x j) := by simpa using hs
-    rcases lt_or_gt_of_ne (hx0 i) with h1 | h1
-    · have h2 : x j < 0 := lt_of_le_of_ne (not_lt.mp (fun hh => by
-        have := hs'.mpr hh; linarith)) (hx0 j)
-      rw [abs_of_neg h1, abs_of_neg h2] at habs; linarith
-    · have h2 : 0 < x j := hs'.mp h1
-      rw [abs_of_pos h1, abs_of_pos h2] at habs; exact habs
   have hsum : ∑ _i : Fin p, (1 / ν) = (p : ℝ) / ν := by
     simp [div_eq_mul_inv]
-  have hm : ∑ _i : Fin p, (1 / ν) = ∑ τ, (μ τ).real univ := by rw [hsum]; exact hmass
-  have hD := reflection_energy (w := fun _ : Fin p => 1 / ν) (a := fun i => |x i|)
-    (σ := fun i => decide (0 < x i)) (μ := μ) hw ha hinj h hC hm hρ0 hρ1
-  unfold Ioff Ex at hD
-  simp only [Kt_abs_eq (hx0 _) (hx0 _)] at hD
-  have hoff := sum_offdiag_eq_two_mul (p := p)
-    (fun i j => 1 / ν * (1 / ν) * -Real.log |x i - x j|)
-    (fun i j => by rw [abs_sub_comm])
-  rw [hoff] at hD
-  have e1 : (∑ i, ∑ j ∈ Finset.Ioi i, 1 / ν * (1 / ν) * -Real.log |x i - x j|) =
-      -((∑ i, ∑ j ∈ Finset.Ioi i, Real.log |x j - x i|) / ν ^ 2) := by
-    rw [Finset.sum_div, ← Finset.sum_neg_distrib]
-    refine Finset.sum_congr rfl fun i _ => ?_
-    rw [Finset.sum_div, ← Finset.sum_neg_distrib]
-    refine Finset.sum_congr rfl fun j _ => ?_
-    rw [abs_sub_comm]; field_simp
-  have e2 : (∑ i : Fin p, 1 / ν * ∑ τ, ∫ y, Kt (decide (0 < x i)) τ |x i| y ∂(μ τ)) =
-      (∑ i, rowRef μ (x i)) / ν := by
+  have h := rows_vandermonde_le_w x (fun _ => 1 / ν) hw hx0 hx hxi μ h hC
+    (by rw [hsum]; exact hmass) hρ0 hρ1
+  rw [hsum] at h
+  have e1 : (∑ i, ∑ j ∈ Finset.Ioi i, 1 / ν * (1 / ν) * Real.log |x j - x i|) =
+      (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |x j - x i|) / ν ^ 2 := by
     rw [Finset.sum_div]
     refine Finset.sum_congr rfl fun i _ => ?_
-    unfold rowRef; ring
-  rw [e1, e2] at hD
-  rw [hsum] at hD
-  unfold refEnergy
-  simp only [← Finset.mul_sum] at hD ⊢
-  linarith only [hD]
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun j _ => ?_
+    field_simp
+  have e2 : (∑ i, 1 / ν * rowRef μ (x i)) = (∑ i, rowRef μ (x i)) / ν := by
+    rw [Finset.sum_div]
+    refine Finset.sum_congr rfl fun i _ => ?_
+    ring
+  rw [e1, e2] at h
+  exact h
 
 /-- **Ordered pairs of an appended list**, for values in any type. -/
 theorem sum_Ioi_append_gen {β : Type*} {p m : ℕ} (H : β → β → ℝ) (x : Fin p → β)
@@ -1062,21 +1074,27 @@ theorem isGeom_refMoment {m : Measure ℝ} {C : ℝ} (h : BD m C) {τ : ℝ} (h�
   rw [Real.norm_eq_abs] at this
   linarith [mul_comm (τ ^ (n + 1)) (m.real Set.univ)]
 
-/-- Reference species moments (positive species / signed negative species) at index `n + 1`. -/
-def mpos (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ := ∫ y, (τ * y) ^ (n + 1) ∂(μ true)
-def mneg (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ :=
-  (-1) ^ (n + 1) * ∫ y, (τ * y) ^ (n + 1) ∂(μ false)
+/-- Reference species moments (positive species / signed negative species) at index `n + 1`,
+of the signed reference `P - N`. -/
+def mpos (μ : SRef) (τ : ℝ) (n : ℕ) : ℝ :=
+  ∫ y, (τ * y) ^ (n + 1) ∂(μ.P true) - ∫ y, (τ * y) ^ (n + 1) ∂(μ.N true)
+def mneg (μ : SRef) (τ : ℝ) (n : ℕ) : ℝ :=
+  (-1) ^ (n + 1) * (∫ y, (τ * y) ^ (n + 1) ∂(μ.P false) - ∫ y, (τ * y) ^ (n + 1) ∂(μ.N false))
 
-theorem isGeom_mneg {μ : Bool → Measure ℝ} {C : ℝ} (h : BD (μ false) C) {τ : ℝ} (hτ : 0 < τ) :
+theorem isGeom_mpos {μ : SRef} {C : ℝ} (h : μ.OK C) {τ : ℝ} (hτ : 0 < τ) :
+    IsGeom τ (mpos μ τ) :=
+  (isGeom_refMoment (h.hP true) hτ).sub (isGeom_refMoment (h.hN true) hτ)
+
+theorem isGeom_mneg {μ : SRef} {C : ℝ} (h : μ.OK C) {τ : ℝ} (hτ : 0 < τ) :
     IsGeom τ (mneg μ τ) := by
-  obtain ⟨K, hK⟩ := isGeom_refMoment h hτ
+  obtain ⟨K, hK⟩ := (isGeom_refMoment (h.hP false) hτ).sub (isGeom_refMoment (h.hN false) hτ)
   exact ⟨K, fun n => by
     unfold mneg; rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]; exact hK n⟩
 
 theorem Lpart_true_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (xn : Fin k → ℝ)
-    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : Bool → Measure ℝ) :
+    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : SRef) :
     Lpart (fun _ : Fin (k + q) => 1 / ν) (fun i => |Fin.append xn gp i|)
-      (fun i => decide (0 < Fin.append xn gp i)) μ (τ ^ 2) true =
+      (fun i => decide (0 < Fin.append xn gp i)) μ.P μ.N (τ ^ 2) true =
       ip (fun n => powSum τ ν gp n - mpos μ τ n) (fun n => powSum τ ν gp n - mpos μ τ n) := by
   unfold Lpart ip
   simp only [Real.sqrt_sq hτ.le]
@@ -1098,13 +1116,14 @@ theorem Lpart_true_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (x
     unfold powSum
     rw [← Finset.mul_sum, one_div, inv_mul_eq_div]
   rw [hsum]
+  show _ = (powSum τ ν gp n - mpos μ τ n) * (powSum τ ν gp n - mpos μ τ n) / ((n : ℝ) + 1)
   unfold mpos
-  field_simp
+  ring
 
 theorem Lpart_false_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (xn : Fin k → ℝ)
-    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : Bool → Measure ℝ) :
+    (gp : Fin q → ℝ) (hn : ∀ b, xn b < 0) (hg : ∀ p, 0 < gp p) (μ : SRef) :
     Lpart (fun _ : Fin (k + q) => 1 / ν) (fun i => |Fin.append xn gp i|)
-      (fun i => decide (0 < Fin.append xn gp i)) μ (τ ^ 2) false =
+      (fun i => decide (0 < Fin.append xn gp i)) μ.P μ.N (τ ^ 2) false =
       ip (fun n => powSum τ ν xn n - mneg μ τ n) (fun n => powSum τ ν xn n - mneg μ τ n) := by
   unfold Lpart ip
   simp only [Real.sqrt_sq hτ.le]
@@ -1135,11 +1154,12 @@ theorem Lpart_false_eq {k q : ℕ} {τ ν : ℝ} (hτ : 0 < τ) (hν : 0 < ν) (
   rw [hsum]
   show _ = (powSum τ ν xn n - mneg μ τ n) * (powSum τ ν xn n - mneg μ τ n) / ((n : ℝ) + 1)
   unfold mneg
-  set I := ∫ y, (τ * y) ^ (n + 1) ∂(μ false)
+  set IP := ∫ y, (τ * y) ^ (n + 1) ∂(μ.P false)
+  set IN := ∫ y, (τ * y) ^ (n + 1) ∂(μ.N false)
   set B := powSum τ ν xn n
   set sg : ℝ := (-1) ^ (n + 1)
-  have key : (sg * B - I) ^ 2 = (B - sg * I) * (B - sg * I) := by
-    linear_combination (B ^ 2 - I ^ 2) * hsq
+  have key : (sg * B - IP + IN) ^ 2 = (B - sg * (IP - IN)) * (B - sg * (IP - IN)) := by
+    linear_combination (B ^ 2 - (IP - IN) ^ 2) * hsq
   rw [one_div, inv_mul_eq_div, key]
 
 end LMatch
@@ -1227,7 +1247,7 @@ structure SignedData where
   t : ℕ → ℝ
   /-- The D7.1 reference: the paper's `c_r = t μ_r + (α/2) σ_r` (weights `1` on free rows,
   `1/2` on fixed rows; NOTES-ETA §1). -/
-  μ : Bool → Measure ℝ
+  μ : SRef
   Cb : ℝ
   /-- The split parameter of the row log-energy (g-joint-cert NOTES §12.1): a share `1 - η` by
   D7.1 at `μ`, a share `η` by the Chebyshev tangent at `p`. -/
@@ -1306,8 +1326,8 @@ def Kq : ℝ :=
 
 /-- The D7.1 error at total (weighted) row mass `W`, at weight `2(1 - η)`. -/
 def eD7 (W : ℝ) : ℝ :=
-  (1 - D.η) * (8 * W * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2)))
-    + 2 * (1 - D.τ ^ 2) * (2 * W) ^ 2)
+  (1 - D.η) * (12 * (W + 1) * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2)))
+    + 2 * (1 - D.τ ^ 2) * (2 * (W + 1)) ^ 2)
 
 /-- The diagonal and damping cost of the `η`-share (Chebyshev tangent at `p`). -/
 def etaErr : ℝ :=
@@ -1502,8 +1522,8 @@ columns. -/
 theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (he : D.e ∈ Ioo (0 : ℝ) (1 / 8)) (hp : ((k + q : ℕ) : ℝ) ≤ D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
-    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
-    (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    (hμ : D.μ.OK D.Cb) (hC : 0 ≤ D.Cb)
+    (hmass : ((k + q : ℕ) : ℝ) / D.ν = D.μ.mass)
     (hη0 : 0 ≤ D.η) (hη : D.η ≤ 1 / 2) (hpS : Summable (fun j => |D.p j|))
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
@@ -1577,8 +1597,8 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
   have hgp1 : ∀ p, |gp p| ≤ 1 := fun p => (abs_lt.mpr ⟨by linarith [(hgp p).1], (hgp p).2⟩).le
   have hB := isGeom_powSum hτ0 hν xn hxn1
   have hP := isGeom_powSum hτ0 hν gp hgp1
-  have hmp : IsGeom D.τ (mpos D.μ D.τ) := isGeom_refMoment (hμ true) hτ0
-  have hmn : IsGeom D.τ (mneg D.μ D.τ) := isGeom_mneg (hμ false) hτ0
+  have hmp : IsGeom D.τ (mpos D.μ D.τ) := isGeom_mpos hμ hτ0
+  have hmn : IsGeom D.τ (mneg D.μ D.τ) := isGeom_mneg hμ hτ0
   have h5 := quad_master hτ hB hP hR hmp hmn ht hη
   have hl1 := ip_powSum_left hτ hν gp hgp1 (hmp.add hR)
   have hl2 := ip_powSum_left hτ hν xn hxn1 (((hmn.sub ht).const_mul (2 * (1 - D.η))).sub hR)
@@ -1689,8 +1709,8 @@ theorem SignedData.errJ3_withCount_mono (D : SignedData) {c' : ℝ} (hc' : 0 < c
 theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (he : D.e ∈ Ioo (0 : ℝ) (1 / 8)) (hp : ((k + q : ℕ) : ℝ) ≤ D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
-    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
-    (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
+    (hμ : D.μ.OK D.Cb) (hC : 0 ≤ D.Cb)
+    (hmass : ((k + q : ℕ) : ℝ) / D.ν = D.μ.mass)
     (hη0 : 0 ≤ D.η) (hη : D.η ≤ 1 / 2) (hpS : Summable (fun j => |D.p j|))
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop} {LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ}
     {c' : ℝ} (hA7 : SpikeCompareCount D c' Cls LR)
@@ -1745,8 +1765,8 @@ structure SignedTrialBounds where
   v_summable : ∀ᶠ N : ℕ in Filter.atTop, Summable (fun j => |(D N).v j|)
   R_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).R
   t_geom : ∀ᶠ N : ℕ in Filter.atTop, IsGeom (D N).τ (D N).t
-  reference : ∀ᶠ N : ℕ in Filter.atTop, (∀ τ, BD ((D N).μ τ) (D N).Cb) ∧ 0 ≤ (D N).Cb ∧
-    (ncount N : ℝ) / (D N).ν = ∑ τ, ((D N).μ τ).real univ
+  reference : ∀ᶠ N : ℕ in Filter.atTop, (D N).μ.OK (D N).Cb ∧ 0 ≤ (D N).Cb ∧
+    (ncount N : ℝ) / (D N).ν = (D N).μ.mass
   eta_mem : ∀ᶠ N : ℕ in Filter.atTop, 0 ≤ (D N).η ∧ (D N).η ≤ 1 / 2
   p_summable : ∀ᶠ N : ℕ in Filter.atTop, Summable (fun j => |(D N).p j|)
   cp : ℕ → ℝ
@@ -1792,7 +1812,7 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
   have hν : 0 < (T.D N).ν := by rw [hνe]; exact hνp
   have hkqR : ((k + q : ℕ) : ℝ) = (T.ncount N : ℝ) := by exact_mod_cast hkq
   have hp : ((k + q : ℕ) : ℝ) ≤ (T.D N).ν := by rw [hνe, hkqR]
-  have hmass' : ((k + q : ℕ) : ℝ) / (T.D N).ν = ∑ τ, ((T.D N).μ τ).real univ := by
+  have hmass' : ((k + q : ℕ) : ℝ) / (T.D N).ν = (T.D N).μ.mass := by
     rw [hkqR]; exact hmass
   have h := signed_second_energy_fixed (T.D N) hν he hp hv hR ht hμ hC hmass' hη0 hη hpS
     (T.spike N k q) xn gp sc hxn hgp hinj hs hsi hcls

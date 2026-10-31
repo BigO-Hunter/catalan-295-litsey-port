@@ -2054,7 +2054,12 @@ theorem intK_prod (h : BD m C) (h' : BD m' C) {k : ℝ → ℝ → ℝ}
 
 end RefInt2
 
-/-! ### The atomic-plus-density pair of measures on `Bool × ℝ` -/
+/-! ### The atomic-plus-density pair of measures on `Bool × ℝ`
+
+The reference is a SIGNED measure `P - N` (both parts nonnegative, of bounded density on `(0,1)`;
+the paper's Theorem 7.1 is for signed measures of total mass `0`).  The discrepancy
+`∑ w_i δ_{a_i} - (P - N)` is written `(A + N) - P` with the atoms `A`: the configuration side is
+`Amu + Mmu N`, the reference side is `Mmu P`. -/
 section Inst
 
 variable {ι : Type*} [Fintype ι]
@@ -2062,12 +2067,12 @@ variable {ι : Type*} [Fintype ι]
 /-- the atomic part `∑ w_i δ_{(σ_i, a_i)}` -/
 def Amu (w a : ι → ℝ) (σ : ι → Bool) : Measure (Bool × ℝ) :=
   ∑ i, ENNReal.ofReal (w i) • Measure.dirac (σ i, a i)
-/-- the reference part -/
+/-- a reference part -/
 def Mmu (μ : Bool → Measure ℝ) : Measure (Bool × ℝ) := ∑ τ : Bool, (μ τ).map (Prod.mk τ)
 /-- species sign -/
 def sgn (y : Bool × ℝ) : ℝ := if y.1 then 1 else -1
 
-variable {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ} {C : ℝ}
+variable {w a : ι → ℝ} {σ : ι → Bool} {μ P N : Bool → Measure ℝ} {C : ℝ}
 
 instance Amu_finite : IsFiniteMeasure (Amu w a σ) := by
   have : ∀ i, IsFiniteMeasure (ENNReal.ofReal (w i) • Measure.dirac (σ i, a i)) :=
@@ -2085,33 +2090,45 @@ theorem measurable_sgn : Measurable sgn :=
 theorem abs_sgn_le (y : Bool × ℝ) : |sgn y| ≤ 1 := by
   unfold sgn; split_ifs <;> simp
 
-theorem ctx_inst (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C)
+theorem ae_Amu (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) : ∀ᵐ y ∂(Amu w a σ), Prod.snd y ∈ Ioo (0:ℝ) 1 := by
+  unfold Amu
+  rw [← Measure.sum_fintype, Measure.ae_sum_iff]
+  intro i
+  refine Measure.ae_smul_measure ?_ _
+  rw [ae_dirac_eq]; exact Filter.eventually_pure.2 (ha i)
+
+theorem ae_Mmu (h : ∀ τ, BD (μ τ) C) : ∀ᵐ y ∂(Mmu μ), Prod.snd y ∈ Ioo (0:ℝ) 1 := by
+  unfold Mmu
+  rw [← Measure.sum_fintype, Measure.ae_sum_iff]
+  intro τ
+  rw [(measurableEmbedding_prodMk_left τ).ae_map_iff]
+  exact (h τ).ae_mem
+
+theorem integrable_Amu (f : Bool × ℝ → ℝ) : Integrable f (Amu w a σ) := by
+  unfold Amu
+  rw [integrable_finsetSum_measure]
+  intro i _
+  exact (integrable_dirac (by simp)).smul_measure ENNReal.ofReal_ne_top
+
+theorem integrable_Mmu (μ : Bool → Measure ℝ) {f : Bool × ℝ → ℝ}
+    (hf : ∀ τ, Integrable (fun x => f (τ, x)) (μ τ)) : Integrable f (Mmu μ) := by
+  unfold Mmu
+  rw [integrable_finsetSum_measure]
+  intro τ _
+  rw [(measurableEmbedding_prodMk_left τ).integrable_map_iff]
+  exact hf τ
+
+theorem ctx_inst (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
     {e : Bool × ℝ → ℝ} (he : Measurable e) (heb : ∀ y, |e y| ≤ 1) :
-    Ctx (Amu w a σ) (Mmu μ) Prod.snd e := by
-  have := Mmu_finite h
+    Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd e := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
   refine ⟨measurable_snd, ?_, ?_, he, heb⟩
-  · rw [ae_add_measure_iff]
-    constructor
-    · unfold Amu
-      rw [← Measure.sum_fintype, Measure.ae_sum_iff]
-      intro i
-      refine Measure.ae_smul_measure ?_ _
-      rw [ae_dirac_eq]; exact Filter.eventually_pure.2 (ha i)
-    · unfold Mmu
-      rw [← Measure.sum_fintype, Measure.ae_sum_iff]
-      intro τ
-      rw [(measurableEmbedding_prodMk_left τ).ae_map_iff]
-      exact (h τ).ae_mem
-  · refine Integrable.add_measure ?_ ?_
-    · unfold Amu
-      rw [integrable_finsetSum_measure]
-      intro i _
-      exact (integrable_dirac (by simp)).smul_measure ENNReal.ofReal_ne_top
-    · unfold Mmu
-      rw [integrable_finsetSum_measure]
-      intro τ _
-      rw [(measurableEmbedding_prodMk_left τ).integrable_map_iff]
-      exact (h τ).logint
+  · rw [ae_add_measure_iff, ae_add_measure_iff]
+    exact ⟨⟨ae_Amu ha, ae_Mmu hN⟩, ae_Mmu hP⟩
+  · refine ((integrable_Amu _).add_measure ?_).add_measure ?_
+    · exact integrable_Mmu N (fun τ => (hN τ).logint)
+    · exact integrable_Mmu P (fun τ => (hP τ).logint)
 
 theorem intA (w a : ι → ℝ) (σ : ι → Bool) (hw : ∀ i, 0 < w i) (f : Bool × ℝ → ℝ) :
     ∫ y, f y ∂(Amu w a σ) = ∑ i, w i * f (σ i, a i) := by
@@ -2128,85 +2145,173 @@ theorem intM (μ : Bool → Measure ℝ) (f : Bool × ℝ → ℝ) (hf : ∀ τ,
   refine Finset.sum_congr rfl (fun τ _ => ?_)
   rw [(measurableEmbedding_prodMk_left τ).integral_map]
 
+theorem intAN (hw : ∀ i, 0 < w i) (f : Bool × ℝ → ℝ) (hf : ∀ τ, Integrable (fun x => f (τ, x)) (N τ)) :
+    ∫ y, f y ∂(Amu w a σ + Mmu N) = ∑ i, w i * f (σ i, a i) + ∑ τ : Bool, ∫ x, f (τ, x) ∂(N τ) := by
+  rw [integral_add_measure (integrable_Amu f) (integrable_Mmu N hf), intA w a σ hw, intM N f hf]
+
 end Inst
 
 section Eval
-variable {ι : Type*} [Fintype ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ} {C : ℝ}
+variable {Y : Type*} [MeasurableSpace Y]
 
-theorem P2_eval (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (μ τ) C)
-    {κ : Bool → Bool → ℝ → ℝ → ℝ} (hsymm : ∀ s t x y, κ s t x y = κ t s y x)
-    (hG1 : ∀ i τ, Integrable (κ (σ i) τ (a i)) (μ τ))
-    (hG2 : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((μ τ).prod (μ τ')))
-    (hF : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
-      ((Amu w a σ + Mmu μ).prod (Amu w a σ + Mmu μ))) :
-    P2 (Amu w a σ) (Mmu μ) (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2) =
-      (∑ i, ∑ j, w i * w j * κ (σ i) (σ j) (a i) (a j))
-        - 2 * ∑ i, w i * ∑ τ, ∫ y, κ (σ i) τ (a i) y ∂(μ τ)
-        + ∑ τ, ∑ τ', ∫ x, ∫ y, κ τ τ' x y ∂(μ τ') ∂(μ τ) := by
+theorem integral_add_prod {U V W : Measure Y} [SFinite U] [SFinite V] [SFinite W] {G : Y × Y → ℝ}
+    (h : Integrable G ((U + V).prod W)) :
+    ∫ z, G z ∂((U + V).prod W) = ∫ z, G z ∂(U.prod W) + ∫ z, G z ∂(V.prod W) := by
+  rw [Measure.add_prod] at h ⊢
+  exact integral_add_measure (h.mono_measure (Measure.le_add_right le_rfl))
+    (h.mono_measure (Measure.le_add_left le_rfl))
+
+theorem integral_prod_add {U V W : Measure Y} [SFinite U] [SFinite V] [SFinite W] {G : Y × Y → ℝ}
+    (h : Integrable G (U.prod (V + W))) :
+    ∫ z, G z ∂(U.prod (V + W)) = ∫ z, G z ∂(U.prod V) + ∫ z, G z ∂(U.prod W) := by
+  rw [Measure.prod_add] at h ⊢
+  exact integral_add_measure (h.mono_measure (Measure.le_add_right le_rfl))
+    (h.mono_measure (Measure.le_add_left le_rfl))
+
+variable {ι : Type*} [Fintype ι] {w a : ι → ℝ} {σ : ι → Bool} {μ ν P N : Bool → Measure ℝ} {C : ℝ}
+
+/-- `∑_i w_i ∑_τ ∫ κ(a_i, ·) dμ_τ`: the atoms against a reference part. -/
+def rowI (w a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) (κ : Bool → Bool → ℝ → ℝ → ℝ) : ℝ :=
+  ∑ i, w i * ∑ τ, ∫ y, κ (σ i) τ (a i) y ∂(μ τ)
+
+/-- `∑_{τ,τ'} ∬ κ dν_τ' dμ_τ`: a reference part against another. -/
+def pairI (μ ν : Bool → Measure ℝ) (κ : Bool → Bool → ℝ → ℝ → ℝ) : ℝ :=
+  ∑ τ, ∑ τ', ∫ x, ∫ y, κ τ τ' x y ∂(ν τ') ∂(μ τ)
+
+theorem blkAA (hw : ∀ i, 0 < w i) {κ : Bool → Bool → ℝ → ℝ → ℝ}
+    (hint : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
+      ((Amu w a σ).prod (Amu w a σ))) :
+    ∫ z, κ z.1.1 z.2.1 z.1.2 z.2.2 ∂((Amu w a σ).prod (Amu w a σ)) =
+      ∑ i, ∑ j, w i * w j * κ (σ i) (σ j) (a i) (a j) := by
+  rw [integral_prod _ hint]
+  dsimp only
+  rw [intA w a σ hw]
+  refine Finset.sum_congr rfl (fun i _ => ?_)
+  dsimp only
+  rw [intA w a σ hw, Finset.mul_sum]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  ring
+
+theorem blkAM (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (ν τ) C) {κ : Bool → Bool → ℝ → ℝ → ℝ}
+    (hG1 : ∀ i τ, Integrable (κ (σ i) τ (a i)) (ν τ))
+    (hint : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
+      ((Amu w a σ).prod (Mmu ν))) :
+    ∫ z, κ z.1.1 z.2.1 z.1.2 z.2.2 ∂((Amu w a σ).prod (Mmu ν)) = rowI w a σ ν κ := by
   have := Mmu_finite h
-  have hfin : ∀ τ, IsFiniteMeasure (μ τ) := fun τ => (h τ).finite
-  have hAA := integrable_AA hF
-  have hAM := integrable_AM hF
-  have hMA := integrable_MA hF
-  have hMM := integrable_MM hF
-  set F : (Bool × ℝ) × (Bool × ℝ) → ℝ := fun z => κ z.1.1 z.2.1 z.1.2 z.2.2 with hFdef
+  rw [integral_prod _ hint]
+  dsimp only
+  rw [intA w a σ hw]
+  unfold rowI
+  refine Finset.sum_congr rfl (fun i _ => ?_)
+  dsimp only
+  rw [intM ν (fun y => κ (σ i) y.1 (a i) y.2) (fun τ => hG1 i τ)]
+
+theorem blkMA (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (ν τ) C) {κ : Bool → Bool → ℝ → ℝ → ℝ}
+    (hsymm : ∀ s t x y, κ s t x y = κ t s y x)
+    (hG1 : ∀ i τ, Integrable (κ (σ i) τ (a i)) (ν τ))
+    (hint : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
+      ((Mmu ν).prod (Amu w a σ))) :
+    ∫ z, κ z.1.1 z.2.1 z.1.2 z.2.2 ∂((Mmu ν).prod (Amu w a σ)) = rowI w a σ ν κ := by
+  have := Mmu_finite h
+  have hfin : ∀ τ, IsFiniteMeasure (ν τ) := fun τ => (h τ).finite
+  rw [integral_prod _ hint]
+  dsimp only
+  have hinner : ∀ y : Bool × ℝ, ∫ y', κ y.1 y'.1 y.2 y'.2 ∂(Amu w a σ) =
+      ∑ j, w j * κ y.1 (σ j) y.2 (a j) := by
+    intro y; rw [intA w a σ hw]
+  simp_rw [hinner]
+  have hsw : ∀ j τ x, κ τ (σ j) x (a j) = κ (σ j) τ (a j) x := fun j τ x => hsymm τ (σ j) x (a j)
+  have hint' : ∀ τ j, Integrable (fun x => w j * κ τ (σ j) x (a j)) (ν τ) := by
+    intro τ j
+    refine ((hG1 j τ).const_mul (w j)).congr (Filter.Eventually.of_forall fun x => ?_)
+    simp only [hsw]
+  rw [intM ν (fun y => ∑ j, w j * κ y.1 (σ j) y.2 (a j))
+    (fun τ => integrable_finsetSum _ (fun j _ => hint' τ j))]
+  have hτ : ∀ τ, ∫ x, ∑ j, w j * κ τ (σ j) x (a j) ∂(ν τ) =
+      ∑ j, w j * ∫ x, κ (σ j) τ (a j) x ∂(ν τ) := by
+    intro τ
+    rw [integral_finsetSum _ (fun j _ => hint' τ j)]
+    refine Finset.sum_congr rfl (fun j _ => ?_)
+    rw [integral_const_mul]
+    simp only [hsw]
+  simp only [hτ]
+  unfold rowI
+  rw [Finset.sum_comm]
+  refine Finset.sum_congr rfl (fun j _ => ?_)
+  rw [Finset.mul_sum]
+
+theorem blkMM (hμ : ∀ τ, BD (μ τ) C) (hν : ∀ τ, BD (ν τ) C) {κ : Bool → Bool → ℝ → ℝ → ℝ}
+    (hG2 : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((μ τ).prod (ν τ')))
+    (hint : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
+      ((Mmu μ).prod (Mmu ν))) :
+    ∫ z, κ z.1.1 z.2.1 z.1.2 z.2.2 ∂((Mmu μ).prod (Mmu ν)) = pairI μ ν κ := by
+  have := Mmu_finite hμ
+  have := Mmu_finite hν
+  have hfμ : ∀ τ, IsFiniteMeasure (μ τ) := fun τ => (hμ τ).finite
+  have hfν : ∀ τ, IsFiniteMeasure (ν τ) := fun τ => (hν τ).finite
+  rw [integral_prod _ hint]
+  dsimp only
+  have hae : ∀ τ, ∀ᵐ x ∂(μ τ), ∀ τ', Integrable (fun y => κ τ τ' x y) (ν τ') := by
+    intro τ
+    rw [ae_all_iff]
+    intro τ'
+    exact (hG2 τ τ').prod_right_ae
+  have hinner : ∀ τ, ∀ᵐ x ∂(μ τ), ∫ y', κ τ y'.1 x y'.2 ∂(Mmu ν) =
+      ∑ τ', ∫ y, κ τ τ' x y ∂(ν τ') := by
+    intro τ
+    filter_upwards [hae τ] with x hx
+    exact intM ν (fun y' => κ τ y'.1 x y'.2) hx
+  have hint1 : ∀ τ, Integrable (fun x => ∑ τ', ∫ y, κ τ τ' x y ∂(ν τ')) (μ τ) := by
+    intro τ
+    exact integrable_finsetSum _ (fun τ' _ => (hG2 τ τ').integral_prod_left)
+  have hint2 : ∀ τ, Integrable (fun x => ∫ y', κ τ y'.1 x y'.2 ∂(Mmu ν)) (μ τ) := by
+    intro τ
+    exact (hint1 τ).congr ((hinner τ).mono fun x hx => hx.symm)
+  rw [intM μ (fun y => ∫ y', κ y.1 y'.1 y.2 y'.2 ∂(Mmu ν)) hint2]
+  unfold pairI
+  refine Finset.sum_congr rfl (fun τ _ => ?_)
+  dsimp only
+  rw [integral_congr_ae (hinner τ),
+    integral_finsetSum _ (fun τ' _ => (hG2 τ τ').integral_prod_left)]
+
+/-- **The pairing of the signed discrepancy `(A + N) - P` with a symmetric kernel**, evaluated. -/
+theorem P2_eval (hw : ∀ i, 0 < w i) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    {κ : Bool → Bool → ℝ → ℝ → ℝ} (hsymm : ∀ s t x y, κ s t x y = κ t s y x)
+    (hP1 : ∀ i τ, Integrable (κ (σ i) τ (a i)) (P τ))
+    (hN1 : ∀ i τ, Integrable (κ (σ i) τ (a i)) (N τ))
+    (hPP : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((P τ).prod (P τ')))
+    (hPN : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((P τ).prod (N τ')))
+    (hNP : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((N τ).prod (P τ')))
+    (hNN : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((N τ).prod (N τ')))
+    (hF : Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2)
+      ((Amu w a σ + Mmu N + Mmu P).prod (Amu w a σ + Mmu N + Mmu P))) :
+    P2 (Amu w a σ + Mmu N) (Mmu P) (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2) =
+      (∑ i, ∑ j, w i * w j * κ (σ i) (σ j) (a i) (a j))
+        + 2 * rowI w a σ N κ - 2 * rowI w a σ P κ
+        + pairI N N κ - pairI N P κ - pairI P N κ + pairI P P κ := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
+  have lA : Amu w a σ ≤ Amu w a σ + Mmu N + Mmu P := Measure.le_add_right (Measure.le_add_right le_rfl)
+  have lN : Mmu N ≤ Amu w a σ + Mmu N + Mmu P := Measure.le_add_right (Measure.le_add_left le_rfl)
+  have lP : Mmu P ≤ Amu w a σ + Mmu N + Mmu P := Measure.le_add_left le_rfl
+  have lAN : Amu w a σ + Mmu N ≤ Amu w a σ + Mmu N + Mmu P := Measure.le_add_right le_rfl
+  have hI : ∀ {U V : Measure (Bool × ℝ)} [SFinite U] [SFinite V], U ≤ Amu w a σ + Mmu N + Mmu P →
+      V ≤ Amu w a σ + Mmu N + Mmu P →
+      Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => κ z.1.1 z.2.1 z.1.2 z.2.2) (U.prod V) :=
+    fun hU hV => hF.mono_measure (Measure.prod_mono hU hV)
+  have eAA := blkAA hw (hI lA lA)
+  have eAN := blkAM hw hN hN1 (hI lA lN)
+  have eAP := blkAM hw hP hP1 (hI lA lP)
+  have eNA := blkMA hw hN hsymm hN1 (hI lN lA)
+  have ePA := blkMA hw hP hsymm hP1 (hI lP lA)
+  have eNN := blkMM hN hN hNN (hI lN lN)
+  have eNP := blkMM hN hP hNP (hI lN lP)
+  have ePN := blkMM hP hN hPN (hI lP lN)
+  have ePP := blkMM hP hP hPP (hI lP lP)
   unfold P2
-  rw [integral_prod F hAA, integral_prod F hAM, integral_prod F hMA, integral_prod F hMM]
-  -- AA
-  have e1 : ∫ y, ∫ y', F (y, y') ∂(Amu w a σ) ∂(Amu w a σ) = ∑ i, ∑ j, w i * w j * κ (σ i) (σ j) (a i) (a j) := by
-    rw [intA w a σ hw]
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [intA w a σ hw, Finset.mul_sum]
-    refine Finset.sum_congr rfl (fun j _ => ?_)
-    simp only [hFdef]; ring
-  -- AM
-  have e2 : ∫ y, ∫ y', F (y, y') ∂(Mmu μ) ∂(Amu w a σ) = ∑ i, w i * ∑ τ, ∫ x, κ (σ i) τ (a i) x ∂(μ τ) := by
-    rw [intA w a σ hw]
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [intM μ _ (fun τ => hG1 i τ)]
-  -- MA
-  have e3 : ∫ y, ∫ y', F (y, y') ∂(Amu w a σ) ∂(Mmu μ) = ∑ i, w i * ∑ τ, ∫ x, κ (σ i) τ (a i) x ∂(μ τ) := by
-    have hinner : ∀ y : Bool × ℝ, ∫ y', F (y, y') ∂(Amu w a σ) = ∑ j, w j * κ y.1 (σ j) y.2 (a j) := by
-      intro y; rw [intA w a σ hw]
-    simp_rw [hinner]
-    have hsw : ∀ j τ x, κ τ (σ j) x (a j) = κ (σ j) τ (a j) x := fun j τ x => hsymm τ (σ j) x (a j)
-    have hint : ∀ τ j, Integrable (fun x => w j * κ τ (σ j) x (a j)) (μ τ) := by
-      intro τ j
-      refine ((hG1 j τ).const_mul (w j)).congr (Filter.Eventually.of_forall fun x => ?_)
-      simp only [hsw]
-    rw [intM μ (fun y => ∑ j, w j * κ y.1 (σ j) y.2 (a j))
-      (fun τ => integrable_finsetSum _ (fun j _ => hint τ j))]
-    have hτ : ∀ τ, ∫ x, ∑ j, w j * κ τ (σ j) x (a j) ∂(μ τ) = ∑ j, w j * ∫ x, κ (σ j) τ (a j) x ∂(μ τ) := by
-      intro τ
-      rw [integral_finsetSum _ (fun j _ => hint τ j)]
-      refine Finset.sum_congr rfl (fun j _ => ?_)
-      rw [integral_const_mul]
-      simp only [hsw]
-    simp only [hτ]
-    rw [Finset.sum_comm]
-    refine Finset.sum_congr rfl (fun j _ => ?_)
-    rw [Finset.mul_sum]
-  -- MM
-  have e4 : ∫ y, ∫ y', F (y, y') ∂(Mmu μ) ∂(Mmu μ) = ∑ τ, ∑ τ', ∫ x, ∫ y, κ τ τ' x y ∂(μ τ') ∂(μ τ) := by
-    have hae : ∀ τ, ∀ᵐ x ∂(μ τ), ∀ τ', Integrable (fun y => κ τ τ' x y) (μ τ') := by
-      intro τ
-      rw [ae_all_iff]
-      intro τ'
-      exact (hG2 τ τ').prod_right_ae
-    have hinner : ∀ τ, ∀ᵐ x ∂(μ τ), ∫ y', F ((τ, x), y') ∂(Mmu μ) = ∑ τ', ∫ y, κ τ τ' x y ∂(μ τ') := by
-      intro τ
-      filter_upwards [hae τ] with x hx
-      exact intM μ (fun y' => F ((τ, x), y')) hx
-    have hint : ∀ τ, Integrable (fun x => ∑ τ', ∫ y, κ τ τ' x y ∂(μ τ')) (μ τ) := by
-      intro τ
-      exact integrable_finsetSum _ (fun τ' _ => (hG2 τ τ').integral_prod_left)
-    have hint2 : ∀ τ, Integrable (fun x => ∫ y', F ((τ, x), y') ∂(Mmu μ)) (μ τ) := by
-      intro τ
-      exact (hint τ).congr ((hinner τ).mono fun x hx => hx.symm)
-    rw [intM μ (fun y => ∫ y', F (y, y') ∂(Mmu μ)) hint2]
-    refine Finset.sum_congr rfl (fun τ _ => ?_)
-    rw [integral_congr_ae (hinner τ), integral_finsetSum _ (fun τ' _ => (hG2 τ τ').integral_prod_left)]
-  rw [e1, e2, e3, e4]
+  rw [integral_add_prod (hI lAN lAN), integral_prod_add (hI lA lAN), integral_prod_add (hI lN lAN),
+    integral_add_prod (hI lAN lP), integral_prod_add (hI lP lAN)]
+  rw [eAA, eAN, eAP, eNA, ePA, eNN, eNP, ePN, ePP]
   ring
 
 end Eval
@@ -2234,20 +2339,56 @@ theorem Ktil_symm (ρ : ℝ) (s t : Bool) (x y : ℝ) : Ktil ρ s t x y = Ktil �
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-/-- the (off-diagonal) energy functional of a species kernel `κ`. -/
-def Ex (w a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) (κ : Bool → Bool → ℝ → ℝ → ℝ) : ℝ :=
+/-- The (off-diagonal) energy functional of a species kernel `κ` for the discrepancy
+`∑ w_i δ_{a_i} - (P - N)`. -/
+def Ex (w a : ι → ℝ) (σ : ι → Bool) (P N : Bool → Measure ℝ) (κ : Bool → Bool → ℝ → ℝ → ℝ) : ℝ :=
   (∑ i, ∑ j, if i = j then 0 else w i * w j * κ (σ i) (σ j) (a i) (a j))
-    - 2 * ∑ i, w i * ∑ τ, ∫ y, κ (σ i) τ (a i) y ∂(μ τ)
-    + ∑ τ, ∑ τ', ∫ x, ∫ y, κ τ τ' x y ∂(μ τ') ∂(μ τ)
+    - 2 * rowI w a σ P κ + 2 * rowI w a σ N κ
+    + pairI P P κ - pairI P N κ - pairI N P κ + pairI N N κ
 
-/-- sections integrable -/
-def Good (a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) (κ : Bool → Bool → ℝ → ℝ → ℝ) : Prop :=
-  (∀ i τ, Integrable (κ (σ i) τ (a i)) (μ τ)) ∧
-  (∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((μ τ).prod (μ τ')))
+/-- sections and products integrable -/
+structure Good (a : ι → ℝ) (σ : ι → Bool) (P N : Bool → Measure ℝ)
+    (κ : Bool → Bool → ℝ → ℝ → ℝ) : Prop where
+  sP : ∀ i τ, Integrable (κ (σ i) τ (a i)) (P τ)
+  sN : ∀ i τ, Integrable (κ (σ i) τ (a i)) (N τ)
+  pPP : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((P τ).prod (P τ'))
+  pPN : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((P τ).prod (N τ'))
+  pNP : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((N τ).prod (P τ'))
+  pNN : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ τ τ' p.1 p.2) ((N τ).prod (N τ'))
 
-theorem Ex_add {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ} (hfin : ∀ τ, IsFiniteMeasure (μ τ))
-    {κ₁ κ₂ : Bool → Bool → ℝ → ℝ → ℝ} (h₁ : Good a σ μ κ₁) (h₂ : Good a σ μ κ₂) :
-    Ex w a σ μ (fun s t x y => κ₁ s t x y + κ₂ s t x y) = Ex w a σ μ κ₁ + Ex w a σ μ κ₂ := by
+theorem rowI_add {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+    {κ₁ κ₂ : Bool → Bool → ℝ → ℝ → ℝ} (h₁ : ∀ i τ, Integrable (κ₁ (σ i) τ (a i)) (μ τ))
+    (h₂ : ∀ i τ, Integrable (κ₂ (σ i) τ (a i)) (μ τ)) :
+    rowI w a σ μ (fun s t x y => κ₁ s t x y + κ₂ s t x y) = rowI w a σ μ κ₁ + rowI w a σ μ κ₂ := by
+  unfold rowI
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl (fun i _ => ?_)
+  rw [← mul_add, ← Finset.sum_add_distrib]
+  congr 1
+  refine Finset.sum_congr rfl (fun τ _ => ?_)
+  exact integral_add (h₁ i τ) (h₂ i τ)
+
+theorem pairI_add {μ ν : Bool → Measure ℝ} [∀ τ, IsFiniteMeasure (μ τ)] [∀ τ, IsFiniteMeasure (ν τ)]
+    {κ₁ κ₂ : Bool → Bool → ℝ → ℝ → ℝ}
+    (h₁ : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ₁ τ τ' p.1 p.2) ((μ τ).prod (ν τ')))
+    (h₂ : ∀ τ τ', Integrable (fun p : ℝ × ℝ => κ₂ τ τ' p.1 p.2) ((μ τ).prod (ν τ'))) :
+    pairI μ ν (fun s t x y => κ₁ s t x y + κ₂ s t x y) = pairI μ ν κ₁ + pairI μ ν κ₂ := by
+  unfold pairI
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl (fun τ _ => ?_)
+  rw [← Finset.sum_add_distrib]
+  refine Finset.sum_congr rfl (fun τ' _ => ?_)
+  have a1 : Integrable (fun x => ∫ y, κ₁ τ τ' x y ∂(ν τ')) (μ τ) := (h₁ τ τ').integral_prod_left
+  have a2 : Integrable (fun x => ∫ y, κ₂ τ τ' x y ∂(ν τ')) (μ τ) := (h₂ τ τ').integral_prod_left
+  rw [← integral_add a1 a2]
+  apply integral_congr_ae
+  filter_upwards [(h₁ τ τ').prod_right_ae, (h₂ τ τ').prod_right_ae] with x hx1 hx2
+  exact integral_add hx1 hx2
+
+theorem Ex_add {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
+    [∀ τ, IsFiniteMeasure (P τ)] [∀ τ, IsFiniteMeasure (N τ)]
+    {κ₁ κ₂ : Bool → Bool → ℝ → ℝ → ℝ} (h₁ : Good a σ P N κ₁) (h₂ : Good a σ P N κ₂) :
+    Ex w a σ P N (fun s t x y => κ₁ s t x y + κ₂ s t x y) = Ex w a σ P N κ₁ + Ex w a σ P N κ₂ := by
   unfold Ex
   have e1 : (∑ i, ∑ j, if i = j then 0 else w i * w j * (κ₁ (σ i) (σ j) (a i) (a j) + κ₂ (σ i) (σ j) (a i) (a j))) =
       (∑ i, ∑ j, if i = j then 0 else w i * w j * κ₁ (σ i) (σ j) (a i) (a j)) +
@@ -2257,32 +2398,14 @@ theorem Ex_add {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
     rw [← Finset.sum_add_distrib]
     refine Finset.sum_congr rfl (fun j _ => ?_)
     split_ifs <;> ring
-  have e2 : (∑ i, w i * ∑ τ, ∫ y, (κ₁ (σ i) τ (a i) y + κ₂ (σ i) τ (a i) y) ∂(μ τ)) =
-      (∑ i, w i * ∑ τ, ∫ y, κ₁ (σ i) τ (a i) y ∂(μ τ)) + (∑ i, w i * ∑ τ, ∫ y, κ₂ (σ i) τ (a i) y ∂(μ τ)) := by
-    rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl (fun i _ => ?_)
-    rw [← mul_add, ← Finset.sum_add_distrib]
-    congr 1
-    refine Finset.sum_congr rfl (fun τ _ => ?_)
-    exact integral_add (h₁.1 i τ) (h₂.1 i τ)
-  have e3 : (∑ τ, ∑ τ', ∫ x, ∫ y, (κ₁ τ τ' x y + κ₂ τ τ' x y) ∂(μ τ') ∂(μ τ)) =
-      (∑ τ, ∑ τ', ∫ x, ∫ y, κ₁ τ τ' x y ∂(μ τ') ∂(μ τ)) + (∑ τ, ∑ τ', ∫ x, ∫ y, κ₂ τ τ' x y ∂(μ τ') ∂(μ τ)) := by
-    rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl (fun τ _ => ?_)
-    rw [← Finset.sum_add_distrib]
-    refine Finset.sum_congr rfl (fun τ' _ => ?_)
-    have a1 : Integrable (fun x => ∫ y, κ₁ τ τ' x y ∂(μ τ')) (μ τ) := (h₁.2 τ τ').integral_prod_left
-    have a2 : Integrable (fun x => ∫ y, κ₂ τ τ' x y ∂(μ τ')) (μ τ) := (h₂.2 τ τ').integral_prod_left
-    rw [← integral_add a1 a2]
-    apply integral_congr_ae
-    filter_upwards [(h₁.2 τ τ').prod_right_ae, (h₂.2 τ τ').prod_right_ae] with x hx1 hx2
-    exact integral_add hx1 hx2
-  rw [e1, e2, e3]; ring
+  rw [e1, rowI_add h₁.sP h₂.sP, rowI_add h₁.sN h₂.sN, pairI_add h₁.pPP h₂.pPP,
+    pairI_add h₁.pPN h₂.pPN, pairI_add h₁.pNP h₂.pNP, pairI_add h₁.pNN h₂.pNN]
+  ring
 
 end Final
 
 section Good
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
 theorem measurable_Ktil (ρ : ℝ) (s t : Bool) : Measurable (fun p : ℝ × ℝ => Ktil ρ s t p.1 p.2) := by
@@ -2304,49 +2427,139 @@ theorem Ktil_bound (hρ0 : 0 < ρ) (hρ1 : ρ < 1) (s t : Bool) {x y : ℝ} (hx 
     have := K2d_abs_le hρ0 hρ1 hx.1 hx.2 hy.1 hy.2
     linarith [abs_nonneg (Real.log y), abs_nonneg (Real.log (1 - ρ))]
 
-theorem good_Ktil (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
-    Good a σ μ (Ktil ρ) := by
-  constructor
-  · intro i τ
-    refine intK_single (h τ) (k := Ktil ρ (σ i) τ) (c := |Real.log (1 - ρ)| + 1) ?_ ?_ (ha i)
-    · intro x
-      exact (measurable_Ktil ρ (σ i) τ).comp (by fun_prop : Measurable fun y : ℝ => (x, y))
-    · intro x y hx hy; exact Ktil_bound hρ0 hρ1 _ _ hx hy
-  · intro τ τ'
-    exact intK_prod (h τ) (h τ') (measurable_Ktil ρ τ τ') (c := |Real.log (1 - ρ)| + 1)
-      (fun x y hx hy => Ktil_bound hρ0 hρ1 _ _ hx hy)
+theorem Ktil_sec {m : Measure ℝ} (h : BD m C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) (s τ : Bool) {x : ℝ}
+    (hx : x ∈ Ioo (0:ℝ) 1) : Integrable (Ktil ρ s τ x) m :=
+  intK_single h (k := Ktil ρ s τ) (c := |Real.log (1 - ρ)| + 1)
+    (fun x => (measurable_Ktil ρ s τ).comp (by fun_prop : Measurable fun y : ℝ => (x, y)))
+    (fun x y hx hy => Ktil_bound hρ0 hρ1 _ _ hx hy) hx
 
-theorem good_Dk (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C) (hC : 0 ≤ C) (hρ0 : 0 < ρ)
-    (hρ1 : ρ < 1) : Good a σ μ (Dk ρ) := by
-  constructor
-  · intro i τ
-    unfold Dk
-    by_cases hs : σ i = τ
-    · simp only [hs, if_true]; exact (D1_int (h τ) hC hρ0 hρ1 (ha i)).1
-    · simp only [hs, ite_false]; exact (D2_int (h τ) hρ0 hρ1 (ha i)).1
-  · intro τ τ'
-    unfold Dk
-    by_cases hs : τ = τ'
-    · subst hs; simp only [if_true]; exact D1_prod (h τ) (h τ) hC hρ0 hρ1
-    · simp only [hs, ite_false]; exact D2_prod (h τ) (h τ') hρ0 hρ1
+theorem Ktil_prd {m m' : Measure ℝ} (h : BD m C) (h' : BD m' C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1)
+    (τ τ' : Bool) : Integrable (fun p : ℝ × ℝ => Ktil ρ τ τ' p.1 p.2) (m.prod m') :=
+  intK_prod h h' (measurable_Ktil ρ τ τ') (c := |Real.log (1 - ρ)| + 1)
+    (fun x y hx hy => Ktil_bound hρ0 hρ1 _ _ hx hy)
+
+theorem good_Ktil (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) : Good a σ P N (Ktil ρ) :=
+  ⟨fun i τ => Ktil_sec (hP τ) hρ0 hρ1 _ _ (ha i), fun i τ => Ktil_sec (hN τ) hρ0 hρ1 _ _ (ha i),
+    fun τ τ' => Ktil_prd (hP τ) (hP τ') hρ0 hρ1 τ τ', fun τ τ' => Ktil_prd (hP τ) (hN τ') hρ0 hρ1 τ τ',
+    fun τ τ' => Ktil_prd (hN τ) (hP τ') hρ0 hρ1 τ τ', fun τ τ' => Ktil_prd (hN τ) (hN τ') hρ0 hρ1 τ τ'⟩
+
+theorem Dk_sec {m : Measure ℝ} (h : BD m C) (hC : 0 ≤ C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) (s τ : Bool)
+    {x : ℝ} (hx : x ∈ Ioo (0:ℝ) 1) : Integrable (Dk ρ s τ x) m := by
+  unfold Dk
+  by_cases hs : s = τ
+  · simp only [hs, if_true]; exact (D1_int h hC hρ0 hρ1 hx).1
+  · simp only [hs, ite_false]; exact (D2_int h hρ0 hρ1 hx).1
+
+theorem Dk_prd {m m' : Measure ℝ} (h : BD m C) (h' : BD m' C) (hC : 0 ≤ C) (hρ0 : 0 < ρ)
+    (hρ1 : ρ < 1) (τ τ' : Bool) : Integrable (fun p : ℝ × ℝ => Dk ρ τ τ' p.1 p.2) (m.prod m') := by
+  unfold Dk
+  by_cases hs : τ = τ'
+  · simp only [hs, if_true]; exact D1_prod h h' hC hρ0 hρ1
+  · simp only [hs, ite_false]; exact D2_prod h h' hρ0 hρ1
+
+theorem good_Dk (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    (hC : 0 ≤ C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) : Good a σ P N (Dk ρ) :=
+  ⟨fun i τ => Dk_sec (hP τ) hC hρ0 hρ1 _ _ (ha i), fun i τ => Dk_sec (hN τ) hC hρ0 hρ1 _ _ (ha i),
+    fun τ τ' => Dk_prd (hP τ) (hP τ') hC hρ0 hρ1 τ τ', fun τ τ' => Dk_prd (hP τ) (hN τ') hC hρ0 hρ1 τ τ',
+    fun τ τ' => Dk_prd (hN τ) (hP τ') hC hρ0 hρ1 τ τ', fun τ τ' => Dk_prd (hN τ) (hN τ') hC hρ0 hρ1 τ τ'⟩
 
 end Good
 
 section ExD
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
-theorem Ex_Dk_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1)
-    (hinj : ∀ i j, i ≠ j → σ i = σ j → a i ≠ a j) (h : ∀ τ, BD (μ τ) C) (hC : 0 ≤ C)
-    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
-    -(1 - ρ) * (∑ i, w i) ^ 2 - 2 * (∑ i, w i) * (C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))))
-      - (1 - ρ) * (∑ τ, (μ τ).real univ) ^ 2 ≤ Ex w a σ μ (Dk ρ) := by
-  have hfin : ∀ τ, IsFiniteMeasure (μ τ) := fun τ => (h τ).finite
+/-- `∫ Dk(x, ·) dm` (summed over the species) is at most `C S` at every `x ∈ (0,1)`. -/
+theorem Dk_row_le {m : Bool → Measure ℝ} (h : ∀ τ, BD (m τ) C) (hC : 0 ≤ C) (hρ0 : 0 < ρ)
+    (hρ1 : ρ < 1) (s : Bool) {x : ℝ} (hx : x ∈ Ioo (0:ℝ) 1) :
+    ∑ τ, ∫ y, Dk ρ s τ x y ∂(m τ) ≤ C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) := by
+  calc ∑ τ, ∫ y, Dk ρ s τ x y ∂(m τ)
+      ≤ ∑ τ, (if τ = s then C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) else 0) := by
+        refine Finset.sum_le_sum (fun τ _ => ?_)
+        unfold Dk
+        by_cases hs : s = τ
+        · subst hs
+          simp only [eq_self_iff_true, ite_true]
+          exact (D1_int (h s) hC hρ0 hρ1 hx).2.2
+        · have hs' : ¬ τ = s := fun e => hs e.symm
+          simp only [hs, hs', ite_false]
+          exact (D2_int (h τ) hρ0 hρ1 hx).2
+    _ = _ := by simp
+
+/-- `∫ Dk(x, ·) dm` (summed over the species) is at least `-(1-ρ) |m|` at every `x ∈ (0,1)`. -/
+theorem Dk_row_ge {m : Bool → Measure ℝ} (h : ∀ τ, BD (m τ) C) (hC : 0 ≤ C) (hρ0 : 0 < ρ)
+    (hρ1 : ρ < 1) (s : Bool) {x : ℝ} (hx : x ∈ Ioo (0:ℝ) 1) :
+    -(1 - ρ) * ∑ τ, (m τ).real univ ≤ ∑ τ, ∫ y, Dk ρ s τ x y ∂(m τ) := by
+  rw [Finset.mul_sum]
+  refine Finset.sum_le_sum (fun τ _ => ?_)
+  have := (h τ).finite
+  have hm0 : 0 ≤ (m τ).real univ := measureReal_nonneg
+  unfold Dk
   have hε : 0 ≤ 1 - ρ := by linarith
-  have hL : 0 ≤ Real.log (1 / (1 - ρ)) := Real.log_nonneg (by rw [le_div_iff₀ (by linarith)]; linarith)
-  have hS : 0 ≤ C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) := by positivity
+  by_cases hs : s = τ
+  · subst hs
+    simp only [eq_self_iff_true, ite_true]
+    have := (D1_int (h s) hC hρ0 hρ1 hx).2.1
+    nlinarith
+  · simp only [hs, ite_false]
+    have : ∫ y, (-(1 - ρ)) ∂(m τ) ≤ ∫ y, D2 ρ x y ∂(m τ) := by
+      apply integral_mono_ae (integrable_const _) (D2_int (h τ) hρ0 hρ1 hx).1
+      filter_upwards [(h τ).ae_mem] with y hy
+      exact D2_ge hρ0 hρ1 hx.1 hy.1
+    simpa [Measure.real, mul_comm] using this
+
+/-- `pairI m m' Dk ≤ |m| C S`. -/
+theorem pairI_Dk_le {m m' : Bool → Measure ℝ} (h : ∀ τ, BD (m τ) C) (h' : ∀ τ, BD (m' τ) C)
+    (hC : 0 ≤ C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    pairI m m' (Dk ρ) ≤ (∑ τ, (m τ).real univ) * (C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))))) := by
+  unfold pairI
+  rw [Finset.sum_mul]
+  refine Finset.sum_le_sum (fun τ _ => ?_)
+  have := (h τ).finite
+  have hfin : ∀ τ', IsFiniteMeasure (m' τ') := fun τ' => (h' τ').finite
+  have hint : ∀ τ', Integrable (fun x => ∫ y, Dk ρ τ τ' x y ∂(m' τ')) (m τ) := fun τ' =>
+    (Dk_prd (h τ) (h' τ') hC hρ0 hρ1 τ τ').integral_prod_left
+  rw [← integral_finsetSum _ (fun τ' _ => hint τ')]
+  have step : ∀ᵐ x ∂(m τ), ∑ τ', ∫ y, Dk ρ τ τ' x y ∂(m' τ') ≤
+      C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) := by
+    filter_upwards [(h τ).ae_mem] with x hx
+    exact Dk_row_le h' hC hρ0 hρ1 τ hx
+  have := integral_mono_ae (integrable_finsetSum _ (fun τ' _ => hint τ')) (integrable_const _) step
+  simp only [integral_const, smul_eq_mul] at this
+  linarith
+
+/-- `pairI m m Dk ≥ -(1-ρ) |m|²` (same as `pairI m' m`, any two BD families). -/
+theorem pairI_Dk_ge {m m' : Bool → Measure ℝ} (h : ∀ τ, BD (m τ) C) (h' : ∀ τ, BD (m' τ) C)
+    (hC : 0 ≤ C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    -(1 - ρ) * ((∑ τ, (m τ).real univ) * (∑ τ, (m' τ).real univ)) ≤ pairI m m' (Dk ρ) := by
+  unfold pairI
+  rw [Finset.sum_mul, Finset.mul_sum]
+  refine Finset.sum_le_sum (fun τ _ => ?_)
+  have := (h τ).finite
+  have hfin : ∀ τ', IsFiniteMeasure (m' τ') := fun τ' => (h' τ').finite
+  have hint : ∀ τ', Integrable (fun x => ∫ y, Dk ρ τ τ' x y ∂(m' τ')) (m τ) := fun τ' =>
+    (Dk_prd (h τ) (h' τ') hC hρ0 hρ1 τ τ').integral_prod_left
+  rw [← integral_finsetSum _ (fun τ' _ => hint τ')]
+  have step : ∀ᵐ x ∂(m τ), -(1 - ρ) * ∑ τ', (m' τ').real univ ≤ ∑ τ', ∫ y, Dk ρ τ τ' x y ∂(m' τ') := by
+    filter_upwards [(h τ).ae_mem] with x hx
+    exact Dk_row_ge h' hC hρ0 hρ1 τ hx
+  have := integral_mono_ae (integrable_const _) (integrable_finsetSum _ (fun τ' _ => hint τ')) step
+  simp only [integral_const, smul_eq_mul] at this
+  nlinarith
+
+theorem Ex_Dk_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1)
+    (hinj : ∀ i j, i ≠ j → σ i = σ j → a i ≠ a j) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    (hC : 0 ≤ C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    -(1 - ρ) * ((∑ i, w i) ^ 2 + 2 * (∑ i, w i) * (∑ τ, (N τ).real univ) + (∑ τ, (N τ).real univ) ^ 2
+        + (∑ τ, (P τ).real univ) ^ 2)
+      - (2 * (∑ i, w i) + ∑ τ, (N τ).real univ + ∑ τ, (P τ).real univ) *
+        (C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))))
+      ≤ Ex w a σ P N (Dk ρ) := by
+  have hε : 0 ≤ 1 - ρ := by linarith
   -- discrete-discrete
-  have hdd : -(1 - ρ) * (∑ i, w i) ^ 2 ≤ ∑ i, ∑ j, if i = j then 0 else w i * w j * Dk ρ (σ i) (σ j) (a i) (a j) := by
+  have hdd : -(1 - ρ) * (∑ i, w i) ^ 2 ≤
+      ∑ i, ∑ j, if i = j then 0 else w i * w j * Dk ρ (σ i) (σ j) (a i) (a j) := by
     have : (∑ i, w i) ^ 2 = ∑ i, ∑ j, w i * w j := by rw [sq, Finset.sum_mul_sum]
     rw [this, Finset.mul_sum]
     refine Finset.sum_le_sum (fun i _ => ?_)
@@ -2364,67 +2577,29 @@ theorem Ex_Dk_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1)
       · simp only [hs, ite_false]
         have := D2_ge hρ0 hρ1 (ha i).1 (ha j).1
         nlinarith
-  -- discrete-reference
-  have hX : ∀ i, ∑ τ, ∫ y, Dk ρ (σ i) τ (a i) y ∂(μ τ) ≤ C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) := by
-    intro i
-    calc ∑ τ, ∫ y, Dk ρ (σ i) τ (a i) y ∂(μ τ)
-        ≤ ∑ τ, (if τ = σ i then C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) else 0) := by
-          refine Finset.sum_le_sum (fun τ _ => ?_)
-          unfold Dk
-          by_cases hs : σ i = τ
-          · subst hs
-            simp only [eq_self_iff_true, ite_true]
-            exact (D1_int (h (σ i)) hC hρ0 hρ1 (ha i)).2.2
-          · have hs' : ¬ τ = σ i := fun e => hs e.symm
-            simp only [hs, hs', ite_false]
-            exact (D2_int (h τ) hρ0 hρ1 (ha i)).2
-      _ = _ := by simp
-  have hdr : ∑ i, w i * ∑ τ, ∫ y, Dk ρ (σ i) τ (a i) y ∂(μ τ) ≤
-      (∑ i, w i) * (C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))))) := by
+  -- atoms against P (upper) and against N (lower)
+  have hdP : rowI w a σ P (Dk ρ) ≤ (∑ i, w i) * (C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ))))) := by
+    unfold rowI
     rw [Finset.sum_mul]
-    exact Finset.sum_le_sum (fun i _ => mul_le_mul_of_nonneg_left (hX i) (hw i).le)
-  -- reference-reference
-  have hrr : ∀ τ τ', -(1 - ρ) * ((μ τ).real univ * (μ τ').real univ) ≤
-      ∫ x, ∫ y, Dk ρ τ τ' x y ∂(μ τ') ∂(μ τ) := by
-    intro τ τ'
-    have hm0 : 0 ≤ (μ τ).real univ := measureReal_nonneg
-    have hm0' : 0 ≤ (μ τ').real univ := measureReal_nonneg
-    unfold Dk
-    by_cases hs : τ = τ'
-    · subst hs
-      simp only [ite_true]
-      have : 0 ≤ ∫ x, ∫ y, D1 ρ x y ∂(μ τ) ∂(μ τ) := by
-        apply integral_nonneg_of_ae
-        filter_upwards [(h τ).ae_mem] with x hx
-        exact (D1_int (h τ) hC hρ0 hρ1 hx).2.1
-      nlinarith [mul_nonneg hm0 hm0]
-    · simp only [hs, ite_false]
-      have hint : Integrable (fun x => ∫ y, D2 ρ x y ∂(μ τ')) (μ τ) := (D2_prod (h τ) (h τ') hρ0 hρ1).integral_prod_left
-      have step : ∀ᵐ x ∂(μ τ), -(1 - ρ) * (μ τ').real univ ≤ ∫ y, D2 ρ x y ∂(μ τ') := by
-        filter_upwards [(h τ).ae_mem] with x hx
-        have h2 := (D2_int (h τ') hρ0 hρ1 hx).1
-        have : ∫ y, (-(1 - ρ)) ∂(μ τ') ≤ ∫ y, D2 ρ x y ∂(μ τ') := by
-          apply integral_mono_ae (integrable_const _) h2
-          filter_upwards [(h τ').ae_mem] with y hy
-          exact D2_ge hρ0 hρ1 hx.1 hy.1
-        simpa [Measure.real, mul_comm] using this
-      have := integral_mono_ae (integrable_const (-(1 - ρ) * (μ τ').real univ)) hint step
-      simp only [integral_const, smul_eq_mul] at this
-      nlinarith [this]
-  have hrrs : -(1 - ρ) * (∑ τ, (μ τ).real univ) ^ 2 ≤ ∑ τ, ∑ τ', ∫ x, ∫ y, Dk ρ τ τ' x y ∂(μ τ') ∂(μ τ) := by
-    have : (∑ τ, (μ τ).real univ) ^ 2 = ∑ τ, ∑ τ', (μ τ).real univ * (μ τ').real univ := by
-      rw [sq, Finset.sum_mul_sum]
-    rw [this, Finset.mul_sum]
-    refine Finset.sum_le_sum (fun τ _ => ?_)
-    rw [Finset.mul_sum]
-    exact Finset.sum_le_sum (fun τ' _ => hrr τ τ')
+    exact Finset.sum_le_sum (fun i _ =>
+      mul_le_mul_of_nonneg_left (Dk_row_le hP hC hρ0 hρ1 _ (ha i)) (hw i).le)
+  have hdN : -(1 - ρ) * ((∑ i, w i) * ∑ τ, (N τ).real univ) ≤ rowI w a σ N (Dk ρ) := by
+    unfold rowI
+    rw [Finset.sum_mul, Finset.mul_sum]
+    refine Finset.sum_le_sum (fun i _ => ?_)
+    have := mul_le_mul_of_nonneg_left (Dk_row_ge hN hC hρ0 hρ1 (σ i) (ha i)) (hw i).le
+    nlinarith
+  have hPP := pairI_Dk_ge hP hP hC hρ0 hρ1
+  have hNN := pairI_Dk_ge hN hN hC hρ0 hρ1
+  have hPN := pairI_Dk_le hP hN hC hρ0 hρ1
+  have hNP := pairI_Dk_le hN hP hC hρ0 hρ1
   unfold Ex
-  nlinarith [hdd, hdr, hrrs]
+  nlinarith [hdd, hdP, hdN, hPP, hNN, hPN, hNP]
 
 end ExD
 
 section Assembly
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
 theorem Wk_add_int {Y : Type*} [MeasurableSpace Y] {A M : Measure Y} {pr e : Y → ℝ} {k₁ k₂ : ℝ → ℝ → ℝ}
@@ -2449,15 +2624,17 @@ theorem Ktil_decomp (ρ : ℝ) (y y' : Bool × ℝ) :
   obtain ⟨t, x'⟩ := y'
   cases s <;> cases t <;> simp [Ktil, Wk, sgn] <;> ring
 
-theorem Qp_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C)
-    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) (hmass : (Amu w a σ).real univ = (Mmu μ).real univ) :
-    (1 / 2) * PP (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) (ell ρ)
-      + (1 / 2) * PP (Amu w a σ) (Mmu μ) Prod.snd sgn (ell ρ) ≤
-    P2 (Amu w a σ) (Mmu μ) (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2) := by
-  have hMfin := Mmu_finite h
-  have C1 : Ctx (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) :=
-    ctx_inst hw ha h measurable_const (fun _ => by simp)
-  have C2 : Ctx (Amu w a σ) (Mmu μ) Prod.snd sgn := ctx_inst hw ha h measurable_sgn abs_sgn_le
+theorem Qp_ge (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) (hmass : (Amu w a σ + Mmu N).real univ = (Mmu P).real univ) :
+    (1 / 2) * PP (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) (ell ρ)
+      + (1 / 2) * PP (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn (ell ρ) ≤
+    P2 (Amu w a σ + Mmu N) (Mmu P)
+      (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2) := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
+  have C1 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) :=
+    ctx_inst ha hP hN measurable_const (fun _ => by simp)
+  have C2 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn := ctx_inst ha hP hN measurable_sgn abs_sgn_le
   have i1 := Wk_add_int (adm_K1d C1 hρ0 hρ1) (adm_K2d C1 hρ0 hρ1)
   have i2 := Wk_sub_int (adm_K1d C2 hρ0 hρ1) (adm_K2d C2 hρ0 hρ1)
   have hfun : (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2) =
@@ -2465,8 +2642,7 @@ theorem Qp_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀
         (1 / 2) * Wk Prod.snd sgn (fun x y => K1d ρ x y - K2d ρ x y) z := by
     funext z; exact Ktil_decomp ρ z.1 z.2
   rw [hfun, P2_add (i1.const_mul _) (i2.const_mul _), P2_smul, P2_smul]
-  have hm1 : (Amu w a σ).real univ = (Mmu μ).real univ := hmass
-  have g1 := PP_sum_ge_ell C1 hm1 (fun _ => rfl) hρ0 hρ1
+  have g1 := PP_sum_ge_ell C1 hmass (fun _ => rfl) hρ0 hρ1
   have g2 := PP_H_ge_ell C2 hρ0 hρ1
   unfold PP at g1 g2 ⊢
   linarith
@@ -2474,20 +2650,20 @@ theorem Qp_ge (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀
 end Assembly
 
 section Moments
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
-/-- species moment of the signed measure `∑_{σ_i = τ} w_i δ_{a_i} - μ_τ` -/
-def mm (w a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) (τ : Bool) (k : ℕ) : ℝ :=
-  (∑ i, if σ i = τ then w i * a i ^ k else 0) - ∫ x, x ^ k ∂(μ τ)
+/-- species moment of the signed measure `∑_{σ_i = τ} w_i δ_{a_i} - (P_τ - N_τ)` -/
+def mm (w a : ι → ℝ) (σ : ι → Bool) (P N : Bool → Measure ℝ) (τ : Bool) (k : ℕ) : ℝ :=
+  (∑ i, if σ i = τ then w i * a i ^ k else 0) - ∫ x, x ^ k ∂(P τ) + ∫ x, x ^ k ∂(N τ)
 
 /-- The quadratic term `L(D_{√ρ} p)` of the species `τ`. -/
-def Lpart (w a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) (ρ : ℝ) (τ : Bool) : ℝ :=
+def Lpart (w a : ι → ℝ) (σ : ι → Bool) (P N : Bool → Measure ℝ) (ρ : ℝ) (τ : Bool) : ℝ :=
   ∑' k : ℕ, (1 / ((k : ℝ) + 1)) *
     ((∑ i, if σ i = τ then w i * (Real.sqrt ρ * a i) ^ (k + 1) else 0)
-      - ∫ y, (Real.sqrt ρ * y) ^ (k + 1) ∂(μ τ)) ^ 2
+      - ∫ y, (Real.sqrt ρ * y) ^ (k + 1) ∂(P τ) + ∫ y, (Real.sqrt ρ * y) ^ (k + 1) ∂(N τ)) ^ 2
 
-theorem int_pow_mul {τ : Bool} (h : BD (μ τ) C) {c : ℝ} (hc : |c| ≤ 1) (k : ℕ) :
+theorem int_pow_mul {μ : Bool → Measure ℝ} {τ : Bool} (h : BD (μ τ) C) {c : ℝ} (hc : |c| ≤ 1) (k : ℕ) :
     Integrable (fun x : ℝ => c * x ^ k) (μ τ) := by
   have := h.finite
   refine Integrable.of_bound (C := 1) ?_ ?_
@@ -2499,7 +2675,7 @@ theorem int_pow_mul {τ : Bool} (h : BD (μ τ) C) {c : ℝ} (hc : |c| ≤ 1) (k
       _ = 1 := by norm_num
 
 theorem Lpart_eq (hρ : 0 ≤ ρ) (τ : Bool) :
-    Lpart w a σ μ ρ τ = ∑' k : ℕ, ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ μ τ (k + 1)) ^ 2 := by
+    Lpart w a σ P N ρ τ = ∑' k : ℕ, ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ P N τ (k + 1)) ^ 2 := by
   unfold Lpart
   congr 1; funext k
   have e1 : (∑ i, if σ i = τ then w i * (Real.sqrt ρ * a i) ^ (k + 1) else 0) =
@@ -2509,26 +2685,33 @@ theorem Lpart_eq (hρ : 0 ≤ ρ) (τ : Bool) :
     split_ifs
     · rw [mul_pow]; ring
     · simp
-  have e2 : ∫ y, (Real.sqrt ρ * y) ^ (k + 1) ∂(μ τ) = Real.sqrt ρ ^ (k + 1) * ∫ y, y ^ (k + 1) ∂(μ τ) := by
-    simp_rw [mul_pow]; exact integral_const_mul _ _
+  have e2 : ∀ m : Measure ℝ, ∫ y, (Real.sqrt ρ * y) ^ (k + 1) ∂m =
+      Real.sqrt ρ ^ (k + 1) * ∫ y, y ^ (k + 1) ∂m := by
+    intro m; simp_rw [mul_pow]; exact integral_const_mul _ _
   have e3 : (Real.sqrt ρ ^ (k + 1)) ^ 2 = ρ ^ (k + 1) := by
     rw [← pow_mul, mul_comm, pow_mul, Real.sq_sqrt hρ]
-  rw [e1, e2, ← mul_sub]
+  rw [e1, e2, e2]
   unfold mm
+  rw [show Real.sqrt ρ ^ (k + 1) * (∑ i, if σ i = τ then w i * a i ^ (k + 1) else 0) -
+      Real.sqrt ρ ^ (k + 1) * ∫ y, y ^ (k + 1) ∂(P τ) + Real.sqrt ρ ^ (k + 1) * ∫ y, y ^ (k + 1) ∂(N τ) =
+      Real.sqrt ρ ^ (k + 1) * ((∑ i, if σ i = τ then w i * a i ^ (k + 1) else 0) -
+        ∫ y, y ^ (k + 1) ∂(P τ) + ∫ y, y ^ (k + 1) ∂(N τ)) by ring]
   rw [mul_pow, e3]
   ring
 
 end Moments
 
 section Moments2
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
-theorem mom_one (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (μ τ) C) (k : ℕ) :
-    mom (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) k = mm w a σ μ true k + mm w a σ μ false k := by
+theorem mom_one (hw : ∀ i, 0 < w i) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C) (k : ℕ) :
+    mom (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) k =
+      mm w a σ P N true k + mm w a σ P N false k := by
   unfold mom S1
-  rw [intA w a σ hw, intM μ _ (fun τ => by simpa using int_pow_mul (h τ) (c := 1) (by simp) k),
-    Fintype.sum_bool]
+  rw [intAN hw _ (fun τ => by simpa using int_pow_mul (hN τ) (c := 1) (by simp) k),
+    intM P _ (fun τ => by simpa using int_pow_mul (hP τ) (c := 1) (by simp) k),
+    Fintype.sum_bool, Fintype.sum_bool]
   unfold mm
   have : ∑ i, w i * (1 * a i ^ k) =
       (∑ i, if σ i = true then w i * a i ^ k else 0) + (∑ i, if σ i = false then w i * a i ^ k else 0) := by
@@ -2538,68 +2721,74 @@ theorem mom_one (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (μ τ) C) (k : ℕ) :
   simp only [one_mul] at this ⊢
   rw [this]; ring
 
-theorem mom_sgn (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (μ τ) C) (k : ℕ) :
-    mom (Amu w a σ) (Mmu μ) Prod.snd sgn k = mm w a σ μ true k - mm w a σ μ false k := by
+theorem mom_sgn (hw : ∀ i, 0 < w i) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C) (k : ℕ) :
+    mom (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn k =
+      mm w a σ P N true k - mm w a σ P N false k := by
   unfold mom S1
-  rw [intA w a σ hw, intM μ _ (fun τ => int_pow_mul (h τ) (c := sgn (τ, 0)) (abs_sgn_le _) k |>.congr
+  rw [intAN hw _ (fun τ => int_pow_mul (hN τ) (c := sgn (τ, 0)) (abs_sgn_le _) k |>.congr
       (Filter.Eventually.of_forall fun x => by simp [sgn])),
-    Fintype.sum_bool]
+    intM P _ (fun τ => int_pow_mul (hP τ) (c := sgn (τ, 0)) (abs_sgn_le _) k |>.congr
+      (Filter.Eventually.of_forall fun x => by simp [sgn])),
+    Fintype.sum_bool, Fintype.sum_bool]
   unfold mm
   have : ∑ i, w i * (sgn (σ i, a i) * a i ^ k) =
       (∑ i, if σ i = true then w i * a i ^ k else 0) - (∑ i, if σ i = false then w i * a i ^ k else 0) := by
     rw [← Finset.sum_sub_distrib]
     refine Finset.sum_congr rfl (fun i _ => ?_)
     cases σ i <;> simp [sgn]
-  have e1 : ∫ x, sgn (true, x) * x ^ k ∂(μ true) = ∫ x, x ^ k ∂(μ true) := by simp [sgn]
-  have e2 : ∫ x, sgn (false, x) * x ^ k ∂(μ false) = -∫ x, x ^ k ∂(μ false) := by
-    simp [sgn, integral_neg]
+  have e1 : ∀ m : Measure ℝ, ∫ x, sgn (true, x) * x ^ k ∂m = ∫ x, x ^ k ∂m := by
+    intro m; simp [sgn]
+  have e2 : ∀ m : Measure ℝ, ∫ x, sgn (false, x) * x ^ k ∂m = -∫ x, x ^ k ∂m := by
+    intro m; simp [sgn, integral_neg]
   simp only [Prod.snd] at *
-  rw [this, e1, e2]; ring
+  rw [this, e1, e2, e1, e2]; ring
 
 end Moments2
 
 section Main
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {P N : Bool → Measure ℝ}
   {C : ℝ} {ρ : ℝ}
 
-theorem half_sum_eq (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C)
-    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
-    (1 / 2) * PP (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) (ell ρ)
-      + (1 / 2) * PP (Amu w a σ) (Mmu μ) Prod.snd sgn (ell ρ) =
-    Lpart w a σ μ ρ true + Lpart w a σ μ ρ false := by
-  have hMfin := Mmu_finite h
-  have C1 : Ctx (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) :=
-    ctx_inst hw ha h measurable_const (fun _ => by simp)
-  have C2 : Ctx (Amu w a σ) (Mmu μ) Prod.snd sgn := ctx_inst hw ha h measurable_sgn abs_sgn_le
+theorem half_sum_eq (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C)
+    (hN : ∀ τ, BD (N τ) C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    (1 / 2) * PP (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) (ell ρ)
+      + (1 / 2) * PP (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn (ell ρ) =
+    Lpart w a σ P N ρ true + Lpart w a σ P N ρ false := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
+  have C1 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) :=
+    ctx_inst ha hP hN measurable_const (fun _ => by simp)
+  have C2 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn := ctx_inst ha hP hN measurable_sgn abs_sgn_le
   have hs1 := PP_ell C1 hρ0 hρ1
   have hs2 := PP_ell C2 hρ0 hρ1
-  simp only [mom_one hw h] at hs1
-  simp only [mom_sgn hw h] at hs2
-  set g : Bool → ℕ → ℝ := fun τ k => ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ μ τ (k + 1)) ^ 2 with hg
+  simp only [mom_one hw hP hN] at hs1
+  simp only [mom_sgn hw hP hN] at hs2
+  set g : Bool → ℕ → ℝ := fun τ k => ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ P N τ (k + 1)) ^ 2 with hg
   have hc : ∀ k : ℕ, 0 ≤ ρ ^ (k + 1) / ((k : ℝ) + 1) := fun k => by positivity
   have hsum := (hs1.mul_left (1 / 2)).add (hs2.mul_left (1 / 2))
-  have hfun : (fun k : ℕ => 1 / 2 * (ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ μ true (k + 1) + mm w a σ μ false (k + 1)) ^ 2)
-      + 1 / 2 * (ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ μ true (k + 1) - mm w a σ μ false (k + 1)) ^ 2)) =
+  have hfun : (fun k : ℕ => 1 / 2 * (ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ P N true (k + 1) + mm w a σ P N false (k + 1)) ^ 2)
+      + 1 / 2 * (ρ ^ (k + 1) / ((k : ℝ) + 1) * (mm w a σ P N true (k + 1) - mm w a σ P N false (k + 1)) ^ 2)) =
       fun k => g true k + g false k := by
     funext k; simp only [hg]; try ring
   rw [hfun] at hsum
   have sg1 : Summable (g true) := Summable.of_nonneg_of_le (fun k => mul_nonneg (hc k) (sq_nonneg _))
-    (fun k => by simp only [hg]; nlinarith [mul_nonneg (hc k) (sq_nonneg (mm w a σ μ false (k + 1)))]) hsum.summable
+    (fun k => by simp only [hg]; nlinarith [mul_nonneg (hc k) (sq_nonneg (mm w a σ P N false (k + 1)))]) hsum.summable
   have sg2 : Summable (g false) := Summable.of_nonneg_of_le (fun k => mul_nonneg (hc k) (sq_nonneg _))
-    (fun k => by simp only [hg]; nlinarith [mul_nonneg (hc k) (sq_nonneg (mm w a σ μ true (k + 1)))]) hsum.summable
+    (fun k => by simp only [hg]; nlinarith [mul_nonneg (hc k) (sq_nonneg (mm w a σ P N true (k + 1)))]) hsum.summable
   rw [Lpart_eq hρ0.le, Lpart_eq hρ0.le]
   have := hsum.tsum_eq
   rw [Summable.tsum_add sg1 sg2] at this
   rw [← this]
 
-theorem F_Ktil_int (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C)
+theorem F_Ktil_int (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
     (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
     Integrable (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2)
-      ((Amu w a σ + Mmu μ).prod (Amu w a σ + Mmu μ)) := by
-  have hMfin := Mmu_finite h
-  have C1 : Ctx (Amu w a σ) (Mmu μ) Prod.snd (fun _ => (1:ℝ)) :=
-    ctx_inst hw ha h measurable_const (fun _ => by simp)
-  have C2 : Ctx (Amu w a σ) (Mmu μ) Prod.snd sgn := ctx_inst hw ha h measurable_sgn abs_sgn_le
+      ((Amu w a σ + Mmu N + Mmu P).prod (Amu w a σ + Mmu N + Mmu P)) := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
+  have C1 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd (fun _ => (1:ℝ)) :=
+    ctx_inst ha hP hN measurable_const (fun _ => by simp)
+  have C2 : Ctx (Amu w a σ + Mmu N) (Mmu P) Prod.snd sgn := ctx_inst ha hP hN measurable_sgn abs_sgn_le
   have i1 := Wk_add_int (adm_K1d C1 hρ0 hρ1) (adm_K2d C1 hρ0 hρ1)
   have i2 := Wk_sub_int (adm_K1d C2 hρ0 hρ1) (adm_K2d C2 hρ0 hρ1)
   have := (i1.const_mul (1 / 2)).add (i2.const_mul (1 / 2))
@@ -2610,13 +2799,14 @@ theorem K1d_diag {ρ x : ℝ} (hx : 0 < x) : K1d ρ x x = -Real.log x - Real.log
   unfold K1d rr
   rw [max_self, min_self, div_self hx.ne', mul_one]
 
-theorem Ex_Ktil_eq (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (h : ∀ τ, BD (μ τ) C)
-    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
-    Ex w a σ μ (Ktil ρ) =
-      P2 (Amu w a σ) (Mmu μ) (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2)
+theorem Ex_Ktil_eq (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1) (hP : ∀ τ, BD (P τ) C)
+    (hN : ∀ τ, BD (N τ) C) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    Ex w a σ P N (Ktil ρ) =
+      P2 (Amu w a σ + Mmu N) (Mmu P)
+        (fun z : (Bool × ℝ) × (Bool × ℝ) => Ktil ρ z.1.1 z.2.1 z.1.2 z.2.2)
         - ∑ i, w i ^ 2 * (-Real.log (a i) - Real.log (1 - ρ)) := by
-  obtain ⟨hG1, hG2⟩ := good_Ktil (σ := σ) ha h hρ0 hρ1
-  rw [P2_eval hw h (Ktil_symm ρ) hG1 hG2 (F_Ktil_int hw ha h hρ0 hρ1)]
+  have G := good_Ktil (σ := σ) ha hP hN hρ0 hρ1
+  rw [P2_eval hw hP hN (Ktil_symm ρ) G.sP G.sN G.pPP G.pPN G.pNP G.pNN (F_Ktil_int ha hP hN hρ0 hρ1)]
   unfold Ex
   have : (∑ i, ∑ j, w i * w j * Ktil ρ (σ i) (σ j) (a i) (a j)) =
       (∑ i, ∑ j, if i = j then 0 else w i * w j * Ktil ρ (σ i) (σ j) (a i) (a j))
@@ -2638,60 +2828,71 @@ end Main
 
 /-! ### The theorem -/
 section TheTheorem
-variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool} {μ : Bool → Measure ℝ}
-  {C : ℝ} {ρ : ℝ}
+variable {ι : Type*} [Fintype ι] [DecidableEq ι] {w a : ι → ℝ} {σ : ι → Bool}
+  {P N : Bool → Measure ℝ} {C : ℝ} {ρ : ℝ}
 
 /-- The (off-diagonal) logarithmic energy of the signed configuration
-`∑ w_i δ_{x_i} - μ`, with `x_i = ±a_i` according to the label `σ_i` and `μ_τ` the reference
-measure of the species `τ`, in the folded coordinates `a = |x|`. -/
-def Ioff (w a : ι → ℝ) (σ : ι → Bool) (μ : Bool → Measure ℝ) : ℝ := Ex w a σ μ Kt
+`∑ w_i δ_{x_i} - (P - N)`, with `x_i = ±a_i` according to the label `σ_i` and `P_τ - N_τ` the
+(signed) reference of the species `τ`, in the folded coordinates `a = |x|`. -/
+def Ioff (w a : ι → ℝ) (σ : ι → Bool) (P N : Bool → Measure ℝ) : ℝ := Ex w a σ P N Kt
 
-theorem mass_real (hw : ∀ i, 0 < w i) (h : ∀ τ, BD (μ τ) C) :
-    (Amu w a σ).real univ = ∑ i, w i ∧ (Mmu μ).real univ = ∑ τ, (μ τ).real univ := by
-  have hMfin := Mmu_finite h
+theorem mass_real (hw : ∀ i, 0 < w i) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C) :
+    (Amu w a σ + Mmu N).real univ = ∑ i, w i + ∑ τ, (N τ).real univ ∧
+      (Mmu P).real univ = ∑ τ, (P τ).real univ := by
+  have := Mmu_finite hP
+  have := Mmu_finite hN
   constructor
-  · have := intA w a σ hw (fun _ => (1:ℝ))
+  · have := intAN (σ := σ) (a := a) (N := N) hw (fun _ => (1:ℝ))
+      (fun τ => by have := (hN τ).finite; exact integrable_const _)
     simpa using this
-  · have := intM μ (fun _ => (1:ℝ)) (fun τ => by
-      have := (h τ).finite
+  · have := intM P (fun _ => (1:ℝ)) (fun τ => by
+      have := (hP τ).finite
       exact integrable_const _)
     simpa using this
 
-/-- **Theorem D7.1 (discrete Theorem 7.1).** -/
+/-- **Theorem D7.1 (discrete Theorem 7.1) for a signed reference `P - N`.**  With
+`W' = ∑ w_i + |N|` (the total mass of the positive side `A + N` of the discrepancy). -/
 theorem reflection_energy (hw : ∀ i, 0 < w i) (ha : ∀ i, a i ∈ Ioo (0:ℝ) 1)
-    (hinj : ∀ i j, i ≠ j → σ i = σ j → a i ≠ a j) (h : ∀ τ, BD (μ τ) C) (hC : 0 ≤ C)
-    (hmass : ∑ i, w i = ∑ τ, (μ τ).real univ) (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
-    (∑ τ, Lpart w a σ μ ρ τ) - ∑ i, w i ^ 2 * (-Real.log (a i) + Real.log (1 / (1 - ρ)))
-      - (8 * (∑ i, w i) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
-          + 2 * (1 - ρ) * (2 * ∑ i, w i) ^ 2) ≤ Ioff w a σ μ := by
-  have hfin : ∀ τ, IsFiniteMeasure (μ τ) := fun τ => (h τ).finite
-  obtain ⟨hA, hM⟩ := mass_real (a := a) (σ := σ) hw h
-  have hmass' : (Amu w a σ).real univ = (Mmu μ).real univ := by rw [hA, hM]; exact hmass
+    (hinj : ∀ i j, i ≠ j → σ i = σ j → a i ≠ a j) (hP : ∀ τ, BD (P τ) C) (hN : ∀ τ, BD (N τ) C)
+    (hC : 0 ≤ C) (hmass : ∑ i, w i + ∑ τ, (N τ).real univ = ∑ τ, (P τ).real univ)
+    (hρ0 : 0 < ρ) (hρ1 : ρ < 1) :
+    (∑ τ, Lpart w a σ P N ρ τ) - ∑ i, w i ^ 2 * (-Real.log (a i) + Real.log (1 / (1 - ρ)))
+      - (12 * (∑ i, w i + ∑ τ, (N τ).real univ) * C * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))
+          + 2 * (1 - ρ) * (2 * (∑ i, w i + ∑ τ, (N τ).real univ)) ^ 2) ≤ Ioff w a σ P N := by
+  have hfP : ∀ τ, IsFiniteMeasure (P τ) := fun τ => (hP τ).finite
+  have hfN : ∀ τ, IsFiniteMeasure (N τ) := fun τ => (hN τ).finite
+  obtain ⟨hA, hM⟩ := mass_real (a := a) (σ := σ) hw hP hN
+  have hmass' : (Amu w a σ + Mmu N).real univ = (Mmu P).real univ := by rw [hA, hM]; exact hmass
   have hKt : Kt = fun s t x y => Ktil ρ s t x y + Dk ρ s t x y := by
     funext s t x y; exact Kt_eq ρ s t x y
-  have hgood1 := good_Ktil (σ := σ) ha h hρ0 hρ1
-  have hgood2 := good_Dk (σ := σ) ha h hC hρ0 hρ1
-  have e1 : Ioff w a σ μ = Ex w a σ μ (Ktil ρ) + Ex w a σ μ (Dk ρ) := by
+  have hgood1 := good_Ktil (σ := σ) ha hP hN hρ0 hρ1
+  have hgood2 := good_Dk (σ := σ) ha hP hN hC hρ0 hρ1
+  have e1 : Ioff w a σ P N = Ex w a σ P N (Ktil ρ) + Ex w a σ P N (Dk ρ) := by
     unfold Ioff
     rw [hKt]
-    exact Ex_add hfin hgood1 hgood2
-  have e2 := Ex_Ktil_eq (σ := σ) hw ha h hρ0 hρ1
-  have q1 := Qp_ge (σ := σ) hw ha h hρ0 hρ1 hmass'
-  have q2 := half_sum_eq (σ := σ) hw ha h hρ0 hρ1
-  have d1 := Ex_Dk_ge (σ := σ) hw ha hinj h hC hρ0 hρ1
+    exact Ex_add hgood1 hgood2
+  have e2 := Ex_Ktil_eq (σ := σ) hw ha hP hN hρ0 hρ1
+  have q1 := Qp_ge (σ := σ) (w := w) ha hP hN hρ0 hρ1 hmass'
+  have q2 := half_sum_eq (σ := σ) hw ha hP hN hρ0 hρ1
+  have d1 := Ex_Dk_ge (σ := σ) hw ha hinj hP hN hC hρ0 hρ1
   rw [← hmass] at d1
-  rw [Fintype.sum_bool]
+  rw [show (∑ τ, Lpart w a σ P N ρ τ) = Lpart w a σ P N ρ true + Lpart w a σ P N ρ false from
+    Fintype.sum_bool _]
   have hlog : Real.log (1 / (1 - ρ)) = -Real.log (1 - ρ) := by rw [one_div, Real.log_inv]
   have hdiag : ∑ i, w i ^ 2 * (-Real.log (a i) + Real.log (1 / (1 - ρ))) =
       ∑ i, w i ^ 2 * (-Real.log (a i) - Real.log (1 - ρ)) := by
     refine Finset.sum_congr rfl (fun i _ => ?_)
     rw [hlog]; ring
   rw [hdiag]
-  have hW : 0 ≤ ∑ i, w i := Finset.sum_nonneg (fun i _ => (hw i).le)
+  set W := ∑ i, w i with hW
+  set n := ∑ τ, (N τ).real univ with hn
+  have hW : 0 ≤ W := Finset.sum_nonneg (fun i _ => (hw i).le)
+  have hn0 : 0 ≤ n := Finset.sum_nonneg (fun τ _ => measureReal_nonneg)
   have hε : 0 ≤ 1 - ρ := by linarith
   have hL : 0 ≤ Real.log (1 / (1 - ρ)) := Real.log_nonneg (by rw [le_div_iff₀ (by linarith)]; linarith)
+  have hS0 : 0 ≤ C * (4 * (1 - ρ) * (1 + Real.log (1 / (1 - ρ)))) := by positivity
   rw [e1, e2]
-  nlinarith [mul_nonneg hε (sq_nonneg (∑ i, w i))]
+  nlinarith [mul_nonneg hε (sq_nonneg (W + n)), mul_nonneg hS0 hn0, mul_nonneg hS0 hW]
 
 end TheTheorem
 

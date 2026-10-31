@@ -49,12 +49,14 @@ theorem SignedData.eD7_mono (D : SignedData) (hC : 0 ≤ D.Cb) (hτ : D.τ ∈ I
       Real.log_nonneg (by rw [le_div_iff₀ hK0]; nlinarith [hτ.1])
     linarith
   have hc : 0 ≤ D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) := by positivity
-  have h1 : 8 * W * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
-      2 * (1 - D.τ ^ 2) * (2 * W) ^ 2 ≤
-      8 * W' * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
-      2 * (1 - D.τ ^ 2) * (2 * W') ^ 2 := by
-    nlinarith [mul_le_mul_of_nonneg_left hWW hc, mul_le_mul_of_nonneg_left
-      (mul_le_mul hWW hWW hW (hW.trans hWW)) hK]
+  have h1 : 12 * (W + 1) * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
+      2 * (1 - D.τ ^ 2) * (2 * (W + 1)) ^ 2 ≤
+      12 * (W' + 1) * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
+      2 * (1 - D.τ ^ 2) * (2 * (W' + 1)) ^ 2 := by
+    have hWW1 : W + 1 ≤ W' + 1 := by linarith
+    have hW1 : 0 ≤ W + 1 := by linarith
+    nlinarith [mul_le_mul_of_nonneg_left hWW1 hc, mul_le_mul_of_nonneg_left
+      (mul_le_mul hWW1 hWW1 hW1 (hW1.trans hWW1)) hK]
   exact mul_le_mul_of_nonneg_left h1 (by linarith)
 
 /-- **The constant with fixed rows against the all-free constant** (`ν = n`, `pf + M = n`). -/

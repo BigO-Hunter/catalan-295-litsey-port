@@ -241,8 +241,8 @@ structure Phase2Data (I : ℕ) where
   hν : ∀ i N, (DA i N).ν = (ncount N : ℝ)
   hRf : ∀ i N, (DA i N).Rf = Rf N
   hCf : ∀ i N, (DA i N).Cf = Cf N
-  mA : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αA i / 2 = ∑ τ, ((DA i N).μ τ).real univ
-  mB : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αB i / 2 = ∑ τ, ((DB i N).μ τ).real univ
+  mA : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αA i / 2 = (DA i N).μ.mass
+  mB : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αB i / 2 = (DB i N).μ.mass
   -- endpoint suprema of the free-row, column fields
   SnA : Fin I → ℝ
   SnB : Fin I → ℝ
@@ -989,15 +989,17 @@ theorem groupedSquares_ge_free {ν e : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : 
   unfold groupedSquares freeSquares
   linarith only [h1, h3]
 
-/-- The factor-free (endpoint column field) old-route trial from an old-route trial and an endpoint
-budget without `a (1 - a) log 2` (for K590: `K590.second_budget'_log2`, cost `secondCost'`). -/
-def SecondTrialBounds.toEnd {P : Parameters} {target residual nearCap cost : ℝ} {G : ℝ → Prop}
-    (D : SecondTrialBounds P target residual nearCap cost G) (cost' : ℝ)
-    (hbud : ∀ {a t : ℝ}, 0 ≤ a → 0 ≤ t →
+/-- The factor-free second-population trial from an old one, at a free output target `target'`
+and marked-fraction threshold `α1` (only the budget field mentions either). -/
+def _root_.CatalanMeasure.GenD.Analytic.SecondTrialBounds.toEndAt {P : Parameters}
+    {target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBounds P target residual nearCap cost G)
+    {α1 target' : ℝ} (cost' : ℝ)
+    (hbud : ∀ {a t : ℝ}, α1 ≤ a → 0 ≤ a → 0 ≤ t →
       (-gC0 P + gC1 P * a - a ^ 2 + t - t ^ 2) * Real.log 2 +
         D.normCap + (1 - a) * D.fieldCap + (a - t) * residual + t * nearCap ≤
-          -target + Real.log 2 / 2 + cost' * a) :
-    SecondTrialBoundsEnd P 0 target residual nearCap cost' G where
+          -target' + Real.log 2 / 2 + cost' * a) :
+    SecondTrialBoundsEnd P α1 target' residual nearCap cost' G where
   p := D.p
   v := D.v
   MX := D.MX
@@ -1012,7 +1014,19 @@ def SecondTrialBounds.toEnd {P : Parameters} {target residual nearCap cost : ℝ
   column := D.column
   marked := D.marked
   near := D.near
-  budget := fun _ ha ht => hbud ha ht
+  budget := hbud
+
+/-- The factor-free (endpoint column field) old-route trial from an old-route trial and an endpoint
+budget without `a (1 - a) log 2` (for K590: `K590.second_budget'_log2`, cost `secondCost'`): the
+instance `α1 = 0`, original target, of `toEndAt`. -/
+def SecondTrialBounds.toEnd {P : Parameters} {target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBounds P target residual nearCap cost G) (cost' : ℝ)
+    (hbud : ∀ {a t : ℝ}, 0 ≤ a → 0 ≤ t →
+      (-gC0 P + gC1 P * a - a ^ 2 + t - t ^ 2) * Real.log 2 +
+        D.normCap + (1 - a) * D.fieldCap + (a - t) * residual + t * nearCap ≤
+          -target + Real.log 2 / 2 + cost' * a) :
+    SecondTrialBoundsEnd P 0 target residual nearCap cost' G :=
+  D.toEndAt (α1 := 0) (target' := target) cost' (fun _ ha ht => hbud ha ht)
 
 set_option maxHeartbeats 1600000 in
 /-- **`second_energy_end` keeping the dropped squares and field brackets** (the endpoint column

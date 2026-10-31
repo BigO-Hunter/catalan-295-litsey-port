@@ -836,13 +836,20 @@ theorem integral_log_one_sub_polyMeas {qs : List Piece} (hqs : ∀ q ∈ qs, Pie
   exact List.map_congr_left fun q hq => piece_int_log_one_sub (hqs q hq) hc
 
 open CatalanMeasure.Signed.ReflectionEnergy in
+/-- The row field of one nonnegative species family (`rowRef μ = rowRefM μ.P - rowRefM μ.N`). -/
+def rowRefM (μ : Bool → Measure ℝ) (x : ℝ) : ℝ := ∑ τ, ∫ y, Kt (decide (0 < x)) τ |x| y ∂(μ τ)
+
+theorem rowRef_eq_M (μ : SRef) (x : ℝ) : rowRef μ x = rowRefM μ.P x - rowRefM μ.N x := by
+  unfold rowRef rowRefM; rw [Finset.sum_sub_distrib]
+
+open CatalanMeasure.Signed.ReflectionEnergy in
 theorem rowRef_eq (μ : Bool → Measure ℝ) {x : ℝ} (hx : x ≠ 0) :
-    rowRef μ x = -(∫ y, Real.log |y - x| ∂(μ true)) - ∫ y, Real.log |y + x| ∂(μ false) := by
+    rowRefM μ x = -(∫ y, Real.log |y - x| ∂(μ true)) - ∫ y, Real.log |y + x| ∂(μ false) := by
   have kff : ∀ a y : ℝ, Kt false false a y = -Real.log |a - y| := fun a y => by simp [Kt]
   have ktt : ∀ a y : ℝ, Kt true true a y = -Real.log |a - y| := fun a y => by simp [Kt]
   have kft : ∀ a y : ℝ, Kt false true a y = -Real.log (a + y) := fun a y => by simp [Kt]
   have ktf : ∀ a y : ℝ, Kt true false a y = -Real.log (a + y) := fun a y => by simp [Kt]
-  unfold rowRef
+  unfold rowRefM
   rw [Fintype.sum_bool]
   rcases lt_or_gt_of_ne hx with h | h
   · have hs : decide (0 < x) = false := by simpa using h.le
@@ -867,7 +874,7 @@ theorem rowRef_eq (μ : Bool → Measure ℝ) {x : ℝ} (hx : x ≠ 0) :
 theorem rowRef_polyMeas (μ : Bool → Measure ℝ) {qsT qsF : List Piece}
     (hT : ∀ q ∈ qsT, PieceOK q) (hF : ∀ q ∈ qsF, PieceOK q) (hμT : μ true = polyMeas qsT)
     (hμF : μ false = polyMeas qsF) {x : ℝ} (hx : x ≠ 0) :
-    rowRef μ x = -logPot qsT x - logPot qsF (-x) := by
+    rowRefM μ x = -logPot qsT x - logPot qsF (-x) := by
   rw [rowRef_eq μ hx, hμT, hμF, integral_log_polyMeas hT x]
   have : ∫ y, Real.log |y + x| ∂(polyMeas qsF) = ∫ y, Real.log |y - (-x)| ∂(polyMeas qsF) := by
     simp only [sub_neg_eq_add]
@@ -980,15 +987,32 @@ theorem fld_const_mul' {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {c : ℕ → �
   unfold fld
   exact (tsum_congr fun n => by ring).trans h.tsum_eq
 
+/-- Species moments of one nonnegative family (`mpos μ = mposM μ.P - mposM μ.N`). -/
+def mposM (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ := ∫ y, (τ * y) ^ (n + 1) ∂(μ true)
+def mnegM (μ : Bool → Measure ℝ) (τ : ℝ) (n : ℕ) : ℝ :=
+  (-1) ^ (n + 1) * ∫ y, (τ * y) ^ (n + 1) ∂(μ false)
+
+theorem mpos_eq_M (μ : SRef) (τ : ℝ) : mpos μ τ = fun n => mposM μ.P τ n - mposM μ.N τ n := rfl
+
+theorem mneg_eq_M (μ : SRef) (τ : ℝ) : mneg μ τ = fun n => mnegM μ.P τ n - mnegM μ.N τ n := by
+  funext n; unfold mneg mnegM; ring
+
 open CatalanMeasure.Signed.ReflectionEnergy in
-/-- `fld τ (mpos μ τ)` for a polynomial-density positive species. -/
+theorem isGeom_mnegM {μ : Bool → Measure ℝ} {C : ℝ} (h : BD (μ false) C) {τ : ℝ} (hτ : 0 < τ) :
+    IsGeom τ (mnegM μ τ) := by
+  obtain ⟨K, hK⟩ := isGeom_refMoment h hτ
+  exact ⟨K, fun n => by
+    unfold mnegM; rw [abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul]; exact hK n⟩
+
+open CatalanMeasure.Signed.ReflectionEnergy in
+/-- `fld τ (mposM μ τ)` for a polynomial-density positive species. -/
 theorem fld_mpos_poly {μ : Bool → Measure ℝ} {C : ℝ} (hBD : BD (μ true) C) {qs : List Piece}
     (hq : ∀ q ∈ qs, PieceOK q) (hμ : μ true = polyMeas qs) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
-    fld τ (mpos μ τ) x = dilPot qs (τ ^ 2 * x) := by
+    fld τ (mposM μ τ) x = dilPot qs (τ ^ 2 * x) := by
   have hc : τ ^ 2 * x ≠ 0 := mul_ne_zero (pow_ne_zero 2 hτ.1.ne') hx0
   have := fld_refMoment hBD hτ hx
-  unfold mpos
+  unfold mposM
   rw [this, hμ, integral_log_one_sub_polyMeas hq hc]
   rfl
 
@@ -997,11 +1021,11 @@ open CatalanMeasure.Signed.ReflectionEnergy in
 theorem fld_mneg_poly {μ : Bool → Measure ℝ} {C : ℝ} (hBD : BD (μ false) C) {qs : List Piece}
     (hq : ∀ q ∈ qs, PieceOK q) (hμ : μ false = polyMeas qs) {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
     {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
-    fld τ (mneg μ τ) x = dilPot qs (τ ^ 2 * (-x)) := by
+    fld τ (mnegM μ τ) x = dilPot qs (τ ^ 2 * (-x)) := by
   have hc : τ ^ 2 * (-x) ≠ 0 := mul_ne_zero (pow_ne_zero 2 hτ.1.ne') (neg_ne_zero.mpr hx0)
   have hx' : |-x| ≤ 1 := by rwa [abs_neg]
-  have h1 : fld τ (mneg μ τ) x = fld τ (fun n : ℕ => ∫ y, (τ * y) ^ (n + 1) ∂(μ false)) (-x) := by
-    unfold fld mneg
+  have h1 : fld τ (mnegM μ τ) x = fld τ (fun n : ℕ => ∫ y, (τ * y) ^ (n + 1) ∂(μ false)) (-x) := by
+    unfold fld mnegM
     refine tsum_congr fun n => ?_
     have : (τ * x) ^ (n + 1) * ((-1 : ℝ) ^ (n + 1) * ∫ y, (τ * y) ^ (n + 1) ∂(μ false)) =
         (τ * -x) ^ (n + 1) * ∫ y, (τ * y) ^ (n + 1) ∂(μ false) := by ring
@@ -1023,6 +1047,9 @@ structure TrialForm where
   Sup : ℝ
   qT : List Piece
   qF : List Piece
+  /-- The pieces of the negative part `N` of the signed reference `P - N` (`P` has `qT`, `qF`). -/
+  qTn : List Piece
+  qFn : List Piece
 
 /-- `D` is the instance described by `F`. -/
 structure TrialForm.Spec (F : TrialForm) (D : SignedData) : Prop where
@@ -1046,11 +1073,24 @@ structure TrialForm.Spec (F : TrialForm) (D : SignedData) : Prop where
   hRgT : IsGeom D.τ (gseq F.R.tail)
   hSup : D.Sup = F.Sup
   ht : D.t = mneg D.μ D.τ
-  hμT : D.μ true = polyMeas F.qT
-  hμF : D.μ false = polyMeas F.qF
+  hμT : D.μ.P true = polyMeas F.qT
+  hμF : D.μ.P false = polyMeas F.qF
+  hμTn : D.μ.N true = polyMeas F.qTn
+  hμFn : D.μ.N false = polyMeas F.qFn
   pT : ∀ q ∈ F.qT, PieceOK q
   pF : ∀ q ∈ F.qF, PieceOK q
-  bd : ∀ b, CatalanMeasure.Signed.ReflectionEnergy.BD (D.μ b) D.Cb
+  pTn : ∀ q ∈ F.qTn, PieceOK q
+  pFn : ∀ q ∈ F.qFn, PieceOK q
+  /-- `N` lives on `(0, 1/8]` (its positive-species dilated potential is then uniformly Lipschitz). -/
+  hTn : ∀ q ∈ F.qTn, q.hi ≤ 1 / 8
+  bd : D.μ.OK D.Cb
+
+/-- The reference row of the signed reference `P - N` in closed form. -/
+def TrialForm.refRow (F : TrialForm) (x : ℝ) : ℝ := refRowForm F.qT F.qF x - refRowForm F.qTn F.qFn x
+/-- The dilated potential of the positive species of `P - N`. -/
+def TrialForm.dilT (F : TrialForm) (c : ℝ) : ℝ := dilPot F.qT c - dilPot F.qTn c
+/-- The dilated potential of the negative species of `P - N`. -/
+def TrialForm.dilF (F : TrialForm) (c : ℝ) : ℝ := dilPot F.qF c - dilPot F.qFn c
 
 namespace TrialForm
 
@@ -1092,14 +1132,16 @@ theorem fld_R (h : F.Spec D) {x : ℝ} (hx : |x| ≤ 1) :
   rfl
 
 theorem rowRef_mu (h : F.Spec D) {x : ℝ} (hx : x ≠ 0) :
-    rowRef D.μ x = refRowForm F.qT F.qF x :=
-  rowRef_polyMeas D.μ h.pT h.pF h.hμT h.hμF hx
+    rowRef D.μ x = F.refRow x := by
+  unfold TrialForm.refRow refRowForm
+  rw [rowRef_eq_M, rowRef_polyMeas D.μ.P h.pT h.pF h.hμT h.hμF hx,
+    rowRef_polyMeas D.μ.N h.pTn h.pFn h.hμTn h.hμFn hx]
 
 theorem isGeom_mneg' (h : F.Spec D) : IsGeom D.τ (mneg D.μ D.τ) :=
-  isGeom_mneg (h.bd false) h.hτ.1
+  isGeom_mneg h.bd h.hτ.1
 
 theorem isGeom_mpos' (h : F.Spec D) : IsGeom D.τ (mpos D.μ D.τ) :=
-  isGeom_refMoment (h.bd true) h.hτ.1
+  isGeom_mpos h.bd h.hτ.1
 
 theorem isGeom_t (h : F.Spec D) : IsGeom D.τ D.t := by
   rw [h.ht]; exact isGeom_mneg' h
@@ -1114,8 +1156,12 @@ theorem phConst_eq_zero (h : F.Spec D) : D.phConst = 0 := by
 
 /-- With the certificate's tilt `t = mneg μ`: `fld τ t = dilPot qF (τ²(-x))`. -/
 theorem fld_t (h : F.Spec D) {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
-    fld D.τ D.t x = dilPot F.qF (D.τ ^ 2 * (-x)) := by
-  rw [h.ht]; exact fld_mneg_poly (h.bd false) h.pF h.hμF h.hτ hx hx0
+    fld D.τ D.t x = F.dilF (D.τ ^ 2 * (-x)) := by
+  unfold TrialForm.dilF
+  rw [h.ht, mneg_eq_M, fld_sub' h.hτ (isGeom_mnegM (h.bd.hP false) h.hτ.1)
+      (isGeom_mnegM (h.bd.hN false) h.hτ.1) hx,
+    fld_mneg_poly (h.bd.hP false) h.pF h.hμF h.hτ hx hx0,
+    fld_mneg_poly (h.bd.hN false) h.pFn h.hμFn h.hτ hx hx0]
 
 /-- The negative-row tangent series in closed form: with `t = mneg μ` the species part cancels,
 `fld τ (κ (mneg μ - t) - R) = - geo R`. -/
@@ -1128,14 +1174,18 @@ theorem fld_neg (h : F.Spec D) (κ : ℝ) {x : ℝ} (hx : |x| ≤ 1) :
 /-- The positive-row tangent series in closed form. -/
 theorem fld_pos (h : F.Spec D) {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
     fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x =
-      dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x := by
-  rw [fld_add' h.hτ (isGeom_mpos' h) h.hRg hx,
-    fld_mpos_poly (h.bd true) h.pT h.hμT h.hτ hx hx0, fld_R h hx]
+      F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x := by
+  unfold TrialForm.dilT
+  rw [fld_add' h.hτ (isGeom_mpos' h) h.hRg hx, mpos_eq_M,
+    fld_sub' (c := mposM D.μ.P D.τ) (d := mposM D.μ.N D.τ) h.hτ
+      (isGeom_refMoment (h.bd.hP true) h.hτ.1) (isGeom_refMoment (h.bd.hN true) h.hτ.1) hx,
+    fld_mpos_poly (h.bd.hP true) h.pT h.hμT h.hτ hx hx0,
+    fld_mpos_poly (h.bd.hN true) h.pTn h.hμTn h.hτ hx hx0, fld_R h hx]
 
 /-- The near-row tangent series in closed form (the arcsine block kept as the series). -/
 theorem fld_near (h : F.Spec D) (β : ℝ) {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
     fld D.τ (fun n => D.R n - D.t n + β / 2 * arcNeg D.τ n) x =
-      rForm D.τ F.R x - dilPot F.qF (D.τ ^ 2 * (-x)) +
+      rForm D.τ F.R x - F.dilF (D.τ ^ 2 * (-x)) +
         (1 / 2) * fld D.τ (fun n => β * arcNeg D.τ n) x := by
   have g1 : IsGeom D.τ (fun n => D.R n - D.t n) := h.hRg.sub (isGeom_t h)
   have g2 : IsGeom D.τ (fun n => β / 2 * arcNeg D.τ n) := (isGeom_arcNeg h.hτ).const_mul _
@@ -1165,7 +1215,7 @@ theorem fNeg_closed (h : F.Spec D) {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 0) :
     D.fNeg x =
       D.Rf x - F.v.Sform x - Real.log (1 - x) / (2 * D.ν) +
         ((1 - F.η) / D.ν) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
         (1 / (2 * D.ν)) * Real.log (1 - (D.τ * x) * (D.τ * x)) - 2 * F.a.Sform (-D.τ * x) +
         (-rForm D.τ F.R x) := by
   have hx1 : |x| ≤ 1 := abs_le_one_of_mem_Ioo le_rfl (by norm_num) hx
@@ -1178,9 +1228,9 @@ theorem fPos_closed (h : F.Spec D) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fPos x =
       D.Rf x - F.v.Sform x - Real.log (1 - x) / (2 * D.ν) +
         ((1 - F.η) / D.ν) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
         2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup := by
+        (F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup := by
   have hx1 : |x| ≤ 1 := abs_le_one_of_mem_Ioo (by norm_num) le_rfl hx
   have hx0 : x ≠ 0 := hx.1.ne'
   unfold SignedData.fPos SignedData.rowBase
@@ -1192,9 +1242,9 @@ theorem fPosS_closed (h : F.Spec D) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fPosS x =
       D.Rf x - F.v.Sform x - Real.log (1 - x) / (2 * D.ν) +
         ((1 - F.η) / D.ν) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
         2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
+        (F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
         D.cs * (if 1 - D.θ < x then 1 else 0) := by
   unfold SignedData.fPosS
   rw [fPos_closed h hx]
@@ -1211,7 +1261,7 @@ theorem fCol_closed (h : F.Spec D) {s : ℝ} (hs : s ∈ Ioo (0 : ℝ) 1) :
 theorem fNegM_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Ioo (-1 : ℝ) 0) :
     D.fNegM Rm x =
       Rm x + ((1 - F.η) / (4 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x -
+        (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x -
         (1 / (2 * D.ν)) * Real.log (1 - (D.τ * x) * (D.τ * x)) - 2 * F.a.Sform (-D.τ * x) +
         (-rForm D.τ F.R x) := by
   have hx1 : |x| ≤ 1 := abs_le_one_of_mem_Ioo le_rfl (by norm_num) hx
@@ -1223,9 +1273,9 @@ theorem fNegM_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Ioo
 theorem fPosM_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fPosM Rm x =
       Rm x + ((1 - F.η) / (4 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x +
+        (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x +
         2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup := by
+        (F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup := by
   have hx1 : |x| ≤ 1 := abs_le_one_of_mem_Ioo (by norm_num) le_rfl hx
   have hx0 : x ≠ 0 := hx.1.ne'
   unfold SignedData.fPosM SignedData.rowBaseM
@@ -1235,9 +1285,9 @@ theorem fPosM_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Ioo
 theorem fPosMS_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fPosMS Rm x =
       Rm x + ((1 - F.η) / (4 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x +
+        (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x +
         2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
+        (F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
         D.cs * (if 1 - D.θ < x then 1 else 0) := by
   unfold SignedData.fPosMS
   rw [fPosM_closed h Rm hx]
@@ -1246,9 +1296,9 @@ theorem fPosMS_closed (h : F.Spec D) (Rm : ℝ → ℝ) {x : ℝ} (hx : x ∈ Io
 theorem fPosMR_closed (h : F.Spec D) (Rm : ℝ → ℝ) (rc α : ℝ) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fPosMR Rm rc α x =
       Rm x + ((1 - F.η) / (4 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) -
-        (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x +
+        (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x +
         2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (dilPot F.qT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
+        (F.dilT (D.τ ^ 2 * x) + rForm D.τ F.R x) + 2 * F.Sup +
         D.cs * (if 1 - D.θ < x then 1 else 0) + rc * α * (-Real.log (1 - x ^ 2)) := by
   unfold SignedData.fPosMR
   rw [fPosMS_closed h Rm hx]
@@ -1258,7 +1308,7 @@ theorem fPosMR_closed (h : F.Spec D) (Rm : ℝ → ℝ) (rc α : ℝ) {x : ℝ} 
 theorem fNearM_closed (h : F.Spec D) (Rn : ℝ → ℝ) (α β : ℝ) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fNearM Rn α β x =
       Rn x + 2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (rForm D.τ F.R x - dilPot F.qF (D.τ ^ 2 * (-x)) +
+        (rForm D.τ F.R x - F.dilF (D.τ ^ 2 * (-x)) +
           (1 / 2) * fld D.τ (fun n => β * arcNeg D.τ n) x) +
         (α / 2) * Real.log (1 + x) +
         (β / (4 * (1 - F.η)) + 1 / (2 * D.ν)) * (-Real.log (1 - x ^ 2)) +
@@ -1280,7 +1330,7 @@ variable {F : TrialForm} {D : SignedData}
 theorem fNearMS_closed (h : F.Spec D) (Rn : ℝ → ℝ) (α β : ℝ) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fNearMS Rn α β x =
       Rn x + 2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (rForm D.τ F.R x - dilPot F.qF (D.τ ^ 2 * (-x)) +
+        (rForm D.τ F.R x - F.dilF (D.τ ^ 2 * (-x)) +
           (1 / 2) * fld D.τ (fun n => β * arcNeg D.τ n) x) +
         (α / 2) * Real.log (1 + x) +
         (β / (4 * (1 - F.η)) + 1 / (2 * D.ν)) * (-Real.log (1 - x ^ 2)) +
@@ -1587,7 +1637,7 @@ theorem TrialForm.fNearM_le_noarc {F : TrialForm} {D : SignedData} (h : F.Spec D
     (Rn : ℝ → ℝ) (α β : ℝ) (hβ : 0 ≤ β) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     D.fNearM Rn α β x ≤
       Rn x + 2 * F.a.Sform (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-        (rForm D.τ F.R x - dilPot F.qF (D.τ ^ 2 * (-x))) +
+        (rForm D.τ F.R x - F.dilF (D.τ ^ 2 * (-x))) +
         (α / 2) * Real.log (1 + x) +
         (β / (4 * (1 - F.η)) + 1 / (2 * D.ν)) * (-Real.log (1 - x ^ 2)) +
         ((1 - F.η) / (4 * D.ν)) * Real.log (1 / (1 - D.τ ^ 2)) + Real.log (1 / D.τ ^ 2) +
@@ -1830,6 +1880,60 @@ theorem dilPot_sub_le {qs : List Piece} (hqs : ∀ q ∈ qs, PieceOK q) {C : ℝ
   rw [Real.norm_eq_abs, h3] at h2
   linarith
 
+theorem polyMeas_ae_le {qs : List Piece} {b : ℝ} (hb : ∀ q ∈ qs, q.hi ≤ b) :
+    ∀ᵐ y ∂(polyMeas qs), y ≤ b := by
+  induction qs with
+  | nil => simp [polyMeas]
+  | cons q qs ih =>
+    have hq : ∀ᵐ y ∂q.meas, y ≤ b := by
+      have h1 : ∀ᵐ y ∂(volume.restrict (Ioc q.lo q.hi)), y ≤ b := by
+        filter_upwards [ae_restrict_mem measurableSet_Ioc] with y hy
+        exact hy.2.trans (hb q (by simp))
+      exact (withDensity_absolutelyContinuous _ _).ae_le h1
+    have e : polyMeas (q :: qs) = q.meas + polyMeas qs := by simp [polyMeas]
+    rw [e, ae_add_measure_iff]
+    exact ⟨hq, ih fun r hr => hb r (by simp [hr])⟩
+
+open CatalanMeasure.Signed.ReflectionEnergy in
+/-- **Dilated potentials of a measure supported on `(0, b]`, `b < 1`**: for `0 < c, c' ≤ 1`,
+`|dilPot qs c - dilPot qs c'| ≤ m(ℝ) |c - c'|/(1 - b)`. -/
+theorem dilPot_sub_le_supp {qs : List Piece} (hqs : ∀ q ∈ qs, PieceOK q) {C : ℝ}
+    (hBD : BD (polyMeas qs) C) {b : ℝ} (hsupp : ∀ᵐ y ∂(polyMeas qs), y ≤ b) (hb : b < 1)
+    {c c' : ℝ} (hc : 0 < c) (hc1 : c ≤ 1) (hc' : 0 < c') (hc'1 : c' ≤ 1) :
+    |dilPot qs c - dilPot qs c'| ≤ polyMass qs * (|c - c'| / (1 - b)) := by
+  have := hBD.finite
+  have e : ∀ d : ℝ, d ≠ 0 → dilPot qs d = -∫ y, Real.log (1 - d * y) ∂(polyMeas qs) := by
+    intro d hd
+    rw [integral_log_one_sub_polyMeas hqs hd]; rfl
+  rw [e c hc.ne', e c' hc'.ne']
+  have hI := integrable_log_one_sub_polyMeas hqs hc.ne'
+  have hI' := integrable_log_one_sub_polyMeas hqs hc'.ne'
+  have h1 : -∫ y, Real.log (1 - c * y) ∂(polyMeas qs) - -∫ y, Real.log (1 - c' * y) ∂(polyMeas qs)
+      = ∫ y, (Real.log (1 - c' * y) - Real.log (1 - c * y)) ∂(polyMeas qs) := by
+    rw [integral_sub hI' hI]; ring
+  rw [h1]
+  have hb' : ∀ᵐ y ∂(polyMeas qs), ‖Real.log (1 - c' * y) - Real.log (1 - c * y)‖ ≤
+      |c - c'| / (1 - b) := by
+    filter_upwards [hBD.ae_mem, hsupp] with y hy hyb
+    have hy1 : y ≤ 1 := hy.2.le
+    have hy0 : 0 ≤ y := hy.1.le
+    have hs : 1 - b ≤ 1 - c * y := by nlinarith [mul_le_mul_of_nonneg_right hc1 hy0]
+    have hs' : 1 - b ≤ 1 - c' * y := by nlinarith [mul_le_mul_of_nonneg_right hc'1 hy0]
+    rw [Real.norm_eq_abs]
+    refine (abs_log_sub_le (by linarith) hs' hs).trans ?_
+    rw [div_le_div_iff_of_pos_right (by linarith)]
+    have : (1 - c' * y) - (1 - c * y) = (c - c') * y := by ring
+    rw [this, abs_mul, abs_of_nonneg hy0]
+    calc |c - c'| * y ≤ |c - c'| * 1 := by gcongr
+      _ = |c - c'| := mul_one _
+  have h2 := norm_integral_le_of_norm_le_const hb'
+  have h3 : (polyMeas qs).real univ = polyMass qs := by
+    have := integral_const_polyMeas hqs
+    rw [integral_const, smul_eq_mul, mul_one] at this
+    exact this
+  rw [Real.norm_eq_abs, h3] at h2
+  linarith
+
 /-- The explicit logarithmic terms of a free row field (`-log(1-x)/(2ν)`, the diagonal cost
 `(κ/ν)(-log|x| + c0)` of the `(1 - η)`-share, `κ = 1 - η`, and `-(1/2ν) log(1-τ²x²)`), vanishing
 like `1/ν` and `c0/ν`. -/
@@ -2023,7 +2127,7 @@ theorem rForm_sub_rLim_le {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {d : SeqForm
 `lfarb2.Trial.mu_parts(-1)` per unit mass (`Crow, SPv, Umn/Ump/Usn` at weight `2(1-η)`, `Cheb/TPu`
 at `-4η`, `Pow, PoleLog`; NOTES-ETA §1.5). -/
 def fNegLim (F : TrialForm) (RfL : ℝ → ℝ) (x : ℝ) : ℝ :=
-  RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+  RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
     2 * F.a.Sform (-x) + (-rLim F.R x)
 
 /-- The error bound `B_N` of the uniform limit (everything except the `Rf` difference). -/
@@ -2108,11 +2212,11 @@ theorem fNeg_unif {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {a 
   have u5 := abs_le.mp eR'
   have key : (D N).Rf x - F.v.Sform x - Real.log (1 - x) / (2 * (D N).ν) +
         ((1 - F.η) / (D N).ν) * (-Real.log |x| + Real.log (1 / (1 - (D N).τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
         (1 / (2 * (D N).ν)) * Real.log (1 - ((D N).τ * x) * ((D N).τ * x)) -
         2 * F.a.Sform (-(D N).τ * x) +
         (-rForm (D N).τ F.R x) -
-      (RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+      (RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
         2 * F.a.Sform (-x) + (-rLim F.R x)) =
       ((D N).Rf x - RfL x) +
         rowLogs (D N).ν (D N).τ (Real.log (1 / (1 - (D N).τ ^ 2))) (1 - F.η) x -
@@ -2186,13 +2290,13 @@ theorem abs_denPoly_le (b : ℕ → ℝ) (K : ℕ) {x : ℝ} (hx : |x| ≤ 1) :
 /-- The generator's limit form of the positive-row field with spike cost; `σ = lim sp/ν`,
 `cs∞ = lim cs`, and `denPoly bL KL` is the (N-independent) denominator polynomial. -/
 def fPosLim (F : TrialForm) (RfL : ℝ → ℝ) (σ : ℝ) (bL : ℕ → ℝ) (KL : ℕ) (csL θL : ℝ) (x : ℝ) : ℝ :=
-  RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
-    2 * F.a.Sform (-x) - σ * denPoly bL KL x + (dilPot F.qT x + rLim F.R x) + 2 * F.Sup +
+  RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
+    2 * F.a.Sform (-x) - σ * denPoly bL KL x + (F.dilT x + rLim F.R x) + 2 * F.Sup +
     csL * (if 1 - θL < x then 1 else 0)
 
 /-- The error bound of the positive-row limit (everything except the `Rf` difference). -/
 def limBoundP (F : TrialForm) (S J Db ν τ c0 ρ sν σ cs csL : ℝ) : ℝ :=
-  2 * J / ν + c0 / ν + 2 * (S * (1 - τ)) + polyMass F.qT * ((1 - τ ^ 2) * ρ / (1 - ρ)) +
+  2 * J / ν + c0 / ν + 2 * (S * (1 - τ)) + (polyMass F.qT + polyMass F.qTn) * ((1 - τ ^ 2) * ρ / (1 - ρ)) +
     rW F.R * ((1 - τ) * ρ / (1 - ρ)) + Db * |sν - σ| +
     |cs - csL|
 
@@ -2230,7 +2334,7 @@ theorem fPosS_unif {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {a
       simpa using this
     have h7 : Tendsto (fun N => |(D N).cs - csL|) atTop (𝓝 0) := by
       simpa using (hcs.sub_const csL).abs
-    have t := ((((((h3.add hf.hℓ).add h5).add (tend_aux h2 (polyMass F.qT) ρ)).add
+    have t := ((((((h3.add hf.hℓ).add h5).add (tend_aux h2 (polyMass F.qT + polyMass F.qTn) ρ)).add
       (tend_aux h1 (rW F.R) ρ)).add h6).add h7)
     simpa [limBoundP] using t
   have hB : ∀ᶠ N in atTop, limBoundP F S J Db (D N).ν (D N).τ
@@ -2262,21 +2366,33 @@ theorem fPosS_unif {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {a
     have : -(D N).τ * x - -x = (1 - (D N).τ) * x := by ring
     rw [this, abs_mul, abs_of_pos (by linarith [hτN.2] : 0 < 1 - (D N).τ)]
     nlinarith [hτN.2, abs_nonneg x]
-  have eDil : |dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x| ≤
-      polyMass F.qT * ((1 - (D N).τ ^ 2) * ρ / (1 - ρ)) := by
+  have eDil : |F.dilT ((D N).τ ^ 2 * x) - F.dilT x| ≤
+      (polyMass F.qT + polyMass F.qTn) * ((1 - (D N).τ ^ 2) * ρ / (1 - ρ)) := by
     have hBD : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qT) (D N).Cb := by
-      have := hs.bd true; rwa [hs.hμT] at this
+      have := hs.bd.hP true; rwa [hs.hμT] at this
+    have hBDn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qTn) (D N).Cb := by
+      have := hs.bd.hN true; rwa [hs.hμTn] at this
     have hxn : 0 < x := hxI.1
     have hτ2 : (D N).τ ^ 2 ≤ 1 := by nlinarith [hτN.1, hτN.2]
-    have := dilPot_sub_le hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x) (ρ := ρ)
-      (mul_pos (pow_pos hτN.1 2) hxn) (by nlinarith [pow_pos hτN.1 2, hx.2])
-      hxn hx.2 hρ
-    refine this.trans ?_
-    refine mul_le_mul_of_nonneg_left ?_ (polyMass_nonneg hs.pT)
-    rw [div_le_div_iff_of_pos_right (by linarith)]
-    have e : (D N).τ ^ 2 * x - x = -((1 - (D N).τ ^ 2) * x) := by ring
-    rw [e, abs_neg, abs_mul, abs_of_nonneg (by linarith : 0 ≤ 1 - (D N).τ ^ 2)]
-    exact mul_le_mul_of_nonneg_left hxa (by linarith)
+    have hd : |(D N).τ ^ 2 * x - x| / (1 - ρ) ≤ (1 - (D N).τ ^ 2) * ρ / (1 - ρ) := by
+      rw [div_le_div_iff_of_pos_right (by linarith)]
+      have e : (D N).τ ^ 2 * x - x = -((1 - (D N).τ ^ 2) * x) := by ring
+      rw [e, abs_neg, abs_mul, abs_of_nonneg (by linarith : 0 ≤ 1 - (D N).τ ^ 2)]
+      exact mul_le_mul_of_nonneg_left hxa (by linarith)
+    have h1 := dilPot_sub_le hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x) (ρ := ρ)
+      (mul_pos (pow_pos hτN.1 2) hxn) (by nlinarith [pow_pos hτN.1 2, hx.2]) hxn hx.2 hρ
+    have h2 := dilPot_sub_le hs.pTn hBDn (c := (D N).τ ^ 2 * x) (c' := x) (ρ := ρ)
+      (mul_pos (pow_pos hτN.1 2) hxn) (by nlinarith [pow_pos hτN.1 2, hx.2]) hxn hx.2 hρ
+    have m1 := mul_le_mul_of_nonneg_left hd (polyMass_nonneg hs.pT)
+    have m2 := mul_le_mul_of_nonneg_left hd (polyMass_nonneg hs.pTn)
+    unfold TrialForm.dilT
+    have e2 : dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qTn ((D N).τ ^ 2 * x) -
+        (dilPot F.qT x - dilPot F.qTn x) =
+        (dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x) -
+          (dilPot F.qTn ((D N).τ ^ 2 * x) - dilPot F.qTn x) := by ring
+    rw [e2]
+    refine (abs_sub _ _).trans ?_
+    nlinarith [h1, h2, m1, m2]
   have eR := rForm_sub_rLim_le hs.hτ hs.hRf hs.hRok hxa hρ
   have eR' : |rForm (D N).τ F.R x - rLim F.R x| ≤
       rW F.R * ((1 - (D N).τ) * ρ / (1 - ρ)) := eR
@@ -2297,17 +2413,17 @@ theorem fPosS_unif {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {a
   have u7 := abs_le.mp eCs
   have key : (D N).Rf x - F.v.Sform x - Real.log (1 - x) / (2 * (D N).ν) +
         ((1 - F.η) / (D N).ν) * (-Real.log |x| + Real.log (1 / (1 - (D N).τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
         2 * F.a.Sform (-(D N).τ * x) - ((D N).sp : ℝ) / (D N).ν * denPoly bL KL x +
-        (dilPot F.qT ((D N).τ ^ 2 * x) + rForm (D N).τ F.R x) + 2 * F.Sup +
+        (F.dilT ((D N).τ ^ 2 * x) + rForm (D N).τ F.R x) + 2 * F.Sup +
         (D N).cs * (if 1 - θL < x then 1 else 0) -
-      (RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
-        2 * F.a.Sform (-x) - σ * denPoly bL KL x + (dilPot F.qT x + rLim F.R x) + 2 * F.Sup +
+      (RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
+        2 * F.a.Sform (-x) - σ * denPoly bL KL x + (F.dilT x + rLim F.R x) + 2 * F.Sup +
         csL * (if 1 - θL < x then 1 else 0)) =
       ((D N).Rf x - RfL x) + rowLogsP (D N).ν (Real.log (1 / (1 - (D N).τ ^ 2))) (1 - F.η) x +
         2 * (F.a.Sform (-(D N).τ * x) - F.a.Sform (-x)) -
         (((D N).sp : ℝ) / (D N).ν - σ) * denPoly bL KL x +
-        (dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x) +
+        (F.dilT ((D N).τ ^ 2 * x) - F.dilT x) +
         (rForm (D N).τ F.R x - rLim F.R x) +
         ((D N).cs - csL) * (if 1 - θL < x then 1 else 0) := by
     unfold rowLogsP; ring
@@ -2632,11 +2748,11 @@ theorem fNeg_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {
   have u5 := abs_le.mp eR
   have key : (D N).Rf x - F.v.Sform x - Real.log (1 - x) / (2 * (D N).ν) +
         ((1 - F.η) / (D N).ν) * (-Real.log |x| + Real.log (1 / (1 - (D N).τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
         (1 / (2 * (D N).ν)) * Real.log (1 - ((D N).τ * x) * ((D N).τ * x)) -
         2 * F.a.Sform (-(D N).τ * x) +
         (-rForm (D N).τ F.R x) -
-      (RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x -
+      (RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x -
         2 * F.a.Sform (-x) + (-rLim F.R x)) =
       ((D N).Rf x - RfL x) +
         rowLogs (D N).ν (D N).τ (Real.log (1 / (1 - (D N).τ ^ 2))) (1 - F.η) x -
@@ -2722,7 +2838,13 @@ theorem fPosS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) 
   set CR : ℝ := rW F.R with hCR
   have hBt : Tendsto (fun N => Real.log (1 / (1 - (D N).τ ^ 2)) / (D N).ν + 2 * (S * (1 - (D N).τ)) +
       CR * ((1 - (D N).τ) / (1 - ω)) + Db * |((D N).sp : ℝ) / (D N).ν - σ| +
-      |(D N).cs - csL|) atTop (𝓝 0) := by
+      |(D N).cs - csL| + polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8))) atTop (𝓝 0) := by
+    have h9n : Tendsto (fun N => polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8))) atTop
+        (𝓝 0) := by
+      have hτ2 : Tendsto (fun N => 1 - (D N).τ ^ 2) atTop (𝓝 0) := by
+        simpa using (tendsto_const_nhds (x := (1 : ℝ))).sub (hf.hτ.pow 2)
+      simpa using (hτ2.div_const (1 - 1 / 8)).const_mul (polyMass F.qTn)
+
     have h1 : Tendsto (fun N => 1 - (D N).τ) atTop (𝓝 0) := by
       simpa using (tendsto_const_nhds (x := (1 : ℝ))).sub hf.hτ
     have h5 : Tendsto (fun N => 2 * (S * (1 - (D N).τ))) atTop (𝓝 0) := by
@@ -2733,10 +2855,11 @@ theorem fPosS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) 
       simpa using (hcs.sub_const csL).abs
     have h8 : Tendsto (fun N => CR * ((1 - (D N).τ) / (1 - ω))) atTop (𝓝 0) := by
       simpa using (h1.div_const (1 - ω)).const_mul CR
-    simpa using ((((hf.hℓ.add h5).add h8).add h6).add h7)
+    simpa using (((((hf.hℓ.add h5).add h8).add h6).add h7).add h9n)
   have hB : ∀ᶠ N in atTop, Real.log (1 / (1 - (D N).τ ^ 2)) / (D N).ν + 2 * (S * (1 - (D N).τ)) +
       CR * ((1 - (D N).τ) / (1 - ω)) + Db * |((D N).sp : ℝ) / (D N).ν - σ| +
-      |(D N).cs - csL| ≤ ε / 2 := hBt.eventually (ge_mem_nhds (by linarith))
+      |(D N).cs - csL| + polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8)) ≤ ε / 2 :=
+    hBt.eventually (ge_mem_nhds (by linarith))
   have hνpos : ∀ᶠ N in atTop, 0 < (D N).ν := hf.hν.eventually_gt_atTop 0
   filter_upwards [hRf (ε / 2) (by linarith), hB, hνpos] with N hRfN hBN hνN x hxI
   have hs := hf.spec N
@@ -2757,13 +2880,28 @@ theorem fPosS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) 
     have : -(D N).τ * x - -x = (1 - (D N).τ) * x := by ring
     rw [this, abs_mul, abs_of_pos (by linarith [hτN.2] : 0 < 1 - (D N).τ)]
     nlinarith [hτN.2, abs_nonneg x]
-  have eDil : dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x ≤ 0 := by
+  have eDil : F.dilT ((D N).τ ^ 2 * x) - F.dilT x ≤
+      polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8)) := by
     have hBD : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qT) (D N).Cb := by
-      have := hs.bd true; rwa [hs.hμT] at this
-    have := dilPot_mono hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x)
+      have := hs.bd.hP true; rwa [hs.hμT] at this
+    have hBDn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qTn) (D N).Cb := by
+      have := hs.bd.hN true; rwa [hs.hμTn] at this
+    have h1 := dilPot_mono hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x)
       (mul_pos (pow_pos hτN.1 2) hxI.1)
       (mul_le_of_le_one_left hxI.1.le (by nlinarith [hτN.1, hτN.2])) hxI.2
-    linarith
+    have h2 := dilPot_sub_le_supp hs.pTn hBDn (polyMeas_ae_le hs.hTn)
+      (by norm_num : (1 / 8 : ℝ) < 1) (c := (D N).τ ^ 2 * x) (c' := x)
+      (mul_pos (pow_pos hτN.1 2) hxI.1) (by nlinarith [hτN.1, hτN.2, hxI.2]) hxI.1 hxI.2.le
+    have h3 : |(D N).τ ^ 2 * x - x| ≤ 1 - (D N).τ ^ 2 := by
+      have e : (D N).τ ^ 2 * x - x = -((1 - (D N).τ ^ 2) * x) := by ring
+      rw [e, abs_neg, abs_mul, abs_of_nonneg (by nlinarith [hτN.1, hτN.2] : 0 ≤ 1 - (D N).τ ^ 2),
+        abs_of_pos hxI.1]
+      exact mul_le_of_le_one_right (by nlinarith [hτN.1, hτN.2]) hxI.2.le
+    have h4 := mul_le_mul_of_nonneg_left
+      (div_le_div_of_nonneg_right h3 (by norm_num : (0 : ℝ) ≤ 1 - 1 / 8)) (polyMass_nonneg hs.pTn)
+    unfold TrialForm.dilT
+    have h5 := abs_le.mp h2
+    nlinarith [h5.1, h5.2, h1, h4]
   have eR := rForm_sub_rLim_le' hs.hτ hs.hRf hs.hRok hωR hω1 hω0 hx1
   have eDen : |(((D N).sp : ℝ) / (D N).ν - σ) * denPoly bL KL x| ≤
       Db * |((D N).sp : ℝ) / (D N).ν - σ| := by
@@ -2779,17 +2917,17 @@ theorem fPosS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) 
   have u7 := abs_le.mp eCs
   have key : (D N).Rf x - F.v.Sform x - Real.log (1 - x) / (2 * (D N).ν) +
         ((1 - F.η) / (D N).ν) * (-Real.log |x| + Real.log (1 / (1 - (D N).τ ^ 2))) -
-        2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
+        2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
         2 * F.a.Sform (-(D N).τ * x) - ((D N).sp : ℝ) / (D N).ν * denPoly bL KL x +
-        (dilPot F.qT ((D N).τ ^ 2 * x) + rForm (D N).τ F.R x) + 2 * F.Sup +
+        (F.dilT ((D N).τ ^ 2 * x) + rForm (D N).τ F.R x) + 2 * F.Sup +
         (D N).cs * (if 1 - θL < x then 1 else 0) -
-      (RfL x - F.v.Sform x - 2 * (1 - F.η) * refRowForm F.qT F.qF x - 4 * F.η * F.p.Tform x +
-        2 * F.a.Sform (-x) - σ * denPoly bL KL x + (dilPot F.qT x + rLim F.R x) + 2 * F.Sup +
+      (RfL x - F.v.Sform x - 2 * (1 - F.η) * F.refRow x - 4 * F.η * F.p.Tform x +
+        2 * F.a.Sform (-x) - σ * denPoly bL KL x + (F.dilT x + rLim F.R x) + 2 * F.Sup +
         csL * (if 1 - θL < x then 1 else 0)) =
       ((D N).Rf x - RfL x) + rowLogsP (D N).ν (Real.log (1 / (1 - (D N).τ ^ 2))) (1 - F.η) x +
         2 * (F.a.Sform (-(D N).τ * x) - F.a.Sform (-x)) -
         (((D N).sp : ℝ) / (D N).ν - σ) * denPoly bL KL x +
-        (dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x) +
+        (F.dilT ((D N).τ ^ 2 * x) - F.dilT x) +
         (rForm (D N).τ F.R x - rLim F.R x) +
         ((D N).cs - csL) * (if 1 - θL < x then 1 else 0) := by
     unfold rowLogsP; ring
@@ -2989,7 +3127,7 @@ theorem fCol_cell_one {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F)
 
 /-- The limit form of the first-kind fixed negative node field. -/
 def fNegMLim (F : TrialForm) (RmL : ℝ → ℝ) (x : ℝ) : ℝ :=
-  RmL x - (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x - 2 * F.a.Sform (-x) +
+  RmL x - (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x - 2 * F.a.Sform (-x) +
     (-rLim F.R x)
 
 /-- **One-sided uniform estimate for `fNegM` on all of `(-1, 0)`.** -/
@@ -3090,8 +3228,8 @@ theorem fNegM_cell_one {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
 /-- The limit form of the first-kind fixed positive node field with spike cost. -/
 def fPosMSLim (F : TrialForm) (RmL : ℝ → ℝ) (σ : ℝ) (bL : ℕ → ℝ) (KL : ℕ) (csL θL : ℝ)
     (x : ℝ) : ℝ :=
-  RmL x - (1 - F.η) * refRowForm F.qT F.qF x - 2 * F.η * F.p.Tform x + 2 * F.a.Sform (-x) -
-    σ * denPoly bL KL x + (dilPot F.qT x + rLim F.R x) + 2 * F.Sup + csL * (if 1 - θL < x then 1 else 0)
+  RmL x - (1 - F.η) * F.refRow x - 2 * F.η * F.p.Tform x + 2 * F.a.Sform (-x) -
+    σ * denPoly bL KL x + (F.dilT x + rLim F.R x) + 2 * F.Sup + csL * (if 1 - θL < x then 1 else 0)
 
 /-- **Cell `(lo, hi) ⊂ (0, 1]` of the fixed positive nodes with spike cost** (SigmaCap's
 `[g*, x_c)` and the top cell `[x_c, 1)`): a limit bound `T` gives `fPosMS (D N) ≤ T + ε`. -/
@@ -3111,7 +3249,14 @@ theorem fPosMS_cell {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {
   set CR : ℝ := rW F.R with hCR
   have hBt : Tendsto (fun N => (|Real.log lo| + Real.log (1 / (1 - (D N).τ ^ 2))) / (2 * (D N).ν) +
       2 * (S * (1 - (D N).τ)) + CR * ((1 - (D N).τ) / (1 - ω)) +
-      Db * |((D N).sp : ℝ) / (D N).ν - σ| + |(D N).cs - csL|) atTop (𝓝 0) := by
+      Db * |((D N).sp : ℝ) / (D N).ν - σ| + |(D N).cs - csL| +
+      polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8))) atTop (𝓝 0) := by
+    have h9n : Tendsto (fun N => polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8))) atTop
+        (𝓝 0) := by
+      have hτ2 : Tendsto (fun N => 1 - (D N).τ ^ 2) atTop (𝓝 0) := by
+        simpa using (tendsto_const_nhds (x := (1 : ℝ))).sub (hf.hτ.pow 2)
+      simpa using (hτ2.div_const (1 - 1 / 8)).const_mul (polyMass F.qTn)
+
     have h1 : Tendsto (fun N => 1 - (D N).τ) atTop (𝓝 0) := by
       simpa using (tendsto_const_nhds (x := (1 : ℝ))).sub hf.hτ
     have h5 : Tendsto (fun N => 2 * (S * (1 - (D N).τ))) atTop (𝓝 0) := by
@@ -3133,10 +3278,11 @@ theorem fPosMS_cell {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {
           (hf.hℓ.const_mul (1 / 2 : ℝ)).congr (fun N => by ring)
         simpa only [mul_zero] using this
       simpa [add_div] using a1.add a2
-    simpa using ((((h9.add h5).add h8).add h6).add h7)
+    simpa using (((((h9.add h5).add h8).add h6).add h7).add h9n)
   have hB : ∀ᶠ N in atTop, (|Real.log lo| + Real.log (1 / (1 - (D N).τ ^ 2))) / (2 * (D N).ν) +
       2 * (S * (1 - (D N).τ)) + CR * ((1 - (D N).τ) / (1 - ω)) +
-      Db * |((D N).sp : ℝ) / (D N).ν - σ| + |(D N).cs - csL| ≤ ε / 2 :=
+      Db * |((D N).sp : ℝ) / (D N).ν - σ| + |(D N).cs - csL| +
+      polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8)) ≤ ε / 2 :=
     hBt.eventually (ge_mem_nhds (by linarith))
   filter_upwards [hRm (ε / 2) (by linarith), hB, hf.hν.eventually_gt_atTop 0] with N hRmN hBN hνN
     x hx
@@ -3147,13 +3293,28 @@ theorem fPosMS_cell {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {
   rw [TrialForm.fPosMS_closed hs (Rm N) hxI, hbL N, hKL N, hθL N]
   have hc0 := c0_nonneg hτN
   have eSa := Sa_block hf N hx1
-  have eDil : dilPot F.qT ((D N).τ ^ 2 * x) - dilPot F.qT x ≤ 0 := by
+  have eDil : F.dilT ((D N).τ ^ 2 * x) - F.dilT x ≤
+      polyMass F.qTn * ((1 - (D N).τ ^ 2) / (1 - 1 / 8)) := by
     have hBD : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qT) (D N).Cb := by
-      have := hs.bd true; rwa [hs.hμT] at this
-    have := dilPot_mono hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x)
+      have := hs.bd.hP true; rwa [hs.hμT] at this
+    have hBDn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qTn) (D N).Cb := by
+      have := hs.bd.hN true; rwa [hs.hμTn] at this
+    have h1 := dilPot_mono hs.pT hBD (c := (D N).τ ^ 2 * x) (c' := x)
       (mul_pos (pow_pos hτN.1 2) hxI.1)
       (mul_le_of_le_one_left hxI.1.le (by nlinarith [hτN.1, hτN.2])) hxI.2
-    linarith
+    have h2 := dilPot_sub_le_supp hs.pTn hBDn (polyMeas_ae_le hs.hTn)
+      (by norm_num : (1 / 8 : ℝ) < 1) (c := (D N).τ ^ 2 * x) (c' := x)
+      (mul_pos (pow_pos hτN.1 2) hxI.1) (by nlinarith [hτN.1, hτN.2, hxI.2]) hxI.1 hxI.2.le
+    have h3 : |(D N).τ ^ 2 * x - x| ≤ 1 - (D N).τ ^ 2 := by
+      have e : (D N).τ ^ 2 * x - x = -((1 - (D N).τ ^ 2) * x) := by ring
+      rw [e, abs_neg, abs_mul, abs_of_nonneg (by nlinarith [hτN.1, hτN.2] : 0 ≤ 1 - (D N).τ ^ 2),
+        abs_of_pos hxI.1]
+      exact mul_le_of_le_one_right (by nlinarith [hτN.1, hτN.2]) hxI.2.le
+    have h4 := mul_le_mul_of_nonneg_left
+      (div_le_div_of_nonneg_right h3 (by norm_num : (0 : ℝ) ≤ 1 - 1 / 8)) (polyMass_nonneg hs.pTn)
+    unfold TrialForm.dilT
+    have h5 := abs_le.mp h2
+    nlinarith [h5.1, h5.2, h1, h4]
   have eR := rForm_sub_rLim_le' hs.hτ hs.hRf hs.hRok hωR hω1 hω0 hx1
   have eDen : |(((D N).sp : ℝ) / (D N).ν - σ) * denPoly bL KL x| ≤
       Db * |((D N).sp : ℝ) / (D N).ν - σ| := by
@@ -3250,7 +3411,7 @@ sign; the cross constant `phConst` vanishes, `phConst_eq_zero`). -/
 def fNearMSLim (F : TrialForm) (RnL : ℝ → ℝ) (α β σ : ℝ) (bL : ℕ → ℝ) (KL : ℕ) (csL θL : ℝ)
     (x : ℝ) : ℝ :=
   RnL x + 2 * F.a.Sform (-x) - σ * denPoly bL KL x +
-    (rLim F.R x - dilPot F.qF (-x)) + (α / 2) * Real.log (1 + x) +
+    (rLim F.R x - F.dilF (-x)) + (α / 2) * Real.log (1 + x) +
     (β / (4 * (1 - F.η))) * (-Real.log (1 - x ^ 2)) +
     remC (1 - 2 * F.η) * β * (2 * Real.log 2) + (F.η + α / 2) * Real.log 2 + 2 * F.Sup +
     csL * (if 1 - θL < x then 1 else 0)
@@ -3281,7 +3442,7 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
   set S : ℝ := ∑' k, |tseq F.a.f F.a.tail k| with hS
   set Db : ℝ := 2 * ∑ i ∈ Finset.range KL, |bL (i + 1)| with hDb
   set CR : ℝ := rW F.R with hCR
-  set M2 : ℝ := polyMass F.qF with hM2
+  set M2 : ℝ := polyMass F.qF + polyMass F.qFn with hM2
   set Bf : ℕ → ℝ := fun N => Real.log (1 / (1 - (D N).τ ^ 2)) / (2 * (D N).ν) +
       Real.log (1 / (D N).τ ^ 2) + 2 * (S * (1 - (D N).τ)) +
       CR * ((1 - (D N).τ) / (1 - ω)) +
@@ -3325,16 +3486,30 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
   have eSa := Sa_block hf N hx1
   have hxn : 0 < x := hxI.1
   have eR := rForm_sub_rLim_le' hs.hτ hs.hRf hs.hRok hωR hω1 hω0 hx1
-  have eDil2 : |dilPot F.qF ((D N).τ ^ 2 * (-x)) - dilPot F.qF (-x)| ≤ M2 * (1 - (D N).τ ^ 2) := by
+  have eDil2 : |F.dilF ((D N).τ ^ 2 * (-x)) - F.dilF (-x)| ≤ M2 * (1 - (D N).τ ^ 2) := by
     have hBD : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qF) (D N).Cb := by
-      have := hs.bd false; rwa [hs.hμF] at this
-    have := dilPot_sub_le_neg hs.pF hBD (c := (D N).τ ^ 2 * (-x)) (c' := -x)
+      have := hs.bd.hP false; rwa [hs.hμF] at this
+    have hBDn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas F.qFn) (D N).Cb := by
+      have := hs.bd.hN false; rwa [hs.hμFn] at this
+    have hd : |(D N).τ ^ 2 * -x - -x| ≤ 1 - (D N).τ ^ 2 := by
+      have e : (D N).τ ^ 2 * -x - -x = (1 - (D N).τ ^ 2) * x := by ring
+      rw [e, abs_mul, abs_of_nonneg (by nlinarith [hτN.1, hτN.2] : 0 ≤ 1 - (D N).τ ^ 2),
+        abs_of_pos hxn]
+      exact mul_le_of_le_one_right (by nlinarith [hτN.1, hτN.2]) hxI.2.le
+    have h1 := dilPot_sub_le_neg hs.pF hBD (c := (D N).τ ^ 2 * (-x)) (c' := -x)
       (by nlinarith [pow_pos hτN.1 2]) (by linarith)
-    refine this.trans (mul_le_mul_of_nonneg_left ?_ (polyMass_nonneg hs.pF))
-    have e : (D N).τ ^ 2 * -x - -x = (1 - (D N).τ ^ 2) * x := by ring
-    rw [e, abs_mul, abs_of_nonneg (by nlinarith [hτN.1, hτN.2] : 0 ≤ 1 - (D N).τ ^ 2),
-      abs_of_pos hxn]
-    exact mul_le_of_le_one_right (by nlinarith [hτN.1, hτN.2]) hxI.2.le
+    have h2 := dilPot_sub_le_neg hs.pFn hBDn (c := (D N).τ ^ 2 * (-x)) (c' := -x)
+      (by nlinarith [pow_pos hτN.1 2]) (by linarith)
+    have m1 := mul_le_mul_of_nonneg_left hd (polyMass_nonneg hs.pF)
+    have m2 := mul_le_mul_of_nonneg_left hd (polyMass_nonneg hs.pFn)
+    unfold TrialForm.dilF
+    have e2 : dilPot F.qF ((D N).τ ^ 2 * -x) - dilPot F.qFn ((D N).τ ^ 2 * -x) -
+        (dilPot F.qF (-x) - dilPot F.qFn (-x)) =
+        (dilPot F.qF ((D N).τ ^ 2 * -x) - dilPot F.qF (-x)) -
+          (dilPot F.qFn ((D N).τ ^ 2 * -x) - dilPot F.qFn (-x)) := by ring
+    rw [e2, hM2]
+    refine (abs_sub _ _).trans ?_
+    nlinarith [h1, h2, m1, m2]
   have eDen : |(((D N).sp : ℝ) / (D N).ν - σ) * denPoly bL KL x| ≤
       Db * |((D N).sp : ℝ) / (D N).ν - σ| := by
     rw [abs_mul, mul_comm]

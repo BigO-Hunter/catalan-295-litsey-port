@@ -71,6 +71,15 @@ theorem mixFam_zero (μA μB : Bool → Measure ℝ) : mixFam 0 μA μB = μA :=
 theorem mixFam_one (μA μB : Bool → Measure ℝ) : mixFam 1 μA μB = μB := by
   funext τ; exact mixM_one _ _
 
+/-- Convex combination of two signed references `P - N` (both parts mixed). -/
+def SRef.mix (l : ℝ) (μA μB : SRef) : SRef := ⟨mixFam l μA.P μB.P, mixFam l μA.N μB.N⟩
+
+theorem SRef.mix_zero (μA μB : SRef) : SRef.mix 0 μA μB = μA := by
+  unfold SRef.mix; rw [mixFam_zero, mixFam_zero]
+
+theorem SRef.mix_one (μA μB : SRef) : SRef.mix 1 μA μB = μB := by
+  unfold SRef.mix; rw [mixFam_one, mixFam_one]
+
 theorem integrable_mixM {l : ℝ} {m n : Measure ℝ} {f : ℝ → ℝ} (hm : Integrable f m)
     (hn : Integrable f n) : Integrable f (mixM l m n) :=
   (hm.smul_measure ENNReal.ofReal_ne_top).add_measure (hn.smul_measure ENNReal.ofReal_ne_top)
@@ -115,6 +124,25 @@ theorem mixM_real_univ {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {m n : Measure 
   simp only [mixM, measureReal_def, Measure.add_apply, Measure.smul_apply, smul_eq_mul]
   rw [ENNReal.toReal_add (by finiteness) (by finiteness), ENNReal.toReal_mul, ENNReal.toReal_mul,
     ENNReal.toReal_ofReal (by linarith), ENNReal.toReal_ofReal hl0]
+
+theorem sum_mixFam_real {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {m n : Bool → Measure ℝ}
+    (hm : ∀ τ, IsFiniteMeasure (m τ)) (hn : ∀ τ, IsFiniteMeasure (n τ)) :
+    ∑ τ, (mixFam l m n τ).real univ =
+      (1 - l) * ∑ τ, (m τ).real univ + l * ∑ τ, (n τ).real univ := by
+  rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl (fun τ _ => mixM_real_univ hl0 hl1)
+
+theorem SRef.OK.mono {μ : SRef} {C C' : ℝ} (h : μ.OK C) (hC : C ≤ C') : μ.OK C' :=
+  ⟨fun τ => BD_mono (h.hP τ) hC, fun τ => BD_mono (h.hN τ) hC, h.hNm⟩
+
+theorem SRef.OK_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef} {C D : ℝ} (hC : 0 ≤ C)
+    (hD : 0 ≤ D) (hA : μA.OK C) (hB : μB.OK D) : (SRef.mix l μA μB).OK ((1 - l) * C + l * D) := by
+  refine ⟨fun τ => BD_mixM hl0 hl1 hC hD (hA.hP τ) (hB.hP τ),
+    fun τ => BD_mixM hl0 hl1 hC hD (hA.hN τ) (hB.hN τ), ?_⟩
+  have e := sum_mixFam_real hl0 hl1 (fun τ => (hA.hN τ).finite) (fun τ => (hB.hN τ).finite)
+  show ∑ τ, (mixFam l μA.N μB.N τ).real univ ≤ 1
+  rw [e]
+  nlinarith [hA.hNm, hB.hNm]
 
 /-! ### 2. Integrability of the kernel sections and of the moments -/
 
@@ -164,26 +192,34 @@ theorem integrable_pow_BD {m : Measure ℝ} {C : ℝ} (h : BD m C) (τ : ℝ) (k
 
 /-! ### 3. Linearity of the reference fields in the measure -/
 
-theorem rowRef_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ} {C D : ℝ}
-    (hA : ∀ τ, BD (μA τ) C) (hB : ∀ τ, BD (μB τ) D) (x : ℝ) :
-    rowRef (mixFam l μA μB) x = (1 - l) * rowRef μA x + l * rowRef μB x := by
-  unfold rowRef mixFam
-  simp_rw [integral_mixM hl0 hl1 (integrable_Kt (hA _) _ _ _) (integrable_Kt (hB _) _ _ _)]
+theorem rowRef_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef} {C D : ℝ}
+    (hA : μA.OK C) (hB : μB.OK D) (x : ℝ) :
+    rowRef (SRef.mix l μA μB) x = (1 - l) * rowRef μA x + l * rowRef μB x := by
+  unfold rowRef SRef.mix mixFam
+  dsimp only
+  simp_rw [integral_mixM hl0 hl1 (integrable_Kt (hA.hP _) _ _ _) (integrable_Kt (hB.hP _) _ _ _),
+    integral_mixM hl0 hl1 (integrable_Kt (hA.hN _) _ _ _) (integrable_Kt (hB.hN _) _ _ _)]
   rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
+  exact Finset.sum_congr rfl (fun τ _ => by ring)
 
-theorem mpos_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ} {C D : ℝ}
-    (hA : BD (μA true) C) (hB : BD (μB true) D) (τ : ℝ) :
-    mpos (mixFam l μA μB) τ = linSeq l (mpos μA τ) (mpos μB τ) := by
+theorem mpos_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef} {C D : ℝ}
+    (hA : μA.OK C) (hB : μB.OK D) (τ : ℝ) :
+    mpos (SRef.mix l μA μB) τ = linSeq l (mpos μA τ) (mpos μB τ) := by
   funext n
-  unfold mpos mixFam linSeq
-  exact integral_mixM hl0 hl1 (integrable_pow_BD hA τ _) (integrable_pow_BD hB τ _)
+  unfold mpos SRef.mix mixFam linSeq
+  dsimp only
+  rw [integral_mixM hl0 hl1 (integrable_pow_BD (hA.hP true) τ _) (integrable_pow_BD (hB.hP true) τ _),
+    integral_mixM hl0 hl1 (integrable_pow_BD (hA.hN true) τ _) (integrable_pow_BD (hB.hN true) τ _)]
+  ring
 
-theorem mneg_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ} {C D : ℝ}
-    (hA : BD (μA false) C) (hB : BD (μB false) D) (τ : ℝ) :
-    mneg (mixFam l μA μB) τ = linSeq l (mneg μA τ) (mneg μB τ) := by
+theorem mneg_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef} {C D : ℝ}
+    (hA : μA.OK C) (hB : μB.OK D) (τ : ℝ) :
+    mneg (SRef.mix l μA μB) τ = linSeq l (mneg μA τ) (mneg μB τ) := by
   funext n
-  unfold mneg mixFam linSeq
-  rw [integral_mixM hl0 hl1 (integrable_pow_BD hA τ _) (integrable_pow_BD hB τ _)]
+  unfold mneg SRef.mix mixFam linSeq
+  dsimp only
+  rw [integral_mixM hl0 hl1 (integrable_pow_BD (hA.hP false) τ _) (integrable_pow_BD (hB.hP false) τ _),
+    integral_mixM hl0 hl1 (integrable_pow_BD (hA.hN false) τ _) (integrable_pow_BD (hB.hN false) τ _)]
   ring
 
 /-! ### 4. Linearity of the series -/
@@ -266,7 +302,7 @@ def SignedData.interp (DA DB : SignedData) (l c : ℝ) : SignedData where
   K := DA.K
   R := linSeq l DA.R DB.R
   t := linSeq l DA.t DB.t
-  μ := mixFam l DA.μ DB.μ
+  μ := SRef.mix l DA.μ DB.μ
   Cb := (1 - l) * DA.Cb + l * DB.Cb
   η := DA.η
   p := linSeq l DA.p DB.p
@@ -302,7 +338,7 @@ structure SignedRegular (D : SignedData) : Prop where
   ha : Summable fun j => |D.a j|
   hR : IsGeom D.τ D.R
   ht : IsGeom D.τ D.t
-  hμ : ∀ τ, BD (D.μ τ) D.Cb
+  hμ : D.μ.OK D.Cb
   hC : 0 ≤ D.Cb
   hp : Summable fun j => |D.p j|
   hη0 : 0 ≤ D.η
@@ -312,12 +348,12 @@ theorem SignedRegular.tau {D : SignedData} (h : SignedRegular D) : D.τ ∈ Ioo 
 
 theorem interp_zero (DA DB : SignedData) (c : ℝ) :
     SignedData.interp DA DB 0 c = { DA with constant := c } := by
-  simp [SignedData.interp, linSeq_zero, mixFam_zero]
+  simp [SignedData.interp, linSeq_zero, SRef.mix_zero]
 
 theorem interp_one {DA DB : SignedData} (hc : InterpCompat DA DB) (c : ℝ) :
     SignedData.interp DA DB 1 c = { DB with constant := c } := by
   obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9, h10⟩ := hc
-  simp [SignedData.interp, linSeq_one, mixFam_one, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10]
+  simp [SignedData.interp, linSeq_one, SRef.mix_one, h1, h2, h3, h4, h5, h6, h7, h8, h9, h10]
 
 theorem abs_linSeq_le (l : ℝ) (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (u v : ℕ → ℝ) (n : ℕ) :
     |linSeq l u v n| ≤ (1 - l) * |u n| + l * |v n| := by
@@ -340,7 +376,7 @@ theorem SignedRegular.interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (h
   ha := summable_abs_linSeq hl0 hl1 rA.ha rB.ha
   hR := isGeom_linSeq rA.hR (by simpa [hc.τ] using rB.hR) l
   ht := isGeom_linSeq rA.ht (by simpa [hc.τ] using rB.ht) l
-  hμ := fun τ => BD_mixM hl0 hl1 rA.hC rB.hC (rA.hμ τ) (rB.hμ τ)
+  hμ := SRef.OK_mix hl0 hl1 rA.hC rB.hC rA.hμ rB.hμ
   hC := add_nonneg (mul_nonneg (by linarith) rA.hC) (mul_nonneg hl0 rB.hC)
   hp := summable_abs_linSeq hl0 hl1 rA.hp rB.hp
   hη0 := rA.hη0
@@ -389,17 +425,17 @@ theorem fldNeg_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   have hτB : DB.τ = DA.τ := hc.τ
   rw [hτB]
   have gA : IsGeom DA.τ (fun n => κ * (mneg DA.μ DA.τ n - DA.t n) - DA.R n) :=
-    (((isGeom_mneg (rA.hμ false) hτ.1).sub rA.ht).const_mul κ).sub rA.hR
+    (((isGeom_mneg rA.hμ hτ.1).sub rA.ht).const_mul κ).sub rA.hR
   have gB : IsGeom DA.τ (fun n => κ * (mneg DB.μ DA.τ n - DB.t n) - DB.R n) :=
-    (((isGeom_mneg (rB.hμ false) hτ.1).sub (by simpa [hτB] using rB.ht)).const_mul κ).sub
+    (((isGeom_mneg rB.hμ hτ.1).sub (by simpa [hτB] using rB.ht)).const_mul κ).sub
       (by simpa [hτB] using rB.hR)
   have e : (fun n => κ * (mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
           (SignedData.interp DA DB l c).t n) - (SignedData.interp DA DB l c).R n) =
       linSeq l (fun n => κ * (mneg DA.μ DA.τ n - DA.t n) - DA.R n)
         (fun n => κ * (mneg DB.μ DA.τ n - DB.t n) - DB.R n) := by
     funext n
-    show κ * (mneg (mixFam l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n) - linSeq l DA.R DB.R n = _
-    rw [mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
+    show κ * (mneg (SRef.mix l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n) - linSeq l DA.R DB.R n = _
+    rw [mneg_mix hl0 hl1 rA.hμ rB.hμ]
     simp only [linSeq]; ring
   rw [e]
   exact fld_linSeq hτ gA gB hx l
@@ -416,15 +452,15 @@ theorem fldPos_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   have hτB : DB.τ = DA.τ := hc.τ
   rw [hτB]
   have gA : IsGeom DA.τ (fun n => mpos DA.μ DA.τ n + DA.R n) :=
-    (isGeom_refMoment (rA.hμ true) hτ.1).add rA.hR
+    (isGeom_mpos rA.hμ hτ.1).add rA.hR
   have gB : IsGeom DA.τ (fun n => mpos DB.μ DA.τ n + DB.R n) :=
-    (isGeom_refMoment (rB.hμ true) hτ.1).add (by simpa [hτB] using rB.hR)
+    (isGeom_mpos rB.hμ hτ.1).add (by simpa [hτB] using rB.hR)
   have e : (fun n => mpos (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n +
           (SignedData.interp DA DB l c).R n) =
       linSeq l (fun n => mpos DA.μ DA.τ n + DA.R n) (fun n => mpos DB.μ DA.τ n + DB.R n) := by
     funext n
-    show mpos (mixFam l DA.μ DB.μ) DA.τ n + linSeq l DA.R DB.R n = _
-    rw [mpos_mix hl0 hl1 (rA.hμ true) (rB.hμ true)]
+    show mpos (SRef.mix l DA.μ DB.μ) DA.τ n + linSeq l DA.R DB.R n = _
+    rw [mpos_mix hl0 hl1 rA.hμ rB.hμ]
     simp only [linSeq]; ring
   rw [e]
   exact fld_linSeq hτ gA gB hx l
@@ -585,15 +621,15 @@ theorem phConst_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   unfold SignedData.phConst
   rw [hτB, hηB]
   have gA1 : IsGeom DA.τ (fun n => mneg DA.μ DA.τ n - DA.t n) :=
-    (isGeom_mneg (rA.hμ false) hτ.1).sub rA.ht
+    (isGeom_mneg rA.hμ hτ.1).sub rA.ht
   have gB1 : IsGeom DA.τ (fun n => mneg DB.μ DA.τ n - DB.t n) :=
-    (isGeom_mneg (rB.hμ false) hτ.1).sub (SignedRegular.htτ hc rB)
+    (isGeom_mneg rB.hμ hτ.1).sub (SignedRegular.htτ hc rB)
   have e1 : (fun n => mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
       (SignedData.interp DA DB l c).t n) =
       linSeq l (fun n => mneg DA.μ DA.τ n - DA.t n) (fun n => mneg DB.μ DA.τ n - DB.t n) := by
     funext n
-    show mneg (mixFam l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n = _
-    rw [mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
+    show mneg (SRef.mix l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n = _
+    rw [mneg_mix hl0 hl1 rA.hμ rB.hμ]
     simp only [linSeq]; ring
   rw [e1]
   show (1 - DA.η) * ip (linSeq l _ _) (arcNeg DA.τ) = _
@@ -799,11 +835,14 @@ theorem isQuadOn_ip_self {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {c c' : ℕ �
 
 /-! ### 9. The reference energy is quadratic along the segment -/
 
-/-- The bilinear form of the reference energy. -/
-def refBil (μ ν : Bool → Measure ℝ) : ℝ :=
-  ∑ τ, ∑ τ', ∫ x, ∫ y, Kt τ τ' x y ∂(ν τ') ∂(μ τ)
+/-- The bilinear form of the reference energy for two nonnegative families. -/
+def refBilM (μ ν : Bool → Measure ℝ) : ℝ := pairI μ ν Kt
 
-theorem refEnergy_eq_refBil (μ : Bool → Measure ℝ) : refEnergy μ = refBil μ μ := rfl
+/-- The bilinear form of the reference energy for two signed references. -/
+def refBil (μ ν : SRef) : ℝ :=
+  refBilM μ.P ν.P - refBilM μ.P ν.N - refBilM μ.N ν.P + refBilM μ.N ν.N
+
+theorem refEnergy_eq_refBil (μ : SRef) : refEnergy μ = refBil μ μ := rfl
 
 theorem integrable_Kt_prod {m n : Measure ℝ} {C : ℝ} (hm : BD m C) (hn : BD n C) (hC : 0 ≤ C)
     (s t : Bool) : Integrable (fun p : ℝ × ℝ => Kt s t p.1 p.2) (m.prod n) := by
@@ -846,24 +885,35 @@ theorem iterInt_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {m n m' n' : Measu
     integral_const_mul]
   ring
 
-theorem refBil_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB νA νB : Bool → Measure ℝ} {C : ℝ}
+theorem refBilM_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB νA νB : Bool → Measure ℝ} {C : ℝ}
     (hC : 0 ≤ C) (h1 : ∀ τ, BD (μA τ) C) (h2 : ∀ τ, BD (μB τ) C) (h3 : ∀ τ, BD (νA τ) C)
     (h4 : ∀ τ, BD (νB τ) C) :
-    refBil (mixFam l μA μB) (mixFam l νA νB) =
-      (1 - l) * (1 - l) * refBil μA νA + (1 - l) * l * refBil μA νB +
-        l * (1 - l) * refBil μB νA + l * l * refBil μB νB := by
+    refBilM (mixFam l μA μB) (mixFam l νA νB) =
+      (1 - l) * (1 - l) * refBilM μA νA + (1 - l) * l * refBilM μA νB +
+        l * (1 - l) * refBilM μB νA + l * l * refBilM μB νB := by
   have key : ∀ τ τ' : Bool, ∫ x, ∫ y, Kt τ τ' x y ∂(mixM l (νA τ') (νB τ')) ∂(mixM l (μA τ) (μB τ)) =
       (1 - l) * (1 - l) * (∫ x, ∫ y, Kt τ τ' x y ∂(νA τ') ∂(μA τ)) +
         (1 - l) * l * (∫ x, ∫ y, Kt τ τ' x y ∂(νB τ') ∂(μA τ)) +
         l * (1 - l) * (∫ x, ∫ y, Kt τ τ' x y ∂(νA τ') ∂(μB τ)) +
         l * l * (∫ x, ∫ y, Kt τ τ' x y ∂(νB τ') ∂(μB τ)) := fun τ τ' =>
     iterInt_mix hl0 hl1 hC (h1 τ) (h2 τ) (h3 τ') (h4 τ') τ τ'
-  unfold refBil mixFam
+  unfold refBilM pairI mixFam
   simp only [key, Finset.sum_add_distrib, ← Finset.mul_sum]
 
-theorem isQuadOn_refEnergy {μA μB : Bool → Measure ℝ} {C : ℝ} (hC : 0 ≤ C)
-    (h1 : ∀ τ, BD (μA τ) C) (h2 : ∀ τ, BD (μB τ) C) :
-    IsQuadOn (fun l => refEnergy (mixFam l μA μB)) := by
+theorem refBil_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB νA νB : SRef} {C : ℝ}
+    (hC : 0 ≤ C) (h1 : μA.OK C) (h2 : μB.OK C) (h3 : νA.OK C) (h4 : νB.OK C) :
+    refBil (SRef.mix l μA μB) (SRef.mix l νA νB) =
+      (1 - l) * (1 - l) * refBil μA νA + (1 - l) * l * refBil μA νB +
+        l * (1 - l) * refBil μB νA + l * l * refBil μB νB := by
+  unfold refBil SRef.mix
+  dsimp only
+  rw [refBilM_mix hl0 hl1 hC h1.hP h2.hP h3.hP h4.hP, refBilM_mix hl0 hl1 hC h1.hP h2.hP h3.hN h4.hN,
+    refBilM_mix hl0 hl1 hC h1.hN h2.hN h3.hP h4.hP, refBilM_mix hl0 hl1 hC h1.hN h2.hN h3.hN h4.hN]
+  ring
+
+theorem isQuadOn_refEnergy {μA μB : SRef} {C : ℝ} (hC : 0 ≤ C)
+    (h1 : μA.OK C) (h2 : μB.OK C) :
+    IsQuadOn (fun l => refEnergy (SRef.mix l μA μB)) := by
   refine (IsQuadOn.four (refBil μA μA) (refBil μA μB) (refBil μB μA) (refBil μB μB)).congr
     (fun l hl => ?_)
   rw [refEnergy_eq_refBil]
@@ -883,7 +933,7 @@ theorem interp_t (DA DB : SignedData) (l c : ℝ) :
 theorem interp_b (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).b = linSeq l DA.b DB.b := rfl
 theorem interp_μ (DA DB : SignedData) (l c : ℝ) :
-    (SignedData.interp DA DB l c).μ = mixFam l DA.μ DB.μ := rfl
+    (SignedData.interp DA DB l c).μ = SRef.mix l DA.μ DB.μ := rfl
 theorem interp_Cb (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).Cb = (1 - l) * DA.Cb + l * DB.Cb := rfl
 theorem interp_constant (DA DB : SignedData) (l c : ℝ) :
@@ -960,23 +1010,23 @@ theorem isQuadOn_Kq {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : SignedR
   have hτ := rA.tau
   have q1 := isQuadOn_ip_self hτ rA.hR (SignedRegular.hRτ hc rB)
   have q3 := isQuadOn_ip_self hτ rA.ht (SignedRegular.htτ hc rB)
-  have gp1 : IsGeom DA.τ (mpos DA.μ DA.τ) := isGeom_refMoment (rA.hμ true) hτ.1
-  have gp2 : IsGeom DA.τ (mpos DB.μ DA.τ) := isGeom_refMoment (rB.hμ true) hτ.1
-  have gn1 : IsGeom DA.τ (mneg DA.μ DA.τ) := isGeom_mneg (rA.hμ false) hτ.1
-  have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg (rB.hμ false) hτ.1
-  have q2 : IsQuadOn (fun l => ip (mpos (mixFam l DA.μ DB.μ) DA.τ)
-      (mpos (mixFam l DA.μ DB.μ) DA.τ)) :=
+  have gp1 : IsGeom DA.τ (mpos DA.μ DA.τ) := isGeom_mpos rA.hμ hτ.1
+  have gp2 : IsGeom DA.τ (mpos DB.μ DA.τ) := isGeom_mpos rB.hμ hτ.1
+  have gn1 : IsGeom DA.τ (mneg DA.μ DA.τ) := isGeom_mneg rA.hμ hτ.1
+  have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg rB.hμ hτ.1
+  have q2 : IsQuadOn (fun l => ip (mpos (SRef.mix l DA.μ DB.μ) DA.τ)
+      (mpos (SRef.mix l DA.μ DB.μ) DA.τ)) :=
     (isQuadOn_ip_self hτ gp1 gp2).congr (fun l hl => by
-      rw [mpos_mix hl.1 hl.2 (rA.hμ true) (rB.hμ true)])
-  have q4 : IsQuadOn (fun l => ip (mneg (mixFam l DA.μ DB.μ) DA.τ)
-      (mneg (mixFam l DA.μ DB.μ) DA.τ)) :=
+      rw [mpos_mix hl.1 hl.2 rA.hμ rB.hμ])
+  have q4 : IsQuadOn (fun l => ip (mneg (SRef.mix l DA.μ DB.μ) DA.τ)
+      (mneg (SRef.mix l DA.μ DB.μ) DA.τ)) :=
     (isQuadOn_ip_self hτ gn1 gn2).congr (fun l hl => by
-      rw [mneg_mix hl.1 hl.2 (rA.hμ false) (rB.hμ false)])
+      rw [mneg_mix hl.1 hl.2 rA.hμ rB.hμ])
   refine IsQuadOn.congr (g := fun l =>
       (1 / 2) * ip (linSeq l DA.R DB.R) (linSeq l DA.R DB.R) +
-      (-(1 / 2)) * ip (mpos (mixFam l DA.μ DB.μ) DA.τ) (mpos (mixFam l DA.μ DB.μ) DA.τ) +
+      (-(1 / 2)) * ip (mpos (SRef.mix l DA.μ DB.μ) DA.τ) (mpos (SRef.mix l DA.μ DB.μ) DA.τ) +
       (1 - DA.η) * ip (linSeq l DA.t DB.t) (linSeq l DA.t DB.t) +
-      (-(1 - DA.η)) * ip (mneg (mixFam l DA.μ DB.μ) DA.τ) (mneg (mixFam l DA.μ DB.μ) DA.τ))
+      (-(1 - DA.η)) * ip (mneg (SRef.mix l DA.μ DB.μ) DA.τ) (mneg (SRef.mix l DA.μ DB.μ) DA.τ))
     (fun l _ => ?_) ?_
   · unfold SignedData.Kq
     rw [interp_R, interp_t, interp_μ, interp_τ, interp_η]
@@ -989,9 +1039,8 @@ theorem isQuadOn_restQ {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : Sign
     IsQuadOn (fun l => restQ (SignedData.interp DA DB l c) p) := by
   have hτ := rA.tau
   have hC : 0 ≤ max DA.Cb DB.Cb := rA.hC.trans (le_max_left _ _)
-  have hmu : IsQuadOn (fun l => refEnergy (mixFam l DA.μ DB.μ)) :=
-    isQuadOn_refEnergy hC (fun τ => BD_mono (rA.hμ τ) (le_max_left _ _))
-      (fun τ => BD_mono (rB.hμ τ) (le_max_right _ _))
+  have hmu : IsQuadOn (fun l => refEnergy (SRef.mix l DA.μ DB.μ)) :=
+    isQuadOn_refEnergy hC (rA.hμ.mono (le_max_left _ _)) (rB.hμ.mono (le_max_right _ _))
   have hE : IsQuadOn (fun l => (SignedData.interp DA DB l c).eD7 ((p : ℝ) / DA.ν)) :=
     (IsQuadOn.affine (DA.eD7 ((p : ℝ) / DA.ν)) (DB.eD7 ((p : ℝ) / DA.ν))).congr
       (fun l _ => eD7_interp hc l c _)
@@ -1010,7 +1059,7 @@ theorem isQuadOn_restQ {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : Sign
         2 * ((Real.log 2 - 2 * Real.log (1 - realEnergyTau DA.e ^ 2)) / (2 * DA.ν) + 2 * DA.e)) +
       (1 / 2) * barrierTrialNormSq (linSeq l DA.v DB.v) +
       (SignedData.interp DA DB l c).eD7 ((p : ℝ) / DA.ν) +
-      (1 - DA.η) * refEnergy (mixFam l DA.μ DB.μ) +
+      (1 - DA.η) * refEnergy (SRef.mix l DA.μ DB.μ) +
       (2 * DA.η) * barrierTrialNormSq (linSeq l DA.p DB.p) +
       2 * barrierTrialNormSq (linSeq l DA.a DB.a) +
       (-(2 * ((DA.g : ℝ) / DA.ν))) * ((1 - l) * DA.Sup + l * DB.Sup) +
@@ -1201,14 +1250,14 @@ theorem raBil_linSeq {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {R R' a a' : ℕ 
     (summable_mul_bdd hM (summable_abs_sh ha')) (summable_mul_bdd hM' (summable_abs_sh ha))
     (summable_mul_bdd hM' (summable_abs_sh ha'))
 
-theorem refBil_mix_pair {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ}
-    {CA CB : ℝ} (hCA : 0 ≤ CA) (hA : ∀ τ, BD (μA τ) CA) (hB : ∀ τ, BD (μB τ) CB) :
-    refBil (mixFam l μA μB) (mixFam l μA μB) =
+theorem refBil_mix_pair {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef}
+    {CA CB : ℝ} (hCA : 0 ≤ CA) (hA : μA.OK CA) (hB : μB.OK CB) :
+    refBil (SRef.mix l μA μB) (SRef.mix l μA μB) =
       (1 - l) * (1 - l) * refBil μA μA + (1 - l) * l * refBil μA μB +
         l * (1 - l) * refBil μB μA + l * l * refBil μB μB :=
   refBil_mix hl0 hl1 (hCA.trans (le_max_left CA CB))
-    (fun τ => BD_mono (hA τ) (le_max_left _ _)) (fun τ => BD_mono (hB τ) (le_max_right _ _))
-    (fun τ => BD_mono (hA τ) (le_max_left _ _)) (fun τ => BD_mono (hB τ) (le_max_right _ _))
+    (hA.mono (le_max_left _ _)) (hB.mono (le_max_right _ _))
+    (hA.mono (le_max_left _ _)) (hB.mono (le_max_right _ _))
 
 /-- Four-term expansion of the bilinear form along the segment. -/
 theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1)
@@ -1219,10 +1268,10 @@ theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 :
   have hτ := rA.tau
   have gR := SignedRegular.hRτ hc rB
   have gt := SignedRegular.htτ hc rB
-  have gp1 : IsGeom DA.τ (mpos DA.μ DA.τ) := isGeom_refMoment (rA.hμ true) hτ.1
-  have gp2 : IsGeom DA.τ (mpos DB.μ DA.τ) := isGeom_refMoment (rB.hμ true) hτ.1
-  have gn1 : IsGeom DA.τ (mneg DA.μ DA.τ) := isGeom_mneg (rA.hμ false) hτ.1
-  have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg (rB.hμ false) hτ.1
+  have gp1 : IsGeom DA.τ (mpos DA.μ DA.τ) := isGeom_mpos rA.hμ hτ.1
+  have gp2 : IsGeom DA.τ (mpos DB.μ DA.τ) := isGeom_mpos rB.hμ hτ.1
+  have gn1 : IsGeom DA.τ (mneg DA.μ DA.τ) := isGeom_mneg rA.hμ hτ.1
+  have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg rB.hμ hτ.1
   have n1 := nsqBil_linSeq rA.hv rB.hv l
   have n2 := nsqBil_linSeq rA.ha rB.ha l
   have n3 := nsqBil_linSeq rA.hp rB.hp l
@@ -1235,7 +1284,7 @@ theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 :
   have i4 := ip_linSeq hτ gn1 gn2 gn1 gn2 l
   unfold curvBlock
   simp only [interp_v, interp_a, interp_R, interp_t, interp_b, interp_μ, interp_p, interp_τ,
-    mpos_mix hl0 hl1 (rA.hμ true) (rB.hμ true), mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
+    mpos_mix hl0 hl1 rA.hμ rB.hμ, mneg_mix hl0 hl1 rA.hμ rB.hμ]
   rw [n1, n2, n3, r1, r3, r4, i1, i2, i3, i4]
   ring
 
@@ -1288,15 +1337,14 @@ theorem fixedFields_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1
 
 /-! ### 12. Masses of the interpolated references -/
 
-theorem mass_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : Bool → Measure ℝ} {C D : ℝ}
-    (hA : ∀ τ, BD (μA τ) C) (hB : ∀ τ, BD (μB τ) D) :
-    ∑ τ, (mixFam l μA μB τ).real univ =
-      (1 - l) * ∑ τ, (μA τ).real univ + l * ∑ τ, (μB τ).real univ := by
-  rw [Finset.mul_sum, Finset.mul_sum, ← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl (fun τ _ => ?_)
-  have := (hA τ).finite
-  have := (hB τ).finite
-  exact mixM_real_univ hl0 hl1
+theorem mass_mix {l : ℝ} (hl0 : 0 ≤ l) (hl1 : l ≤ 1) {μA μB : SRef} {C D : ℝ}
+    (hA : μA.OK C) (hB : μB.OK D) :
+    (SRef.mix l μA μB).mass = (1 - l) * μA.mass + l * μB.mass := by
+  unfold SRef.mass SRef.mix
+  dsimp only
+  rw [sum_mixFam_real hl0 hl1 (fun τ => (hA.hP τ).finite) (fun τ => (hB.hP τ).finite),
+    sum_mixFam_real hl0 hl1 (fun τ => (hA.hN τ).finite) (fun τ => (hB.hN τ).finite)]
+  ring
 
 /-! ### 13. The interval theorems: the `α`-dependent fields from the endpoint trials -/
 
@@ -1392,19 +1440,18 @@ theorem IntervalEnds.t_geom (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ 
 
 /-- `reference`: the bounded densities and the mass `1 - α/2` of `c_r`. -/
 theorem IntervalEnds.reference (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ → ℝ → ℝ)
-    (mA : ∀ᶠ N : ℕ in Filter.atTop, 1 - αA / 2 = ∑ τ, ((DA N).μ τ).real univ)
-    (mB : ∀ᶠ N : ℕ in Filter.atTop, 1 - αB / 2 = ∑ τ, ((DB N).μ τ).real univ) :
+    (mA : ∀ᶠ N : ℕ in Filter.atTop, 1 - αA / 2 = (DA N).μ.mass)
+    (mB : ∀ᶠ N : ℕ in Filter.atTop, 1 - αB / 2 = (DB N).μ.mass) :
     ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
-      (∀ τ, BD ((interpFamily αA αB DA DB const N α).μ τ)
-        (interpFamily αA αB DA DB const N α).Cb) ∧
+      (interpFamily αA αB DA DB const N α).μ.OK (interpFamily αA αB DA DB const N α).Cb ∧
         0 ≤ (interpFamily αA αB DA DB const N α).Cb ∧
-        1 - α / 2 = ∑ τ, ((interpFamily αA αB DA DB const N α).μ τ).real univ := by
+        1 - α / 2 = (interpFamily αA αB DA DB const N α).μ.mass := by
   filter_upwards [h.regA, h.regB, mA, mB] with N rA rB ma mb α hα
   obtain ⟨hl0, hl1⟩ := h.mem hα
   have r := SignedRegular.interp (c := const N α) hl0 hl1 (h.compat N) rA rB
   have hpos : αB - αA ≠ 0 := by linarith [h.lt]
   refine ⟨r.hμ, r.hC, ?_⟩
-  show 1 - α / 2 = ∑ τ, (mixFam (interpL αA αB α) (DA N).μ (DB N).μ τ).real univ
+  show 1 - α / 2 = (SRef.mix (interpL αA αB α) (DA N).μ (DB N).μ).mass
   rw [mass_mix hl0 hl1 rA.hμ rB.hμ, ← ma, ← mb,
     interpL_of_mem h.lt (by linarith [h.lo_ge, hα.1]) (by linarith [h.hi_le, hα.2])]
   field_simp
@@ -1623,8 +1670,8 @@ def SignedNearBounds.ofEnds {I : ℕ}
     (hends : ∀ i, IntervalEnds (αA i) (αB i) (lo i) (hi i) (DA i) (DB i))
     (hν : ∀ i N, (DA i N).ν = (ncount N : ℝ)) (hRf : ∀ i N, (DA i N).Rf = Rf N)
     (hCf : ∀ i N, (DA i N).Cf = Cf N)
-    (mA : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αA i / 2 = ∑ τ, ((DA i N).μ τ).real univ)
-    (mB : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αB i / 2 = ∑ τ, ((DB i N).μ τ).real univ)
+    (mA : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αA i / 2 = (DA i N).μ.mass)
+    (mB : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αB i / 2 = (DB i N).μ.mass)
     -- the endpoint suprema
     (SnA SnB SpA SpB SyA SyB : Fin I → ℝ)
     (hSnA : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ x ∈ Ioo (-1 : ℝ) 0,

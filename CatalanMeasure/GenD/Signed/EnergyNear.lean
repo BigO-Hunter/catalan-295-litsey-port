@@ -672,6 +672,7 @@ theorem eta_shift (η : ℝ) (hη0 : 0 ≤ η) (hlog2 : 0 ≤ Real.log 2) (A d :
 /-! ### The master inequality with a near species and the η split -/
 
 set_option maxHeartbeats 12800000 in
+set_option maxRecDepth 8192 in
 /-- **The master inequality with first-kind fixed and near-type nodes** (NOTES-ETA §1).  Free
 rows `xn` (negative), `gp` (positive) with columns `sc`; first-kind fixed rows `yn`, `yp`;
 near-type positive rows `zp`.  The non-near Vandermonde `V(F) + V(F ∪ M)` (pin copy and
@@ -684,9 +685,9 @@ theorem signed_master_near (D : SignedData) {k q m1 m2 s : ℕ} (hν : 0 < D.ν)
     (he : D.e ∈ Ioo (0 : ℝ) (1 / 8))
     (hall : ((((k + m1) + (q + m2)) + s : ℕ) : ℝ) ≤ D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
-    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
+    (hμ : D.μ.OK D.Cb) (hC : 0 ≤ D.Cb)
     (hmass : ((k + q : ℕ) : ℝ) / D.ν + ((m1 + m2 + s : ℕ) : ℝ) / (2 * D.ν) =
-      ∑ τ, (D.μ τ).real univ)
+      D.μ.mass)
     (hη0 : 0 ≤ D.η) (hε : 0 < 1 - 2 * D.η) (hpS : Summable (fun j => |D.p j|))
     (Rm Rn : ℝ → ℝ) (α : ℝ) (hα : ((m1 + m2 + s : ℕ) : ℝ) / D.ν ≤ α)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
@@ -814,7 +815,7 @@ theorem signed_master_near (D : SignedData) {k q m1 m2 s : ℕ} (hν : 0 < D.ν)
     linarith [hWs]
   have hmassW : (∑ i, Fin.append (wts (a := k) (b := m1) (1 / D.ν) ((1 / 2) / D.ν))
       (wts (a := q) (b := m2) (1 / D.ν) ((1 / 2) / D.ν)) i) + (s : ℝ) * ((1 / 2) / D.ν) =
-      ∑ τ, (D.μ τ).real univ := by
+      D.μ.mass := by
     rw [hWs', ← hmass]; push_cast; field_simp; ring
   have h2 := rows_vandermonde_phantom hτ (Fin.append xn yn) (Fin.append gp yp)
     (wts (1 / D.ν) ((1 / 2) / D.ν)) (wts (1 / D.ν) ((1 / 2) / D.ν))
@@ -907,8 +908,8 @@ theorem signed_master_near (D : SignedData) {k q m1 m2 s : ℕ} (hν : 0 < D.ν)
   have hPf := isGeom_powSum hτ0 hν gp (hab2 _ hgp)
   have hPm := isGeom_powSum hτ0 hν yp (hab2 _ hyp)
   have hQ := isGeom_powSum hτ0 hν zp (hab2 _ hzp)
-  have hmp : IsGeom D.τ (mpos D.μ D.τ) := isGeom_refMoment (hμ true) hτ0
-  have hmn : IsGeom D.τ (mneg D.μ D.τ) := isGeom_mneg (hμ false) hτ0
+  have hmp : IsGeom D.τ (mpos D.μ D.τ) := isGeom_mpos hμ hτ0
+  have hmn : IsGeom D.τ (mneg D.μ D.τ) := isGeom_mneg hμ hτ0
   have hφp : IsGeom D.τ (fun n => (s : ℝ) / D.ν / 2 * arcPos D.τ n) :=
     (isGeom_arcPos hτ).const_mul _
   have hφn : IsGeom D.τ (fun n => (s : ℝ) / D.ν / 2 * arcNeg D.τ n) :=
@@ -1099,9 +1100,9 @@ theorem signed_second_energy_near_det (D : SignedData) {k q m1 m2 s : ℕ} (hν 
     (he : D.e ∈ Ioo (0 : ℝ) (1 / 8))
     (hall : ((((k + m1) + (q + m2)) + s : ℕ) : ℝ) ≤ D.ν)
     (hv : Summable (fun j => |D.v j|)) (hR : IsGeom D.τ D.R) (ht : IsGeom D.τ D.t)
-    (hμ : ∀ τ, BD (D.μ τ) D.Cb) (hC : 0 ≤ D.Cb)
+    (hμ : D.μ.OK D.Cb) (hC : 0 ≤ D.Cb)
     (hmass : ((k + q : ℕ) : ℝ) / D.ν + ((m1 + m2 + s : ℕ) : ℝ) / (2 * D.ν) =
-      ∑ τ, (D.μ τ).real univ)
+      D.μ.mass)
     (hη0 : 0 ≤ D.η) (hε : 0 < 1 - 2 * D.η) (hpS : Summable (fun j => |D.p j|))
     (Rm Rn : ℝ → ℝ) (α : ℝ) (hα : ((m1 + m2 + s : ℕ) : ℝ) / D.ν ≤ α)
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin (m2 + s) → ℝ) → Prop}
@@ -1231,8 +1232,8 @@ structure SignedNearBounds (I : ℕ) where
   t_geom : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
     IsGeom (D i N α).τ (D i N α).t
   reference : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
-    (∀ τ, BD ((D i N α).μ τ) (D i N α).Cb) ∧ 0 ≤ (D i N α).Cb ∧
-      1 - α / 2 = ∑ τ, ((D i N α).μ τ).real univ
+    (D i N α).μ.OK (D i N α).Cb ∧ 0 ≤ (D i N α).Cb ∧
+      1 - α / 2 = (D i N α).μ.mass
   cp : Fin I → ℕ → ℝ → ℝ
   cp_pos : ∀ i N α, 0 < cp i N α
   cp_le : ∀ i N α, cp i N α ≤ 1
@@ -1311,8 +1312,8 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
       (∀ α ∈ Icc (T.lo i) (T.hi i), IsGeom (T.D i N α).τ (T.D i N α).R) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i), IsGeom (T.D i N α).τ (T.D i N α).t) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i),
-        (∀ τ, BD ((T.D i N α).μ τ) (T.D i N α).Cb) ∧ 0 ≤ (T.D i N α).Cb ∧
-          1 - α / 2 = ∑ τ, ((T.D i N α).μ τ).real univ) ∧
+        (T.D i N α).μ.OK (T.D i N α).Cb ∧ 0 ≤ (T.D i N α).Cb ∧
+          1 - α / 2 = (T.D i N α).μ.mass) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i), ∀ x ∈ Ioo (-1 : ℝ) 0,
         (T.D i N α).fNeg x ≤ T.MXn i α + δ / 8) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i), ∀ x ∈ Ioo (0 : ℝ) 1,
@@ -1374,7 +1375,7 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
     rw [hνD, hαdef]; push_cast
     field_simp; linarith
   have hmass' : ((k + q : ℕ) : ℝ) / (T.D i N α).ν +
-      ((m1 + m2 + s : ℕ) : ℝ) / (2 * (T.D i N α).ν) = ∑ τ, ((T.D i N α).μ τ).real univ := by
+      ((m1 + m2 + s : ℕ) : ℝ) / (2 * (T.D i N α).ν) = (T.D i N α).μ.mass := by
     rw [← hmu1, hfree, hνD, hαdef]
     field_simp
     ring
