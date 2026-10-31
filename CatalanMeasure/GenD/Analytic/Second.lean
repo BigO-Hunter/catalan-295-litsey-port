@@ -143,7 +143,7 @@ theorem second_energy {P : Parameters} (hP : Admissible P)
 
 /-- Second-population trial contract for the endpoint column field (no `α log (1 + s)` term):
 identical to `SecondTrialBounds` except that the budget has no `a (1 - a) log 2` term. -/
-structure SecondTrialBoundsEnd (P : Parameters) (target residual nearCap cost : ℝ)
+structure SecondTrialBoundsEnd (P : Parameters) (α1 target residual nearCap cost : ℝ)
     (G : ℝ → Prop) where
   p : ℕ → ℝ
   v : ℕ → ℝ
@@ -168,7 +168,7 @@ structure SecondTrialBoundsEnd (P : Parameters) (target residual nearCap cost : 
       residual + Real.log 2 / (P.n N : ℝ)
   near : ∀ {N : ℕ}, 0 < N → ∀ {y : ℝ}, y ∈ Ioo (0 : ℝ) 1 →
     groupedNearField P N y - p 1 * y ≤ nearCap + Real.log 2 / (P.n N : ℝ)
-  budget : ∀ {a t : ℝ}, 0 ≤ a → 0 ≤ t →
+  budget : ∀ {a t : ℝ}, α1 ≤ a → 0 ≤ a → 0 ≤ t →
     (-gC0 P + gC1 P * a - a ^ 2 + t - t ^ 2) * Real.log 2 +
       normCap + (1 - a) * fieldCap + (a - t) * residual + t * nearCap ≤
         -target + Real.log 2 / 2 + cost * a
@@ -177,14 +177,15 @@ set_option maxHeartbeats 1600000 in
 /-- `second_energy` with the column field `populationEndpointColumnField P N 0`: the grouped
 second-population energy is at most the target, with budget lacking `a (1 - a) log 2`. -/
 theorem second_energy_end {P : Parameters} (hP : Admissible P)
-    {target residual nearCap cost : ℝ} {G : ℝ → Prop}
-    (D : SecondTrialBoundsEnd P target residual nearCap cost G) {δ : ℝ} (hδ : 0 < δ) :
+    {α1 target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBoundsEnd P α1 target residual nearCap cost G) {δ : ℝ} (hδ : 0 < δ) :
     ∀ᶠ N : ℕ in atTop, ∀ (r a b : ℕ), r + a + b = P.n N →
       ∀ (z : Fin r → ℝ) (x : Fin a → ℝ) (y : Fin b → ℝ) (s : Fin r → ℝ),
       (∀ i, z i ∈ Ioo (-1 : ℝ) 1) → (∀ i, z i ≠ 0) →
       (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, G (x i)) → (∀ i, y i ∈ Ioo (0 : ℝ) 1) →
       (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective z →
       Function.Injective (Fin.append z x) → Function.Injective y → Function.Injective s →
+      α1 * (P.n N : ℝ) ≤ ((a + b : ℕ) : ℝ) →
       groupedValueWithFields (P.n N : ℝ) (groupedConstant P N r a b)
         (populationPhysicalFreeField P N) (groupedMarkedField P N)
         (groupedNearField P N) (populationEndpointColumnField P N 0)
@@ -195,7 +196,7 @@ theorem second_energy_end {P : Parameters} (hP : Admissible P)
   obtain ⟨e, he, herr⟩ := grouped_error_eventually hP D.p D.v (by linarith : 0 < δ / 2)
   filter_upwards [D.row hε, D.column hε,
       log_reciprocal_eventually hP hε, herr, eventually_gt_atTop (0 : ℕ)]
-    with N hrow hcol hsmall herror hN r a b hcount z x y s hz hz0 hx hxG hy hs hzi hxi hyi hsi
+    with N hrow hcol hsmall herror hN r a b hcount z x y s hz hz0 hx hxG hy hs hzi hxi hyi hsi hα1
   let ν : ℝ := P.n N
   let α : ℝ := ((a + b : ℕ) : ℝ) / ν
   let β : ℝ := (b : ℝ) / ν
@@ -238,7 +239,11 @@ theorem second_energy_end {P : Parameters} (hP : Admissible P)
       have hh := hcol (s i) (hs i)
       linarith only [hh])
   have hconst := grouped_constant_le hP hN hcount
-  have hbudget := D.budget hα hβ
+  have hα1' : α1 ≤ α := by
+    dsimp only [α, ν]
+    rw [le_div_iff₀ hν]
+    exact hα1
+  have hbudget := D.budget hα1' hα hβ
   have hnorm := D.norm_le
   have hfields := congrArg (fun t : ℝ => (1 - α) * t) D.field_sum
   have hεα' : 0 ≤ ((P.n N : ℕ) : ℝ)⁻¹ * ((a + b : ℕ) : ℝ) * δ := by positivity
