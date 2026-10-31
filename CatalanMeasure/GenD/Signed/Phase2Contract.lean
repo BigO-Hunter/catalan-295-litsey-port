@@ -288,14 +288,17 @@ structure Phase2Data (I : ℕ) where
   cp_pos : ∀ i N α, 0 < cp i N α
   cp_le : ∀ i N α, cp i N α ≤ 1
   err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
-    (DA i N).errJ3 (cp i N α) (ncount N) ≤ ε
-  -- the spike data (Theorem SE): margin below theta, LRf is the log-ratio, and the class gives
-  -- a witness pair at the two endpoint trials (same configuration, same margin cp i N alpha)
+    ((DA i N).withCount (ncount N)).errJ3 (cp i N α) (ncount N) ≤ ε
+  -- the spike data (Theorem SE): margin below theta, LRf is the log-ratio at the configuration's
+  -- Heine count `q + m₂ - g`, and the class gives the count condition and a witness pair at the
+  -- two endpoint trials at that count (same configuration, same margin cp i N alpha)
   cp_theta : ∀ i N α, cp i N α ≤ (DA i N).θ
   hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
-    logRatioZ (DA i N).sp (Fin.append xn yn) (Fin.append gp yp)
+    logRatioZ (q + m2 - (DA i N).g) (Fin.append xn yn) (Fin.append gp yp)
   hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
-    Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp)
+    (0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2) ∧
+    Nonempty (PairCls ((DA i N).withCount (q + m2 - (DA i N).g))
+      ((DB i N).withCount (q + m2 - (DA i N).g)) (cp i N α) xn gp yn yp)
   -- the σ cap (Theorem S): endpoint data and side conditions
   capE : Fin I → CapEnd
   hxc0 : ∀ i, 0 ≤ (capE i).xc
@@ -453,8 +456,8 @@ def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
     D.cP D.rA D.rB D.κc D.hP D.hrA D.hrB D.hκ D.κlo D.κhi D.epsSplit D.epsSplit_pos
     D.epsSplit_le D.etaA (fun i => zbCap ((D.capE i).toS (D.αA i) (D.αB i))) D.zb D.Clsf D.LRf D.FixAdm
     D.cp D.cp_pos D.cp_le D.err_small
-    (spikeFix_of_ends D.αA D.αB D.DA D.DB D.constant D.cp D.cp_pos D.cp_le D.cp_theta D.Clsf
-      D.LRf D.hLR D.hCls)
+    (spikeFix_of_ends D.αA D.αB D.DA D.DB D.constant D.cp D.cp_pos D.cp_le D.cp_theta
+      (fun i N => ((D.hends i).compat N).sp) D.Clsf D.LRf D.hLR D.hCls)
     (fun i ε hε => fixedSum_ends (D.hends i) (D.capE i) D.constant (D.hxc0 i) (D.hxc1 i)
       (D.hC1 i) (remC_nonneg (D.epsSplit_pos i)) (D.hlo0 i) (D.hhi1 i) D.ncount_pos (D.hν i)
       (D.hrP i) (D.hrSA i) (D.hrSB i) D.umin D.hum0 D.hum1 (D.Bd i) (D.Rbd i)
@@ -719,6 +722,44 @@ theorem SpikeTrialCert.costOK {D : SignedData} (E : SpikeEnv D) (rD : SignedRegu
     have := mul_le_mul_of_nonneg_right hT hlog
     linarith [C.hph]
 
+/-- The endpoint data at a Heine count (NOTES-ETA §5.1). -/
+theorem InterpCompat.withCount {DA DB : SignedData} (hc : InterpCompat DA DB) (x : ℕ) :
+    InterpCompat (DA.withCount x) (DB.withCount x) :=
+  ⟨hc.ν, hc.e, rfl, hc.g, hc.K, hc.Rf, hc.Cf, hc.θ, hc.kph, hc.η⟩
+
+theorem SignedRegular.withCount {D : SignedData} (h : SignedRegular D) (x : ℕ) :
+    SignedRegular (D.withCount x) :=
+  ⟨h.he, h.hv, h.ha, h.hR, h.ht, h.hμ, h.hC, h.hp, h.hη0⟩
+
+def SpikeEnv.withCount {D : SignedData} (E : SpikeEnv D) {x : ℕ} (hx : (x : ℝ) ≤ D.ν) :
+    SpikeEnv (D.withCount x) where
+  hν := E.hν
+  he := E.he
+  hsp := hx
+  hθ := E.hθ
+  ha := E.ha
+  hr := E.hr
+  hra := E.hra
+  Qref := E.Qref
+  hQ := E.hQ
+  hℓ := E.hℓ
+  hbK := fun i hi => by
+    show ((D.sp : ℝ) / x) * D.b i = 0
+    rw [E.hbK i hi, mul_zero]
+
+/-- The denominator trial at count `x`: `chebPs b_x = 1 + (sp/x)(chebPs b - 1)` (the conditions
+`hb`, `hpoly` of a certificate at count `x` are affine in `sp/x`). -/
+theorem chebPs_withCount (D : SignedData) (x : ℕ) (u : ℝ) :
+    chebPs (D.withCount x).b u = 1 + ((D.sp : ℝ) / x) * (chebPs D.b u - 1) := by
+  unfold chebPs
+  simp only [SignedData.withCount_b]
+  rw [show (fun k : ℕ => (D.sp : ℝ) / x * D.b (k + 1) *
+      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u) =
+      fun k : ℕ => (D.sp : ℝ) / x * (D.b (k + 1) *
+        (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval u) from funext fun k => by ring,
+    tsum_mul_left]
+  ring
+
 /-- **The witness pair from the certificates** (the `hCls` of the contract).  For a configuration
 whose free and marked rows are in range, whose counts are bounded (`Kn`, `Tn`) and whose spike count is at most `Mmax` (Lemma K,
 `free_spike_count`), the per-trial certificates of both endpoints for every `m` with
@@ -800,9 +841,10 @@ theorem pairCls_of_cert {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : Sig
 
 
 /-- **`hCls` of `Phase2Data` from the certificates.**  If the class `Clsf` carries the ranges, the
-row counts (`Kn N`, `Tn N`) and the spike count `≤ Mmax N` (free spikes: `free_spike_count`;
-marked spikes: the node top count of `MarkedCap`), and every endpoint trial has its certificate
-for every `m` with `2m ≤ Mmax N + 1`, then the `hCls` field holds. -/
+row counts (`Kn N`, `Tn N`), the spike count `≤ Mmax N` (free spikes: `free_spike_count`;
+marked spikes: the node top count of `MarkedCap`) and the count condition `0 < sp`,
+`sp + g ≤ q + m₂ ≤ ν`, and every endpoint trial has its certificate at every Heine count
+`x ∈ [sp, ν]` for every `m` with `2m ≤ Mmax N + 1`, then the `hCls` field holds. -/
 theorem hCls_of_cert {I : ℕ} {DA DB : Fin I → ℕ → SignedData} (cp : Fin I → ℕ → ℝ → ℝ)
     (hc : ∀ i N, InterpCompat (DA i N) (DB i N)) (rA : ∀ i N, SignedRegular (DA i N))
     (rB : ∀ i N, SignedRegular (DB i N)) (EA : ∀ i N, SpikeEnv (DA i N))
@@ -812,17 +854,28 @@ theorem hCls_of_cert {I : ℕ} {DA DB : Fin I → ℕ → SignedData} (cp : Fin 
     (hClsf : ∀ N k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
       (∀ b, Fin.append xn yn b ∈ Ioo (-1 : ℝ) 0) ∧ (∀ p, Fin.append gp yp p ∈ Ioo (0 : ℝ) 1) ∧
       (((k + m1 : ℕ)) : ℝ) ≤ Kn N ∧ ((k + m1 + (q + m2) + 1 : ℕ) : ℝ) ≤ Tn N ∧
-      ∀ i, (Finset.univ.filter (fun p => 1 - (DA i N).θ < Fin.append gp yp p)).card ≤ Mmax N)
-    (hcert : ∀ i N (m : ℕ), 2 * m ≤ Mmax N + 1 → ∃ ρ : ℝ, |ρ| < 1 ∧
-      ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
-      Nonempty (SpikeTrialCert (DA i N) m ρ (Kn N) (Tn N)) ∧
-      Nonempty (SpikeTrialCert (DB i N) m ρ (Kn N) (Tn N))) :
+      (∀ i, (Finset.univ.filter (fun p => 1 - (DA i N).θ < Fin.append gp yp p)).card ≤ Mmax N) ∧
+      ∀ i, 0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2 ∧
+        ((q + m2 : ℕ) : ℝ) ≤ (DA i N).ν)
+    (hcert : ∀ i N (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν → 2 * m ≤ Mmax N + 1 →
+      ∃ ρ : ℝ, |ρ| < 1 ∧ ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
+      Nonempty (SpikeTrialCert ((DA i N).withCount x) m ρ (Kn N) (Tn N)) ∧
+      Nonempty (SpikeTrialCert ((DB i N).withCount x) m ρ (Kn N) (Tn N))) :
     ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
-      Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp) := by
+      (0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2) ∧
+      Nonempty (PairCls ((DA i N).withCount (q + m2 - (DA i N).g))
+        ((DB i N).withCount (q + m2 - (DA i N).g)) (cp i N α) xn gp yn yp) := by
   intro i N α k q m1 m2 xn gp yn yp h
-  obtain ⟨hX, hG, hK, hT, hM⟩ := hClsf N k q m1 m2 xn gp yn yp h
-  exact pairCls_of_cert (hc i N) (rA i N) (rB i N) (EA i N) (EB i N) xn gp yn yp hX hG hK hT
-    (hM i) (hcert i N)
+  obtain ⟨hX, hG, hK, hT, hM, hcnt⟩ := hClsf N k q m1 m2 xn gp yn yp h
+  obtain ⟨h0, hle, hqν⟩ := hcnt i
+  refine ⟨⟨h0, hle⟩, ?_⟩
+  set x := q + m2 - (DA i N).g with hx
+  have hxν : (x : ℝ) ≤ (DA i N).ν :=
+    (Nat.cast_le.mpr (show x ≤ q + m2 by omega)).trans hqν
+  have hxνB : (x : ℝ) ≤ (DB i N).ν := by rw [(hc i N).ν]; exact hxν
+  exact pairCls_of_cert ((hc i N).withCount x) ((rA i N).withCount x) ((rB i N).withCount x)
+    ((EA i N).withCount hxν) ((EB i N).withCount hxνB) xn gp yn yp hX hG hK hT
+    (hM i) (fun m hm => hcert i N x m (by omega) hxν hm)
 
 /-! ### 6. The class link `hlink` for `nearOptCls`: counting, free facts, statistics
 
@@ -1516,26 +1569,32 @@ open CatalanMeasure.GenD CatalanMeasure.GenD.Analytic CatalanMeasure.Parametric
 
 /-- The canonical class predicate `Clsf` (what `hCls_of_cert` needs): ranges, row counts, and the
 spike count of the positives `≤ Mmax N` for every endpoint trial's `θ`. -/
-def ClsfCanon {I : ℕ} (θ : Fin I → ℕ → ℝ) (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ) (N k q m1 m2 : ℕ)
+def ClsfCanon {I : ℕ} (θ : Fin I → ℕ → ℝ) (sr gc : Fin I → ℕ → ℕ) (nu : Fin I → ℕ → ℝ)
+    (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ) (N k q m1 m2 : ℕ)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) : Prop :=
   (∀ b, Fin.append xn yn b ∈ Ioo (-1 : ℝ) 0) ∧ (∀ p, Fin.append gp yp p ∈ Ioo (0 : ℝ) 1) ∧
     (((k + m1 : ℕ)) : ℝ) ≤ Kn N ∧ ((k + m1 + (q + m2) + 1 : ℕ) : ℝ) ≤ Tn N ∧
-    ∀ i, (Finset.univ.filter (fun p => 1 - θ i N < Fin.append gp yp p)).card ≤ Mmax N
+    (∀ i, (Finset.univ.filter (fun p => 1 - θ i N < Fin.append gp yp p)).card ≤ Mmax N) ∧
+    ∀ i, 0 < sr i N ∧ sr i N + gc i N ≤ q + m2 ∧ ((q + m2 : ℕ) : ℝ) ≤ nu i N
 
 /-- `hCls` for the canonical class: only the per-trial spike certificates remain. -/
 theorem hCls_of_canon {I : ℕ} {DA DB : Fin I → ℕ → SignedData} (cp : Fin I → ℕ → ℝ → ℝ)
     (hc : ∀ i N, InterpCompat (DA i N) (DB i N)) (rA : ∀ i N, SignedRegular (DA i N))
     (rB : ∀ i N, SignedRegular (DB i N)) (EA : ∀ i N, SpikeEnv (DA i N))
     (EB : ∀ i N, SpikeEnv (DB i N)) (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ)
-    (hcert : ∀ i N (m : ℕ), 2 * m ≤ Mmax N + 1 → ∃ ρ : ℝ, |ρ| < 1 ∧
-      ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
-      Nonempty (SpikeTrialCert (DA i N) m ρ (Kn N) (Tn N)) ∧
-      Nonempty (SpikeTrialCert (DB i N) m ρ (Kn N) (Tn N))) :
+    (hcert : ∀ i N (x m : ℕ), (DA i N).sp ≤ x → (x : ℝ) ≤ (DA i N).ν → 2 * m ≤ Mmax N + 1 →
+      ∃ ρ : ℝ, |ρ| < 1 ∧ ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
+      Nonempty (SpikeTrialCert ((DA i N).withCount x) m ρ (Kn N) (Tn N)) ∧
+      Nonempty (SpikeTrialCert ((DB i N).withCount x) m ρ (Kn N) (Tn N))) :
     ∀ i N α k q m1 m2 xn gp yn yp,
-      ClsfCanon (fun i N => (DA i N).θ) Kn Tn Mmax N k q m1 m2 xn gp yn yp →
-      Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp) :=
+      ClsfCanon (fun i N => (DA i N).θ) (fun i N => (DA i N).sp) (fun i N => (DA i N).g)
+        (fun i N => (DA i N).ν) Kn Tn Mmax N k q m1 m2 xn gp yn yp →
+      (0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2) ∧
+      Nonempty (PairCls ((DA i N).withCount (q + m2 - (DA i N).g))
+        ((DB i N).withCount (q + m2 - (DA i N).g)) (cp i N α) xn gp yn yp) :=
   hCls_of_cert cp hc rA rB EA EB (fun N k q m1 m2 xn gp yn yp =>
-    ClsfCanon (fun i N => (DA i N).θ) Kn Tn Mmax N k q m1 m2 xn gp yn yp) Kn Tn Mmax
+    ClsfCanon (fun i N => (DA i N).θ) (fun i N => (DA i N).sp) (fun i N => (DA i N).g)
+      (fun i N => (DA i N).ν) Kn Tn Mmax N k q m1 m2 xn gp yn yp) Kn Tn Mmax
     (fun _ _ _ _ _ _ _ _ _ h => h) hcert
 
 theorem card_spike_mono {n : ℕ} (v : Fin n → ℝ) {θ θ0 : ℝ} (h : θ ≤ θ0) :
@@ -1547,7 +1606,8 @@ theorem card_spike_mono {n : ℕ} (v : Fin n → ℝ) {θ θ0 : ℝ} (h : θ ≤
 
 /-- The canonical `Clsf` holds for a sign/first-kind split of a configuration (ranges, counts and
 the spike count `card_x + card_y ≤ Mmax`). -/
-theorem canon_of_split {I : ℕ} (θ : Fin I → ℕ → ℝ) (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ) (N : ℕ)
+theorem canon_of_split {I : ℕ} (θ : Fin I → ℕ → ℝ) (sr gc : Fin I → ℕ → ℕ)
+    (nu : Fin I → ℕ → ℝ) (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ) (N : ℕ)
     {p m n k q m1 m2' r s' : ℕ} (hpm : p + m = n) (x : Fin p → ℝ) (y : Fin m → ℝ)
     (hx : ∀ i, x i ∈ Ioo (-1 : ℝ) 1) (hy : ∀ j, y j ∈ Ioo (-1 : ℝ) 1)
     (σx : Fin k ⊕ Fin q ≃ Fin p) (σy : Fin m1 ⊕ Fin m2' ≃ Fin m) (τ : Fin r ⊕ Fin s' ≃ Fin m2')
@@ -1555,15 +1615,16 @@ theorem canon_of_split {I : ℕ} (θ : Fin I → ℕ → ℝ) (Kn Tn : ℕ → �
     (hyneg : ∀ b, y (σy (Sum.inl b)) < 0) (hypos : ∀ b, 0 < y (σy (Sum.inr b)))
     (hKn : (n : ℝ) ≤ Kn N) (hTn : (n : ℝ) + 1 ≤ Tn N)
     (hsp : ∀ i, (Finset.univ.filter (fun v => 1 - θ i N < x v)).card +
-        (Finset.univ.filter (fun v => 1 - θ i N < y v)).card ≤ Mmax N) :
-    ClsfCanon θ Kn Tn Mmax N k q m1 (r + s') (fun b => x (σx (Sum.inl b)))
+        (Finset.univ.filter (fun v => 1 - θ i N < y v)).card ≤ Mmax N)
+    (hcnt : ∀ i, 0 < sr i N ∧ sr i N + gc i N ≤ q) (hnu : ∀ i, (n : ℝ) ≤ nu i N) :
+    ClsfCanon θ sr gc nu Kn Tn Mmax N k q m1 (r + s') (fun b => x (σx (Sum.inl b)))
       (fun b => x (σx (Sum.inr b))) (fun b => y (σy (Sum.inl b)))
       (Fin.append (fun j => y (σy (Sum.inr (τ (Sum.inl j)))))
         (fun j => y (σy (Sum.inr (τ (Sum.inr j)))))) := by
   have hkq : k + q = p := by simpa using Fintype.card_congr σx
   have hm12 : m1 + m2' = m := by simpa using Fintype.card_congr σy
   have hrs : r + s' = m2' := by simpa using Fintype.card_congr τ
-  refine ⟨?_, ?_, ?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩
   · intro b
     refine Fin.addCases (fun j => ?_) (fun j => ?_) b
     · simp only [Fin.append_left]; exact ⟨(hx _).1, hxneg j⟩
@@ -1583,6 +1644,11 @@ theorem canon_of_split {I : ℕ} (θ : Fin I → ℕ → ℝ) (Kn Tn : ℕ → �
     exact hTn
   · intro i
     exact (spike_count_split x y σx σy τ (θ i N)).trans (hsp i)
+  · intro i
+    obtain ⟨h0, h1⟩ := hcnt i
+    refine ⟨h0, by omega, ?_⟩
+    have h2 : q + (r + s') ≤ n := by omega
+    exact (Nat.cast_le.mpr h2).trans (hnu i)
 
 theorem Phase2Data.toBounds_α1 {I : ℕ} (D : Phase2Data I) : D.toBounds.α1 = D.α1 := rfl
 theorem Phase2Data.toBounds_ncount {I : ℕ} (D : Phase2Data I) : D.toBounds.ncount = D.ncount := rfl
@@ -1676,8 +1742,12 @@ structure LinkCert {I : ℕ} (D : Phase2Data I) (P : Parameters) (target residua
   hKn : ∀ N, (P.n N : ℝ) ≤ Kn N
   hTn : ∀ N, (P.n N : ℝ) + 1 ≤ Tn N
   hMmax : ∀ N, (Dtop / dsp + D.C1 * θ0) * (P.n N : ℝ) + 1 ≤ (Mmax N : ℝ)
+  -- the Heine count: offset `g` of the problem, reference count `0 < sp ≤ g` (NOTES-ETA §5.1)
+  hgA : ∀ i N, (D.DA i N).g = P.g N
+  hspA : ∀ i N, 0 < (D.DA i N).sp ∧ (D.DA i N).sp ≤ P.g N
   hClsf : ∀ N k q m1 m2 xn gp yn yp,
-    ClsfCanon (fun i N => (D.DA i N).θ) Kn Tn Mmax N k q m1 m2 xn gp yn yp →
+    ClsfCanon (fun i N => (D.DA i N).θ) (fun i N => (D.DA i N).sp) (fun i N => (D.DA i N).g)
+      (fun i N => (D.DA i N).ν) Kn Tn Mmax N k q m1 m2 xn gp yn yp →
     D.Clsf N k q m1 m2 xn gp yn yp
 
 end HL5
@@ -1799,8 +1869,25 @@ theorem Phase2Data.hlink_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters} (
     · -- the canonical `Clsf`
       show D.Clsf N k q m1 (r + s') _ _ _ _
       refine L.hClsf N k q m1 (r + s') _ _ _ _ ?_
-      refine canon_of_split (fun i N => (D.DA i N).θ) L.Kn L.Tn L.Mmax N hpm x y hx hy σx σy τ
-        hxneg hxpos hyneg hypos (L.hKn N) (L.hTn N) ?_
+      have hq2 : 2 * P.g N < q := by
+        obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+        have hs := (hsign i0 ⟨h1, h2⟩).1
+        have hq := L.hq2g i0 α ⟨h1, h2⟩
+        have h3 : 2 * (P.g N : ℝ) / (P.n N : ℝ) < (q : ℝ) / (P.n N : ℝ) := by
+          rw [hgr]; linarith
+        have h4 : 2 * (P.g N : ℝ) < q := (div_lt_div_iff_of_pos_right hνpos).1 h3
+        exact_mod_cast h4
+      refine canon_of_split (fun i N => (D.DA i N).θ) (fun i N => (D.DA i N).sp)
+        (fun i N => (D.DA i N).g) (fun i N => (D.DA i N).ν) L.Kn L.Tn L.Mmax N hpm x y hx hy
+        σx σy τ hxneg hxpos hyneg hypos (L.hKn N) (L.hTn N) ?_ ?_ ?_
+      rotate_left
+      · intro i
+        obtain ⟨h0, h1⟩ := L.hspA i N
+        refine ⟨h0, ?_⟩
+        rw [L.hgA i N]
+        omega
+      · intro i
+        rw [D.hν i N, hνD]
       intro i
       have hcx0 : ((Finset.univ.filter (fun v => 1 - L.θ0 < x v)).card : ℝ) ≤
           (P.n N : ℝ) * L.Dtop / L.dsp :=

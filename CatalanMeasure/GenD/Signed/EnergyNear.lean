@@ -531,7 +531,7 @@ def fNegM (Rm : ℝ → ℝ) (x : ℝ) : ℝ :=
 /-- Field of a first-kind fixed positive node. -/
 def fPosM (Rm : ℝ → ℝ) (x : ℝ) : ℝ :=
   D.rowBaseM Rm x + 2 * barrierTrialS D.a (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-    fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x
+    fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x + 2 * D.Sup
 
 /-- With the spike cost attached. -/
 def fPosMS (Rm : ℝ → ℝ) (x : ℝ) : ℝ := D.fPosM Rm x + D.cs * (if 1 - D.θ < x then 1 else 0)
@@ -558,7 +558,7 @@ def fNearM (Rn : ℝ → ℝ) (α β x : ℝ) : ℝ :=
     (β / (4 * (1 - D.η)) + 1 / (2 * D.ν)) * (-Real.log (1 - x ^ 2)) +
     ((1 - D.η) / (4 * D.ν)) * Real.log (1 / (1 - D.τ ^ 2)) + Real.log (1 / D.τ ^ 2) +
     D.phConst + remC (1 - 2 * D.η) * β * ip (arcPos D.τ) (arcPos D.τ) +
-    (D.η + α / 2) * Real.log 2
+    (D.η + α / 2) * Real.log 2 + 2 * D.Sup
 
 /-- With the spike cost attached. -/
 def fNearMS (Rn : ℝ → ℝ) (α β x : ℝ) : ℝ :=
@@ -578,9 +578,11 @@ theorem sum_fPosM_eq (D : SignedData) (Rm : ℝ → ℝ) {q : ℕ} (gp : Fin q �
     ∑ p, D.fPosM Rm (gp p) = (∑ p, D.rowBaseM Rm (gp p)) +
       2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
       ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
-      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) := by
+      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) + (q : ℝ) * (2 * D.Sup) := by
   unfold SignedData.fPosM
-  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum]
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
+    Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  ring
 
 theorem sum_fNeg_eq (D : SignedData) {k : ℕ} (xn : Fin k → ℝ) :
     ∑ b, D.fNeg (xn b) = (∑ b, D.rowBase (xn b)) -
@@ -594,9 +596,11 @@ theorem sum_fPos_eq (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) :
     ∑ p, D.fPos (gp p) = (∑ p, D.rowBase (gp p)) +
       2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
       ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
-      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) := by
+      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) + (q : ℝ) * (2 * D.Sup) := by
   unfold SignedData.fPos
-  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum]
+  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
+    Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+  ring
 
 theorem sum_rowBase_eq (D : SignedData) {k : ℕ} (x : Fin k → ℝ) :
     ∑ b, D.rowBase (x b) = (∑ b, D.Rf (x b)) - (∑ b, barrierTrialS D.v (x b)) -
@@ -623,7 +627,7 @@ theorem sum_fNearM_eq (D : SignedData) (Rn : ℝ → ℝ) (α β : ℝ) {s : ℕ
       (s : ℝ) * (((1 - D.η) / (4 * D.ν)) * Real.log (1 / (1 - D.τ ^ 2))) +
       (s : ℝ) * Real.log (1 / D.τ ^ 2) + (s : ℝ) * D.phConst +
       (s : ℝ) * (remC (1 - 2 * D.η) * β * ip (arcPos D.τ) (arcPos D.τ)) +
-      (s : ℝ) * ((D.η + α / 2) * Real.log 2) := by
+      (s : ℝ) * ((D.η + α / 2) * Real.log 2) + (s : ℝ) * (2 * D.Sup) := by
   unfold SignedData.fNearM
   simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum, Finset.sum_const,
     Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
@@ -694,10 +698,11 @@ theorem signed_master_near (D : SignedData) {k q m1 m2 s : ℕ} (hν : 0 < D.ν)
     (hinj : Function.Injective (Fin.append (Fin.append xn yn) (Fin.append gp yp)))
     (hzinj : Function.Injective zp)
     (hs : ∀ j, sc j ∈ Ioo (0 : ℝ) 1) (hsi : Function.Injective sc)
-    (LR spike : ℝ)
+    (LR spike : ℝ) (x : ℕ) (hx0 : 0 < x) (hsr : D.sp ≤ x)
+    (hxg : (x : ℝ) + D.g = (q : ℝ) + m2 + s)
     (hA7 : LR / D.ν ^ 2 ≤ logPref (Fin.append xn yn) (Fin.append gp (Fin.append yp zp)) / D.ν ^ 2 +
-      D.numB (Fin.append xn yn) (Fin.append gp (Fin.append yp zp)) -
-      D.denB (Fin.append gp (Fin.append yp zp)) + spike) :
+      (D.withCount x).numB (Fin.append xn yn) (Fin.append gp (Fin.append yp zp)) -
+      (D.withCount x).denB (Fin.append gp (Fin.append yp zp)) + spike) :
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
         (∑ i, ∑ j ∈ Finset.Ioi i,
           Real.log |Fin.append (Fin.append xn yn) (Fin.append gp yp) j -
@@ -714,6 +719,16 @@ theorem signed_master_near (D : SignedData) {k q m1 m2 s : ℕ} (hν : 0 < D.ν)
           remC (1 - 2 * D.η) * α * (-Real.log (1 - yp j ^ 2)))) +
         (1 / D.ν) * ∑ j, D.fNearM Rn α ((s : ℝ) / D.ν) (zp j) +
         (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  -- the Heine count `x` (NOTES-ETA §5.1)
+  have hA7c := D.numB_sub_denB_withCount_le hν hx0 hsr (Fin.append xn yn)
+    (Fin.append gp (Fin.append yp zp))
+  rw [hxg] at hA7c
+  replace hA7 : LR / D.ν ^ 2 ≤ logPref (Fin.append xn yn) (Fin.append gp (Fin.append yp zp)) /
+      D.ν ^ 2 + D.numB (Fin.append xn yn) (Fin.append gp (Fin.append yp zp)) -
+      D.denB (Fin.append gp (Fin.append yp zp)) +
+      (spike + (D.numDenRef - (D.numConst - D.denConst) +
+        2 * (((q : ℝ) + m2 + s) / D.ν) * D.Sup)) := by
+    linarith
   have hτb := realEnergyTau_bounds he
   have hτ : D.τ ∈ Ioo (0 : ℝ) 1 := hτb
   have hτ1 : D.τ ∈ Ioc (0 : ℝ) 1 := ⟨hτb.1, hτb.2.le⟩
@@ -1091,7 +1106,7 @@ theorem signed_second_energy_near_det (D : SignedData) {k q m1 m2 s : ℕ} (hν 
     (Rm Rn : ℝ → ℝ) (α : ℝ) (hα : ((m1 + m2 + s : ℕ) : ℝ) / D.ν ≤ α)
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin (m2 + s) → ℝ) → Prop}
     {LR : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin (m2 + s) → ℝ) → ℝ}
-    {c' : ℝ} (hA7 : SpikeCompareFixed D c' Cls LR)
+    {c' : ℝ} (hA7 : SpikeCompareFixedCount D c' Cls LR)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
     (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
@@ -1112,7 +1127,8 @@ theorem signed_second_energy_near_det (D : SignedData) {k q m1 m2 s : ℕ} (hν 
         ((∑ b, D.Rf (xn b)) + ∑ p, D.Rf (gp p)) / D.ν +
         ((∑ j, Rm (yn j)) + ∑ j, Rm (yp j)) / D.ν + (∑ j, Rn (zp j)) / D.ν +
         (∑ j, D.Cf (sc j)) / D.ν + LR xn gp yn (Fin.append yp zp) / D.ν ^ 2 ≤
-      D.constFix (k + q) (m1 + m2 + s) + D.errJ3 c' ((k + m1) + (q + m2) + s) +
+      D.constFix (k + q) (m1 + m2 + s) +
+        (D.withCount (q + (m2 + s) - D.g)).errJ3 c' ((k + m1) + (q + m2) + s) +
         (1 / D.ν) * ((∑ b, D.fNeg (xn b)) + ∑ j, D.fNegM Rm (yn j)) +
         (1 / D.ν) * ((∑ p, D.fPosS (gp p)) +
           ∑ j, D.fPosMR Rm (remC (1 - 2 * D.η)) α (yp j)) +
@@ -1123,12 +1139,23 @@ theorem signed_second_energy_near_det (D : SignedData) {k q m1 m2 s : ℕ} (hν 
     refine Fin.addCases (fun i => ?_) (fun i => ?_) b
     · simp only [Fin.append_left]; exact hyp i
     · simp only [Fin.append_right]; exact hzp i
+  obtain ⟨hcnt, hA7⟩ := hA7
+  obtain ⟨hsr0, hsrg⟩ := hcnt xn gp yn (Fin.append yp zp) hcls
   have hA := hA7 xn gp yn (Fin.append yp zp) hxn hgp hyn hyp' hcls
   have hN : (k + m1) + (q + (m2 + s)) = (k + m1) + (q + m2) + s := by omega
   rw [hN] at hA
+  have hst : (D.withCount (q + (m2 + s) - D.g)).spikeTerm (Fin.append gp (Fin.append yp zp)) =
+      D.spikeTerm (Fin.append gp (Fin.append yp zp)) := rfl
+  rw [hst, SignedData.withCount_ν] at hA
+  have hx0 : 0 < q + (m2 + s) - D.g := by omega
+  have hsr : D.sp ≤ q + (m2 + s) - D.g := by omega
+  have hxg : ((q + (m2 + s) - D.g : ℕ) : ℝ) + D.g = (q : ℝ) + m2 + s := by
+    rw [Nat.cast_sub (by omega)]; push_cast; ring
   have h := signed_master_near D hν he hall hv hR ht hμ hC hmass hη0 hε hpS Rm Rn α hα xn gp
     yn yp zp sc hxn hgp hyn hyp hzp hinjF hinj hzinj hs hsi (LR xn gp yn (Fin.append yp zp))
-    (D.spikeTerm (Fin.append gp (Fin.append yp zp)) + D.errJ3 c' ((k + m1) + (q + m2) + s))
+    (D.spikeTerm (Fin.append gp (Fin.append yp zp)) +
+      (D.withCount (q + (m2 + s) - D.g)).errJ3 c' ((k + m1) + (q + m2) + s))
+    (q + (m2 + s) - D.g) hx0 hsr hxg
     (by linarith only [hA])
   have e := row_sum_split (fun x => D.cs * (if 1 - D.θ < x then 1 else 0)) gp (Fin.append yp zp)
   have e' := row_sum_split (fun x => D.cs * (if 1 - D.θ < x then 1 else 0)) yp zp
@@ -1210,9 +1237,9 @@ structure SignedNearBounds (I : ℕ) where
   cp_pos : ∀ i N α, 0 < cp i N α
   cp_le : ∀ i N α, cp i N α ≤ 1
   err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
-    (D i N α).errJ3 (cp i N α) (ncount N) ≤ ε
+    ((D i N α).withCount (ncount N)).errJ3 (cp i N α) (ncount N) ≤ ε
   spikeFix : ∀ i N α k q m1 m2,
-    SpikeCompareFixed (D i N α) (cp i N α) (Clsf N k q m1 m2) (LRf N k q m1 m2)
+    SpikeCompareFixedCount (D i N α) (cp i N α) (Clsf N k q m1 m2) (LRf N k q m1 m2)
   rowNeg : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D i N α).fNeg x ≤ MXn i α + ε
   rowPos : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc (lo i) (hi i),
@@ -1304,7 +1331,7 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
               ((s : ℝ) / (T.ncount N : ℝ)) + δ / 8) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i), (T.D i N α).constTotal (T.ncount N) ≤ T.cInf i α + δ / 8) ∧
       (∀ α ∈ Icc (T.lo i) (T.hi i),
-        (T.D i N α).errJ3 (T.cp i N α) (T.ncount N) ≤ δ / 8) := by
+        ((T.D i N α).withCount (T.ncount N)).errJ3 (T.cp i N α) (T.ncount N) ≤ δ / 8) := by
     rw [Filter.eventually_all]
     intro i
     filter_upwards [T.e_mem i, T.v_summable i, T.p_summable i, T.R_geom i, T.t_geom i,
@@ -1425,10 +1452,12 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
   rw [hαν, show 1 - 2 * (T.D i N α).η = T.epsSplit i by rw [hηD]; ring] at hct
   have hconst := h10 α hαI
   have herr := h11 α hαI
-  have hej : (T.D i N α).errJ3 (T.cp i N α) ((k + m1) + (q + m2) + s) =
-      (T.D i N α).errJ3 (T.cp i N α) (T.ncount N) := by
-    congr 1; omega
-  rw [hej] at h
+  have hej : ((T.D i N α).withCount (q + (m2 + s) - (T.D i N α).g)).errJ3 (T.cp i N α)
+      ((k + m1) + (q + m2) + s) ≤
+      ((T.D i N α).withCount (T.ncount N)).errJ3 (T.cp i N α) (T.ncount N) := by
+    have e : (k + m1) + (q + m2) + s = T.ncount N := by omega
+    rw [e]
+    exact (T.D i N α).errJ3_withCount_mono (T.cp_pos i N α) he.1.le hν (by omega) _
   rw [hβD, hνD, hRfD, hCfD, hcD] at h
   simp only [mul_add] at g1 g2 g3 g4 hb h
   have hκ0 : 0 ≤ κ := by rw [hκdef]; positivity
@@ -1437,7 +1466,7 @@ theorem signed_second_energy_near_nodes {I : ℕ} (T : SignedNearBounds I) {δ :
   have hm3 := mul_nonneg (show 0 ≤ 1 - α by linarith) hδ.le
   have hm4 := mul_nonneg hα0 hδ.le
   rw [hνD] at g1 g2 g3 g4
-  nlinarith only [h, hct, g1, g2, g3, g4, hb, hconst, hδ, hm1, hm2, hm3, hm4, herr]
+  nlinarith only [h, hct, g1, g2, g3, g4, hb, hconst, hδ, hm1, hm2, hm3, hm4, herr, hej]
 
 end
 

@@ -1213,7 +1213,12 @@ def denPoly (b : ℕ → ℝ) (K : ℕ) (g : ℝ) : ℝ :=
 structure SignedData where
   ν : ℝ
   e : ℝ
+  /-- The reference Heine count `s_r` of the denominator trial `b` (the trial's `W = s_r b`). The
+  Heine count of a configuration is its number of positive rows minus `g`; the bounds are taken
+  at `withCount` of that count (NOTES-ETA §5.1). -/
   sp : ℕ
+  /-- The count offset: Heine count = number of positive rows − `g`. -/
+  g : ℕ
   v : ℕ → ℝ
   a : ℕ → ℝ
   b : ℕ → ℝ
@@ -1285,10 +1290,11 @@ def fNeg (x : ℝ) : ℝ :=
     2 * barrierTrialS D.a (-D.τ * x) +
     fld D.τ (fun n => 2 * (1 - D.η) * (mneg D.μ D.τ n - D.t n) - D.R n) x
 
-/-- Row field on the positives. -/
+/-- Row field on the positives; `2 Sup` is the positive row's share `2 Sup/ν` of the particle
+term `2 (x/ν) Sup` at the Heine count `x = #positives − g` (NOTES-ETA §5.1). -/
 def fPos (x : ℝ) : ℝ :=
   D.rowBase x + 2 * barrierTrialS D.a (-D.τ * x) - ((D.sp : ℝ) / D.ν) * denPoly D.b D.K x +
-    fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x
+    fld D.τ (fun n => mpos D.μ D.τ n + D.R n) x + 2 * D.Sup
 
 /-- Column field. -/
 def fCol (s : ℝ) : ℝ := D.Cf s + 2 * barrierTrialT D.v s - Real.log (1 - s) / D.ν
@@ -1311,13 +1317,27 @@ def etaErr : ℝ :=
 /-- The cost of the Chebyshev bound of the fixed-fixed half Vandermonde (PROOF-A §17.40). -/
 def hadErr : ℝ := (Real.log 2 - 2 * Real.log (1 - D.τ ^ 2)) / (4 * D.ν) + D.e
 
+/-- The J2/J5 constant at the reference count, with the particle term `2 (x/ν) Sup` moved to the
+positive fields (`+ 2 Sup` each) and `- 2 (g/ν) Sup` kept here: `numConst - denConst` of
+`withCount x` is at most `numDenRef + 2 ((x + g)/ν) Sup` for `0 < sp ≤ x`
+(`numConst_sub_denConst_withCount_le`; NOTES-ETA §5.1). -/
+def numDenRef : ℝ :=
+  2 * (barrierTrialNormSq D.a - ((D.g : ℝ) / D.ν) * D.Sup - D.ra + trialPairError D.ν D.e D.a) +
+    ((D.sp : ℝ) / D.ν) ^ 2 * (∑ i ∈ Finset.range D.K, 2 * D.b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ)) +
+    2 * ((D.sp : ℝ) / D.ν ^ 2) * ∑ i ∈ Finset.range D.K, D.b (i + 1) ^ 2
+
+/-- **The trial at Heine count `x`**: count `x`, denominator trial `(sp/x) b` (so `x · b_x = sp · b`;
+the J5 competitor is Lemma 7.4's mixture `sp ν'_b + (x - sp) arcsine`). -/
+def withCount (x : ℕ) : SignedData :=
+  { D with sp := x, b := fun k => ((D.sp : ℝ) / x) * D.b k }
+
 /-- The total constant, `p` free rows (no fixed rows). -/
 def constTotal (p : ℕ) : ℝ :=
   D.constant - ((p : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.v / 2 +
     4 * D.e * (∑' j, |D.v j|) + pinZeroError D.ν D.e + D.eD7 ((p : ℝ) / D.ν) +
     (1 - D.η) * refEnergy D.μ + 2 * D.η * barrierTrialNormSq D.p -
     D.η * ((p : ℝ) / D.ν) ^ 2 * Real.log 2 + D.etaErr + D.hadErr +
-    D.numConst - D.denConst + D.Kq
+    D.numDenRef + D.Kq
 
 /-- The total constant with `pf` free rows and `M` fixed rows (first kind and near): the
 weighted mass of the `(1 - η)` and `η` shares is `(pf + M/2)/ν`, the fixed-fixed half
@@ -1329,7 +1349,96 @@ def constFix (pf M : ℕ) : ℝ :=
     2 * D.η * barrierTrialNormSq D.p -
     D.η * (((pf : ℝ) + (M : ℝ) / 2) / D.ν) ^ 2 * Real.log 2 + D.etaErr -
     (1 / 4) * ((M : ℝ) / D.ν) ^ 2 * Real.log 2 + D.hadErr +
-    D.numConst - D.denConst + D.Kq
+    D.numDenRef + D.Kq
+
+/-! #### The trial at the configuration's Heine count -/
+
+@[simp] theorem withCount_ν (x : ℕ) : (D.withCount x).ν = D.ν := rfl
+@[simp] theorem withCount_e (x : ℕ) : (D.withCount x).e = D.e := rfl
+@[simp] theorem withCount_sp (x : ℕ) : (D.withCount x).sp = x := rfl
+@[simp] theorem withCount_g (x : ℕ) : (D.withCount x).g = D.g := rfl
+@[simp] theorem withCount_a (x : ℕ) : (D.withCount x).a = D.a := rfl
+@[simp] theorem withCount_b (x : ℕ) :
+    (D.withCount x).b = fun k => ((D.sp : ℝ) / x) * D.b k := rfl
+@[simp] theorem withCount_K (x : ℕ) : (D.withCount x).K = D.K := rfl
+@[simp] theorem withCount_R (x : ℕ) : (D.withCount x).R = D.R := rfl
+@[simp] theorem withCount_Sup (x : ℕ) : (D.withCount x).Sup = D.Sup := rfl
+@[simp] theorem withCount_τ (x : ℕ) : (D.withCount x).τ = D.τ := rfl
+@[simp] theorem withCount_ra (x : ℕ) : (D.withCount x).ra = D.ra := rfl
+@[simp] theorem withCount_cs (x : ℕ) : (D.withCount x).cs = D.cs := rfl
+@[simp] theorem withCount_θ (x : ℕ) : (D.withCount x).θ = D.θ := rfl
+@[simp] theorem withCount_kph (x : ℕ) : (D.withCount x).kph = D.kph := rfl
+
+theorem denPoly_const_mul (c : ℝ) (b : ℕ → ℝ) (K : ℕ) (g : ℝ) :
+    denPoly (fun k => c * b k) K g = c * denPoly b K g := by
+  simp only [denPoly, Finset.mul_sum]
+  exact Finset.sum_congr rfl fun i _ => by ring
+
+theorem withCount_numB (x : ℕ) {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) :
+    (D.withCount x).numB xn gp = D.numB xn gp - D.numConst + (D.withCount x).numConst := by
+  unfold numB
+  simp only [withCount_ν, withCount_a, withCount_τ, withCount_R]
+  ring
+
+theorem withCount_denB {x : ℕ} (hx : x ≠ 0) {q : ℕ} (gp : Fin q → ℝ) :
+    (D.withCount x).denB gp = D.denB gp - D.denConst + (D.withCount x).denConst := by
+  unfold denB
+  simp only [withCount_ν, withCount_sp, withCount_b, withCount_K, denPoly_const_mul,
+    ← Finset.mul_sum]
+  have hx' : (x : ℝ) ≠ 0 := Nat.cast_ne_zero.mpr hx
+  field_simp
+  ring
+
+/-- **Lemma 7.3–7.4 at the Heine count `x`** (the `σ²` terms cancel; NOTES-ETA §5.1). -/
+theorem numConst_sub_denConst_withCount_le {x : ℕ} (hν : 0 < D.ν) (hx : 0 < x)
+    (hsr : D.sp ≤ x) :
+    (D.withCount x).numConst - (D.withCount x).denConst ≤
+      D.numDenRef + 2 * ((((x : ℝ) + D.g)) / D.ν) * D.Sup := by
+  have hX : (0 : ℝ) < x := Nat.cast_pos.mpr hx
+  have hr0 : (0 : ℝ) ≤ D.sp := Nat.cast_nonneg _
+  have hrX : (D.sp : ℝ) ≤ x := Nat.cast_le.mpr hsr
+  set B := ∑ i ∈ Finset.range D.K, 2 * D.b (i + 1) ^ 2 / ((i + 1 : ℕ) : ℝ) with hB
+  set S := ∑ i ∈ Finset.range D.K, D.b (i + 1) ^ 2 with hS
+  have hB0 : 0 ≤ B := Finset.sum_nonneg fun i _ => by positivity
+  have hS0 : 0 ≤ S := Finset.sum_nonneg fun i _ => by positivity
+  have eB : ∑ i ∈ Finset.range D.K, 2 * (((D.sp : ℝ) / x) * D.b (i + 1)) ^ 2 /
+      ((i + 1 : ℕ) : ℝ) = ((D.sp : ℝ) / x) ^ 2 * B := by
+    rw [hB, Finset.mul_sum]; exact Finset.sum_congr rfl fun i _ => by ring
+  have eS : ∑ i ∈ Finset.range D.K, (((D.sp : ℝ) / x) * D.b (i + 1)) ^ 2 =
+      ((D.sp : ℝ) / x) ^ 2 * S := by
+    rw [hS, Finset.mul_sum]; exact Finset.sum_congr rfl fun i _ => by ring
+  have hL : 0 ≤ Real.log 2 := Real.log_nonneg (by norm_num)
+  unfold numConst denConst numDenRef
+  simp only [withCount_ν, withCount_sp, withCount_b, withCount_K, withCount_a, withCount_e,
+    withCount_Sup, withCount_ra, withCount_g]
+  rw [eB, eS, ← hB, ← hS]
+  have key : (2 * (barrierTrialNormSq D.a - ((D.g : ℝ) / D.ν) * D.Sup - D.ra +
+        trialPairError D.ν D.e D.a) + ((D.sp : ℝ) / D.ν) ^ 2 * B + 2 * ((D.sp : ℝ) / D.ν ^ 2) * S +
+        2 * (((x : ℝ) + D.g) / D.ν) * D.Sup) -
+      ((2 * (-(1 / 2 : ℝ) * ((x : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.a +
+        ((x : ℝ) / D.ν) * D.Sup - D.ra + trialPairError D.ν D.e D.a) +
+        (x : ℝ) * Real.log Real.pi / D.ν ^ 2) -
+       ((x : ℝ) * ((x : ℝ) - 1) * (-Real.log 2 - ((D.sp : ℝ) / x) ^ 2 * B) +
+        (x : ℝ) * (Real.log Real.pi - 2 * (((D.sp : ℝ) / x) ^ 2 * S))) / D.ν ^ 2) =
+      (x : ℝ) * Real.log 2 / D.ν ^ 2 + (D.sp : ℝ) ^ 2 * B / ((x : ℝ) * D.ν ^ 2) +
+        2 * (D.sp : ℝ) * S * ((x : ℝ) - D.sp) / ((x : ℝ) * D.ν ^ 2) := by
+    field_simp
+    ring
+  have h1 : 0 ≤ (x : ℝ) * Real.log 2 / D.ν ^ 2 := by positivity
+  have h2 : 0 ≤ (D.sp : ℝ) ^ 2 * B / ((x : ℝ) * D.ν ^ 2) := by positivity
+  have h3 : 0 ≤ 2 * (D.sp : ℝ) * S * ((x : ℝ) - D.sp) / ((x : ℝ) * D.ν ^ 2) := by
+    have : 0 ≤ (x : ℝ) - D.sp := by linarith
+    positivity
+  linarith
+
+/-- The J2/J5 bound at the Heine count `x`, in the reference trial's terms. -/
+theorem numB_sub_denB_withCount_le {x : ℕ} (hν : 0 < D.ν) (hx : 0 < x) (hsr : D.sp ≤ x)
+    {k q : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) :
+    (D.withCount x).numB xn gp - (D.withCount x).denB gp ≤
+      D.numB xn gp - D.denB gp - (D.numConst - D.denConst) + D.numDenRef +
+        2 * ((((x : ℝ) + D.g)) / D.ν) * D.Sup := by
+  rw [withCount_numB, withCount_denB D hx.ne']
+  linarith [D.numConst_sub_denConst_withCount_le hν hx hsr]
 
 end SignedData
 
@@ -1400,13 +1509,20 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
     (hinj : Function.Injective (Fin.append xn gp))
     (hs : ∀ j, sc j ∈ Ioo (0 : ℝ) 1) (hsi : Function.Injective sc)
-    (LR spike : ℝ)
-    (hA7 : LR / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + spike) :
+    (LR spike : ℝ) (x : ℕ) (hx0 : 0 < x) (hsr : D.sp ≤ x) (hxg : (x : ℝ) + D.g = q)
+    (hA7 : LR / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + (D.withCount x).numB xn gp -
+      (D.withCount x).denB gp + spike) :
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
         (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR / D.ν ^ 2 ≤
       D.constTotal (k + q) + spike + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
         (1 / D.ν) * (∑ p, D.fPos (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  -- the Heine count `x` (NOTES-ETA §5.1)
+  have hA7c := D.numB_sub_denB_withCount_le hν hx0 hsr xn gp
+  rw [hxg] at hA7c
+  replace hA7 : LR / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp +
+      (spike + (D.numDenRef - (D.numConst - D.denConst) + 2 * ((q : ℝ) / D.ν) * D.Sup)) := by
+    linarith
   have hτb := realEnergyTau_bounds he
   have hτ : D.τ ∈ Ioo (0 : ℝ) 1 := hτb
   have hτ1 : D.τ ∈ Ioc (0 : ℝ) 1 := ⟨hτb.1, hτb.2.le⟩
@@ -1475,9 +1591,11 @@ theorem signed_master (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
   have hsP : ∑ p, D.fPos (gp p) = (∑ p, D.rowBase (gp p)) +
       2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
       ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
-      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) := by
+      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) + (q : ℝ) * (2 * D.Sup) := by
     unfold SignedData.fPos
-    simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum]
+    simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, ← Finset.mul_sum,
+      Finset.sum_const, Finset.card_univ, Fintype.card_fin, nsmul_eq_mul]
+    ring
   have hbase : ∑ i, D.rowBase (Fin.append xn gp i) =
       (∑ i, D.Rf (Fin.append xn gp i)) - (∑ i, barrierTrialS D.v (Fin.append xn gp i)) -
         (∑ i, Real.log (1 - Fin.append xn gp i)) / (2 * D.ν) +
@@ -1545,6 +1663,28 @@ def SpikeCompare (D : SignedData) (c' : ℝ) {k q : ℕ}
     LR xn gp / D.ν ^ 2 ≤ logPref xn gp / D.ν ^ 2 + D.numB xn gp - D.denB gp + D.spikeTerm gp +
         D.errJ3 c' (k + q)
 
+/-- **`SpikeCompare` at the configuration's Heine count** (NOTES-ETA §5.1): the class gives
+`0 < sp` (reference count) and `sp + g ≤ q`, and the bound holds for `D.withCount (q - g)`. -/
+def SpikeCompareCount (D : SignedData) (c' : ℝ) {k q : ℕ}
+    (Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop)
+    (LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ) : Prop :=
+  (∀ xn gp, Cls xn gp → 0 < D.sp ∧ D.sp + D.g ≤ q) ∧
+    SpikeCompare (D.withCount (q - D.g)) c' Cls LR
+
+/-- The J3 error grows with the count. -/
+theorem SignedData.errJ3_withCount_mono (D : SignedData) {c' : ℝ} (hc' : 0 < c')
+    (he : 0 ≤ D.e) (hν : 0 < D.ν) {x y : ℕ} (hxy : x ≤ y) (n : ℕ) :
+    (D.withCount x).errJ3 c' n ≤ (D.withCount y).errJ3 c' n := by
+  unfold SignedData.errJ3
+  simp only [SignedData.withCount_e, SignedData.withCount_sp, SignedData.withCount_ν,
+    SignedData.withCount_kph]
+  have h1 : (x : ℝ) / D.ν ≤ (y : ℝ) / D.ν :=
+    div_le_div_of_nonneg_right (Nat.cast_le.mpr hxy) hν.le
+  have h2 : 0 ≤ 4 * D.e / c' := by positivity
+  have h3 : 0 ≤ (n : ℝ) / D.ν := by positivity
+  have := mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left h1 h2) h3
+  linarith
+
 /-- **The joint theorem (deterministic form, fixed `N`).** -/
 theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (he : D.e ∈ Ioo (0 : ℝ) (1 / 8)) (hp : ((k + q : ℕ) : ℝ) ≤ D.ν)
@@ -1553,7 +1693,7 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     (hmass : ((k + q : ℕ) : ℝ) / D.ν = ∑ τ, (D.μ τ).real univ)
     (hη0 : 0 ≤ D.η) (hη : D.η ≤ 1 / 2) (hpS : Summable (fun j => |D.p j|))
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → Prop} {LR : (Fin k → ℝ) → (Fin q → ℝ) → ℝ}
-    {c' : ℝ} (hA7 : SpikeCompare D c' Cls LR)
+    {c' : ℝ} (hA7 : SpikeCompareCount D c' Cls LR)
     (xn : Fin k → ℝ) (gp : Fin q → ℝ) (sc : Fin (k + q) → ℝ)
     (hxn : ∀ b, xn b ∈ Ioo (-1 : ℝ) 0) (hgp : ∀ p, gp p ∈ Ioo (0 : ℝ) 1)
     (hinj : Function.Injective (Fin.append xn gp))
@@ -1561,11 +1701,21 @@ theorem signed_second_energy_fixed (D : SignedData) {k q : ℕ} (hν : 0 < D.ν)
     D.constant + pinOffDiagonalInteraction D.ν 1 (Fin.append xn gp) sc +
         (∑ i, ∑ j ∈ Finset.Ioi i, Real.log |Fin.append xn gp j - Fin.append xn gp i|) / D.ν ^ 2 +
         (∑ i, D.Rf (Fin.append xn gp i)) / D.ν + (∑ j, D.Cf (sc j)) / D.ν + LR xn gp / D.ν ^ 2 ≤
-      D.constTotal (k + q) + D.errJ3 c' (k + q) + (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
+      D.constTotal (k + q) + (D.withCount (q - D.g)).errJ3 c' (k + q) +
+        (1 / D.ν) * (∑ b, D.fNeg (xn b)) +
         (1 / D.ν) * (∑ p, D.fPosS (gp p)) + (1 / D.ν) * ∑ j, D.fCol (sc j) := by
+  obtain ⟨hcnt, hA7⟩ := hA7
+  obtain ⟨hsr0, hsrg⟩ := hcnt xn gp hcls
   have hA := hA7 xn gp hxn hgp hcls
+  have hst : (D.withCount (q - D.g)).spikeTerm gp = D.spikeTerm gp := rfl
+  rw [hst, SignedData.withCount_ν] at hA
+  have hx0 : 0 < q - D.g := by omega
+  have hsr : D.sp ≤ q - D.g := by omega
+  have hxg : ((q - D.g : ℕ) : ℝ) + D.g = q := by
+    rw [Nat.cast_sub (by omega)]; ring
   have h := signed_master D hν he hp hv hR ht hμ hC hmass hη0 hη hpS xn gp sc hxn hgp hinj hs hsi
-    (LR xn gp) (D.spikeTerm gp + D.errJ3 c' (k + q)) (by linarith only [hA])
+    (LR xn gp) (D.spikeTerm gp + (D.withCount (q - D.g)).errJ3 c' (k + q)) (q - D.g) hx0 hsr hxg
+    (by linarith only [hA])
   have hsp : D.spikeTerm gp + (1 / D.ν) * (∑ p, D.fPos (gp p)) =
       (1 / D.ν) * (∑ p, D.fPosS (gp p)) := by
     unfold SignedData.spikeTerm SignedData.fPosS
@@ -1602,8 +1752,9 @@ structure SignedTrialBounds where
   cp : ℕ → ℝ
   cp_pos : ∀ N, 0 < cp N
   cp_le : ∀ N, cp N ≤ 1
-  err_small : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, (D N).errJ3 (cp N) (ncount N) ≤ ε
-  spike : ∀ N k q, SpikeCompare (D N) (cp N) (Cls N k q) (LR N k q)
+  err_small : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
+    ((D N).withCount (ncount N)).errJ3 (cp N) (ncount N) ≤ ε
+  spike : ∀ N k q, SpikeCompareCount (D N) (cp N) (Cls N k q) (LR N k q)
   rowNeg : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, (D N).fNeg x ≤ MXn + ε
   rowPos : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop,
@@ -1675,9 +1826,12 @@ theorem signed_second_energy (T : SignedTrialBounds) {δ : ℝ} (hδ : 0 < δ) :
       _ = T.MY + δ / 8 := by rw [hνe, hkqR]; field_simp
   have hb := T.budget κ ⟨hlo, hhi⟩
   have hct : (T.D N).constTotal (k + q) = (T.D N).constTotal (T.ncount N) := by rw [hkq]
-  have hej : (T.D N).errJ3 (T.cp N) (k + q) = (T.D N).errJ3 (T.cp N) (T.ncount N) := by rw [hkq]
-  rw [hct, hej] at h
-  nlinarith only [h, h1, h2, h3, hb, hconst, hδ, herr]
+  have hej : ((T.D N).withCount (q - (T.D N).g)).errJ3 (T.cp N) (k + q) ≤
+      ((T.D N).withCount (T.ncount N)).errJ3 (T.cp N) (T.ncount N) := by
+    rw [hkq]
+    exact (T.D N).errJ3_withCount_mono (T.cp_pos N) he.1.le hν (by omega) _
+  rw [hct] at h
+  nlinarith only [h, h1, h2, h3, hb, hconst, hδ, herr, hej]
 
 end Master
 

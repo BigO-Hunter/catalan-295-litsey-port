@@ -98,6 +98,15 @@ def SpikeCompareFixed (D : SignedData) (c' : ℝ) {k q m1 m2 : ℕ}
         D.numB (Fin.append xn yn) (Fin.append gp yp) - D.denB (Fin.append gp yp) +
         D.spikeTerm (Fin.append gp yp) + D.errJ3 c' ((k + m1) + (q + m2))
 
+/-- **`SpikeCompareFixed` at the configuration's Heine count** (NOTES-ETA §5.1): the class gives
+`0 < sp` (reference count) and `sp + g ≤ q + m₂` (positive rows), and the bound holds for
+`D.withCount (q + m₂ - g)`. -/
+def SpikeCompareFixedCount (D : SignedData) (c' : ℝ) {k q m1 m2 : ℕ}
+    (Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop)
+    (LR : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ) : Prop :=
+  (∀ xn gp yn yp, Cls xn gp yn yp → 0 < D.sp ∧ D.sp + D.g ≤ q + m2) ∧
+    SpikeCompareFixed (D.withCount (q + m2 - D.g)) c' Cls LR
+
 /-! ### The η-split and the linearisation of Lemma R′ (PROOF-A 17.33, NOTES §§11-12.1)
 
 Sequence-level statements, with `L(u) = ip u u`.  The fixed nodes enter the `(1 - η)`-share of

@@ -551,28 +551,55 @@ theorem spikeCompareFixed_interp (DA DB : SignedData) {l c c' : ℝ} (hl0 : 0 �
     (LR := fun a b => logRatioZ DA.sp a b) (fun _ _ => rfl) (Fin.append xn yn)
     (Fin.append gp yp) hxa hga ⟨W⟩
 
+/-- The interpolated trial at a Heine count is the interpolation of the endpoint trials at that
+count (the endpoints share the reference count `sp`). -/
+theorem interp_withCount {DA DB : SignedData} (hsp : DB.sp = DA.sp) (l c : ℝ) (x : ℕ) :
+    (SignedData.interp DA DB l c).withCount x =
+      SignedData.interp (DA.withCount x) (DB.withCount x) l c := by
+  unfold SignedData.withCount SignedData.interp
+  simp only [SignedData.mk.injEq, true_and, and_true]
+  funext k
+  simp only [linSeq, hsp]
+  ring
+
 /-- **`spikeFix` of `SignedNearBounds.ofEnds`.**  For every interval `i`, every `N` and every `α`,
 the interpolated trial `interpFamily (αA i) (αB i) (DA i) (DB i) constant N α` satisfies
-`SpikeCompareFixed` with the margin `cp i N α` and the class `Clsf`, provided the class implies a
-witness pair at the endpoint trials `DA i N`, `DB i N` (same configuration, each endpoint with its
-own spike constant `cs`). -/
+`SpikeCompareFixedCount` with the margin `cp i N α` and the class `Clsf`, provided the class gives
+the count condition `0 < sp`, `sp + g ≤ q + m₂` and a witness pair at the endpoint trials at the
+configuration's Heine count `q + m₂ - g` (same configuration, each endpoint with its own spike
+constant `cs`; NOTES-ETA §5.1). -/
 theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → ℕ → SignedData)
     (constant : ℕ → ℝ → ℝ) (cp : Fin I → ℕ → ℝ → ℝ) (cp_pos : ∀ i N α, 0 < cp i N α)
     (cp_le : ∀ i N α, cp i N α ≤ 1) (cp_theta : ∀ i N α, cp i N α ≤ (DA i N).θ)
+    (hsp : ∀ i N, (DB i N).sp = (DA i N).sp)
     (Clsf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop)
     (LRf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ)
     (hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
-      logRatioZ (DA i N).sp (Fin.append xn yn) (Fin.append gp yp))
+      logRatioZ (q + m2 - (DA i N).g) (Fin.append xn yn) (Fin.append gp yp))
     (hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
-      Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp)) :
+      (0 < (DA i N).sp ∧ (DA i N).sp + (DA i N).g ≤ q + m2) ∧
+      Nonempty (PairCls ((DA i N).withCount (q + m2 - (DA i N).g))
+        ((DB i N).withCount (q + m2 - (DA i N).g)) (cp i N α) xn gp yn yp)) :
     ∀ i N α k q m1 m2,
-      SpikeCompareFixed (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
+      SpikeCompareFixedCount (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
         (Clsf N k q m1 m2) (LRf N k q m1 m2) := by
   intro i N α k q m1 m2
-  exact spikeCompareFixed_interp (DA i N) (DB i N) (interpL_nonneg (αA i) (αB i) α)
-    (interpL_le_one (αA i) (αB i) α) ⟨cp_pos i N α, cp_le i N α⟩ (cp_theta i N α)
-    (fun xn gp yn yp => hLR i N k q m1 m2 xn gp yn yp)
-    (fun xn gp yn yp h => hCls i N α k q m1 m2 xn gp yn yp h)
+  refine ⟨fun xn gp yn yp h => (hCls i N α k q m1 m2 xn gp yn yp h).1, ?_⟩
+  have e : (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α).withCount
+      (q + m2 - (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α).g) =
+      SignedData.interp ((DA i N).withCount (q + m2 - (DA i N).g))
+        ((DB i N).withCount (q + m2 - (DA i N).g)) (interpL (αA i) (αB i) α) (constant N α) :=
+    interp_withCount (hsp i N) _ _ _
+  rw [e]
+  have hθ : cp i N α ≤ ((DA i N).withCount (q + m2 - (DA i N).g)).θ := cp_theta i N α
+  have hLR' : ∀ xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
+      logRatioZ ((DA i N).withCount (q + m2 - (DA i N).g)).sp (Fin.append xn yn)
+        (Fin.append gp yp) := fun xn gp yn yp => hLR i N k q m1 m2 xn gp yn yp
+  exact spikeCompareFixed_interp ((DA i N).withCount (q + m2 - (DA i N).g))
+    ((DB i N).withCount (q + m2 - (DA i N).g)) (l := interpL (αA i) (αB i) α)
+    (c := constant N α) (interpL_nonneg (αA i) (αB i) α)
+    (interpL_le_one (αA i) (αB i) α) ⟨cp_pos i N α, cp_le i N α⟩ hθ hLR'
+    (fun xn gp yn yp h => (hCls i N α k q m1 m2 xn gp yn yp h).2)
 
 
 /-! ### 6. Building the pair from ONE single-trial witness -/
