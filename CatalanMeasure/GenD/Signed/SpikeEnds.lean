@@ -507,8 +507,9 @@ def SpikePair.toWitness {DA DB : SignedData} {l c c' : ℝ} {k q : ℕ} {xn : Fi
     (abs_le.mpr ⟨by linarith [EA.hθ.2, P.hzph.1], P.hzph.2.le⟩) P.hcostA P.hcostB
 
 /-- The class of the interpolated contract: the endpoint trials are regular and compatible, their
-environments exist, and the configuration is a witness pair (with the quadrature cap `bcap`). -/
-structure PairCls (DA DB : SignedData) (c' bcap : ℝ) {k q m1 m2 : ℕ} (xn : Fin k → ℝ)
+environments exist, and the configuration is a witness pair.  Marked positives may be spikes:
+they are charged by `spikeTerm` of the combined list, so no quadrature cap is needed here. -/
+structure PairCls (DA DB : SignedData) (c' : ℝ) {k q m1 m2 : ℕ} (xn : Fin k → ℝ)
     (gp : Fin q → ℝ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) where
   compat : InterpCompat DA DB
   rA : SignedRegular DA
@@ -516,8 +517,6 @@ structure PairCls (DA DB : SignedData) (c' bcap : ℝ) {k q m1 m2 : ℕ} (xn : F
   EA : SpikeEnv DA
   EB : SpikeEnv DB
   P : SpikePair DA DB c' (Fin.append xn yn) (Fin.append gp yp)
-  hbcap : DA.θ < bcap
-  hyp : ∀ p, yp p ≤ 1 - bcap
 
 /-- `SpikeCompareFixed` for the interpolated trial `interp DA DB l c`, `l ∈ [0,1]`, for every
 configuration whose class gives a witness pair at the endpoints. -/
@@ -527,10 +526,10 @@ theorem spikeCompareFixed_interp (DA DB : SignedData) {l c c' : ℝ} (hl0 : 0 �
     (hLR : ∀ xn gp yn yp, LR xn gp yn yp =
       logRatioZ DA.sp (Fin.append xn yn) (Fin.append gp yp))
     {Cls : (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop}
-    (hCls : ∀ xn gp yn yp, Cls xn gp yn yp → ∃ bcap, Nonempty (PairCls DA DB c' bcap xn gp yn yp)) :
+    (hCls : ∀ xn gp yn yp, Cls xn gp yn yp → Nonempty (PairCls DA DB c' xn gp yn yp)) :
     SpikeCompareFixed (SignedData.interp DA DB l c) c' Cls LR := by
   intro xn gp yn yp hxn hgp hyn hyp hcls
-  obtain ⟨bcap, ⟨C⟩⟩ := hCls xn gp yn yp hcls
+  obtain ⟨C⟩ := hCls xn gp yn yp hcls
   have hxa : ∀ b, Fin.append xn yn b ∈ Ioo (-1 : ℝ) 0 :=
     fin_append_forall xn yn (fun t => t ∈ Ioo (-1 : ℝ) 0) hxn hyn
   have hga : ∀ p, Fin.append gp yp p ∈ Ioo (0 : ℝ) 1 :=
@@ -547,10 +546,10 @@ theorem spikeCompareFixed_interp (DA DB : SignedData) {l c c' : ℝ} (hl0 : 0 �
     exact abs_le.mpr ⟨by linarith [this.1], this.2.le⟩
   have W := C.P.toWitness (c := c) (l := l) hl0 hl1 C.compat C.rA C.rB C.EA C.EB hx hy hz
   have E := SpikeEnv.interp (c := c) hl0 hl1 C.compat C.rA C.rB C.EA C.EB
-  have key := spikeCompareFixed_of_class (SignedData.interp DA DB l c) E (bcap := bcap) hc' hcθ
-    (LR := LR) (fun xn gp yn yp => hLR xn gp yn yp) xn gp yn yp hxn hgp hyn hyp
-    ⟨⟨W⟩, C.hbcap, C.hyp⟩
-  exact key
+  rw [hLR]
+  exact spikeCompare_of_class (SignedData.interp DA DB l c) E hc' hcθ (k := k + m1) (q := q + m2)
+    (LR := fun a b => logRatioZ DA.sp a b) (fun _ _ => rfl) (Fin.append xn yn)
+    (Fin.append gp yp) hxa hga ⟨W⟩
 
 /-- **`spikeFix` of `SignedNearBounds.ofEnds`.**  For every interval `i`, every `N` and every `α`,
 the interpolated trial `interpFamily (αA i) (αB i) (DA i) (DB i) constant N α` satisfies
@@ -565,7 +564,7 @@ theorem spikeFix_of_ends {I : ℕ} (αA αB : Fin I → ℝ) (DA DB : Fin I → 
     (hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
       logRatioZ (DA i N).sp (Fin.append xn yn) (Fin.append gp yp))
     (hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
-      ∃ bcap, Nonempty (PairCls (DA i N) (DB i N) (cp i N α) bcap xn gp yn yp)) :
+      Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp)) :
     ∀ i N α k q m1 m2,
       SpikeCompareFixed (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
         (Clsf N k q m1 m2) (LRf N k q m1 m2) := by
@@ -585,10 +584,10 @@ def SpikePair.monoMargin {DA DB : SignedData} {c' c'' : ℝ} {k q : ℕ} {xn : F
     SpikePair DA DB c'' xn gp :=
   { P with }
 
-def PairCls.monoMargin {DA DB : SignedData} {c' c'' bcap : ℝ} {k q m1 m2 : ℕ}
+def PairCls.monoMargin {DA DB : SignedData} {c' c'' : ℝ} {k q m1 m2 : ℕ}
     {xn : Fin k → ℝ} {gp : Fin q → ℝ} {yn : Fin m1 → ℝ} {yp : Fin m2 → ℝ}
-    (C : PairCls DA DB c' bcap xn gp yn yp) (h : c'' ≤ c') :
-    PairCls DA DB c'' bcap xn gp yn yp :=
+    (C : PairCls DA DB c' xn gp yn yp) (h : c'' ≤ c') :
+    PairCls DA DB c'' xn gp yn yp :=
   { C with P := C.P.monoMargin h }
 
 /-- **The pair from one single-trial witness.**  A spike witness `WA` of the trial `DA` (the
@@ -627,22 +626,19 @@ def SpikePair.ofWitness {DA DB : SignedData} {c' : ℝ} {k q : ℕ} {xn : Fin k 
 
 /-- `PairCls` from a single-trial witness `WA` plus the endpoint-`B` ingredients on the same
 configuration, the environments and the cap. -/
-def PairCls.ofWitness {DA DB : SignedData} {c' bcap : ℝ} {k q m1 m2 : ℕ} {xn : Fin k → ℝ}
+def PairCls.ofWitness {DA DB : SignedData} {c' : ℝ} {k q m1 m2 : ℕ} {xn : Fin k → ℝ}
     {gq : Fin q → ℝ} {yn : Fin m1 → ℝ} {yp : Fin m2 → ℝ}
     (hc : InterpCompat DA DB) (rA : SignedRegular DA) (rB : SignedRegular DB) (EA : SpikeEnv DA)
     (EB : SpikeEnv DB) (WA : SpikeWitness DA c' (Fin.append xn yn) (Fin.append gq yp))
     (c1B : ℝ) (hc1B : 0 < c1B) (hPB : SpikeChebOK DB WA.m WA.ρ c1B)
-    (hcostB : SpikeCostOK DB WA.m (Fin.append xn yn) WA.y WA.z WA.zph WA.ρ)
-    (hbcap : DA.θ < bcap) (hyp : ∀ p, yp p ≤ 1 - bcap) :
-    PairCls DA DB c' bcap xn gq yn yp where
+    (hcostB : SpikeCostOK DB WA.m (Fin.append xn yn) WA.y WA.z WA.zph WA.ρ) :
+    PairCls DA DB c' xn gq yn yp where
   compat := hc
   rA := rA
   rB := rB
   EA := EA
   EB := EB
   P := SpikePair.ofWitness WA c1B hc1B hPB hcostB
-  hbcap := hbcap
-  hyp := hyp
 
 /-! ### 7. The cost condition for an even number of spikes -/
 
@@ -778,6 +774,195 @@ theorem SpikeCostOK.of_even_cert (D : SignedData) {k q' m : ℕ} (xn : Fin k →
   SpikeCostOK.of_even D xn y z zph ρ
     ((spikeCost_le_of_bounds hν he D.a D.b (D.sp - m) m k z hL hDe hSg hA hK).trans hfin)
 
+
+/-! ### 8. Odd `M`: the phantom row at `r = 1 - θ` (SIMPLIFY-S2 §2.3), charged to `ν kph` -/
+
+theorem sum_extFam_odd {M m : ℕ} (hM : M + 1 = 2 * m) (z : Fin M → ℝ) (zph : ℝ) (f : ℝ → ℝ) :
+    ∑ p, f (extFam z zph m p) = ∑ i, f (z i) + f zph := by
+  rw [← Fin.sum_congr' (fun p => f (extFam z zph m p)) hM, Fin.sum_univ_castSucc]
+  congr 1
+  · refine Finset.sum_congr rfl fun i _ => ?_
+    simp [extFam, i.isLt]
+  · simp [extFam]
+
+theorem powSum_append_extFam_odd {M m q' : ℕ} (hM : M + 1 = 2 * m) (τ ν : ℝ) (y : Fin q' → ℝ)
+    (z : Fin M → ℝ) (zph : ℝ) (n : ℕ) :
+    powSum τ ν (Fin.append y (extFam z zph m)) n =
+      powSum τ ν (Fin.append y z) n + powSum τ ν (fun _ : Fin 1 => zph) n := by
+  unfold powSum
+  rw [row_sum_split (fun v => (τ * v) ^ (n + 1)) y (extFam z zph m),
+    row_sum_split (fun v => (τ * v) ^ (n + 1)) y z,
+    sum_extFam_odd hM z zph (fun v => (τ * v) ^ (n + 1))]
+  simp only [Finset.univ_unique, Finset.sum_singleton]
+  ring
+
+/-- `|log(1 - τ² w r)| ≤ log(1/θ)` for `|w| ≤ 1`, `r = 1 - θ`, `θ ≤ 1/2`, `0 < τ ≤ 1`. -/
+theorem abs_log_one_sub_le {τ w θ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) (hw : |w| ≤ 1)
+    (hθ : θ ∈ Ioc (0 : ℝ) (1 / 2)) :
+    |Real.log (1 - (τ * w) * (τ * (1 - θ)))| ≤ Real.log (1 / θ) := by
+  have hτ2 : τ * τ ≤ 1 := by nlinarith [hτ.1, hτ.2]
+  have hτ0 : 0 ≤ τ * τ := by nlinarith [hτ.1]
+  have hw' := abs_le.mp hw
+  have hprod : |(τ * w) * (τ * (1 - θ))| ≤ 1 - θ := by
+    rw [show (τ * w) * (τ * (1 - θ)) = (τ * τ) * w * (1 - θ) by ring, abs_mul, abs_mul,
+      abs_of_nonneg hτ0, abs_of_nonneg (by linarith [hθ.2] : (0 : ℝ) ≤ 1 - θ)]
+    have : τ * τ * |w| ≤ 1 := by nlinarith [abs_nonneg w]
+    nlinarith [hθ.2, abs_nonneg w]
+  have hp := abs_le.mp hprod
+  have hlo : θ ≤ 1 - (τ * w) * (τ * (1 - θ)) := by linarith [hp.2]
+  have hhi : 1 - (τ * w) * (τ * (1 - θ)) ≤ 1 / θ := by
+    have : (2 : ℝ) ≤ 1 / θ := by rw [le_div_iff₀ hθ.1]; linarith [hθ.2]
+    linarith [hp.1, hθ.1]
+  have hpos : 0 < 1 - (τ * w) * (τ * (1 - θ)) := lt_of_lt_of_le hθ.1 hlo
+  rw [abs_le]
+  constructor
+  · have h1 : Real.log θ ≤ Real.log (1 - (τ * w) * (τ * (1 - θ))) := Real.log_le_log hθ.1 hlo
+    have h2 : Real.log (1 / θ) = -Real.log θ := by rw [one_div, Real.log_inv]
+    linarith
+  · exact Real.log_le_log hpos hhi
+
+theorem abs_sum_log_le {n : ℕ} {τ θ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1)
+    (hθ : θ ∈ Ioc (0 : ℝ) (1 / 2)) (w : Fin n → ℝ) (hw : ∀ i, |w i| ≤ 1) :
+    |∑ i, Real.log (1 - (τ * w i) * (τ * (1 - θ)))| ≤ n * Real.log (1 / θ) := by
+  calc _ ≤ ∑ i, |Real.log (1 - (τ * w i) * (τ * (1 - θ)))| := Finset.abs_sum_le_sum_abs _ _
+    _ ≤ ∑ _i : Fin n, Real.log (1 / θ) :=
+        Finset.sum_le_sum fun i _ => abs_log_one_sub_le hτ (hw i) hθ
+    _ = _ := by simp
+
+set_option maxHeartbeats 1600000 in
+/-- **The phantom bound (odd `M`).**  With the phantom at `r = 1 - θ` and the cost of the `2m`
+pinned spikes within `ν (2m) cs`, the cost condition holds as soon as the phantom row is paid by
+`ν kph`:
+`2ν A1 + ν BR + (k + q' + M + 1) log(1/θ) + 2 sp B1 + ν cs ≤ ν kph`, where the data supply
+`|S_a(-τ r)| ≤ A1`, `|S_b(-r)| ≤ B1` and `|Σ R_n (τ r)^{n+1}/(n+1)| ≤ BR` (three evaluations of the
+trial at the single point `r`).  Since `k + q' + M ≤ n` this is `kph = O(1)`, so `kph/ν → 0`. -/
+theorem SpikeCostOK.of_odd_cert (D : SignedData) (hν : 0 < D.ν) (rD : SignedRegular D)
+    {k q' M m : ℕ} (hM : M + 1 = 2 * m) (xn : Fin k → ℝ) (y : Fin q' → ℝ) (z : Fin M → ℝ)
+    (hx : ∀ b, |xn b| ≤ 1) (hy : ∀ j, |y j| ≤ 1) (hz : ∀ i, |z i| ≤ 1)
+    (hθ : D.θ ∈ Ioc (0 : ℝ) (1 / 2)) (ρ : ℝ) {A1 B1 BR : ℝ}
+    (hA1 : |barrierTrialS D.a (-D.τ * (1 - D.θ))| ≤ A1)
+    (hB1 : |barrierTrialS D.b (-(1 - D.θ))| ≤ B1)
+    (hBR : |∑' n : ℕ, D.R n * (D.τ * (1 - D.θ)) ^ (n + 1) / ((n : ℝ) + 1)| ≤ BR)
+    (hcost : spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) k
+        (extFam z (1 - D.θ) m) ≤ D.ν * (((2 * m : ℕ) : ℝ) * D.cs))
+    (hph : 2 * D.ν * A1 + D.ν * BR + ((k + q' + M + 1 : ℕ) : ℝ) * Real.log (1 / D.θ) +
+        2 * (D.sp : ℝ) * B1 + D.ν * D.cs ≤ D.ν * D.kph) :
+    SpikeCostOK D m xn y z (1 - D.θ) ρ := by
+  rw [costOK_iff D hν]
+  have hτ := rD.tau
+  set r := 1 - D.θ with hr
+  have hr1 : |r| ≤ 1 := abs_le.mpr ⟨by linarith [hθ.2], by linarith [hθ.1]⟩
+  set δ := powSum D.τ D.ν (fun _ : Fin 1 => r) with hδ
+  set u := fun j => powSum D.τ D.ν xn j - powSum D.τ D.ν (Fin.append y z) j with hu
+  have hyz : ∀ p, |Fin.append y z p| ≤ 1 := fin_append_forall y z (fun t => |t| ≤ 1) hy hz
+  have hgx := isGeom_powSum hτ.1 hν xn hx
+  have hgyz := isGeom_powSum hτ.1 hν (Fin.append y z) hyz
+  have hgd := isGeom_powSum hτ.1 hν (fun _ : Fin 1 => r) (fun _ => hr1)
+  have hgu : IsGeom D.τ u := hgx.sub hgyz
+  have hgR := rD.hR
+  -- the Ipd term
+  have hu' : (fun j => powSum D.τ D.ν xn j -
+      powSum D.τ D.ν (Fin.append y (extFam z r m)) j) = fun j => u j - δ j := by
+    funext j
+    rw [powSum_append_extFam_odd hM]
+    simp only [hu, hδ]
+    ring
+  have hIpd : Ipd (fun j => powSum D.τ D.ν xn j - powSum D.τ D.ν (Fin.append y (extFam z r m)) j)
+      u D.R = ip δ δ - 2 * (ip u δ - ip D.R δ) := by
+    rw [hu']
+    unfold Ipd
+    have h1 := hasSum_ip hτ ((hgu.sub hgd).sub hgR) ((hgu.sub hgd).sub hgR)
+    have h2 := hasSum_ip hτ (hgu.sub hgR) (hgu.sub hgR)
+    have h3 := ((hasSum_ip hτ hgd hgd).sub
+      (((hasSum_ip hτ hgu hgd).sub (hasSum_ip hτ hgR hgd)).mul_left 2))
+    have h4 := h1.sub h2
+    refine h4.unique ?_
+    convert h3 using 1
+    funext n
+    ring
+  -- pair sums
+  have hτx : ∀ i, |D.τ * xn i| < 1 := fun i => by
+    rw [abs_mul, abs_of_pos hτ.1]; exact lt_of_le_of_lt (mul_le_of_le_one_right hτ.1.le (hx i)) hτ.2
+  have hτyz : ∀ i, |D.τ * Fin.append y z i| < 1 := fun i => by
+    rw [abs_mul, abs_of_pos hτ.1]; exact lt_of_le_of_lt (mul_le_of_le_one_right hτ.1.le (hyz i)) hτ.2
+  have hτr : ∀ _i : Fin 1, |D.τ * r| < 1 := fun _ => by
+    rw [abs_mul, abs_of_pos hτ.1]; exact lt_of_le_of_lt (mul_le_of_le_one_right hτ.1.le hr1) hτ.2
+  have hpx := hasSum_pair_powSum hν hτx hτr
+  have hpyz := hasSum_pair_powSum hν hτyz hτr
+  have hpd := hasSum_pair_powSum hν hτr hτr
+  have hipx : ip (powSum D.τ D.ν xn) δ =
+      -(∑ i, ∑ _j : Fin 1, Real.log (1 - (D.τ * xn i) * (D.τ * r))) / D.ν ^ 2 :=
+    (hasSum_ip hτ hgx hgd).unique hpx
+  have hipyz : ip (powSum D.τ D.ν (Fin.append y z)) δ =
+      -(∑ i, ∑ _j : Fin 1, Real.log (1 - (D.τ * Fin.append y z i) * (D.τ * r))) / D.ν ^ 2 :=
+    (hasSum_ip hτ hgyz hgd).unique hpyz
+  have hipd : ip δ δ =
+      -(∑ _i : Fin 1, ∑ _j : Fin 1, Real.log (1 - (D.τ * r) * (D.τ * r))) / D.ν ^ 2 :=
+    (hasSum_ip hτ hgd hgd).unique hpd
+  have hipu : ip u δ = ip (powSum D.τ D.ν xn) δ - ip (powSum D.τ D.ν (Fin.append y z)) δ :=
+    ((hasSum_ip hτ hgu hgd).unique (by
+      convert (hasSum_ip hτ hgx hgd).sub (hasSum_ip hτ hgyz hgd) using 1
+      funext n; simp only [hu]; ring))
+  have hipR : ip D.R δ = (1 / D.ν) * ∑' n : ℕ, D.R n * (D.τ * r) ^ (n + 1) / ((n : ℝ) + 1) := by
+    unfold ip
+    rw [← tsum_mul_left]
+    congr 1; funext n
+    simp only [hδ, powSum, Finset.univ_unique, Finset.sum_singleton]
+    field_simp
+  -- bounds on the logs
+  have hLx := abs_sum_log_le hτ hθ xn hx
+  have hLyz := abs_sum_log_le hτ hθ (Fin.append y z) hyz
+  have hLr : |Real.log (1 - (D.τ * r) * (D.τ * r))| ≤ Real.log (1 / D.θ) :=
+    abs_log_one_sub_le hτ hr1 hθ
+  simp only [Finset.univ_unique, Finset.sum_singleton] at hipx hipyz hipd
+  -- the S_a and S_b parts
+  have hSa : (∑ p, barrierTrialS D.a (-D.τ * Fin.append y (extFam z r m) p)) -
+      ∑ p, barrierTrialS D.a (-D.τ * Fin.append y z p) = barrierTrialS D.a (-D.τ * r) := by
+    rw [row_sum_split (fun v => barrierTrialS D.a (-D.τ * v)) y (extFam z r m),
+      row_sum_split (fun v => barrierTrialS D.a (-D.τ * v)) y z,
+      sum_extFam_odd hM z r (fun v => barrierTrialS D.a (-D.τ * v))]
+    ring
+  have hSb : (∑ p, barrierTrialS D.b (-(extFam z r m p))) - ∑ p, barrierTrialS D.b (-(z p)) =
+      barrierTrialS D.b (-r) := by
+    rw [sum_extFam_odd hM z r (fun v => barrierTrialS D.b (-v))]
+    ring
+  -- assemble
+  unfold costGap numDiff
+  rw [hSa, hSb, hIpd, hipu, hipR, hipx, hipyz, hipd]
+  have hν2 : 0 < D.ν ^ 2 := by positivity
+  have hcard : ((k + q' + M + 1 : ℕ) : ℝ) = (k : ℝ) + ((q' + M : ℕ) : ℝ) + 1 := by push_cast; ring
+  have hMm : (((2 * m : ℕ) : ℝ)) = (M : ℝ) + 1 := by exact_mod_cast hM.symm
+  rw [hMm] at hcost
+  rw [hcard] at hph
+  have hlogθ : 0 ≤ Real.log (1 / D.θ) := Real.log_nonneg (by
+    rw [le_div_iff₀ hθ.1]; linarith [hθ.2])
+  have eA := abs_le.mp hA1
+  have eB := abs_le.mp hB1
+  have eR := abs_le.mp hBR
+  have ex := abs_le.mp hLx
+  have eyz := abs_le.mp hLyz
+  have er := abs_le.mp hLr
+  have hspB : 2 * (D.sp : ℝ) * (-(barrierTrialS D.b (-r))) ≤ 2 * (D.sp : ℝ) * B1 :=
+    mul_le_mul_of_nonneg_left (by linarith [eB.1]) (by positivity)
+  have hνA : D.ν * barrierTrialS D.a (-D.τ * r) ≤ D.ν * A1 :=
+    mul_le_mul_of_nonneg_left eA.2 hν.le
+  have hνR : D.ν * ∑' n : ℕ, D.R n * (D.τ * r) ^ (n + 1) / ((n : ℝ) + 1) ≤ D.ν * BR :=
+    mul_le_mul_of_nonneg_left eR.2 hν.le
+  have e2 : D.ν ^ 2 * ((2 / D.ν) * barrierTrialS D.a (-D.τ * r) + (1 / 2) *
+      (-Real.log (1 - D.τ * r * (D.τ * r)) / D.ν ^ 2 - 2 *
+        (-(∑ i, Real.log (1 - D.τ * xn i * (D.τ * r))) / D.ν ^ 2 -
+          -(∑ i, Real.log (1 - D.τ * Fin.append y z i * (D.τ * r))) / D.ν ^ 2 -
+          1 / D.ν * ∑' n : ℕ, D.R n * (D.τ * r) ^ (n + 1) / ((n : ℝ) + 1)))) =
+      2 * (D.ν * barrierTrialS D.a (-D.τ * r)) - (1 / 2) * Real.log (1 - D.τ * r * (D.τ * r)) +
+        (∑ i, Real.log (1 - D.τ * xn i * (D.τ * r))) -
+        (∑ i, Real.log (1 - D.τ * Fin.append y z i * (D.τ * r))) +
+        D.ν * ∑' n : ℕ, D.R n * (D.τ * r) ^ (n + 1) / ((n : ℝ) + 1) := by
+    field_simp
+    ring
+  rw [e2]
+  have hcq : ((q' + M : ℕ) : ℝ) * Real.log (1 / D.θ) ≥ 0 := by positivity
+  nlinarith [hcost, hph, hspB, hνA, hνR, ex.1, eyz.2, er.1, hlogθ]
+
 end
 
 end CatalanMeasure.Signed
@@ -809,3 +994,4 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.spikeChebOK_of_cert
 #print axioms CatalanMeasure.Signed.spikeCost_le_of_bounds
 #print axioms CatalanMeasure.Signed.SpikeCostOK.of_even_cert
+#print axioms CatalanMeasure.Signed.SpikeCostOK.of_odd_cert

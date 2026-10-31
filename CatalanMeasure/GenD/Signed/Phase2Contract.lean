@@ -293,7 +293,7 @@ structure Phase2Data (I : ℕ) where
   hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
     logRatioZ (DA i N).sp (Fin.append xn yn) (Fin.append gp yp)
   hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
-    ∃ bcap, Nonempty (PairCls (DA i N) (DB i N) (cp i N α) bcap xn gp yn yp)
+    Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp)
   -- the σ cap (Theorem S): endpoint data and side conditions
   capE : Fin I → CapEnd
   hxc0 : ∀ i, 0 ≤ (capE i).xc
@@ -596,6 +596,200 @@ theorem Phase2Data.fixAdm_of_nodeSub {I : ℕ} (D : Phase2Data I) {J : ℕ → �
 
 end Sheet
 
+
+/-! ### Spike witnesses from per-trial certificates (`spikeWitness_of_cert`)
+
+`SpikeTrialCert D m ρ Kn Tn` is the per-trial, per-`m` data: finitely many real (in practice
+rational) constants and inequalities that do not depend on the configuration.  `Kn` bounds the
+number of negative rows, `Tn` the total number of rows plus one. -/
+
+structure SpikeTrialCert (D : SignedData) (m : ℕ) (ρ Kn Tn : ℝ) where
+  c1 : ℝ
+  κ : ℝ
+  L : ℝ
+  De2 : ℝ
+  Sg : ℝ
+  A : ℝ
+  K0 : ℝ
+  A1 : ℝ
+  B1 : ℝ
+  BR : ℝ
+  hθ : D.θ ∈ Ioc (0 : ℝ) (1 / 2)
+  hc1 : 0 < c1
+  hκ0 : 0 ≤ κ
+  hκ1 : κ < 1
+  hsp : 0 < D.sp
+  hmκ : (m : ℝ) ≤ κ * D.sp
+  hb : ∀ u ∈ Icc (-1 : ℝ) 1, c1 ≤ chebPs D.b u
+  hpoly : ∀ u ∈ Icc (-1 : ℝ) 1,
+    κ * (1 - ρ ^ 2) ≤ (chebPs D.b u - (1 - κ) * c1) * (1 + 2 * ρ * u + ρ ^ 2)
+  hL0 : 0 ≤ L
+  hL : Real.log (2 / (1 + realEnergyTau D.e ^ 2 * (1 - D.θ))) ≤ L
+  hDe : ∀ y, 1 - D.θ ≤ y → y < 1 → barrierTrialS D.b (-y) - barrierTrialS D.b (-ρ) ≤ De2
+  hSg : Real.log (1 - realEnergyTau D.e ^ 2 * (1 - D.θ) ^ 2) - Real.log (1 - ρ ^ 2) ≤ Sg
+  hA : ∑' j : ℕ, |D.a j| ≤ A
+  hK : costRem D.b (D.sp - m) m ρ ≤ K0
+  hfin : 2 * (m : ℝ) * (Kn * L + 2 * (D.sp : ℝ) * De2 + m * Sg + 2 * D.ν * D.e * A) +
+    (m : ℝ) * K0 ≤ D.ν * (((2 * m : ℕ) : ℝ) * D.cs)
+  hkph : 0 ≤ D.kph
+  hA1 : |barrierTrialS D.a (-D.τ * (1 - D.θ))| ≤ A1
+  hB1 : |barrierTrialS D.b (-(1 - D.θ))| ≤ B1
+  hBR : |∑' n : ℕ, D.R n * (D.τ * (1 - D.θ)) ^ (n + 1) / ((n : ℝ) + 1)| ≤ BR
+  hph : 2 * D.ν * A1 + D.ν * BR + Tn * Real.log (1 / D.θ) + 2 * (D.sp : ℝ) * B1 + D.ν * D.cs ≤
+    D.ν * D.kph
+
+theorem SpikeTrialCert.m_lt {D : SignedData} {m : ℕ} {ρ Kn Tn : ℝ}
+    (C : SpikeTrialCert D m ρ Kn Tn) : m < D.sp := by
+  have h1 := C.hmκ
+  have h2 : (0 : ℝ) < D.sp := by exact_mod_cast C.hsp
+  have : (m : ℝ) < D.sp := by nlinarith [C.hκ1, C.hκ0]
+  exact_mod_cast this
+
+theorem SpikeTrialCert.cheb {D : SignedData} {m : ℕ} {ρ Kn Tn : ℝ} (hρ : |ρ| < 1)
+    (C : SpikeTrialCert D m ρ Kn Tn) : SpikeChebOK D m ρ C.c1 :=
+  spikeChebOK_of_cert hρ C.hκ0 C.hmκ C.m_lt.le C.hb C.hpoly
+
+theorem SpikeTrialCert.costOK {D : SignedData} (E : SpikeEnv D) (rD : SignedRegular D) {m : ℕ}
+    {ρ Kn Tn : ℝ} (C : SpikeTrialCert D m ρ Kn Tn) {K q' M : ℕ} (hM : M = 2 * m ∨ M + 1 = 2 * m)
+    (xn : Fin K → ℝ) (y : Fin q' → ℝ) (z : Fin M → ℝ)
+    (hx : ∀ b, |xn b| ≤ 1) (hy : ∀ j, |y j| ≤ 1) (hz : ∀ i, 1 - D.θ ≤ z i ∧ z i < 1)
+    (hK : (K : ℝ) ≤ Kn) (hT : ((K + q' + M + 1 : ℕ) : ℝ) ≤ Tn) :
+    SpikeCostOK D m xn y z (1 - D.θ) ρ := by
+  have hm : m ≤ D.sp := C.m_lt.le
+  have hcast : ((D.sp - m : ℕ) : ℝ) + m = D.sp := by
+    rw [Nat.cast_sub hm]; ring
+  have hm0 : (0 : ℝ) ≤ m := Nat.cast_nonneg _
+  have hν := E.hν
+  have hkL : (K : ℝ) * C.L ≤ Kn * C.L := mul_le_mul_of_nonneg_right hK C.hL0
+  have hbound : ∀ w : Fin (2 * m) → ℝ, (∀ p, 1 - D.θ ≤ w p ∧ w p < 1) →
+      spikeCost D.ν D.e D.a D.b (D.sp - m) m ρ (1 - D.θ) K w ≤
+        D.ν * (((2 * m : ℕ) : ℝ) * D.cs) := by
+    intro w hw
+    have h := spikeCost_le_of_bounds hν.le E.he.1.le D.a D.b (D.sp - m) m K w C.hL
+      (fun p => C.hDe _ (hw p).1 (hw p).2) C.hSg C.hA C.hK
+    rw [hcast] at h
+    have : 2 * (m : ℝ) * ((K : ℝ) * C.L) ≤ 2 * m * (Kn * C.L) :=
+      mul_le_mul_of_nonneg_left hkL (by positivity)
+    nlinarith [C.hfin, h, this]
+  rcases hM with hM | hM
+  · subst hM
+    apply SpikeCostOK.of_even
+    have := hbound z hz
+    nlinarith [mul_nonneg hν.le C.hkph]
+  · have hz' : ∀ i, |z i| ≤ 1 := fun i =>
+      abs_le.mpr ⟨by linarith [(hz i).1, C.hθ.2], (hz i).2.le⟩
+    refine SpikeCostOK.of_odd_cert D hν rD hM xn y z hx hy hz' C.hθ ρ C.hA1 C.hB1 C.hBR
+      (hbound _ (extFam_mem z (1 - D.θ) (1 - D.θ) hz ⟨le_refl _, by linarith [C.hθ.1]⟩)) ?_
+    have hlog : 0 ≤ Real.log (1 / D.θ) := Real.log_nonneg (by
+      rw [le_div_iff₀ C.hθ.1]; linarith [C.hθ.2])
+    have := mul_le_mul_of_nonneg_right hT hlog
+    linarith [C.hph]
+
+/-- **The witness pair from the certificates** (the `hCls` of the contract).  For a configuration
+whose free and marked rows are in range, whose counts are bounded (`Kn`, `Tn`) and whose spike count is at most `Mmax` (Lemma K,
+`free_spike_count`), the per-trial certificates of both endpoints for every `m` with
+`2m ≤ Mmax + 1` (one pole `ρ` per `m`, i.e. per q-interval) give a `PairCls`. -/
+theorem pairCls_of_cert {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : SignedRegular DA)
+    (rB : SignedRegular DB) (EA : SpikeEnv DA) (EB : SpikeEnv DB) {c' Kn Tn : ℝ}
+    {k q m1 m2 : ℕ} (xn : Fin k → ℝ) (gp : Fin q → ℝ) (yn : Fin m1 → ℝ)
+    (yp : Fin m2 → ℝ) (hX : ∀ b, Fin.append xn yn b ∈ Ioo (-1 : ℝ) 0)
+    (hG : ∀ p, Fin.append gp yp p ∈ Ioo (0 : ℝ) 1)
+    (hK : (((k + m1 : ℕ)) : ℝ) ≤ Kn) (hT : ((k + m1 + (q + m2) + 1 : ℕ) : ℝ) ≤ Tn) {Mmax : ℕ}
+    (hMc : (Finset.univ.filter (fun p => 1 - DA.θ < Fin.append gp yp p)).card ≤ Mmax)
+    (hcert : ∀ m : ℕ, 2 * m ≤ Mmax + 1 → ∃ ρ : ℝ, |ρ| < 1 ∧ ρ ≤ DA.τ ^ 2 * (1 - DA.θ) ∧
+      Nonempty (SpikeTrialCert DA m ρ Kn Tn) ∧ Nonempty (SpikeTrialCert DB m ρ Kn Tn)) :
+    Nonempty (PairCls DA DB c' xn gp yn yp) := by
+  classical
+  set G := Fin.append gp yp with hGdef
+  set X := Fin.append xn yn with hXdef
+  set S := Finset.univ.filter (fun p => 1 - DA.θ < G p) with hS
+  obtain ⟨q', M, τ', hnot, hin⟩ := exists_split_finset S
+  set y : Fin q' → ℝ := fun j => G (τ' (Sum.inl j)) with hy
+  set z : Fin M → ℝ := fun j => G (τ' (Sum.inr j)) with hz
+  have hMS : M ≤ S.card := by
+    have := Finset.card_le_card_of_injOn (s := (Finset.univ : Finset (Fin M))) (t := S)
+      (fun j => τ' (Sum.inr j)) (fun j _ => hin j)
+      (fun a _ b _ hab => Sum.inr_injective (τ'.injective hab))
+    simpa using this
+  obtain ⟨m, hM⟩ : ∃ m : ℕ, M = 2 * m ∨ M + 1 = 2 * m :=
+    ⟨(M + 1) / 2, by omega⟩
+  have h2m : 2 * m ≤ Mmax + 1 := by omega
+  obtain ⟨ρ, hρ, hρd, ⟨CA⟩, ⟨CB⟩⟩ := hcert m h2m
+  have hθB : DB.θ = DA.θ := hc.θ
+  have hX1 : ∀ b, |X b| ≤ 1 := fun b => abs_le.mpr ⟨(hX b).1.le, by linarith [(hX b).2]⟩
+  have hG1 : ∀ p, |G p| ≤ 1 := fun p => abs_le.mpr ⟨by linarith [(hG p).1], (hG p).2.le⟩
+  have hy1 : ∀ j, |y j| ≤ 1 := fun j => hG1 _
+  have hzA : ∀ i, 1 - DA.θ ≤ z i ∧ z i < 1 := fun i =>
+    ⟨(Finset.mem_filter.mp (hin i)).2.le, (hG _).2⟩
+  have hzB : ∀ i, 1 - DB.θ ≤ z i ∧ z i < 1 := by rw [hθB]; exact hzA
+  have hσ : ∀ i, G ((finSumFinEquiv.symm.trans τ') i) = Fin.append y z i := by
+    intro i
+    refine Fin.addCases (fun j => ?_) (fun j => ?_) i
+    · simp [hy]
+    · simp [hz]
+  have hcnt : ((k + m1 + q' + M + 1 : ℕ) : ℝ) ≤ Tn := by
+    have hqM : q' + M = q + m2 := by simpa using Fintype.card_congr τ'
+    have : k + m1 + q' + M + 1 = k + m1 + (q + m2) + 1 := by omega
+    rw [this]; exact hT
+  have hcostA := CA.costOK EA rA hM X y z hX1 hy1 hzA hK hcnt
+  have hcostB := CB.costOK EB rB hM X y z hX1 hy1 hzB hK hcnt
+  rw [hθB] at hcostB
+  have hyns : ∀ j, y j ≤ 1 - DA.θ := fun j => by
+    by_contra h
+    exact hnot j (Finset.mem_filter.mpr ⟨Finset.mem_univ _, lt_of_not_ge h⟩)
+  have SP : SpikePair DA DB c' X G :=
+    { q' := q'
+      M := M
+      m := m
+      y := y
+      z := z
+      zph := 1 - DA.θ
+      σ := finSumFinEquiv.symm.trans τ'
+      hσ := hσ
+      hM := hM
+      hm := CA.m_lt
+      hy_not_spike := hyns
+      hz_spike := fun i => (Finset.mem_filter.mp (hin i)).2
+      hzph := ⟨le_refl _, by linarith [CA.hθ.1]⟩
+      ρ := ρ
+      c1A := CA.c1
+      c1B := CB.c1
+      hρ := hρ
+      hρd := hρd
+      hc1A := CA.hc1
+      hc1B := CB.hc1
+      hPA := CA.cheb hρ
+      hPB := CB.cheb hρ
+      hcostA := hcostA
+      hcostB := hcostB }
+  exact ⟨⟨hc, rA, rB, EA, EB, SP⟩⟩
+
+
+/-- **`hCls` of `Phase2Data` from the certificates.**  If the class `Clsf` carries the ranges, the
+row counts (`Kn N`, `Tn N`) and the spike count `≤ Mmax N` (free spikes: `free_spike_count`;
+marked spikes: the node top count of `MarkedCap`), and every endpoint trial has its certificate
+for every `m` with `2m ≤ Mmax N + 1`, then the `hCls` field holds. -/
+theorem hCls_of_cert {I : ℕ} {DA DB : Fin I → ℕ → SignedData} (cp : Fin I → ℕ → ℝ → ℝ)
+    (hc : ∀ i N, InterpCompat (DA i N) (DB i N)) (rA : ∀ i N, SignedRegular (DA i N))
+    (rB : ∀ i N, SignedRegular (DB i N)) (EA : ∀ i N, SpikeEnv (DA i N))
+    (EB : ∀ i N, SpikeEnv (DB i N))
+    (Clsf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop)
+    (Kn Tn : ℕ → ℝ) (Mmax : ℕ → ℕ)
+    (hClsf : ∀ N k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
+      (∀ b, Fin.append xn yn b ∈ Ioo (-1 : ℝ) 0) ∧ (∀ p, Fin.append gp yp p ∈ Ioo (0 : ℝ) 1) ∧
+      (((k + m1 : ℕ)) : ℝ) ≤ Kn N ∧ ((k + m1 + (q + m2) + 1 : ℕ) : ℝ) ≤ Tn N ∧
+      ∀ i, (Finset.univ.filter (fun p => 1 - (DA i N).θ < Fin.append gp yp p)).card ≤ Mmax N)
+    (hcert : ∀ i N (m : ℕ), 2 * m ≤ Mmax N + 1 → ∃ ρ : ℝ, |ρ| < 1 ∧
+      ρ ≤ (DA i N).τ ^ 2 * (1 - (DA i N).θ) ∧
+      Nonempty (SpikeTrialCert (DA i N) m ρ (Kn N) (Tn N)) ∧
+      Nonempty (SpikeTrialCert (DB i N) m ρ (Kn N) (Tn N))) :
+    ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
+      Nonempty (PairCls (DA i N) (DB i N) (cp i N α) xn gp yn yp) := by
+  intro i N α k q m1 m2 xn gp yn yp h
+  obtain ⟨hX, hG, hK, hT, hM⟩ := hClsf N k q m1 m2 xn gp yn yp h
+  exact pairCls_of_cert (hc i N) (rA i N) (rB i N) (EA i N) (EB i N) xn gp yn yp hX hG hK hT
+    (hM i) (hcert i N)
+
 end
 
 end CatalanMeasure.Signed
@@ -612,3 +806,5 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNear_nearOpt
 #print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNearNd_nearOpt
 #print axioms CatalanMeasure.Signed.Phase2Data.fixAdm_of_nodeSub
+#print axioms CatalanMeasure.Signed.pairCls_of_cert
+#print axioms CatalanMeasure.Signed.hCls_of_cert
