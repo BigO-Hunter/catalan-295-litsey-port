@@ -6,9 +6,9 @@ public import CatalanMeasure.GenD.Signed.EnergyNear
 # Theorem M: mass-weighted interpolation of trials
 
 Phase 2 (theorem-only) lane M of the Theorem A plan.  Two `SignedData` trials `DA`, `DB` at the
-fixed fractions `αA < αB` that agree on `ν, e, sp, K, Rf, Cf, θ` (`InterpCompat`) are interpolated
-linearly in `l = (α - αA)/(αB - αA)` in all the *mass-weighted* data: the reference measures
-`μ, μf`, the sequences `v, a, b, R, t`, `Sup`, the caps `Cb, Cbf` and the spike cost `cs`
+fixed fractions `αA < αB` that agree on `ν, e, sp, K, Rf, Cf, θ, η` (`InterpCompat`) are
+interpolated linearly in `l = (α - αA)/(αB - αA)` in all the *mass-weighted* data: the reference
+measure `μ`, the sequences `v, a, b, R, t, p`, `Sup`, the cap `Cb` and the spike cost `cs`
 (`SignedData.interp`).  Then:
 
 * every row field and the column field (`fNeg, fPos, fPosS, fCol` and the fixed-row fields
@@ -21,7 +21,7 @@ linearly in `l = (α - αA)/(αB - αA)` in all the *mass-weighted* data: the re
   `2 (q 0 + q 1) - 4 q (1/2)`; each quadratic piece contributes the combination
   `AA - AB - BA + BB` of its four-term expansion (`nsq_linSeq`, `ip_linSeq`, `refBil_mix`,
   `isQuadOn_ra`, `isQuadOn_denConst`), the three bilinear blocks of the paper.  `convPart =
-  4 e (Σ|v| + Σ|a|)` is convex (`constTotal_interp_le`).
+  4 e (Σ|v| + Σ|a|) + 4 η e Σ|p|` is convex (`constTotal_interp_le`).
 
 §13 (`IntervalEnds`) discharges the `α`-dependent fields `e_mem, v_summable, R_geom, t_geom,
 reference, rowNeg, rowPos, column, const_le` of `SignedNearBounds` from data at the two endpoint
@@ -252,9 +252,9 @@ theorem denPoly_linSeq (b b' : ℕ → ℝ) (K : ℕ) (g l : ℝ) :
 /-! ### 5. The interpolated trial -/
 
 /-- **The interpolated trial.**  Linear interpolation, in the weight `l`, of the mass-weighted
-data of two trials: the reference measures `μ, μf`, the sequences `v, a, b, R, t`, `Sup`, `Cb`,
-`Cbf` and the spike cost `cs`.  The scale data `ν, e, sp, K, Rf, Cf, θ` are those of `DA` (they
-agree with those of `DB` under `InterpCompat`); the constant is the problem own constant `c`. -/
+data of two trials: the reference measure `μ`, the sequences `v, a, b, R, t, p`, `Sup`, `Cb` and
+the spike cost `cs`.  The scale data `ν, e, sp, K, Rf, Cf, θ, η` are those of `DA` (they agree with
+those of `DB` under `InterpCompat`); the constant is the problem own constant `c`. -/
 def SignedData.interp (DA DB : SignedData) (l c : ℝ) : SignedData where
   ν := DA.ν
   e := DA.e
@@ -267,8 +267,8 @@ def SignedData.interp (DA DB : SignedData) (l c : ℝ) : SignedData where
   t := linSeq l DA.t DB.t
   μ := mixFam l DA.μ DB.μ
   Cb := (1 - l) * DA.Cb + l * DB.Cb
-  μf := mixFam l DA.μf DB.μf
-  Cbf := (1 - l) * DA.Cbf + l * DB.Cbf
+  η := DA.η
+  p := linSeq l DA.p DB.p
   Sup := (1 - l) * DA.Sup + l * DB.Sup
   constant := c
   Rf := DA.Rf
@@ -287,6 +287,7 @@ structure InterpCompat (DA DB : SignedData) : Prop where
   Cf : DB.Cf = DA.Cf
   θ : DB.θ = DA.θ
   kph : DB.kph = DA.kph
+  η : DB.η = DA.η
 
 theorem InterpCompat.τ {DA DB : SignedData} (hc : InterpCompat DA DB) : DB.τ = DA.τ := by
   unfold SignedData.τ; rw [hc.e]
@@ -301,8 +302,8 @@ structure SignedRegular (D : SignedData) : Prop where
   ht : IsGeom D.τ D.t
   hμ : ∀ τ, BD (D.μ τ) D.Cb
   hC : 0 ≤ D.Cb
-  hμf : ∀ τ, BD (D.μf τ) D.Cbf
-  hCf : 0 ≤ D.Cbf
+  hp : Summable fun j => |D.p j|
+  hη0 : 0 ≤ D.η
 
 theorem SignedRegular.tau {D : SignedData} (h : SignedRegular D) : D.τ ∈ Ioo (0 : ℝ) 1 :=
   realEnergyTau_bounds h.he
@@ -313,8 +314,8 @@ theorem interp_zero (DA DB : SignedData) (c : ℝ) :
 
 theorem interp_one {DA DB : SignedData} (hc : InterpCompat DA DB) (c : ℝ) :
     SignedData.interp DA DB 1 c = { DB with constant := c } := by
-  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8⟩ := hc
-  simp [SignedData.interp, linSeq_one, mixFam_one, h1, h2, h3, h4, h5, h6, h7, h8]
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7, h8, h9⟩ := hc
+  simp [SignedData.interp, linSeq_one, mixFam_one, h1, h2, h3, h4, h5, h6, h7, h8, h9]
 
 theorem abs_linSeq_le (l : ℝ) (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (u v : ℕ → ℝ) (n : ℕ) :
     |linSeq l u v n| ≤ (1 - l) * |u n| + l * |v n| := by
@@ -339,8 +340,8 @@ theorem SignedRegular.interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (h
   ht := isGeom_linSeq rA.ht (by simpa [hc.τ] using rB.ht) l
   hμ := fun τ => BD_mixM hl0 hl1 rA.hC rB.hC (rA.hμ τ) (rB.hμ τ)
   hC := add_nonneg (mul_nonneg (by linarith) rA.hC) (mul_nonneg hl0 rB.hC)
-  hμf := fun τ => BD_mixM hl0 hl1 rA.hCf rB.hCf (rA.hμf τ) (rB.hμf τ)
-  hCf := add_nonneg (mul_nonneg (by linarith) rA.hCf) (mul_nonneg hl0 rB.hCf)
+  hp := summable_abs_linSeq hl0 hl1 rA.hp rB.hp
+  hη0 := rA.hη0
 
 /-! ### 6. The fields are affine in the weight -/
 
@@ -357,55 +358,45 @@ theorem abs_neg_tau_mul_le {τ x : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) (hx : |x|
 theorem rowBase_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
     (rA : SignedRegular DA) (rB : SignedRegular DB) {x : ℝ} (hx : |x| ≤ 1) :
     (SignedData.interp DA DB l c).rowBase x = (1 - l) * DA.rowBase x + l * DB.rowBase x := by
-  obtain ⟨hν, he, hsp, hK, hRf, hCf, hθ⟩ := hc
+  obtain ⟨hν, he, hsp, hK, hRf, hCf, hθ, hkph, hη⟩ := hc
   unfold SignedData.rowBase SignedData.τ
-  simp only [SignedData.interp, hν, he, hRf]
+  simp only [SignedData.interp, hν, he, hRf, hη]
   rw [barrierTrialS_linSeq rA.hv rB.hv l hx, rowRef_mix hl0 hl1 rA.hμ rB.hμ x,
-    rowRef_mix hl0 hl1 rA.hμf rB.hμf x]
-  ring
-
-theorem rowBaseFix_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
-    (rA : SignedRegular DA) (rB : SignedRegular DB) (x : ℝ) :
-    (SignedData.interp DA DB l c).rowBaseFix x =
-      (1 - l) * DA.rowBaseFix x + l * DB.rowBaseFix x := by
-  obtain ⟨hν, he, hsp, hK, hRf, hCf, hθ⟩ := hc
-  unfold SignedData.rowBaseFix SignedData.τ
-  simp only [SignedData.interp, hν, he, hRf]
-  rw [rowRef_mix hl0 hl1 rA.hμ rB.hμ x]
+    barrierTrialT_linSeq rA.hp rB.hp l hx]
   ring
 
 theorem rowBaseM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
-    (rA : SignedRegular DA) (rB : SignedRegular DB) (Rm : ℝ → ℝ) (x : ℝ) :
+    (rA : SignedRegular DA) (rB : SignedRegular DB) (Rm : ℝ → ℝ) {x : ℝ} (hx : |x| ≤ 1) :
     (SignedData.interp DA DB l c).rowBaseM Rm x =
       (1 - l) * DA.rowBaseM Rm x + l * DB.rowBaseM Rm x := by
-  obtain ⟨hν, he, hsp, hK, hRf, hCf, hθ⟩ := hc
+  obtain ⟨hν, he, hsp, hK, hRf, hCf, hθ, hkph, hη⟩ := hc
   unfold SignedData.rowBaseM SignedData.τ
-  simp only [SignedData.interp, hν, he]
-  rw [rowRef_mix hl0 hl1 rA.hμ rB.hμ x]
+  simp only [SignedData.interp, hν, he, hη]
+  rw [rowRef_mix hl0 hl1 rA.hμ rB.hμ x, barrierTrialT_linSeq rA.hp rB.hp l hx]
   ring
 
-/-- The negative-species tangent field. -/
+/-- The negative-species tangent field `κ (mneg μ - t) - R`. -/
 theorem fldNeg_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
-    (rA : SignedRegular DA) (rB : SignedRegular DB) {x : ℝ} (hx : |x| ≤ 1) :
+    (rA : SignedRegular DA) (rB : SignedRegular DB) (κ : ℝ) {x : ℝ} (hx : |x| ≤ 1) :
     fld (SignedData.interp DA DB l c).τ
-        (fun n => mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
-          (SignedData.interp DA DB l c).R n - (SignedData.interp DA DB l c).t n) x =
-      (1 - l) * fld DA.τ (fun n => mneg DA.μ DA.τ n - DA.R n - DA.t n) x +
-        l * fld DB.τ (fun n => mneg DB.μ DB.τ n - DB.R n - DB.t n) x := by
+        (fun n => κ * (mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
+          (SignedData.interp DA DB l c).t n) - (SignedData.interp DA DB l c).R n) x =
+      (1 - l) * fld DA.τ (fun n => κ * (mneg DA.μ DA.τ n - DA.t n) - DA.R n) x +
+        l * fld DB.τ (fun n => κ * (mneg DB.μ DB.τ n - DB.t n) - DB.R n) x := by
   have hτ := rA.tau
   have hτB : DB.τ = DA.τ := hc.τ
   rw [hτB]
-  have gA : IsGeom DA.τ (fun n => mneg DA.μ DA.τ n - DA.R n - DA.t n) :=
-    ((isGeom_mneg (rA.hμ false) hτ.1).sub rA.hR).sub rA.ht
-  have gB : IsGeom DA.τ (fun n => mneg DB.μ DA.τ n - DB.R n - DB.t n) :=
-    ((isGeom_mneg (rB.hμ false) hτ.1).sub (by simpa [hτB] using rB.hR)).sub
-      (by simpa [hτB] using rB.ht)
-  have e : (fun n => mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
-          (SignedData.interp DA DB l c).R n - (SignedData.interp DA DB l c).t n) =
-      linSeq l (fun n => mneg DA.μ DA.τ n - DA.R n - DA.t n)
-        (fun n => mneg DB.μ DA.τ n - DB.R n - DB.t n) := by
+  have gA : IsGeom DA.τ (fun n => κ * (mneg DA.μ DA.τ n - DA.t n) - DA.R n) :=
+    (((isGeom_mneg (rA.hμ false) hτ.1).sub rA.ht).const_mul κ).sub rA.hR
+  have gB : IsGeom DA.τ (fun n => κ * (mneg DB.μ DA.τ n - DB.t n) - DB.R n) :=
+    (((isGeom_mneg (rB.hμ false) hτ.1).sub (by simpa [hτB] using rB.ht)).const_mul κ).sub
+      (by simpa [hτB] using rB.hR)
+  have e : (fun n => κ * (mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
+          (SignedData.interp DA DB l c).t n) - (SignedData.interp DA DB l c).R n) =
+      linSeq l (fun n => κ * (mneg DA.μ DA.τ n - DA.t n) - DA.R n)
+        (fun n => κ * (mneg DB.μ DA.τ n - DB.t n) - DB.R n) := by
     funext n
-    show mneg (mixFam l DA.μ DB.μ) DA.τ n - linSeq l DA.R DB.R n - linSeq l DA.t DB.t n = _
+    show κ * (mneg (mixFam l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n) - linSeq l DA.R DB.R n = _
     rw [mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
     simp only [linSeq]; ring
   rw [e]
@@ -436,34 +427,28 @@ theorem fldPos_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   rw [e]
   exact fld_linSeq hτ gA gB hx l
 
-/-- The near-type tangent field `R - (mneg μf + t)/2`. -/
+/-- The near-type tangent field `R - t + (β/2) arcNeg`. -/
 theorem fldNear_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
-    (rA : SignedRegular DA) (rB : SignedRegular DB) {x : ℝ} (hx : |x| ≤ 1) :
+    (rA : SignedRegular DA) (rB : SignedRegular DB) (β : ℝ) {x : ℝ} (hx : |x| ≤ 1) :
     fld (SignedData.interp DA DB l c).τ
-        (fun n => (SignedData.interp DA DB l c).R n -
-          (mneg (SignedData.interp DA DB l c).μf (SignedData.interp DA DB l c).τ n +
-            (SignedData.interp DA DB l c).t n) / 2) x =
-      (1 - l) * fld DA.τ (fun n => DA.R n - (mneg DA.μf DA.τ n + DA.t n) / 2) x +
-        l * fld DB.τ (fun n => DB.R n - (mneg DB.μf DB.τ n + DB.t n) / 2) x := by
+        (fun n => (SignedData.interp DA DB l c).R n - (SignedData.interp DA DB l c).t n +
+          β / 2 * arcNeg (SignedData.interp DA DB l c).τ n) x =
+      (1 - l) * fld DA.τ (fun n => DA.R n - DA.t n + β / 2 * arcNeg DA.τ n) x +
+        l * fld DB.τ (fun n => DB.R n - DB.t n + β / 2 * arcNeg DB.τ n) x := by
   have hτ := rA.tau
   have hτB : DB.τ = DA.τ := hc.τ
   rw [hτB]
-  have gA : IsGeom DA.τ (fun n => DA.R n - (mneg DA.μf DA.τ n + DA.t n) / 2) := by
-    refine rA.hR.sub ?_
-    have := ((isGeom_mneg (rA.hμf false) hτ.1).add rA.ht).const_mul (1 / 2)
-    simpa [div_eq_inv_mul, mul_comm] using this
-  have gB : IsGeom DA.τ (fun n => DB.R n - (mneg DB.μf DA.τ n + DB.t n) / 2) := by
-    refine (by simpa [hτB] using rB.hR : IsGeom DA.τ DB.R).sub ?_
-    have := ((isGeom_mneg (rB.hμf false) hτ.1).add (by simpa [hτB] using rB.ht)).const_mul (1 / 2)
-    simpa [div_eq_inv_mul, mul_comm] using this
-  have e : (fun n => (SignedData.interp DA DB l c).R n -
-          (mneg (SignedData.interp DA DB l c).μf (SignedData.interp DA DB l c).τ n +
-            (SignedData.interp DA DB l c).t n) / 2) =
-      linSeq l (fun n => DA.R n - (mneg DA.μf DA.τ n + DA.t n) / 2)
-        (fun n => DB.R n - (mneg DB.μf DA.τ n + DB.t n) / 2) := by
+  have gA : IsGeom DA.τ (fun n => DA.R n - DA.t n + β / 2 * arcNeg DA.τ n) :=
+    (rA.hR.sub rA.ht).add ((isGeom_arcNeg hτ).const_mul _)
+  have gB : IsGeom DA.τ (fun n => DB.R n - DB.t n + β / 2 * arcNeg DA.τ n) :=
+    ((by simpa [hτB] using rB.hR : IsGeom DA.τ DB.R).sub (by simpa [hτB] using rB.ht)).add
+      ((isGeom_arcNeg hτ).const_mul _)
+  have e : (fun n => (SignedData.interp DA DB l c).R n - (SignedData.interp DA DB l c).t n +
+          β / 2 * arcNeg (SignedData.interp DA DB l c).τ n) =
+      linSeq l (fun n => DA.R n - DA.t n + β / 2 * arcNeg DA.τ n)
+        (fun n => DB.R n - DB.t n + β / 2 * arcNeg DA.τ n) := by
     funext n
-    show linSeq l DA.R DB.R n - (mneg (mixFam l DA.μf DB.μf) DA.τ n + linSeq l DA.t DB.t n) / 2 = _
-    rw [mneg_mix hl0 hl1 (rA.hμf false) (rB.hμf false)]
+    show linSeq l DA.R DB.R n - linSeq l DA.t DB.t n + β / 2 * arcNeg DA.τ n = _
     simp only [linSeq]; ring
   rw [e]
   exact fld_linSeq hτ gA gB hx l
@@ -504,9 +489,11 @@ theorem fNeg_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
     (SignedData.interp DA DB l c).fNeg x = (1 - l) * DA.fNeg x + l * DB.fNeg x := by
   have hτB : DB.τ = DA.τ := hc.τ
   have hνB : DB.ν = DA.ν := hc.ν
+  have hηB : DB.η = DA.η := hc.η
+  have hηI : (SignedData.interp DA DB l c).η = DA.η := rfl
   unfold SignedData.fNeg
-  rw [rowBase_interp hl0 hl1 hc rA rB hx, fldNeg_interp hl0 hl1 hc rA rB hx,
-    barrierS_a_interp hc rA rB hx, interp_ν, interp_τ, hτB, hνB]
+  rw [rowBase_interp hl0 hl1 hc rA rB hx, hηI, fldNeg_interp hl0 hl1 hc rA rB _ hx,
+    barrierS_a_interp hc rA rB hx, interp_ν, interp_τ, hτB, hνB, hηB]
   ring
 
 theorem fNegM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
@@ -515,9 +502,11 @@ theorem fNegM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
       (1 - l) * DA.fNegM Rm x + l * DB.fNegM Rm x := by
   have hτB : DB.τ = DA.τ := hc.τ
   have hνB : DB.ν = DA.ν := hc.ν
+  have hηB : DB.η = DA.η := hc.η
+  have hηI : (SignedData.interp DA DB l c).η = DA.η := rfl
   unfold SignedData.fNegM
-  rw [rowBaseM_interp hl0 hl1 hc rA rB Rm x, fldNeg_interp hl0 hl1 hc rA rB hx,
-    barrierS_a_interp hc rA rB hx, interp_ν, interp_τ, hτB, hνB]
+  rw [rowBaseM_interp hl0 hl1 hc rA rB Rm hx, hηI, fldNeg_interp hl0 hl1 hc rA rB _ hx,
+    barrierS_a_interp hc rA rB hx, interp_ν, interp_τ, hτB, hνB, hηB]
   ring
 
 theorem fPos_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
@@ -549,7 +538,7 @@ theorem fPosM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   have hKB : DB.K = DA.K := hc.K
   have hspB : DB.sp = DA.sp := hc.sp
   unfold SignedData.fPosM
-  rw [rowBaseM_interp hl0 hl1 hc rA rB Rm x, fldPos_interp hl0 hl1 hc rA rB hx,
+  rw [rowBaseM_interp hl0 hl1 hc rA rB Rm hx, fldPos_interp hl0 hl1 hc rA rB hx,
     barrierS_a_interp hc rA rB hx, denPoly_interp hc, interp_ν, interp_sp, hτB, hνB,
     hKB, hspB]
   ring
@@ -587,16 +576,13 @@ theorem phConst_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
     (SignedData.interp DA DB l c).phConst = (1 - l) * DA.phConst + l * DB.phConst := by
   have hτ := rA.tau
   have hτB : DB.τ = DA.τ := hc.τ
+  have hηB : DB.η = DA.η := hc.η
   unfold SignedData.phConst
-  rw [hτB]
+  rw [hτB, hηB]
   have gA1 : IsGeom DA.τ (fun n => mneg DA.μ DA.τ n - DA.t n) :=
     (isGeom_mneg (rA.hμ false) hτ.1).sub rA.ht
   have gB1 : IsGeom DA.τ (fun n => mneg DB.μ DA.τ n - DB.t n) :=
     (isGeom_mneg (rB.hμ false) hτ.1).sub (SignedRegular.htτ hc rB)
-  have gA2 : IsGeom DA.τ (fun n => mpos DA.μ DA.τ n - mpos DA.μf DA.τ n) :=
-    (isGeom_refMoment (rA.hμ true) hτ.1).sub (isGeom_refMoment (rA.hμf true) hτ.1)
-  have gB2 : IsGeom DA.τ (fun n => mpos DB.μ DA.τ n - mpos DB.μf DA.τ n) :=
-    (isGeom_refMoment (rB.hμ true) hτ.1).sub (isGeom_refMoment (rB.hμf true) hτ.1)
   have e1 : (fun n => mneg (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
       (SignedData.interp DA DB l c).t n) =
       linSeq l (fun n => mneg DA.μ DA.τ n - DA.t n) (fun n => mneg DB.μ DA.τ n - DB.t n) := by
@@ -604,17 +590,9 @@ theorem phConst_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
     show mneg (mixFam l DA.μ DB.μ) DA.τ n - linSeq l DA.t DB.t n = _
     rw [mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
     simp only [linSeq]; ring
-  have e2 : (fun n => mpos (SignedData.interp DA DB l c).μ (SignedData.interp DA DB l c).τ n -
-      mpos (SignedData.interp DA DB l c).μf (SignedData.interp DA DB l c).τ n) =
-      linSeq l (fun n => mpos DA.μ DA.τ n - mpos DA.μf DA.τ n)
-        (fun n => mpos DB.μ DA.τ n - mpos DB.μf DA.τ n) := by
-    funext n
-    show mpos (mixFam l DA.μ DB.μ) DA.τ n - mpos (mixFam l DA.μf DB.μf) DA.τ n = _
-    rw [mpos_mix hl0 hl1 (rA.hμ true) (rB.hμ true), mpos_mix hl0 hl1 (rA.hμf true) (rB.hμf true)]
-    simp only [linSeq]; ring
-  rw [e1, e2]
-  show ip (arcNeg DA.τ) (linSeq l _ _) + ip (linSeq l _ _) (arcPos DA.τ) = _
-  rw [ip_linSeq_right hτ (isGeom_arcNeg hτ) gA1 gB1 l, ip_linSeq_left hτ gA2 gB2 (isGeom_arcPos hτ) l]
+  rw [e1]
+  show (1 - DA.η) * ip (linSeq l _ _) (arcNeg DA.τ) = _
+  rw [ip_linSeq_left hτ gA1 gB1 (isGeom_arcNeg hτ) l]
   ring
 
 theorem fNearM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
@@ -626,10 +604,12 @@ theorem fNearM_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
   have hνB : DB.ν = DA.ν := hc.ν
   have hKB : DB.K = DA.K := hc.K
   have hspB : DB.sp = DA.sp := hc.sp
+  have hηB : DB.η = DA.η := hc.η
+  have hηI : (SignedData.interp DA DB l c).η = DA.η := rfl
   unfold SignedData.fNearM
-  rw [fldNear_interp hl0 hl1 hc rA rB hx, phConst_interp hl0 hl1 hc rA rB,
-    barrierS_a_interp hc rA rB hx, denPoly_interp hc, interp_ν, interp_τ, interp_sp, hτB, hνB,
-    hKB, hspB]
+  rw [fldNear_interp hl0 hl1 hc rA rB β hx, phConst_interp hl0 hl1 hc rA rB,
+    barrierS_a_interp hc rA rB hx, denPoly_interp hc, hηI, interp_ν, interp_τ, interp_sp, hτB,
+    hνB, hKB, hspB, hηB]
   ring
 
 theorem fNearMS_interp (hl0 : 0 ≤ l) (hl1 : l ≤ 1) (hc : InterpCompat DA DB)
@@ -899,25 +879,30 @@ theorem interp_b (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).b = linSeq l DA.b DB.b := rfl
 theorem interp_μ (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).μ = mixFam l DA.μ DB.μ := rfl
-theorem interp_μf (DA DB : SignedData) (l c : ℝ) :
-    (SignedData.interp DA DB l c).μf = mixFam l DA.μf DB.μf := rfl
 theorem interp_Sup (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).Sup = (1 - l) * DA.Sup + l * DB.Sup := rfl
 theorem interp_Cb (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).Cb = (1 - l) * DA.Cb + l * DB.Cb := rfl
-theorem interp_Cbf (DA DB : SignedData) (l c : ℝ) :
-    (SignedData.interp DA DB l c).Cbf = (1 - l) * DA.Cbf + l * DB.Cbf := rfl
 theorem interp_constant (DA DB : SignedData) (l c : ℝ) :
     (SignedData.interp DA DB l c).constant = c := rfl
 
-/-- The convex part of the constant: the terms `4 e (Σ|v| + Σ|a|)`. -/
-def convPart (D : SignedData) : ℝ := 4 * D.e * ((∑' j, |D.v j|) + ∑' k, |D.a k|)
+theorem interp_η (DA DB : SignedData) (l c : ℝ) : (SignedData.interp DA DB l c).η = DA.η := rfl
+
+theorem interp_p (DA DB : SignedData) (l c : ℝ) :
+    (SignedData.interp DA DB l c).p = linSeq l DA.p DB.p := rfl
+
+/-- The convex part of the constant: the terms `4 e (Σ|v| + Σ|a|)` and the damping
+`4 η e Σ|p|` of the `η`-share. -/
+def convPart (D : SignedData) : ℝ :=
+  4 * D.e * ((∑' j, |D.v j|) + ∑' k, |D.a k|) + 4 * D.η * D.e * ∑' j, |D.p j|
 
 /-- The part of `constTotal` that is a quadratic form in the data: everything except the problem
 constant and the convex part. -/
 def restQ (D : SignedData) (p : ℕ) : ℝ :=
   -((p : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.v / 2 + pinZeroError D.ν D.e +
-    D.eD7 p + D.eD7f p + (1 / 2) * refEnergy D.μ + (1 / 2) * refEnergy D.μf +
+    D.eD7 ((p : ℝ) / D.ν) + (1 - D.η) * refEnergy D.μ + 2 * D.η * barrierTrialNormSq D.p -
+    D.η * ((p : ℝ) / D.ν) ^ 2 * Real.log 2 +
+    D.η * ((Real.log 2 - 2 * Real.log (1 - D.τ ^ 2)) / D.ν + 4 * D.e) + D.hadErr +
     (2 * (-(1 / 2 : ℝ) * ((D.sp : ℝ) / D.ν) ^ 2 * Real.log 2 + barrierTrialNormSq D.a +
         ((D.sp : ℝ) / D.ν) * D.Sup - D.ra +
         ((Real.log 2 - 2 * Real.log (1 - realEnergyTau D.e ^ 2)) / (2 * D.ν) + 2 * D.e)) +
@@ -925,7 +910,7 @@ def restQ (D : SignedData) (p : ℕ) : ℝ :=
 
 theorem constTotal_eq (D : SignedData) (p : ℕ) :
     D.constTotal p = D.constant + restQ D p + convPart D := by
-  unfold SignedData.constTotal SignedData.numConst trialPairError restQ convPart
+  unfold SignedData.constTotal SignedData.numConst SignedData.etaErr trialPairError restQ convPart
   ring
 
 /-- The second difference of the quadratic part of the constant along the segment (it is the
@@ -933,18 +918,11 @@ coefficient of `l²`; `AA - 2 AB + BB` of the three bilinear blocks). -/
 def curvQ (DA DB : SignedData) (p : ℕ) : ℝ :=
   2 * (restQ DA p + restQ DB p) - 4 * restQ (SignedData.interp DA DB (1 / 2) 0) p
 
-theorem eD7_interp {DA DB : SignedData} (hc : InterpCompat DA DB) (l c : ℝ) (p : ℕ) :
-    (SignedData.interp DA DB l c).eD7 p = (1 - l) * DA.eD7 p + l * DB.eD7 p := by
+theorem eD7_interp {DA DB : SignedData} (hc : InterpCompat DA DB) (l c W : ℝ) :
+    (SignedData.interp DA DB l c).eD7 W = (1 - l) * DA.eD7 W + l * DB.eD7 W := by
   have hτB : DB.τ = DA.τ := hc.τ
   unfold SignedData.eD7
-  rw [interp_ν, interp_τ, interp_Cb, hτB, hc.ν]
-  ring
-
-theorem eD7f_interp {DA DB : SignedData} (hc : InterpCompat DA DB) (l c : ℝ) (p : ℕ) :
-    (SignedData.interp DA DB l c).eD7f p = (1 - l) * DA.eD7f p + l * DB.eD7f p := by
-  have hτB : DB.τ = DA.τ := hc.τ
-  unfold SignedData.eD7f
-  rw [interp_ν, interp_τ, interp_Cbf, hτB, hc.ν]
+  rw [interp_η, interp_τ, interp_Cb, hτB, hc.η]
   ring
 
 theorem isQuadOn_sumsq (K : ℕ) (b b' : ℕ → ℝ) (w : ℕ → ℝ) :
@@ -993,60 +971,55 @@ theorem isQuadOn_Kq {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : SignedR
   refine IsQuadOn.congr (g := fun l =>
       (1 / 2) * ip (linSeq l DA.R DB.R) (linSeq l DA.R DB.R) +
       (-(1 / 2)) * ip (mpos (mixFam l DA.μ DB.μ) DA.τ) (mpos (mixFam l DA.μ DB.μ) DA.τ) +
-      (1 / 2) * ip (linSeq l DA.t DB.t) (linSeq l DA.t DB.t) +
-      (-(1 / 2)) * ip (mneg (mixFam l DA.μ DB.μ) DA.τ) (mneg (mixFam l DA.μ DB.μ) DA.τ))
+      (1 - DA.η) * ip (linSeq l DA.t DB.t) (linSeq l DA.t DB.t) +
+      (-(1 - DA.η)) * ip (mneg (mixFam l DA.μ DB.μ) DA.τ) (mneg (mixFam l DA.μ DB.μ) DA.τ))
     (fun l _ => ?_) ?_
   · unfold SignedData.Kq
-    rw [interp_R, interp_t, interp_μ, interp_τ]
+    rw [interp_R, interp_t, interp_μ, interp_τ, interp_η]
     ring
   · exact (((q1.const_mul (1 / 2)).add (q2.const_mul (-(1 / 2)))).add
-      (q3.const_mul (1 / 2))).add (q4.const_mul (-(1 / 2)))
+      (q3.const_mul (1 - DA.η))).add (q4.const_mul (-(1 - DA.η)))
 
 theorem isQuadOn_restQ {DA DB : SignedData} (hc : InterpCompat DA DB) (rA : SignedRegular DA)
     (rB : SignedRegular DB) (c : ℝ) (p : ℕ) :
     IsQuadOn (fun l => restQ (SignedData.interp DA DB l c) p) := by
   have hτ := rA.tau
-  have hC : 0 ≤ max (max DA.Cb DB.Cb) (max DA.Cbf DB.Cbf) :=
-    (rA.hC.trans (le_max_left _ _)).trans (le_max_left _ _)
-  have hmax : ∀ {C : ℝ}, C ≤ max (max DA.Cb DB.Cb) (max DA.Cbf DB.Cbf) →
-      ∀ {m : Measure ℝ}, BD m C → BD m (max (max DA.Cb DB.Cb) (max DA.Cbf DB.Cbf)) :=
-    fun hCC _ hm => BD_mono hm hCC
+  have hC : 0 ≤ max DA.Cb DB.Cb := rA.hC.trans (le_max_left _ _)
   have hmu : IsQuadOn (fun l => refEnergy (mixFam l DA.μ DB.μ)) :=
-    isQuadOn_refEnergy hC
-      (fun τ => hmax ((le_max_left _ _).trans (le_max_left _ _)) (rA.hμ τ))
-      (fun τ => hmax ((le_max_right _ _).trans (le_max_left _ _)) (rB.hμ τ))
-  have hmuf : IsQuadOn (fun l => refEnergy (mixFam l DA.μf DB.μf)) :=
-    isQuadOn_refEnergy hC
-      (fun τ => hmax ((le_max_left _ _).trans (le_max_right _ _)) (rA.hμf τ))
-      (fun τ => hmax ((le_max_right _ _).trans (le_max_right _ _)) (rB.hμf τ))
-  have hE : IsQuadOn (fun l => (SignedData.interp DA DB l c).eD7 p) :=
-    (IsQuadOn.affine (DA.eD7 p) (DB.eD7 p)).congr (fun l _ => eD7_interp hc l c p)
-  have hF : IsQuadOn (fun l => (SignedData.interp DA DB l c).eD7f p) :=
-    (IsQuadOn.affine (DA.eD7f p) (DB.eD7f p)).congr (fun l _ => eD7f_interp hc l c p)
+    isQuadOn_refEnergy hC (fun τ => BD_mono (rA.hμ τ) (le_max_left _ _))
+      (fun τ => BD_mono (rB.hμ τ) (le_max_right _ _))
+  have hE : IsQuadOn (fun l => (SignedData.interp DA DB l c).eD7 ((p : ℝ) / DA.ν)) :=
+    (IsQuadOn.affine (DA.eD7 ((p : ℝ) / DA.ν)) (DB.eD7 ((p : ℝ) / DA.ν))).congr
+      (fun l _ => eD7_interp hc l c _)
   have hv := isQuadOn_nsq rA.hv rB.hv
   have ha := isQuadOn_nsq rA.ha rB.ha
+  have hpp := isQuadOn_nsq rA.hp rB.hp
   have hra : IsQuadOn (fun l => (SignedData.interp DA DB l c).ra) :=
     isQuadOn_ra hτ rA.hR (SignedRegular.hRτ hc rB) rA.ha rB.ha
   have hden := isQuadOn_denConst DA DB c
   have hKq := isQuadOn_Kq hc rA rB c
   have hS := IsQuadOn.affine DA.Sup DB.Sup
   refine IsQuadOn.congr (g := fun l =>
-      (-((p : ℝ) / DA.ν) ^ 2 * Real.log 2 + pinZeroError DA.ν DA.e +
+      (-((p : ℝ) / DA.ν) ^ 2 * Real.log 2 + pinZeroError DA.ν DA.e -
+        DA.η * ((p : ℝ) / DA.ν) ^ 2 * Real.log 2 +
+        DA.η * ((Real.log 2 - 2 * Real.log (1 - DA.τ ^ 2)) / DA.ν + 4 * DA.e) + DA.hadErr +
         (2 * (-(1 / 2 : ℝ) * ((DA.sp : ℝ) / DA.ν) ^ 2 * Real.log 2 +
           ((Real.log 2 - 2 * Real.log (1 - realEnergyTau DA.e ^ 2)) / (2 * DA.ν) + 2 * DA.e)) +
           (DA.sp : ℝ) * Real.log Real.pi / DA.ν ^ 2)) +
       (1 / 2) * barrierTrialNormSq (linSeq l DA.v DB.v) +
-      (SignedData.interp DA DB l c).eD7 p + (SignedData.interp DA DB l c).eD7f p +
-      (1 / 2) * refEnergy (mixFam l DA.μ DB.μ) + (1 / 2) * refEnergy (mixFam l DA.μf DB.μf) +
+      (SignedData.interp DA DB l c).eD7 ((p : ℝ) / DA.ν) +
+      (1 - DA.η) * refEnergy (mixFam l DA.μ DB.μ) +
+      (2 * DA.η) * barrierTrialNormSq (linSeq l DA.p DB.p) +
       2 * barrierTrialNormSq (linSeq l DA.a DB.a) +
       (2 * ((DA.sp : ℝ) / DA.ν)) * ((1 - l) * DA.Sup + l * DB.Sup) +
       (-2) * (SignedData.interp DA DB l c).ra + (-1) * (SignedData.interp DA DB l c).denConst +
       (SignedData.interp DA DB l c).Kq) (fun l _ => ?_) ?_
-  · unfold restQ
-    rw [interp_ν, interp_e, interp_sp, interp_v, interp_a, interp_μ, interp_μf, interp_Sup]
+  · unfold restQ SignedData.hadErr
+    rw [interp_ν, interp_e, interp_sp, interp_v, interp_a, interp_μ, interp_Sup, interp_η,
+      interp_p, interp_τ]
     ring
-  · exact ((((((((((IsQuadOn.const _).add (hv.const_mul (1 / 2))).add hE).add hF).add
-      (hmu.const_mul (1 / 2))).add (hmuf.const_mul (1 / 2))).add (ha.const_mul 2)).add
+  · exact (((((((((IsQuadOn.const _).add (hv.const_mul (1 / 2))).add hE).add
+      (hmu.const_mul (1 - DA.η))).add (hpp.const_mul (2 * DA.η))).add (ha.const_mul 2)).add
       (hS.const_mul (2 * ((DA.sp : ℝ) / DA.ν)))).add (hra.const_mul (-2))).add
       (hden.const_mul (-1))).add hKq
 
@@ -1072,15 +1045,20 @@ theorem convPart_interp_le {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1
     (hc : InterpCompat DA DB) (rA : SignedRegular DA) (rB : SignedRegular DB) :
     convPart (SignedData.interp DA DB l c) ≤ (1 - l) * convPart DA + l * convPart DB := by
   unfold convPart
-  rw [interp_e, hc.e]
+  rw [interp_e, interp_η, hc.e, hc.η]
   have h1 := tsum_abs_linSeq_le hl0 hl1 rA.hv rB.hv
   have h2 := tsum_abs_linSeq_le hl0 hl1 rA.ha rB.ha
+  have h3 := tsum_abs_linSeq_le hl0 hl1 rA.hp rB.hp
   have he : 0 ≤ 4 * DA.e := by have := rA.he.1; linarith
-  have h3 := mul_le_mul_of_nonneg_left (add_le_add h1 h2) he
+  have heη : 0 ≤ 4 * DA.η * DA.e := by have := rA.he.1; have := rA.hη0; positivity
+  have h4 := mul_le_mul_of_nonneg_left (add_le_add h1 h2) he
+  have h5 := mul_le_mul_of_nonneg_left h3 heη
   calc 4 * DA.e * ((∑' j, |(SignedData.interp DA DB l c).v j|) +
-        ∑' k, |(SignedData.interp DA DB l c).a k|)
+        ∑' k, |(SignedData.interp DA DB l c).a k|) +
+        4 * DA.η * DA.e * ∑' j, |(SignedData.interp DA DB l c).p j|
       ≤ 4 * DA.e * (((1 - l) * ∑' k, |DA.v k| + l * ∑' k, |DB.v k|) +
-          ((1 - l) * ∑' k, |DA.a k| + l * ∑' k, |DB.a k|)) := h3
+          ((1 - l) * ∑' k, |DA.a k| + l * ∑' k, |DB.a k|)) +
+        4 * DA.η * DA.e * ((1 - l) * ∑' k, |DA.p k| + l * ∑' k, |DB.p k|) := add_le_add h4 h5
     _ = _ := by ring
 
 /-- **Theorem M (constant).**  Along the segment the total constant is bounded by the chord of the
@@ -1112,7 +1090,7 @@ theorem constTotal_interp_le {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (h
 
 /-! ### 10b. The curvature `curvQ` as three bilinear blocks
 
-`restQ` is a quadratic form in the data `(v, a, R, t, μ, μf, b)` plus an affine part.  Write
+`restQ` is a quadratic form in the data `(v, a, p, R, t, μ, b)` plus an affine part.  Write
 `curvBlock Z X Y` for its bilinear form (scalars `ν, sp, K, τ` of `Z`, left argument `X`, right
 argument `Y`).  Then `curvQ DA DB = AA - AB - BA + BB` with `AA = curvBlock DA DA DA`,
 `AB = curvBlock DA DA DB`, and so on (`curvQ_blocks`).  `AA` and `BB` depend on one trial only
@@ -1135,14 +1113,16 @@ def denW (D : SignedData) (i : ℕ) : ℝ :=
 /-- The bilinear form of the quadratic part `restQ`, with the scalars of `Z`, the left data of `X`
 and the right data of `Y`. -/
 def curvBlock (Z X Y : SignedData) : ℝ :=
-  (1 / 2) * nsqBil X.v Y.v + 2 * nsqBil X.a Y.a + (1 / 2) * refBil X.μ Y.μ +
-    (1 / 2) * refBil X.μf Y.μf - 2 * raBil X.R Y.a + sumBil (denW Z) Z.K X.b Y.b +
+  (1 / 2) * nsqBil X.v Y.v + 2 * nsqBil X.a Y.a + (1 - Z.η) * refBil X.μ Y.μ +
+    2 * Z.η * nsqBil X.p Y.p - 2 * raBil X.R Y.a + sumBil (denW Z) Z.K X.b Y.b +
     (1 / 2) * ip X.R Y.R - (1 / 2) * ip (mpos X.μ Z.τ) (mpos Y.μ Z.τ) +
-    (1 / 2) * ip X.t Y.t - (1 / 2) * ip (mneg X.μ Z.τ) (mneg Y.μ Z.τ)
+    (1 - Z.η) * (ip X.t Y.t - ip (mneg X.μ Z.τ) (mneg Y.μ Z.τ))
 
 /-- The part of `restQ` that is affine in the data. -/
 def restLin (D : SignedData) (p : ℕ) : ℝ :=
-  -((p : ℝ) / D.ν) ^ 2 * Real.log 2 + pinZeroError D.ν D.e + D.eD7 p + D.eD7f p +
+  -((p : ℝ) / D.ν) ^ 2 * Real.log 2 + pinZeroError D.ν D.e + D.eD7 ((p : ℝ) / D.ν) -
+    D.η * ((p : ℝ) / D.ν) ^ 2 * Real.log 2 +
+    D.η * ((Real.log 2 - 2 * Real.log (1 - D.τ ^ 2)) / D.ν + 4 * D.e) + D.hadErr +
     (2 * (-(1 / 2 : ℝ) * ((D.sp : ℝ) / D.ν) ^ 2 * Real.log 2 +
       ((Real.log 2 - 2 * Real.log (1 - realEnergyTau D.e ^ 2)) / (2 * D.ν) + 2 * D.e)) +
       (D.sp : ℝ) * Real.log Real.pi / D.ν ^ 2) + 2 * ((D.sp : ℝ) / D.ν) * D.Sup -
@@ -1162,7 +1142,7 @@ theorem restQ_eq_lin_block (D : SignedData) (p : ℕ) :
     restQ D p = restLin D p + curvBlock D D D := by
   have hra : D.ra = raBil D.R D.a := rfl
   unfold restQ restLin curvBlock
-  rw [sumBil_denW_self, hra, refEnergy_eq_refBil, refEnergy_eq_refBil]
+  rw [sumBil_denW_self, hra, refEnergy_eq_refBil]
   simp only [nsq_eq_tsum, nsqBil, raBil, SignedData.Kq, SignedData.denConst]
   ring
 
@@ -1172,10 +1152,11 @@ theorem restLin_interp {DA DB : SignedData} (hc : InterpCompat DA DB) (l c : ℝ
   have hν : DB.ν = DA.ν := hc.ν
   have he : DB.e = DA.e := hc.e
   have hsp : DB.sp = DA.sp := hc.sp
-  have h1 := eD7_interp hc l c p
-  have h2 := eD7f_interp hc l c p
-  unfold restLin
-  rw [h1, h2, interp_ν, interp_e, interp_sp, interp_Sup, hν, he, hsp]
+  have hη : DB.η = DA.η := hc.η
+  have h1 := eD7_interp hc l c ((p : ℝ) / DA.ν)
+  unfold restLin SignedData.hadErr
+  rw [interp_ν, h1, interp_e, interp_sp, interp_Sup, interp_η, interp_τ, hν, he, hsp, hη,
+    hc.τ]
   ring
 
 theorem sumBil_linSeq (w : ℕ → ℝ) (K : ℕ) (b b' : ℕ → ℝ) (l : ℝ) :
@@ -1241,8 +1222,8 @@ theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 :
   have gn2 : IsGeom DA.τ (mneg DB.μ DA.τ) := isGeom_mneg (rB.hμ false) hτ.1
   have n1 := nsqBil_linSeq rA.hv rB.hv l
   have n2 := nsqBil_linSeq rA.ha rB.ha l
+  have n3 := nsqBil_linSeq rA.hp rB.hp l
   have r1 := refBil_mix_pair hl0 hl1 rA.hC rA.hμ rB.hμ
-  have r2 := refBil_mix_pair hl0 hl1 rA.hCf rA.hμf rB.hμf
   have r3 := raBil_linSeq hτ rA.hR gR rA.ha rB.ha l
   have r4 := sumBil_linSeq (denW DA) DA.K DA.b DB.b l
   have i1 := ip_linSeq hτ rA.hR gR rA.hR gR l
@@ -1250,9 +1231,9 @@ theorem curvBlock_interp {DA DB : SignedData} {l c : ℝ} (hl0 : 0 ≤ l) (hl1 :
   have i3 := ip_linSeq hτ gp1 gp2 gp1 gp2 l
   have i4 := ip_linSeq hτ gn1 gn2 gn1 gn2 l
   unfold curvBlock
-  simp only [interp_v, interp_a, interp_R, interp_t, interp_b, interp_μ, interp_μf, interp_τ,
+  simp only [interp_v, interp_a, interp_R, interp_t, interp_b, interp_μ, interp_p, interp_τ,
     mpos_mix hl0 hl1 (rA.hμ true) (rB.hμ true), mneg_mix hl0 hl1 (rA.hμ false) (rB.hμ false)]
-  rw [n1, n2, r1, r2, r3, r4, i1, i2, i3, i4]
+  rw [n1, n2, n3, r1, r3, r4, i1, i2, i3, i4]
   ring
 
 /-- **The curvature as three bilinear blocks.**  `curvQ = AA - AB - BA + BB`, where `AA`
@@ -1406,34 +1387,30 @@ theorem IntervalEnds.t_geom (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ 
       IsGeom (interpFamily αA αB DA DB const N α).τ (interpFamily αA αB DA DB const N α).t := by
   filter_upwards [h.regular const] with N hN α hα using (hN α hα).ht
 
-/-- `reference`: the bounded densities and the masses `1` and `1 - α`. -/
+/-- `reference`: the bounded densities and the mass `1 - α/2` of `c_r`. -/
 theorem IntervalEnds.reference (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ → ℝ → ℝ)
-    (mA : ∀ᶠ N : ℕ in Filter.atTop, 1 = ∑ τ, ((DA N).μ τ).real univ ∧
-      1 - αA = ∑ τ, ((DA N).μf τ).real univ)
-    (mB : ∀ᶠ N : ℕ in Filter.atTop, 1 = ∑ τ, ((DB N).μ τ).real univ ∧
-      1 - αB = ∑ τ, ((DB N).μf τ).real univ) :
+    (mA : ∀ᶠ N : ℕ in Filter.atTop, 1 - αA / 2 = ∑ τ, ((DA N).μ τ).real univ)
+    (mB : ∀ᶠ N : ℕ in Filter.atTop, 1 - αB / 2 = ∑ τ, ((DB N).μ τ).real univ) :
     ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
       (∀ τ, BD ((interpFamily αA αB DA DB const N α).μ τ)
         (interpFamily αA αB DA DB const N α).Cb) ∧
         0 ≤ (interpFamily αA αB DA DB const N α).Cb ∧
-        1 = ∑ τ, ((interpFamily αA αB DA DB const N α).μ τ).real univ ∧
-      (∀ τ, BD ((interpFamily αA αB DA DB const N α).μf τ)
-        (interpFamily αA αB DA DB const N α).Cbf) ∧
-        0 ≤ (interpFamily αA αB DA DB const N α).Cbf ∧
-        1 - α = ∑ τ, ((interpFamily αA αB DA DB const N α).μf τ).real univ := by
+        1 - α / 2 = ∑ τ, ((interpFamily αA αB DA DB const N α).μ τ).real univ := by
   filter_upwards [h.regA, h.regB, mA, mB] with N rA rB ma mb α hα
   obtain ⟨hl0, hl1⟩ := h.mem hα
   have r := SignedRegular.interp (c := const N α) hl0 hl1 (h.compat N) rA rB
   have hpos : αB - αA ≠ 0 := by linarith [h.lt]
-  refine ⟨r.hμ, r.hC, ?_, r.hμf, r.hCf, ?_⟩
-  · show 1 = ∑ τ, (mixFam (interpL αA αB α) (DA N).μ (DB N).μ τ).real univ
-    rw [mass_mix hl0 hl1 rA.hμ rB.hμ, ← ma.1, ← mb.1]
-    ring
-  · show 1 - α = ∑ τ, (mixFam (interpL αA αB α) (DA N).μf (DB N).μf τ).real univ
-    rw [mass_mix hl0 hl1 rA.hμf rB.hμf, ← ma.2, ← mb.2,
-      interpL_of_mem h.lt (by linarith [h.lo_ge, hα.1]) (by linarith [h.hi_le, hα.2])]
-    field_simp
-    ring
+  refine ⟨r.hμ, r.hC, ?_⟩
+  show 1 - α / 2 = ∑ τ, (mixFam (interpL αA αB α) (DA N).μ (DB N).μ τ).real univ
+  rw [mass_mix hl0 hl1 rA.hμ rB.hμ, ← ma, ← mb,
+    interpL_of_mem h.lt (by linarith [h.lo_ge, hα.1]) (by linarith [h.hi_le, hα.2])]
+  field_simp
+  ring
+
+theorem IntervalEnds.p_summable (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ → ℝ → ℝ) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
+      Summable (fun j => |(interpFamily αA αB DA DB const N α).p j|) := by
+  filter_upwards [h.regular const] with N hN α hα using (hN α hα).hp
 
 /-- `rowNeg` from the endpoint suprema of the negative row field. -/
 theorem IntervalEnds.rowNeg (h : IntervalEnds αA αB lo hi DA DB) (const : ℕ → ℝ → ℝ)
@@ -1588,24 +1565,24 @@ theorem quad_nonpos_Icc {a b c l0 l1 l : ℝ} (h0 : a + b * l0 + c * l0 ^ 2 ≤ 
 /-- **`budgetFix` of one interval.**  Linearity in the free negative fraction `κ`: it suffices to
 check the budget at `κlo` and `κhi`, for `α` in the interval, with `ZB ≤ zb` (the σ chord).  The
 conclusion is the field `budgetFix` of `SignedNearBounds` for this interval. -/
-theorem budgetFix_of_kappa_ends {κlo κhi lo hi B cost : ℝ} {cInf MXn MXp MY zb : ℝ → ℝ}
+theorem budgetFix_of_kappa_ends {κlo κhi lo hi B cost ε : ℝ} {cInf MXn MXp MY zb : ℝ → ℝ}
     {ZB : ℝ → ℝ → ℝ → ℝ}
     (hZB : ∀ c d e : ℝ, 0 ≤ c → 0 ≤ d → 0 ≤ e → lo ≤ c + d + e → c + d + e ≤ hi →
       ZB c d e ≤ zb (c + d + e))
-    (hlo : ∀ α ∈ Icc lo hi, cInf α + (2 * α - α ^ 2) * Real.log 2 + κlo * MXn α +
+    (hlo : ∀ α ∈ Icc lo hi, cInf α + fixLog2 ε α * Real.log 2 + κlo * MXn α +
       (1 - κlo - α) * MXp α + (1 - α) * MY α + zb α ≤ B + cost * α)
-    (hhi : ∀ α ∈ Icc lo hi, cInf α + (2 * α - α ^ 2) * Real.log 2 + κhi * MXn α +
+    (hhi : ∀ α ∈ Icc lo hi, cInf α + fixLog2 ε α * Real.log 2 + κhi * MXn α +
       (1 - κhi - α) * MXp α + (1 - α) * MY α + zb α ≤ B + cost * α) :
     ∀ (κ c d e : ℝ), κlo ≤ κ → κ ≤ κhi → 0 ≤ c → 0 ≤ d → 0 ≤ e → lo ≤ c + d + e →
       c + d + e ≤ hi → κ + (c + d + e) ≤ 1 →
-      cInf (c + d + e) + (2 * (c + d + e) - (c + d + e) ^ 2) * Real.log 2 +
+      cInf (c + d + e) + fixLog2 ε (c + d + e) * Real.log 2 +
         κ * MXn (c + d + e) + (1 - κ - (c + d + e)) * MXp (c + d + e) +
         (1 - (c + d + e)) * MY (c + d + e) + ZB c d e ≤ B + cost * (c + d + e) := by
   intro κ c d e hκ0 hκ1 hc hd he hlo' hhi' _
   have hα : c + d + e ∈ Icc lo hi := ⟨hlo', hhi'⟩
   have hz := hZB c d e hc hd he hlo' hhi'
   set α := c + d + e with hαdef
-  have key := affine_nonpos_of_ends (a := cInf α + (2 * α - α ^ 2) * Real.log 2 +
+  have key := affine_nonpos_of_ends (a := cInf α + fixLog2 ε α * Real.log 2 +
     (1 - α) * MXp α + (1 - α) * MY α + zb α - (B + cost * α)) (b := MXn α - MXp α)
     (x := κ) hκ0 hκ1 (by nlinarith [hlo α hα]) (by nlinarith [hhi α hα])
   nlinarith [key, hz]
@@ -1643,10 +1620,8 @@ def SignedNearBounds.ofEnds {I : ℕ}
     (hends : ∀ i, IntervalEnds (αA i) (αB i) (lo i) (hi i) (DA i) (DB i))
     (hν : ∀ i N, (DA i N).ν = (ncount N : ℝ)) (hRf : ∀ i N, (DA i N).Rf = Rf N)
     (hCf : ∀ i N, (DA i N).Cf = Cf N)
-    (mA : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 = ∑ τ, ((DA i N).μ τ).real univ ∧
-      1 - αA i = ∑ τ, ((DA i N).μf τ).real univ)
-    (mB : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 = ∑ τ, ((DB i N).μ τ).real univ ∧
-      1 - αB i = ∑ τ, ((DB i N).μf τ).real univ)
+    (mA : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αA i / 2 = ∑ τ, ((DA i N).μ τ).real univ)
+    (mB : ∀ i, ∀ᶠ N : ℕ in Filter.atTop, 1 - αB i / 2 = ∑ τ, ((DB i N).μ τ).real univ)
     -- the endpoint suprema
     (SnA SnB SpA SpB SyA SyB : Fin I → ℝ)
     (hSnA : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ x ∈ Ioo (-1 : ℝ) 0,
@@ -1674,6 +1649,7 @@ def SignedNearBounds.ofEnds {I : ℕ}
     -- the rest of the contract
     (κlo κhi epsSplit : Fin I → ℝ) (epsSplit_pos : ∀ i, 0 < epsSplit i)
     (epsSplit_le : ∀ i, epsSplit i ≤ 1)
+    (etaA : ∀ i N, (DA i N).η = (1 - epsSplit i) / 2)
     (ZB : Fin I → ℝ → ℝ → ℝ → ℝ) (zb : Fin I → ℝ → ℝ)
     (Clsf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop)
     (LRf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ)
@@ -1700,12 +1676,14 @@ def SignedNearBounds.ofEnds {I : ℕ}
     (hZB : ∀ (i : Fin I) (c d e : ℝ), 0 ≤ c → 0 ≤ d → 0 ≤ e → lo i ≤ c + d + e → c + d + e ≤ hi i →
       ZB i c d e ≤ zb i (c + d + e))
     (hbudLo : ∀ i, ∀ α ∈ Icc (lo i) (hi i),
-      interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α + (2 * α - α ^ 2) * Real.log 2 +
+      interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α +
+        fixLog2 (epsSplit i) α * Real.log 2 +
         κlo i * chord (αA i) (αB i) (SnA i) (SnB i) α +
         (1 - κlo i - α) * chord (αA i) (αB i) (SpA i) (SpB i) α +
         (1 - α) * chord (αA i) (αB i) (SyA i) (SyB i) α + zb i α ≤ B + cost * α)
     (hbudHi : ∀ i, ∀ α ∈ Icc (lo i) (hi i),
-      interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α + (2 * α - α ^ 2) * Real.log 2 +
+      interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α +
+        fixLog2 (epsSplit i) α * Real.log 2 +
         κhi i * chord (αA i) (αB i) (SnA i) (SnB i) α +
         (1 - κhi i - α) * chord (αA i) (αB i) (SpA i) (SpB i) α +
         (1 - α) * chord (αA i) (αB i) (SyA i) (SyB i) α + zb i α ≤ B + cost * α) :
@@ -1735,12 +1713,14 @@ def SignedNearBounds.ofEnds {I : ℕ}
   epsSplit := epsSplit
   epsSplit_pos := epsSplit_pos
   epsSplit_le := epsSplit_le
+  eta_eq := fun i N _ => etaA i N
   ZB := ZB
   Clsf := Clsf
   LRf := LRf
   FixAdm := FixAdm
   e_mem := fun i => (hends i).e_mem constant
   v_summable := fun i => (hends i).v_summable constant
+  p_summable := fun i => (hends i).p_summable constant
   R_geom := fun i => (hends i).R_geom constant
   t_geom := fun i => (hends i).t_geom constant
   reference := fun i => (hends i).reference constant (mA i) (mB i)

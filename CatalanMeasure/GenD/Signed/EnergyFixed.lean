@@ -5,9 +5,9 @@ public import CatalanMeasure.GenD.Signed.Energy
 /-!
 # Fixed (marked) nodes in the signed second-sheet energy bound: fields and the A7 interface
 
-The fields of the free rows, the pin parts, the constant `constFix`, the A7 interface for fixed
-nodes `SpikeCompareFixed` (the marked positives sit in the positive list of the route II ratio), the
-η-split and the linearisation of Lemma R′.  The master inequality, the contract and the energy
+The `log 2` count `fixLog2` of the fixed rows and the bound of `constFix` by `constTotal`, the A7
+interface for fixed nodes `SpikeCompareFixed` (the marked positives sit in the positive list of the
+route II ratio), the η-split and the linearisation of Lemma R′.  The master inequality, the contract and the energy
 theorem with first-kind fixed and near-type nodes are `EnergyNear`.
 -/
 
@@ -29,83 +29,57 @@ theorem sum_split4 (F : ℝ → ℝ) {k q m1 m2 : ℕ} (xn : Fin k → ℝ) (yn 
       ((∑ b, F (xn b)) + ∑ j, F (yn j)) + ((∑ p, F (gp p)) + ∑ j, F (yp j)) := by
   rw [row_sum_split, row_sum_split, row_sum_split]
 
-/-! ### Fields of the fixed nodes -/
-
-namespace SignedData
-
-variable (D : SignedData)
-
-/-- Row field of a fixed node: the problem's field, the D7.1 diagonal cost and the reference
-potential (no pin terms: the fixed rows carry no column). -/
-def rowBaseFix (x : ℝ) : ℝ :=
-  D.Rf x + (1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μ x
-
-/-- The free-row copy of the Vandermonde (pin principal): D7.1 diagonal cost and the potential of
-the free reference `μf`. -/
-def freeCopy (x : ℝ) : ℝ :=
-  (1 / (2 * D.ν)) * (-Real.log |x| + Real.log (1 / (1 - D.τ ^ 2))) - rowRef D.μf x
-
-/-- The pin terms of a free row (`-S_v`, `-log(1-x)/(2ν)`, and the free-row Vandermonde copy). -/
-def pinPart (x : ℝ) : ℝ :=
-  -barrierTrialS D.v x - Real.log (1 - x) / (2 * D.ν) + D.freeCopy x
-
-theorem rowBase_eq (x : ℝ) : D.rowBase x = D.rowBaseFix x + D.pinPart x := by
-  unfold rowBase rowBaseFix pinPart freeCopy; ring
-
-/-- The constant with `pf` free rows (pin, free-row D7.1 copy) and `n` rows in all (D7.1). -/
-def constFix (pf n : ℕ) : ℝ :=
-  D.constTotal n + (((n : ℝ) / D.ν) ^ 2 - ((pf : ℝ) / D.ν) ^ 2) * Real.log 2 +
-    (D.eD7f pf - D.eD7f n)
-
-end SignedData
-
 /-- The remainder constant `REMC = (1 + 1/ε)/8` of NOTES §12.1, `ε = 1 - 2η`. -/
 def remC (ε : ℝ) : ℝ := (1 + 1 / ε) / 8
 
-theorem sum_fNeg_eq (D : SignedData) {k : ℕ} (xn : Fin k → ℝ) :
-    ∑ b, D.fNeg (xn b) = (∑ b, D.rowBaseFix (xn b)) + (∑ b, D.pinPart (xn b)) -
-      (1 / (2 * D.ν)) * (∑ b, Real.log (1 - (D.τ * xn b) * (D.τ * xn b))) -
-      2 * (∑ b, barrierTrialS D.a (-D.τ * xn b)) +
-      ∑ b, fld D.τ (fun n => mneg D.μ D.τ n - D.R n - D.t n) (xn b) := by
-  unfold SignedData.fNeg
-  simp only [SignedData.rowBase_eq, Finset.sum_add_distrib, Finset.sum_sub_distrib,
-    ← Finset.mul_sum]
+/-! ### The `log 2` count and the constant with fixed rows -/
 
-theorem sum_fPos_eq (D : SignedData) {q : ℕ} (gp : Fin q → ℝ) :
-    ∑ p, D.fPos (gp p) = (∑ p, D.rowBaseFix (gp p)) + (∑ p, D.pinPart (gp p)) +
-      2 * (∑ p, barrierTrialS D.a (-D.τ * gp p)) -
-      ((D.sp : ℝ) / D.ν) * (∑ p, denPoly D.b D.K (gp p)) +
-      ∑ p, fld D.τ (fun n => mpos D.μ D.τ n + D.R n) (gp p) := by
-  unfold SignedData.fPos
-  simp only [SignedData.rowBase_eq, Finset.sum_add_distrib, Finset.sum_sub_distrib,
-    ← Finset.mul_sum]
+/-- The `log 2` coefficient of the fixed rows in the budget (NOTES-ETA §1.4): with `α` the fixed
+fraction and `η = (1 - ε)/2`, `constFix ≤ constTotal n + fixLog2 ε α · log 2`. -/
+def fixLog2 (ε α : ℝ) : ℝ := (2 * α - α ^ 2) + ((1 - ε) / 2) * (α - α ^ 2 / 4) - α ^ 2 / 4
 
-/-- The pin terms of the free rows as a sum of `pinPart`. -/
-theorem pinPart_sum (D : SignedData) (hν : 0 < D.ν) {p : ℕ} (x : Fin p → ℝ) :
-    (∑ i, -barrierTrialS D.v (x i)) / D.ν - (∑ i, Real.log (1 - x i)) / (2 * D.ν ^ 2) +
-      ((1 / 2) * (∑ i : Fin p, (1 / D.ν) ^ 2 * (-Real.log |x i| + Real.log (1 / (1 - D.τ ^ 2)))) -
-        (∑ i, rowRef D.μf (x i)) / D.ν) = (1 / D.ν) * ∑ i, D.pinPart (x i) := by
-  unfold SignedData.pinPart SignedData.freeCopy
-  simp only [Finset.sum_add_distrib, Finset.sum_sub_distrib, Finset.sum_neg_distrib,
-    ← Finset.mul_sum, ← Finset.sum_div]
-  field_simp
-
-theorem eD7f_mono (D : SignedData) (hν : 0 < D.ν) (hCf : 0 ≤ D.Cbf) (hτ : D.τ ∈ Ioo (0 : ℝ) 1)
-    {pf n : ℕ} (h : pf ≤ n) : D.eD7f pf ≤ D.eD7f n := by
-  unfold SignedData.eD7f
+/-- The D7.1 error is monotone in the row mass. -/
+theorem SignedData.eD7_mono (D : SignedData) (hC : 0 ≤ D.Cb) (hτ : D.τ ∈ Ioo (0 : ℝ) 1)
+    (hη : D.η ≤ 1) {W W' : ℝ} (hW : 0 ≤ W) (hWW : W ≤ W') : D.eD7 W ≤ D.eD7 W' := by
+  unfold SignedData.eD7
   have hK : 0 ≤ 1 - D.τ ^ 2 := by nlinarith [hτ.1, hτ.2]
-  have hK1 : 1 - D.τ ^ 2 ≤ 1 := by nlinarith [hτ.1]
   have hK0 : 0 < 1 - D.τ ^ 2 := by nlinarith [hτ.1, hτ.2]
   have hL : 0 ≤ 1 + Real.log (1 / (1 - D.τ ^ 2)) := by
     have : 0 ≤ Real.log (1 / (1 - D.τ ^ 2)) :=
-      Real.log_nonneg (by rw [le_div_iff₀ hK0]; linarith)
+      Real.log_nonneg (by rw [le_div_iff₀ hK0]; nlinarith [hτ.1])
     linarith
-  have hab : (pf : ℝ) / D.ν ≤ (n : ℝ) / D.ν :=
-    div_le_div_of_nonneg_right (by exact_mod_cast h) hν.le
-  have ha : 0 ≤ (pf : ℝ) / D.ν := by positivity
-  have hc : 0 ≤ D.Cbf * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) := by positivity
-  nlinarith [mul_le_mul_of_nonneg_left hab hc, mul_le_mul_of_nonneg_left
-    (mul_le_mul hab hab ha (ha.trans hab)) hK]
+  have hc : 0 ≤ D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) := by positivity
+  have h1 : 8 * W * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
+      2 * (1 - D.τ ^ 2) * (2 * W) ^ 2 ≤
+      8 * W' * D.Cb * (1 - D.τ ^ 2) * (1 + Real.log (1 / (1 - D.τ ^ 2))) +
+      2 * (1 - D.τ ^ 2) * (2 * W') ^ 2 := by
+    nlinarith [mul_le_mul_of_nonneg_left hWW hc, mul_le_mul_of_nonneg_left
+      (mul_le_mul hWW hWW hW (hW.trans hWW)) hK]
+  exact mul_le_mul_of_nonneg_left h1 (by linarith)
+
+/-- **The constant with fixed rows against the all-free constant** (`ν = n`, `pf + M = n`). -/
+theorem SignedData.constFix_le (D : SignedData) (hC : 0 ≤ D.Cb) (he : D.e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hη : D.η ≤ 1) {pf M n : ℕ} (hn : pf + M = n) (hνn : D.ν = (n : ℝ)) (hν : 0 < D.ν) :
+    D.constFix pf M ≤
+      D.constTotal n + fixLog2 (1 - 2 * D.η) ((M : ℝ) / D.ν) * Real.log 2 := by
+  have hτ : D.τ ∈ Ioo (0 : ℝ) 1 := realEnergyTau_bounds he
+  have hnR : (pf : ℝ) + M = n := by exact_mod_cast hn
+  have hM0 : (0 : ℝ) ≤ M := Nat.cast_nonneg M
+  have hpf0 : (0 : ℝ) ≤ pf := Nat.cast_nonneg pf
+  have hW0 : 0 ≤ ((pf : ℝ) + (M : ℝ) / 2) / D.ν := by positivity
+  have hWle : ((pf : ℝ) + (M : ℝ) / 2) / D.ν ≤ (n : ℝ) / D.ν :=
+    div_le_div_of_nonneg_right (by linarith) hν.le
+  have hmono := D.eD7_mono hC hτ hη hW0 hWle
+  have h1 : (n : ℝ) / D.ν = 1 := by rw [← hνn]; exact div_self hν.ne'
+  have h2 : (pf : ℝ) / D.ν = 1 - (M : ℝ) / D.ν := by
+    rw [eq_sub_iff_add_eq, ← add_div, hnR, h1]
+  have h3 : ((pf : ℝ) + (M : ℝ) / 2) / D.ν = 1 - ((M : ℝ) / D.ν) / 2 := by
+    rw [add_div, h2]; ring
+  unfold SignedData.constFix SignedData.constTotal fixLog2
+  rw [h1] at hmono ⊢
+  rw [h3] at hmono ⊢
+  rw [h2]
+  nlinarith [hmono]
 
 /-! ### The A7 interface and the deterministic theorem -/
 
@@ -126,10 +100,10 @@ def SpikeCompareFixed (D : SignedData) (c' : ℝ) {k q m1 m2 : ℕ}
 
 /-! ### The η-split and the linearisation of Lemma R′ (PROOF-A 17.33, NOTES §§11-12.1)
 
-Sequence-level statements, with `L(u) = ip u u`.  They are the paper's route when the fixed nodes
-enter the Vandermonde only through `I(c)`, `c = a + b/2`; in `signed_master_fixed` the Vandermonde
-is applied at weight one to every row, which needs no remainder, and these lemmas supply the
-optional remainder field `fPosFixR`. -/
+Sequence-level statements, with `L(u) = ip u u`.  The fixed nodes enter the `(1 - η)`-share of
+the Vandermonde through `I(c)`, `c = a + b/2`; the pointwise form of `eta_split` is the first
+square of `quad_master_eta` (EnergyNear), and Lemma R′ turns `REMC · L(b⁺)` into the field
+`remC (1 - 2η) · α · (-log (1 - x²))` of `fPosMR`. -/
 
 /-- Young: `L(c + d) ≤ (1 + ε) L(c) + (1 + 1/ε) L(d)`. -/
 theorem ip_add_le {τ : ℝ} (hτ : τ ∈ Ioo (0 : ℝ) 1) {c d : ℕ → ℝ} (hc : IsGeom τ c)
@@ -267,4 +241,4 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.lemmaR'_linearisation
 #print axioms CatalanMeasure.Signed.neg_log_pair_le
 #print axioms CatalanMeasure.Signed.remainder_sum_eq
-#print axioms CatalanMeasure.Signed.eD7f_mono
+#print axioms CatalanMeasure.Signed.SignedData.constFix_le

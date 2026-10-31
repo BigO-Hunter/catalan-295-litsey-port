@@ -241,10 +241,8 @@ structure Phase2Data (I : ℕ) where
   hν : ∀ i N, (DA i N).ν = (ncount N : ℝ)
   hRf : ∀ i N, (DA i N).Rf = Rf N
   hCf : ∀ i N, (DA i N).Cf = Cf N
-  mA : ∀ i, ∀ᶠ N : ℕ in atTop, 1 = ∑ τ, ((DA i N).μ τ).real univ ∧
-    1 - αA i = ∑ τ, ((DA i N).μf τ).real univ
-  mB : ∀ i, ∀ᶠ N : ℕ in atTop, 1 = ∑ τ, ((DB i N).μ τ).real univ ∧
-    1 - αB i = ∑ τ, ((DB i N).μf τ).real univ
+  mA : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αA i / 2 = ∑ τ, ((DA i N).μ τ).real univ
+  mB : ∀ i, ∀ᶠ N : ℕ in atTop, 1 - αB i / 2 = ∑ τ, ((DB i N).μ τ).real univ
   -- endpoint suprema of the free-row, column fields
   SnA : Fin I → ℝ
   SnB : Fin I → ℝ
@@ -283,6 +281,7 @@ structure Phase2Data (I : ℕ) where
   epsSplit : Fin I → ℝ
   epsSplit_pos : ∀ i, 0 < epsSplit i
   epsSplit_le : ∀ i, epsSplit i ≤ 1
+  etaA : ∀ i N, (DA i N).η = (1 - epsSplit i) / 2
   Clsf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop
   LRf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ
   cp : Fin I → ℕ → ℝ → ℝ
@@ -364,12 +363,14 @@ structure Phase2Data (I : ℕ) where
   hZB : ∀ (i : Fin I) (c d e : ℝ), 0 ≤ c → 0 ≤ d → 0 ≤ e → lo i ≤ c + d + e →
     c + d + e ≤ hi i → zbCap ((capE i).toS (αA i) (αB i)) c d e ≤ zb i (c + d + e)
   hbudLo : ∀ i, ∀ α ∈ Icc (lo i) (hi i),
-    interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α + (2 * α - α ^ 2) * Real.log 2 +
+    interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α +
+      fixLog2 (epsSplit i) α * Real.log 2 +
       κlo i * chord (αA i) (αB i) (SnA i) (SnB i) α +
       (1 - κlo i - α) * chord (αA i) (αB i) (SpA i) (SpB i) α +
       (1 - α) * chord (αA i) (αB i) (SyA i) (SyB i) α + zb i α ≤ B + cost * α
   hbudHi : ∀ i, ∀ α ∈ Icc (lo i) (hi i),
-    interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α + (2 * α - α ^ 2) * Real.log 2 +
+    interpCInf (αA i) (αB i) (cP i α) (rA i) (rB i) (κc i) α +
+      fixLog2 (epsSplit i) α * Real.log 2 +
       κhi i * chord (αA i) (αB i) (SnA i) (SnB i) α +
       (1 - κhi i - α) * chord (αA i) (αB i) (SpA i) (SpB i) α +
       (1 - α) * chord (αA i) (αB i) (SyA i) (SyB i) α + zb i α ≤ B + cost * α
@@ -450,7 +451,7 @@ def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
     D.Rf D.Cf D.Rm D.Rn D.constant D.αA D.αB D.DA D.DB D.hends D.hν D.hRf D.hCf D.mA D.mB
     D.SnA D.SnB D.SpA D.SpB D.SyA D.SyB D.hSnA D.hSnB D.hSpA D.hSpB D.hSyA D.hSyB
     D.cP D.rA D.rB D.κc D.hP D.hrA D.hrB D.hκ D.κlo D.κhi D.epsSplit D.epsSplit_pos
-    D.epsSplit_le (fun i => zbCap ((D.capE i).toS (D.αA i) (D.αB i))) D.zb D.Clsf D.LRf D.FixAdm
+    D.epsSplit_le D.etaA (fun i => zbCap ((D.capE i).toS (D.αA i) (D.αB i))) D.zb D.Clsf D.LRf D.FixAdm
     D.cp D.cp_pos D.cp_le D.err_small
     (spikeFix_of_ends D.αA D.αB D.DA D.DB D.constant D.cp D.cp_pos D.cp_le D.cp_theta D.Clsf
       D.LRf D.hLR D.hCls)
