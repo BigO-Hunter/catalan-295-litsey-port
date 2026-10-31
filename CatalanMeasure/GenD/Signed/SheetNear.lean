@@ -764,11 +764,13 @@ rows `y` (all in `G`) and a free class configuration `Cls N p x`:
   than `2g` free positives, the negative-fraction range of every α-interval containing
   `α = (m₁ + m₂')/n`, and for every splitting `τ` of the marked positives into first-kind and
   near rows, membership in `T.Clsf` and `T.FixAdm`. -/
-def SignedNearClassLink (P : Parameters) {I : ℕ} (T : SignedNearBounds I)
-    (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) (G : ℝ → Prop) : Prop :=
+def SignedNearClassLinkNd (P : Parameters) {I : ℕ} (T : SignedNearBounds I)
+    (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) (G : ℝ → Prop)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop) : Prop :=
   ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ),
     (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) → (∀ j, y j ∈ Ioo (-1 : ℝ) 1) →
-    (∀ j, y j ≠ 0) → (∀ j, G (y j)) → Function.Injective (Fin.append x y) → Cls N p x →
+    (∀ j, y j ≠ 0) → (∀ j, G (y j)) → Nd N m y → Function.Injective (Fin.append x y) →
+    Cls N p x →
     (∀ c : Fin (P.n N) → ℝ,
       |∑ a ∈ Finset.univ.filter (fun a => 0 < sheetNodes hpm x y a),
         bDeriv (sheetNodes hpm x y) a * sheetNodes hpm x y a ^ (P.n N - 1 - 2 * P.g N) *
@@ -790,6 +792,28 @@ def SignedNearClassLink (P : Parameters) {I : ℕ} (T : SignedNearBounds I)
         T.FixAdm N m1 r s' (fun b => y (σy (Sum.inl b)))
           (fun j => y (σy (Sum.inr (τ (Sum.inl j))))) (fun j => y (σy (Sum.inr (τ (Sum.inr j)))))
 
+/-- The class link with no node-set restriction (`Nd` trivial). -/
+def SignedNearClassLink (P : Parameters) {I : ℕ} (T : SignedNearBounds I)
+    (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) (G : ℝ → Prop) : Prop :=
+  SignedNearClassLinkNd P T Cls G (fun _ _ _ => True)
+
+/-- `SignedSecondSheetCore` for marked rows restricted by a node-set predicate `Nd N m y`
+(in the real assembly: `y = realCoordinate ∘ τ N ∘ a` for an injective `a`, see `MarkedCap.lean`). -/
+def SignedSecondSheetCoreNd (P : Parameters) (G : ℝ → Prop)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop) (target0 c2 alpha1 : ℝ) : Prop :=
+  ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
+    ∀ (p m : ℕ) (hpm : p + m = P.n N)
+      (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ),
+      (m : ℝ) ≤ alpha1 * (P.n N : ℝ) →
+      (∀ i, x i ∈ Set.Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Set.Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) → Nd N m y →
+      (∀ i, s i ∈ Set.Ioo (0 : ℝ) 1) →
+      Function.Injective (Fin.append x y) → Function.Injective s →
+      (∑ i : Fin (p + m), paramCaseField P N (Fin.append x y i)) ≤ -1 →
+      markedSheetCore P N hpm x y s ≤
+        5 ^ m * (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
+          Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target0 + Real.log 2 / 2 + ε) + c2 * N * m)
+
 end WrapNear
 
 
@@ -808,7 +832,7 @@ open CatalanMeasure.GenD CatalanMeasure.GenD.Analytic OAI.InternalCatalan Filter
   `Rm = groupedMarkedField`, `Rn = groupedNearField` and the grouped constant at the actual
   counts), the cost being in `budgetFix` (`T.cost * n0 ≤ c2`);
 * the identification of `T` with the sheet's data and the class link `hlink`. -/
-theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
+theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
     (target0 c2 : ℝ) (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) {I : ℕ}
     (T : SignedNearBounds I)
     (hn : ∀ N, T.ncount N = P.n N)
@@ -824,15 +848,16 @@ theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → 
     (hcost : T.cost * (P.n0 : ℝ) ≤ c2)
     (hnon : GroupedMarkedProductCostOnRestr P target0 c2 G
       (fun N r _ _ z _ _ _ => ¬ Cls N r z))
-    (hlink : SignedNearClassLink P T Cls G) :
-    SignedSecondSheetCore P G target0 c2 T.α1 := by
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hlink : SignedNearClassLinkNd P T Cls G Nd) :
+    SignedSecondSheetCoreNd P G Nd target0 c2 T.α1 := by
   intro ε hε
   filter_upwards [second_marked_sheet_product_on_restr hP target0 c2 G _ hnon hε,
     signed_second_energy_near_nodes T hε, hlink, eventually_gt_atTop (0 : ℕ)]
-    with N hnonN hE hl hN0 p m hpm x y s hmle hx hx0 hy hy0 hyG hs hzi hsi hcase
+    with N hnonN hE hl hN0 p m hpm x y s hmle hx hx0 hy hy0 hyG hNd hs hzi hsi hcase
   by_cases hc : Cls N p x
   · -- class branch
-    obtain ⟨hT, hrest⟩ := hl p m hpm x y hx hx0 hy hy0 hyG hzi hc
+    obtain ⟨hT, hrest⟩ := hl p m hpm x y hx hx0 hy hy0 hyG hNd hzi hc
     obtain ⟨k, q, σx, hxneg, hxpos⟩ := exists_sign_split x hx0
     obtain ⟨m1, m2', σy, hyneg, hypos⟩ := exists_sign_split y hy0
     obtain ⟨hk, hq, hκ, hcl⟩ := hrest k q m1 m2' σx σy hxneg hxpos hyneg hypos
@@ -933,6 +958,32 @@ theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → 
         (Finset.prod_nonneg fun j _ => paramRowNodeWeight_nonneg P N (hy j)))
         (paramPinPrincipal_nonneg P N x s hx hs)) (Finset.prod_nonneg fun j _ => abs_nonneg _)
     exact (le_mul_of_one_le_left hcnn hf).trans hb
+
+
+/-- The unrestricted statement (`Nd` trivial): `SignedSecondSheetCore` from `SignedNearClassLink`. -/
+theorem signedSecondSheetNear {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
+    (target0 c2 : ℝ) (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) {I : ℕ}
+    (T : SignedNearBounds I)
+    (hn : ∀ N, T.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      T.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, T.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, T.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, T.Rn N = groupedNearField P N)
+    (hCf : ∀ N, T.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', T.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : T.B = -target0 + Real.log 2 / 2)
+    (hcost : T.cost * (P.n0 : ℝ) ≤ c2)
+    (hnon : GroupedMarkedProductCostOnRestr P target0 c2 G
+      (fun N r _ _ z _ _ _ => ¬ Cls N r z))
+    (hlink : SignedNearClassLink P T Cls G) :
+    SignedSecondSheetCore P G target0 c2 T.α1 := by
+  intro ε hε
+  filter_upwards [signedSecondSheetNearNd hP G target0 c2 Cls T hn hconst hRf hRm hRn hCf hLRf hB
+    hcost hnon (fun _ _ _ => True) hlink ε hε] with N h p m hpm x y s hmle hx hx0 hy hy0 hyG hs hzi
+    hsi hcase
+  exact h p m hpm x y s hmle hx hx0 hy hy0 hyG trivial hs hzi hsi hcase
 
 end WrapNear2
 
