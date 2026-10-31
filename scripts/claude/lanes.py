@@ -17,6 +17,11 @@ than itself is refused. Near the floor the driver sheds its youngest owned job t
 and requeues it once.
 """
 import ctypes as C, json, os, subprocess, sys, time, uuid
+# Receipts carry Lean output (non-ASCII); a cp1252 console made `submit` crash while printing.
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except (AttributeError, ValueError):
+    pass
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
