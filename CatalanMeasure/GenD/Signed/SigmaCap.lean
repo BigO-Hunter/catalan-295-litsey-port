@@ -177,6 +177,75 @@ theorem sum_le_of_count {m : ℕ} (u : Fin m → ℝ) (φ G : ℝ → ℝ) {K : 
     _ = K * (G ((m : ℝ) / K) - G 0) := by
         rw [← Finset.mul_sum, e1, e2]
 
+/-- **Sorted comparison with one extra node.**  As `sum_le_of_count`, but the count is
+`#{i | u_i ≤ u_j} ≤ K u_j + 1` and all positions are `≥ umin > 0`; the smallest position is bounded
+by `φ umin`.  `G` must be monotone on `[0, ∞)`.  Then `Σ φ(u_j) ≤ φ umin + K (G(m/K) - G 0)`. -/
+theorem sum_le_of_count1 {m : ℕ} (u : Fin m → ℝ) (φ G : ℝ → ℝ) {K umin : ℝ} (hK : 0 < K)
+    (humin : 0 < umin) (hum : ∀ j, umin ≤ u j)
+    (hφ0 : ∀ t, 0 ≤ φ t) (hanti : ∀ s t, 0 < s → s ≤ t → φ t ≤ φ s)
+    (hG : ∀ s t, 0 ≤ s → s ≤ t → G s ≤ G t)
+    (hcount : ∀ j, 0 < φ (u j) →
+      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j + 1)
+    (hstep : ∀ k : ℕ, φ (((k : ℝ) + 1) / K) ≤
+      K * (G (((k : ℝ) + 1) / K) - G ((k : ℝ) / K))) :
+    ∑ j, φ (u j) ≤ φ umin + K * (G ((m : ℝ) / K) - G 0) := by
+  cases m with
+  | zero =>
+    simp only [Finset.univ_eq_empty, Finset.sum_empty, Nat.cast_zero, zero_div, sub_self,
+      mul_zero, add_zero]
+    exact hφ0 _
+  | succ m' =>
+    have hmono : Monotone (u ∘ Tuple.sort u) := Tuple.monotone_sort u
+    have h1 : ∑ j, φ (u j) = ∑ k, φ (u (Tuple.sort u k)) :=
+      (Equiv.sum_comp (Tuple.sort u) (fun j => φ (u j))).symm
+    have h2 : ∀ k : Fin m', φ (u (Tuple.sort u k.succ)) ≤ φ ((((k : ℕ) : ℝ) + 1) / K) := by
+      intro k
+      by_cases hpos : 0 < φ (u (Tuple.sort u k.succ))
+      · have hc := hcount (Tuple.sort u k.succ) hpos
+        have hsub : (Finset.Iic k.succ).image (Tuple.sort u) ⊆
+            Finset.univ.filter (fun i => u i ≤ u (Tuple.sort u k.succ)) := by
+          intro i hi
+          obtain ⟨l, hl, rfl⟩ := Finset.mem_image.mp hi
+          simp only [Finset.mem_filter, Finset.mem_univ, true_and]
+          exact hmono (Finset.mem_Iic.mp hl)
+        have hcard1 : ((Finset.Iic k.succ).image (Tuple.sort u)).card = (k : ℕ) + 2 := by
+          rw [Finset.card_image_of_injective _ (Tuple.sort u).injective, Fin.card_Iic]
+          simp
+        have hk1 : (k : ℕ) + 2 ≤
+            (Finset.univ.filter (fun i => u i ≤ u (Tuple.sort u k.succ))).card := by
+          rw [← hcard1]; exact Finset.card_le_card hsub
+        have hk2 : (((k : ℕ) : ℝ) + 2) ≤
+            ((Finset.univ.filter (fun i => u i ≤ u (Tuple.sort u k.succ))).card : ℝ) := by
+          have : (((k : ℕ) + 2 : ℕ) : ℝ) ≤
+              ((Finset.univ.filter (fun i => u i ≤ u (Tuple.sort u k.succ))).card : ℝ) := by
+            exact_mod_cast hk1
+          push_cast at this
+          linarith
+        have hk3 : ((((k : ℕ) : ℝ) + 1) / K) ≤ u (Tuple.sort u k.succ) := by
+          rw [div_le_iff₀ hK]; linarith [mul_comm K (u (Tuple.sort u k.succ))]
+        exact hanti _ _ (div_pos (by positivity) hK) hk3
+      · exact (not_lt.mp hpos).trans (hφ0 _)
+    have e1 : ∑ k : Fin m', (G ((((k : ℕ) : ℝ) + 1) / K) - G (((k : ℕ) : ℝ) / K)) =
+        ∑ k ∈ Finset.range m', (G (((k : ℝ) + 1) / K) - G ((k : ℝ) / K)) :=
+      Fin.sum_univ_eq_sum_range (fun k : ℕ => G (((k : ℝ) + 1) / K) - G ((k : ℝ) / K)) m'
+    have e2 : ∑ k ∈ Finset.range m', (G (((k : ℝ) + 1) / K) - G ((k : ℝ) / K)) =
+        G ((m' : ℝ) / K) - G 0 := by
+      have h := Finset.sum_range_sub (fun k : ℕ => G ((k : ℝ) / K)) m'
+      simp only [Nat.cast_add, Nat.cast_one, Nat.cast_zero, zero_div] at h
+      exact h
+    have hfirst : φ (u (Tuple.sort u 0)) ≤ φ umin := hanti _ _ humin (hum _)
+    have hrest : ∑ k : Fin m', φ (u (Tuple.sort u k.succ)) ≤ K * (G ((m' : ℝ) / K) - G 0) := by
+      calc ∑ k : Fin m', φ (u (Tuple.sort u k.succ))
+          ≤ ∑ k : Fin m', φ ((((k : ℕ) : ℝ) + 1) / K) := Finset.sum_le_sum (fun k _ => h2 k)
+        _ ≤ ∑ k : Fin m', K * (G ((((k : ℕ) : ℝ) + 1) / K) - G (((k : ℕ) : ℝ) / K)) :=
+            Finset.sum_le_sum (fun k _ => hstep k)
+        _ = K * (G ((m' : ℝ) / K) - G 0) := by rw [← Finset.mul_sum, e1, e2]
+    have hGm : G ((m' : ℝ) / K) ≤ G (((m' + 1 : ℕ) : ℝ) / K) :=
+      hG _ _ (by positivity) (by push_cast; exact div_le_div_of_nonneg_right (by linarith) hK.le)
+    rw [h1, Fin.sum_univ_succ]
+    have := mul_le_mul_of_nonneg_left (sub_le_sub_right hGm (G 0)) hK.le
+    linarith
+
 /-- The integrand of the cap: `(c + r (-log u))^+` on `(0, θ]`, zero beyond. -/
 def topPhi (c r θ u : ℝ) : ℝ := if u ≤ θ then max 0 (c + r * (-Real.log u)) else 0
 
@@ -200,12 +269,26 @@ theorem topPhi_anti {c r θ : ℝ} (hr : 0 ≤ r) {s t : ℝ} (hs : 0 < s) (hst 
     · exact le_max_left _ _
     · exact le_rfl
 
+theorem topPhi_le_aux {c r θ u Bd Rbd : ℝ} (hu0 : 0 < u) (hu1 : u ≤ 1) (hr : 0 ≤ r)
+    (hc : c ≤ Bd) (hrR : r ≤ Rbd) : topPhi c r θ u ≤ max 0 Bd + Rbd * (-Real.log u) := by
+  have hL : 0 ≤ -Real.log u := by
+    have := Real.log_nonpos hu0.le hu1; linarith
+  have hR0 : 0 ≤ Rbd := hr.trans hrR
+  have hB := le_max_right 0 Bd
+  have hB0 := le_max_left 0 Bd
+  have hm := mul_le_mul_of_nonneg_right hrR hL
+  have hp := mul_nonneg hR0 hL
+  unfold topPhi
+  split_ifs
+  · exact max_le (by linarith) (by nlinarith)
+  · linarith
+
 /-- The cap sum for `r > 0`: the primitive truncated at `u* = min (exp (c / r)) θ`. -/
 theorem sum_topPhi_le_pos {m : ℕ} (u : Fin m → ℝ) {c r θ K : ℝ} (hr : 0 < r) (hθ : 0 < θ)
-    (hK : 0 < K)
+    (hK : 0 < K) {umin : ℝ} (humin : 0 < umin) (hum : ∀ j, umin ≤ u j)
     (hcount : ∀ j, 0 < topPhi c r θ (u j) →
-      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j) :
-    ∑ j, topPhi c r θ (u j) ≤ K * capPrim c r (min (Real.exp (c / r)) θ) := by
+      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j + 1) :
+    ∑ j, topPhi c r θ (u j) ≤ topPhi c r θ umin + K * capPrim c r (min (Real.exp (c / r)) θ) := by
   obtain ⟨us, hus⟩ : ∃ us, us = min (Real.exp (c / r)) θ := ⟨_, rfl⟩
   rw [← hus]
   have hus0 : 0 < us := by rw [hus]; exact lt_min (Real.exp_pos _) hθ
@@ -263,22 +346,26 @@ theorem sum_topPhi_le_pos {m : ℕ} (u : Fin m → ℝ) {c r θ K : ℝ} (hr : 0
       have : capPrim c r (min ((k : ℝ) / K) us) ≤ capPrim c r us :=
         hmonoP _ _ (le_min ha0 hus0.le) (min_le_right _ _) le_rfl
       exact mul_nonneg hK.le (by linarith)
-  have h := sum_le_of_count u (topPhi c r θ) (fun t => capPrim c r (min t us)) hK
-    (topPhi_nonneg c r θ) (fun s t hs hst => topPhi_anti hr.le hs hst) hcount hstep
+  have h := sum_le_of_count1 u (topPhi c r θ) (fun t => capPrim c r (min t us)) hK humin hum
+    (topPhi_nonneg c r θ) (fun s t hs hst => topPhi_anti hr.le hs hst)
+    (fun s t hs hst => hmonoP _ _ (le_min hs hus0.le) (min_le_min_right us hst) (min_le_right _ _))
+    hcount hstep
   have hG0 : capPrim c r (min (0 : ℝ) us) = 0 := by
     rw [min_eq_left hus0.le]; exact capPrim_zero c r
   have hGm : capPrim c r (min ((m : ℝ) / K) us) ≤ capPrim c r us :=
     hmonoP _ _ (le_min (by positivity) hus0.le) (min_le_right _ _) le_rfl
   calc ∑ j, topPhi c r θ (u j)
-      ≤ K * (capPrim c r (min ((m : ℝ) / K) us) - capPrim c r (min 0 us)) := h
-    _ ≤ K * capPrim c r us := by
-        rw [hG0]; exact mul_le_mul_of_nonneg_left (by linarith) hK.le
+      ≤ topPhi c r θ umin +
+          K * (capPrim c r (min ((m : ℝ) / K) us) - capPrim c r (min 0 us)) := h
+    _ ≤ topPhi c r θ umin + K * capPrim c r us := by
+        rw [hG0]; exact add_le_add le_rfl (mul_le_mul_of_nonneg_left (by linarith) hK.le)
 
 /-- The cap sum for `r = 0`: the constant `(c)^+` on `(0, θ]`. -/
 theorem sum_topPhi_le_zero {m : ℕ} (u : Fin m → ℝ) {c θ K : ℝ} (hθ : 0 < θ) (hK : 0 < K)
+    {umin : ℝ} (humin : 0 < umin) (hum : ∀ j, umin ≤ u j)
     (hcount : ∀ j, 0 < topPhi c 0 θ (u j) →
-      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j) :
-    ∑ j, topPhi c 0 θ (u j) ≤ K * (θ * max 0 c) := by
+      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j + 1) :
+    ∑ j, topPhi c 0 θ (u j) ≤ topPhi c 0 θ umin + K * (θ * max 0 c) := by
   have hcc0 : 0 ≤ max 0 c := le_max_left _ _
   have hstep : ∀ k : ℕ, topPhi c 0 θ (((k : ℝ) + 1) / K) ≤
       K * (max 0 c * min (((k : ℝ) + 1) / K) θ - max 0 c * min ((k : ℝ) / K) θ) := by
@@ -302,42 +389,46 @@ theorem sum_topPhi_le_zero {m : ℕ} (u : Fin m → ℝ) {c θ K : ℝ} (hθ : 0
       have : max 0 c * min ((k : ℝ) / K) θ ≤ max 0 c * min (((k : ℝ) + 1) / K) θ :=
         mul_le_mul_of_nonneg_left (min_le_min_right θ hab) hcc0
       exact mul_nonneg hK.le (by linarith)
-  have h := sum_le_of_count u (topPhi c 0 θ) (fun t => max 0 c * min t θ) hK
-    (topPhi_nonneg c 0 θ) (fun s t hs hst => topPhi_anti le_rfl hs hst) hcount hstep
+  have h := sum_le_of_count1 u (topPhi c 0 θ) (fun t => max 0 c * min t θ) hK humin hum
+    (topPhi_nonneg c 0 θ) (fun s t hs hst => topPhi_anti le_rfl hs hst)
+    (fun s t _ hst => mul_le_mul_of_nonneg_left (min_le_min_right θ hst) hcc0) hcount hstep
   calc ∑ j, topPhi c 0 θ (u j)
-      ≤ K * (max 0 c * min ((m : ℝ) / K) θ - max 0 c * min 0 θ) := h
-    _ ≤ K * (θ * max 0 c) := by
+      ≤ topPhi c 0 θ umin + K * (max 0 c * min ((m : ℝ) / K) θ - max 0 c * min 0 θ) := h
+    _ ≤ topPhi c 0 θ umin + K * (θ * max 0 c) := by
         rw [min_eq_left hθ.le]
         have h1 : max 0 c * min ((m : ℝ) / K) θ ≤ max 0 c * θ :=
           mul_le_mul_of_nonneg_left (min_le_right _ _) hcc0
-        exact mul_le_mul_of_nonneg_left (by nlinarith) hK.le
+        exact add_le_add le_rfl (mul_le_mul_of_nonneg_left (by nlinarith) hK.le)
 
 /-- The cap sum in the closed form `capInt`. -/
 theorem sum_topPhi_le {m : ℕ} (u : Fin m → ℝ) {c r θ K : ℝ} (hr : 0 ≤ r) (hθ : 0 < θ)
-    (hK : 0 < K)
+    (hK : 0 < K) {umin : ℝ} (humin : 0 < umin) (hum : ∀ j, umin ≤ u j)
     (hcount : ∀ j, 0 < topPhi c r θ (u j) →
-      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j) :
-    ∑ j, topPhi c r θ (u j) ≤ K * capInt c r θ := by
+      ((Finset.univ.filter (fun i => u i ≤ u j)).card : ℝ) ≤ K * u j + 1) :
+    ∑ j, topPhi c r θ (u j) ≤ topPhi c r θ umin + K * capInt c r θ := by
   unfold capInt
   rcases hr.eq_or_lt with rfl | hpos
-  · rw [if_neg (lt_irrefl (0 : ℝ))]; exact sum_topPhi_le_zero u hθ hK hcount
-  · rw [if_pos hpos]; exact sum_topPhi_le_pos u hpos hθ hK hcount
+  · rw [if_neg (lt_irrefl (0 : ℝ))]; exact sum_topPhi_le_zero u hθ hK humin hum hcount
+  · rw [if_pos hpos]; exact sum_topPhi_le_pos u hpos hθ hK humin hum hcount
 
 /-! ### 3. One node family -/
 
 /-- **Theorem S for one node family (counting form).**  Nodes `xs j < 1` with `0 ≤ x_c < 1`.
 Off the top cell the field is at most `lam`; on the top cell `[x_c, 1)` it is at most
 `g0 + r (-log (1 - x²))` (`r ≥ 0`); the nodes obey the top cap: the number of nodes `≥ xs j` is
-at most `K (1 - xs j)` for every top node.  Then
-`Σ f(xs j) ≤ m lam + K ∫_0^{1-x_c} (g0 - lam + r log (1/u))^+ du`, the integral being `capInt`. -/
+at most `K (1 - xs j) + 1` for every top node (the exact discrete form of the density cap
+`ν ≤ κ`), and all nodes satisfy `xs j ≤ 1 - umin`.  Then
+`Σ f(xs j) ≤ m lam + (g0 - lam + r log (1/umin))^+ + K ∫_0^{1-x_c} (g0 - lam + r log (1/u))^+ du`,
+the integral being `capInt`. -/
 theorem sum_le_topCap {m : ℕ} (f : ℝ → ℝ) (xs : Fin m → ℝ) {xc lam g0 r K : ℝ}
     (hxc0 : 0 ≤ xc) (hxc1 : xc < 1) (hr : 0 ≤ r) (hK : 0 < K)
-    (hx1 : ∀ j, xs j < 1)
+    (hx1 : ∀ j, xs j < 1) {umin : ℝ} (humin : 0 < umin) (hum : ∀ j, umin ≤ 1 - xs j)
     (hlow : ∀ j, xs j < xc → f (xs j) ≤ lam)
     (htop : ∀ j, xc ≤ xs j → f (xs j) ≤ g0 + r * (-Real.log (1 - xs j ^ 2)))
     (hcap : ∀ j, xc ≤ xs j →
-      ((Finset.univ.filter (fun i => xs j ≤ xs i)).card : ℝ) ≤ K * (1 - xs j)) :
-    ∑ j, f (xs j) ≤ (m : ℝ) * lam + K * capInt (g0 - lam) r (1 - xc) := by
+      ((Finset.univ.filter (fun i => xs j ≤ xs i)).card : ℝ) ≤ K * (1 - xs j) + 1) :
+    ∑ j, f (xs j) ≤ (m : ℝ) * lam + topPhi (g0 - lam) r (1 - xc) umin +
+      K * capInt (g0 - lam) r (1 - xc) := by
   have hθ : 0 < 1 - xc := by linarith
   have hu : ∀ j, 0 < 1 - xs j := fun j => by linarith [hx1 j]
   have hpt : ∀ j, f (xs j) ≤ lam + topPhi (g0 - lam) r (1 - xc) (1 - xs j) := by
@@ -366,7 +457,7 @@ theorem sum_le_topCap {m : ℕ} (f : ℝ → ℝ) (xs : Fin m → ℝ) {xc lam g
   have hconst : ∑ j : Fin m, lam = (m : ℝ) * lam := by simp
   rw [Finset.sum_add_distrib, hconst] at hsum1
   have hcnt : ∀ j, 0 < topPhi (g0 - lam) r (1 - xc) (1 - xs j) →
-      ((Finset.univ.filter (fun i => 1 - xs i ≤ 1 - xs j)).card : ℝ) ≤ K * (1 - xs j) := by
+      ((Finset.univ.filter (fun i => 1 - xs i ≤ 1 - xs j)).card : ℝ) ≤ K * (1 - xs j) + 1 := by
     intro j hj
     have hjc : xc ≤ xs j := by
       by_contra hcon
@@ -382,8 +473,8 @@ theorem sum_le_topCap {m : ℕ} (f : ℝ → ℝ) (xs : Fin m → ℝ) {xc lam g
     rw [e]
     exact hcap j hjc
   have hphi : ∑ j, topPhi (g0 - lam) r (1 - xc) (1 - xs j) ≤
-      K * capInt (g0 - lam) r (1 - xc) :=
-    sum_topPhi_le (fun j => 1 - xs j) hr hθ hK hcnt
+      topPhi (g0 - lam) r (1 - xc) umin + K * capInt (g0 - lam) r (1 - xc) :=
+    sum_topPhi_le (fun j => 1 - xs j) hr hθ hK humin hum hcnt
   linarith
 
 /-! ### 4. The fixed-node fields and the `fixedSum` contract field -/
@@ -391,15 +482,18 @@ theorem sum_le_topCap {m : ℕ} (f : ℝ → ℝ) (xs : Fin m → ℝ) {xc lam g
 /-- **Admissibility with the top cap.**  The first-kind negatives lie in `[-1, -g*]`, the positives
 (first kind and near) in `[g*, 1)`, and each positive family obeys the top cap: for a node in the
 top cell `[x_c, 1)`, the number of nodes of the family at least as large is at most
-`C₁ n (1 - x)` (`n` the number of rows).  This is the whole content of `FixAdm` that the σ bound
+`C₁ n (1 - x) + 1` (`n` the number of rows; the `+ 1` is the discreteness of the nodes, the density
+cap `ν ≤ κ` of the paper holding with its constant `C₁`), and all positives satisfy
+`x ≤ 1 - umin` (the node gap at 1).  This is the whole content of `FixAdm` that the σ bound
 needs; a contract `FixAdm` only has to imply it (no cap cells, no `κᵢ` table). -/
-def FixAdmCap (gs xc C1 n : ℝ) {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ)
+def FixAdmCap (gs xc C1 n umin : ℝ) {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ)
     (zp : Fin s → ℝ) : Prop :=
   (∀ j, yn j ≤ -gs) ∧ (∀ j, gs ≤ yp j) ∧ (∀ j, gs ≤ zp j) ∧
+    (∀ j, yp j ≤ 1 - umin) ∧ (∀ j, zp j ≤ 1 - umin) ∧
     (∀ j, xc ≤ yp j →
-      ((Finset.univ.filter (fun i => yp j ≤ yp i)).card : ℝ) ≤ C1 * n * (1 - yp j)) ∧
+      ((Finset.univ.filter (fun i => yp j ≤ yp i)).card : ℝ) ≤ C1 * n * (1 - yp j) + 1) ∧
     (∀ j, xc ≤ zp j →
-      ((Finset.univ.filter (fun i => zp j ≤ zp i)).card : ℝ) ≤ C1 * n * (1 - zp j))
+      ((Finset.univ.filter (fun i => zp j ≤ zp i)).card : ℝ) ≤ C1 * n * (1 - zp j) + 1)
 
 /-- The data of the σ bound of one α-interval: `gs = g*`, the start `xc` of the top cell, the cap
 density `C1` (per unit of `n`), and the field bounds as functions of the fixed fraction `α`
@@ -429,14 +523,15 @@ def zbCap (S : SigmaCapData) (c d β : ℝ) : ℝ :=
 (each plus the slack `ε`) of `fNegM` on `(-1, -g*]`, `fPosMR` and `fNearMS` on `[g*, x_c)`; on the
 top cell `fPosMS ≤ gP + ε` (so `fPosMR ≤ gP + ε + rP (-log (1 - x²))` as `rc α ≤ rP`) and
 `fNearMS ≤ gS + ε + rS (-log (1 - x²))`.  With the top cap of `FixAdmCap`:
-`Σ fNegM + Σ fPosMR + Σ fNearMS ≤ m₁(lamN+ε) + m₂(lamP+ε) + s(lamS+ε) + C₁ ν (capInt + capInt)`. -/
+`Σ fNegM + Σ fPosMR + Σ fNearMS ≤ m₁(lamN+ε) + m₂(lamP+ε) + s(lamS+ε) + C₁ ν (capInt + capInt)`
+plus the two one-node terms `topPhi … umin` (each `(g0 - lam + r log (1/umin))^+`). -/
 theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → ℝ)
-    {rc α β ε : ℝ} {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
+    {rc α β ε umin : ℝ} {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
     (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hν : 0 < D.ν)
     (hrc : 0 ≤ rc) (hα : 0 ≤ α) (hrP : rc * α ≤ S.rP α) (hrS : 0 ≤ S.rS α β)
     (hyn : ∀ j, yn j ∈ Ioo (-1 : ℝ) 0) (hyp : ∀ j, yp j ∈ Ioo (0 : ℝ) 1)
     (hzp : ∀ j, zp j ∈ Ioo (0 : ℝ) 1)
-    (hadm : FixAdmCap S.gs S.xc S.C1 D.ν yn yp zp)
+    (humin : 0 < umin) (hadm : FixAdmCap S.gs S.xc S.C1 D.ν umin yn yp zp)
     (hneg : ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → D.fNegM Rm x ≤ S.lamN α + ε)
     (hpos : ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
       D.fPosMR Rm rc α x ≤ S.lamP α + ε)
@@ -449,8 +544,10 @@ theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → �
         ∑ j, D.fNearMS Rn α β (zp j) ≤
       (m1 : ℝ) * (S.lamN α + ε) + (m2 : ℝ) * (S.lamP α + ε) + (s : ℝ) * (S.lamS α β + ε) +
         S.C1 * D.ν * (capInt (S.gP α - S.lamP α) (S.rP α) (1 - S.xc) +
-          capInt (S.gS α β - S.lamS α β) (S.rS α β) (1 - S.xc)) := by
-  obtain ⟨hgn, hgp, hgz, hcp, hcz⟩ := hadm
+          capInt (S.gS α β - S.lamS α β) (S.rS α β) (1 - S.xc)) +
+        topPhi (S.gP α - S.lamP α) (S.rP α) (1 - S.xc) umin +
+        topPhi (S.gS α β - S.lamS α β) (S.rS α β) (1 - S.xc) umin := by
+  obtain ⟨hgn, hgp, hgz, hup, huz, hcp, hcz⟩ := hadm
   have hK : 0 < S.C1 * D.ν := mul_pos hC1 hν
   have hrP0 : 0 ≤ S.rP α := (mul_nonneg hrc hα).trans hrP
   have A : ∑ j, D.fNegM Rm (yn j) ≤ (m1 : ℝ) * (S.lamN α + ε) := by
@@ -459,7 +556,7 @@ theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → �
     simpa only [Finset.card_univ, Fintype.card_fin, nsmul_eq_mul] using this
   have B := sum_le_topCap (D.fPosMR Rm rc α) yp (xc := S.xc) (lam := S.lamP α + ε)
     (g0 := S.gP α + ε) (r := S.rP α) (K := S.C1 * D.ν) hxc0 hxc1 hrP0 hK
-    (fun j => (hyp j).2)
+    (fun j => (hyp j).2) humin (fun j => by linarith [hup j])
     (fun j hj => hpos _ (hyp j) (hgp j) hj)
     (fun j hj => by
       have hx := hyp j
@@ -475,7 +572,7 @@ theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → �
     hcp
   have C := sum_le_topCap (D.fNearMS Rn α β) zp (xc := S.xc) (lam := S.lamS α β + ε)
     (g0 := S.gS α β + ε) (r := S.rS α β) (K := S.C1 * D.ν) hxc0 hxc1 hrS hK
-    (fun j => (hzp j).2)
+    (fun j => (hzp j).2) humin (fun j => by linarith [huz j])
     (fun j hj => hnear _ (hzp j) (hgz j) hj)
     (fun j hj => hnearTop _ (hzp j) hj)
     hcz
@@ -527,8 +624,17 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
     (hn : ∀ N, 0 < ncount N) (hν : ∀ N α, (D N α).ν = (ncount N : ℝ))
     (hrP : ∀ α ∈ Icc lo hi, rc * α ≤ S.rP α)
     (hrS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, 0 ≤ S.rS α β)
+    (umin : ℕ → ℝ) (hum0 : ∀ N, 0 < umin N) (hum1 : ∀ N, umin N ≤ 1) (Bd Rbd : ℝ)
+    (hBdP : ∀ α ∈ Icc lo hi, S.gP α - S.lamP α ≤ Bd)
+    (hBdS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, S.gS α β - S.lamS α β ≤ Bd)
+    (hRP : ∀ α ∈ Icc lo hi, S.rP α ≤ Rbd)
+    (hRS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, S.rS α β ≤ Rbd)
+    (hn_top : Filter.Tendsto (fun N => (ncount N : ℝ)) Filter.atTop Filter.atTop)
+    (hlogu : Filter.Tendsto (fun N => -Real.log (umin N) / (ncount N : ℝ)) Filter.atTop
+      (nhds 0))
     (hFix : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
-      FixAdm N m1 m2 s yn yp zp → FixAdmCap S.gs S.xc S.C1 (ncount N : ℝ) yn yp zp)
+      FixAdm N m1 m2 s yn yp zp →
+        FixAdmCap S.gs S.xc S.C1 (ncount N : ℝ) (umin N) yn yp zp)
     (hZB : ∀ c d β, 0 ≤ c → 0 ≤ d → 0 ≤ β → zbCap S c d β ≤ ZB c d β)
     (hneg : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
       ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → (D N α).fNegM (Rm N) x ≤ S.lamN α + ε)
@@ -547,8 +653,17 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
     FixedSumAt ncount D Rm Rn rc lo hi ZB FixAdm := by
   unfold FixedSumAt
   intro ε hε
-  filter_upwards [hneg ε hε, hpos ε hε, hposTop ε hε, hnear ε hε, hnearTop ε hε]
-    with N h1 h2 h3 h4 h5
+  have hε' : 0 < ε / 2 := half_pos hε
+  have hinv : Filter.Tendsto (fun N => ((ncount N : ℝ))⁻¹) Filter.atTop (nhds 0) :=
+    tendsto_inv_atTop_zero.comp hn_top
+  have hT : Filter.Tendsto (fun N => 2 * max 0 Bd * ((ncount N : ℝ))⁻¹ +
+      2 * Rbd * (-Real.log (umin N) / (ncount N : ℝ))) Filter.atTop (nhds 0) := by
+    have := ((tendsto_const_nhds (x := 2 * max 0 Bd)).mul hinv).add
+      ((tendsto_const_nhds (x := 2 * Rbd)).mul hlogu)
+    simpa using this
+  filter_upwards [hneg (ε / 2) hε', hpos (ε / 2) hε', hposTop (ε / 2) hε', hnear (ε / 2) hε',
+    hnearTop (ε / 2) hε', hT.eventually (gt_mem_nhds hε')]
+    with N h1 h2 h3 h4 h5 hfN
   intro α hα m1 m2 s yn yp zp hyn hyp hzp hadm heq
   have hnN : (0 : ℝ) < (ncount N : ℝ) := by exact_mod_cast hn N
   have hνN : (D N α).ν = (ncount N : ℝ) := hν N α
@@ -561,11 +676,12 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
   have hd0 : 0 ≤ (m2 : ℝ) / (ncount N : ℝ) := by positivity
   have hβ0 : 0 ≤ (s : ℝ) / (ncount N : ℝ) := by positivity
   have hβα : (s : ℝ) / (ncount N : ℝ) ≤ α := by linarith
-  have hadm' : FixAdmCap S.gs S.xc S.C1 (D N α).ν yn yp zp := by
+  have hadm' : FixAdmCap S.gs S.xc S.C1 (D N α).ν (umin N) yn yp zp := by
     rw [hνN]; exact hFix N m1 m2 s yn yp zp hadm
   have hmain := fixed_sum_le_cap S (D N α) (Rm N) (Rn N) (rc := rc) (α := α)
-    (β := (s : ℝ) / (ncount N : ℝ)) (ε := ε) yn yp zp hxc0 hxc1 hC1 (by rw [hνN]; exact hnN)
-    hrc hα0 (hrP α hα) (hrS α hα _ ⟨hβ0, hβα⟩) hyn hyp hzp hadm'
+    (β := (s : ℝ) / (ncount N : ℝ)) (ε := ε / 2) (umin := umin N) yn yp zp hxc0 hxc1 hC1
+    (by rw [hνN]; exact hnN)
+    hrc hα0 (hrP α hα) (hrS α hα _ ⟨hβ0, hβα⟩) hyn hyp hzp (hum0 N) hadm'
     (h1 α hα) (h2 α hα) (h3 α hα) (h4 α hα _ ⟨hβ0, hβα⟩) (h5 α hα _ ⟨hβ0, hβα⟩)
   rw [hνN] at hmain ⊢
   have hZ := hZB _ _ _ hc0 hd0 hβ0
@@ -576,12 +692,22 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
     (P := capInt (S.gP α - S.lamP α) (S.rP α) (1 - S.xc))
     (Q := capInt (S.gS α ((s : ℝ) / (ncount N : ℝ)) -
       S.lamS α ((s : ℝ) / (ncount N : ℝ))) (S.rS α ((s : ℝ) / (ncount N : ℝ))) (1 - S.xc))
-    (C1 := S.C1) (ε := ε) hnN
+    (C1 := S.C1) (ε := ε / 2) hnN
   have hmul := mul_le_mul_of_nonneg_left hmain (show 0 ≤ 1 / (ncount N : ℝ) by positivity)
-  have hε2 : ((m1 : ℝ) + m2 + s) / (ncount N : ℝ) * ε ≤ ε := by
+  have hε2 : ((m1 : ℝ) + m2 + s) / (ncount N : ℝ) * (ε / 2) ≤ ε / 2 := by
     have h : ((m1 : ℝ) + m2 + s) / (ncount N : ℝ) = α := by rw [← hsum]; ring
-    rw [h]; nlinarith [mul_nonneg (sub_nonneg.2 hα1) hε.le]
-  linarith [hmul, hid, hε2, hZ]
+    rw [h]; nlinarith [mul_nonneg (sub_nonneg.2 hα1) hε'.le]
+  have hrP0 : 0 ≤ S.rP α := (mul_nonneg hrc hα0).trans (hrP α hα)
+  have hE1 := topPhi_le_aux (θ := 1 - S.xc) (hum0 N) (hum1 N) hrP0 (hBdP α hα) (hRP α hα)
+  have hE2 := topPhi_le_aux (θ := 1 - S.xc) (hum0 N) (hum1 N) (hrS α hα _ ⟨hβ0, hβα⟩)
+    (hBdS α hα _ ⟨hβ0, hβα⟩) (hRS α hα _ ⟨hβ0, hβα⟩)
+  have hEs := mul_le_mul_of_nonneg_left (add_le_add hE1 hE2)
+    (show 0 ≤ 1 / (ncount N : ℝ) by positivity)
+  have hEe : 1 / (ncount N : ℝ) * ((max 0 Bd + Rbd * (-Real.log (umin N))) +
+      (max 0 Bd + Rbd * (-Real.log (umin N)))) =
+      2 * max 0 Bd * ((ncount N : ℝ))⁻¹ +
+        2 * Rbd * (-Real.log (umin N) / (ncount N : ℝ)) := by ring
+  linarith [hmul, hid, hε2, hZ, hEs, hEe, hfN]
 
 end
 
@@ -589,7 +715,8 @@ end CatalanMeasure.Signed
 
 #print axioms CatalanMeasure.Signed.capPrim_sub_ge
 #print axioms CatalanMeasure.Signed.capInt_le_mul_exp
-#print axioms CatalanMeasure.Signed.sum_le_of_count
+#print axioms CatalanMeasure.Signed.sum_le_of_count1
+#print axioms CatalanMeasure.Signed.topPhi_le_aux
 #print axioms CatalanMeasure.Signed.sum_topPhi_le
 #print axioms CatalanMeasure.Signed.sum_le_topCap
 #print axioms CatalanMeasure.Signed.fixed_sum_le_cap
