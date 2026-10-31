@@ -41,6 +41,15 @@ Layers:
    derivative bound of the log terms from the distance of the cell to the nearest pole
    (`poleRemQ`).  `poleCellCheck` is the Boolean checker, `poleCellCheck_sound` its soundness.
 
+Sections 7-13 (general fields, block tails, pole-power sharing): Leibniz towers `mulTower`,
+`logTower`, `polyTow` (`P(x) log|x - e|` has exact coefficients `plogCoefQ`, soundness
+`plogCoefQ_spec`); `tower_majorant` (Taylor majorant of the `M`-th derivative over a block from the
+point coefficients at the block centre), `polyTow_block`, `plog_block`; `FieldQ`/`fieldTower`
+(polynomial + `Σ P_e log|x-e|` + pole potential), `fieldCellCheck_sound` (exact coefficients through
+order `M-1` per cell, tail `BM` shared by the block) and `blockTailCheck_sound` (the tail);
+`poleVec`/`poleVec_getD` (pole coefficients from per-pole power tables `powTabQ`, one table per pole
+position shared by every field and every order; equal to `poleCoeff` exactly).
+
 Not in this module: a derivation of the crude box evaluation `V` for pole sums (the `v` fallback of
 `taylor_box_ub`, which wins when a pole is at distance `≤ r` from the cell; such cells are bisected
 or take `V` from elsewhere), and the value certificate `F(c) ≤ A0` (the consumer's hypothesis).
@@ -608,6 +617,1188 @@ example : poleCellCheck [⟨1, 0, 0, 0⟩] (3 / 4) (5 / 4) 0 1 1 (-1 / 2)
 example : poleCellCheck [⟨1, 0, 0, 0⟩] (3 / 4) (5 / 4) 0 1 1 (-1 / 2)
     [1 / 3, 1 / 4, 1 / 6, 1 / 6, 1 / 7] (5 / 4) (23 / 100) = false := by decide +kernel
 
+/-! ### 7. Leibniz towers: products, `log |x - e|`, polynomials -/
+
+/-- Leibniz tower of a product: `(u v)^{(n)} = Σ_{i+j=n} C(n,i) u^{(i)} v^{(j)}`. -/
+def mulTower (u v : ℕ → ℝ → ℝ) (n : ℕ) (x : ℝ) : ℝ :=
+  ∑ ij ∈ Finset.antidiagonal n, (n.choose ij.1 : ℝ) * (u ij.1 x * v ij.2 x)
+
+theorem mulTower_zero (u v : ℕ → ℝ → ℝ) (x : ℝ) : mulTower u v 0 x = u 0 x * v 0 x := by
+  simp [mulTower]
+
+theorem IsTower.mul {u v : ℕ → ℝ → ℝ} {c r : ℝ} {M : ℕ} (hu : IsTower u c r M)
+    (hv : IsTower v c r M) : IsTower (mulTower u v) c r M where
+  cont j hj := by
+    unfold mulTower
+    refine continuousOn_finsetSum _ (fun ij hij => ?_)
+    have h := Finset.mem_antidiagonal.mp hij
+    exact continuousOn_const.mul ((hu.cont _ (by omega)).mul (hv.cont _ (by omega)))
+  der j hj x hx := by
+    have h : HasDerivAt (fun y => ∑ ij ∈ Finset.antidiagonal j,
+        (j.choose ij.1 : ℝ) * (u ij.1 y * v ij.2 y))
+        (∑ ij ∈ Finset.antidiagonal j, (j.choose ij.1 : ℝ) *
+          (u (ij.1 + 1) x * v ij.2 x + u ij.1 x * v (ij.2 + 1) x)) x := by
+      refine HasDerivAt.fun_sum (fun ij hij => ?_)
+      have h := Finset.mem_antidiagonal.mp hij
+      exact ((hu.der ij.1 (by omega) x hx).mul (hv.der ij.2 (by omega) x hx)).const_mul _
+    have key := Finset.sum_antidiagonal_choose_succ_mul (R := ℝ) (fun a b => u a x * v b x) j
+    have e : mulTower u v (j + 1) x = ∑ ij ∈ Finset.antidiagonal j, (j.choose ij.1 : ℝ) *
+          (u (ij.1 + 1) x * v ij.2 x + u ij.1 x * v (ij.2 + 1) x) := by
+      unfold mulTower
+      rw [key]
+      have e2 : ∑ ij ∈ Finset.antidiagonal j, (j.choose ij.2 : ℝ) * (u (ij.1 + 1) x * v ij.2 x) =
+          ∑ ij ∈ Finset.antidiagonal j, (j.choose ij.1 : ℝ) * (u (ij.1 + 1) x * v ij.2 x) := by
+        refine Finset.sum_congr rfl (fun ij hij => ?_)
+        rw [Nat.choose_symm_of_eq_add (Finset.mem_antidiagonal.mp hij).symm]
+      rw [e2, add_comm, ← Finset.sum_add_distrib]
+      exact Finset.sum_congr rfl (fun ij _ => by ring)
+    rw [e]
+    exact h
+
+/-- Normalised Leibniz: `(u v)^{(n)}/n! = Σ_{i+j=n} (u^{(i)}/i!)(v^{(j)}/j!)`. -/
+theorem mulTower_div (u v : ℕ → ℝ → ℝ) (n : ℕ) (x : ℝ) :
+    mulTower u v n x / (n ! : ℝ) =
+      ∑ ij ∈ Finset.antidiagonal n, (u ij.1 x / (ij.1 ! : ℝ)) * (v ij.2 x / (ij.2 ! : ℝ)) := by
+  unfold mulTower
+  rw [Finset.sum_div]
+  refine Finset.sum_congr rfl (fun ij hij => ?_)
+  have h := Finset.mem_antidiagonal.mp hij
+  have hf := Nat.add_choose_mul_factorial_mul_factorial ij.1 ij.2
+  rw [h] at hf
+  have hf' : ((n.choose ij.2 : ℕ) : ℝ) * (ij.1 ! : ℝ) * (ij.2 ! : ℝ) = (n ! : ℝ) := by
+    exact_mod_cast hf
+  rw [Nat.choose_symm_of_eq_add h.symm]
+  have h1 : (ij.1 ! : ℝ) ≠ 0 := by positivity
+  have h2 : (ij.2 ! : ℝ) ≠ 0 := by positivity
+  have h3 : (n ! : ℝ) ≠ 0 := by positivity
+  have h4 : (n.choose ij.2 : ℝ) ≠ 0 := by
+    exact_mod_cast (Nat.choose_pos (by omega : ij.2 ≤ n)).ne'
+  rw [← hf']
+  field_simp
+
+/-- `log |x - e|` and its derivatives `(-1)^m m! / (x - e)^(m+1)`. -/
+noncomputable def logTower (e : ℝ) : ℕ → ℝ → ℝ
+  | 0 => fun x => Real.log |x - e|
+  | m + 1 => fun x => (-1 : ℝ) ^ m * (m ! : ℝ) / (x - e) ^ (m + 1)
+
+theorem hasDerivAt_logTower (e : ℝ) (j : ℕ) (x : ℝ) (hx : x ≠ e) :
+    HasDerivAt (logTower e j) (logTower e (j + 1) x) x := by
+  have hne : x - e ≠ 0 := sub_ne_zero.mpr hx
+  have h1 : HasDerivAt (fun y : ℝ => y - e) 1 x := (hasDerivAt_id x).sub_const _
+  cases j with
+  | zero =>
+    have h2 := h1.log hne
+    simp only [logTower]
+    simp only [Real.log_abs] at *
+    refine h2.congr_deriv ?_
+    simp
+  | succ m =>
+    have h3 : HasDerivAt (fun y : ℝ => (y - e) ^ (m + 1)) (((m + 1 : ℕ) : ℝ) * (x - e) ^ m * 1) x :=
+      h1.pow (m + 1)
+    have h4 := (hasDerivAt_const x ((-1 : ℝ) ^ m * (m ! : ℝ))).div h3 (pow_ne_zero _ hne)
+    simp only [logTower]
+    refine h4.congr_deriv ?_
+    rw [Nat.factorial_succ]
+    push_cast
+    field_simp
+    ring
+
+theorem isTower_logTower (e c r : ℝ) (M : ℕ) (hne : ∀ x ∈ Icc (c - r) (c + r), x ≠ e) :
+    IsTower (logTower e) c r M where
+  cont j _ y hy := (hasDerivAt_logTower e j y (hne y hy)).continuousAt.continuousWithinAt
+  der j _ y hy := hasDerivAt_logTower e j y (hne y ⟨hy.1.le, hy.2.le⟩)
+
+/-- Horner tower of a polynomial given by its coefficient list `[a₀, a₁, ...]` (low to high):
+`polyTow p 0 = a₀ + x (a₁ + x (...))`; `polyTow p k = p^{(k)}`. -/
+noncomputable def polyTow : List ℚ → ℕ → ℝ → ℝ
+  | [], _ => fun _ => 0
+  | a :: as, 0 => fun x => (a : ℝ) + x * polyTow as 0 x
+  | _ :: as, k + 1 => fun x => x * polyTow as (k + 1) x + ((k : ℝ) + 1) * polyTow as k x
+
+theorem hasDerivAt_polyTow (p : List ℚ) : ∀ (k : ℕ) (x : ℝ),
+    HasDerivAt (polyTow p k) (polyTow p (k + 1) x) x := by
+  induction p with
+  | nil => intro k x; simpa [polyTow] using hasDerivAt_const x (0 : ℝ)
+  | cons a as ih =>
+    intro k x
+    cases k with
+    | zero =>
+      have h := ((hasDerivAt_id x).mul (ih 0 x)).const_add (a : ℝ)
+      simp only [polyTow]
+      refine h.congr_deriv ?_
+      simp
+      ring
+    | succ k =>
+      have h := ((hasDerivAt_id x).mul (ih (k + 1) x)).add ((ih k x).const_mul ((k : ℝ) + 1))
+      simp only [polyTow]
+      refine h.congr_deriv ?_
+      push_cast
+      simp only [id]
+      ring
+
+theorem isTower_polyTow (p : List ℚ) (c r : ℝ) (M : ℕ) : IsTower (polyTow p) c r M where
+  cont j _ y _ := (hasDerivAt_polyTow p j y).continuousAt.continuousWithinAt
+  der j _ y _ := hasDerivAt_polyTow p j y
+
+/-- Beyond the degree the Horner tower vanishes. -/
+theorem polyTow_eq_zero (p : List ℚ) : ∀ (k : ℕ), p.length ≤ k → ∀ x, polyTow p k x = 0 := by
+  induction p with
+  | nil => intro k _ x; simp [polyTow]
+  | cons a as ih =>
+    intro k hk x
+    cases k with
+    | zero => simp at hk
+    | succ k =>
+      simp only [polyTow]
+      rw [ih (k + 1) (by simp at hk; omega) x, ih k (by simp at hk; omega) x]
+      ring
+
+/-- One Horner step of the exact Taylor shift: from the coefficient list `t` of `q` at `c` to that
+of `a + x q(x)`: `c t_k + t_{k-1}` (with `t_{-1} = a`). -/
+def shiftStep (c : ℚ) : List ℚ → ℚ → List ℚ
+  | [], _ => []
+  | s :: ss, prev => (c * s + prev) :: shiftStep c ss s
+
+/-- The first `M + 1` Taylor coefficients at `c` of the polynomial with coefficient list `p`. -/
+def shiftL (c : ℚ) (M : ℕ) : List ℚ → List ℚ
+  | [] => List.replicate (M + 1) 0
+  | a :: as => shiftStep c (shiftL c M as) a
+
+theorem shiftStep_length (c : ℚ) : ∀ (t : List ℚ) (prev : ℚ), (shiftStep c t prev).length = t.length := by
+  intro t
+  induction t with
+  | nil => intro prev; simp [shiftStep]
+  | cons s ss ih => intro prev; simp [shiftStep, ih]
+
+theorem shiftL_length (c : ℚ) (M : ℕ) (p : List ℚ) : (shiftL c M p).length = M + 1 := by
+  induction p with
+  | nil => simp [shiftL]
+  | cons a as ih => simp [shiftL, shiftStep_length, ih]
+
+theorem shiftStep_getD (c : ℚ) : ∀ (t : List ℚ) (prev : ℚ) (k : ℕ), k < t.length →
+    (shiftStep c t prev).getD k 0 = c * t.getD k 0 + (if k = 0 then prev else t.getD (k - 1) 0) := by
+  intro t
+  induction t with
+  | nil => intro prev k hk; simp at hk
+  | cons s ss ih =>
+    intro prev k hk
+    cases k with
+    | zero => simp [shiftStep]
+    | succ k =>
+      simp only [shiftStep, List.getD_cons_succ]
+      rw [ih s k (by simpa using hk)]
+      cases k with
+      | zero => simp
+      | succ k => simp
+
+/-- Exact Taylor coefficients of a polynomial: `p^{(k)}(c)/k!` for `k ≤ M`. -/
+theorem shiftL_spec (c : ℚ) (M : ℕ) (p : List ℚ) : ∀ k ≤ M,
+    (((shiftL c M p).getD k 0 : ℚ) : ℝ) = polyTow p k (c : ℝ) / (k ! : ℝ) := by
+  induction p with
+  | nil => intro k _; simp [shiftL, polyTow, ]
+  | cons a as ih =>
+    intro k hk
+    have hl := shiftL_length c M as
+    cases k with
+    | zero =>
+      simp only [shiftL]
+      rw [shiftStep_getD c _ _ 0 (by omega)]
+      have := ih 0 (by omega)
+      simp only [polyTow, Nat.factorial_zero, Nat.cast_one, div_one] at this ⊢
+      push_cast
+      rw [this]
+      ring
+    | succ k =>
+      simp only [shiftL]
+      rw [shiftStep_getD c _ _ (k + 1) (by omega)]
+      have h1 := ih (k + 1) hk
+      have h2 := ih k (by omega)
+      simp only [Nat.add_sub_cancel, ite_eq_right_iff.mpr (fun h => absurd h (Nat.succ_ne_zero k))]
+      push_cast
+      rw [h1, h2]
+      simp only [polyTow]
+      have hk1 : ((k + 1 : ℕ) ! : ℝ) = ((k : ℝ) + 1) * (k ! : ℝ) := by
+        rw [Nat.factorial_succ]; push_cast; ring
+      rw [hk1]
+      have hk0 : (k ! : ℝ) ≠ 0 := by positivity
+      have hk2 : ((k : ℝ) + 1) ≠ 0 := by positivity
+      field_simp
+
+
+/-! ### 8. Exact Taylor coefficients of `P(x) log|x - e|` (Leibniz) -/
+
+/-- `Σ_{j<n} U_j V(k - j)`, structurally recursive. -/
+def partialConv (U : List ℚ) (V : ℕ → ℚ) (k : ℕ) : ℕ → ℚ
+  | 0 => 0
+  | j + 1 => partialConv U V k j + U.getD j 0 * V (k - j)
+
+theorem partialConv_cast (U : List ℚ) (V : ℕ → ℚ) (k n : ℕ) :
+    ((partialConv U V k n : ℚ) : ℝ) =
+      ∑ j ∈ Finset.range n, ((U.getD j 0 : ℚ) : ℝ) * ((V (k - j) : ℚ) : ℝ) := by
+  induction n with
+  | zero => simp [partialConv]
+  | succ n ih => rw [partialConv, Finset.sum_range_succ, ← ih]; push_cast; rfl
+
+/-- `L^{(m)}(c)/m!` for `L = log|x - e|`, `m ≥ 1`, with `d = c - e`: `(-1)^{m-1} / (m d^m)`. -/
+def logTailQ (d : ℚ) (m : ℕ) : ℚ := (-1) ^ (m - 1) / ((m : ℚ) * d ^ m)
+
+theorem logTower_coef_succ (e c : ℝ) (hne : c - e ≠ 0) (m : ℕ) :
+    logTower e (m + 1) c / ((m + 1)! : ℝ) = (-1) ^ m / (((m : ℝ) + 1) * (c - e) ^ (m + 1)) := by
+  simp only [logTower]
+  rw [Nat.factorial_succ]
+  push_cast
+  have h1 : (m ! : ℝ) ≠ 0 := by positivity
+  have h2 : ((m : ℝ) + 1) ≠ 0 := by positivity
+  field_simp
+
+theorem logTailQ_cast (e c : ℚ) (hne : c - e ≠ 0) (m : ℕ) :
+    ((logTailQ (c - e) (m + 1) : ℚ) : ℝ) = logTower (e : ℝ) (m + 1) (c : ℝ) / ((m + 1)! : ℝ) := by
+  have h : (c : ℝ) - (e : ℝ) ≠ 0 := by exact_mod_cast hne
+  rw [logTower_coef_succ _ _ h]
+  unfold logTailQ
+  push_cast
+  simp
+
+/-- Exact normalised coefficients of `P(x) log|x - e|`: `a_k = L P_k + Σ_{j<k} P_j (-1)^{k-j-1}/((k-j) d^{k-j})`
+with `P_j` the Taylor coefficients of `P` at `c`, `d = c - e`, `L = log |c - e|`. -/
+def plogCoefQ (Pk : List ℚ) (d L : ℚ) (k : ℕ) : ℚ :=
+  L * Pk.getD k 0 + partialConv Pk (logTailQ d) k k
+
+theorem plogCoefQ_spec (P : List ℚ) (e c L : ℚ) (hce : c - e ≠ 0)
+    (hL : (L : ℝ) = Real.log |(c : ℝ) - (e : ℝ)|) (K : ℕ) (k : ℕ) (hk : k ≤ K) :
+    mulTower (polyTow P) (logTower (e : ℝ)) k (c : ℝ) / (k ! : ℝ) =
+      ((plogCoefQ (shiftL c K P) (c - e) L k : ℚ) : ℝ) := by
+  rw [mulTower_div, Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => (polyTow P i (c : ℝ) / (i ! : ℝ)) * (logTower (e : ℝ) j (c : ℝ) / (j ! : ℝ))) k]
+  unfold plogCoefQ
+  push_cast
+  rw [partialConv_cast, Finset.sum_range_succ]
+  have hP : ∀ i ≤ K, ((( shiftL c K P).getD i 0 : ℚ) : ℝ) = polyTow P i (c : ℝ) / (i ! : ℝ) :=
+    fun i hi => shiftL_spec c K P i hi
+  have hlog0 : logTower (e : ℝ) 0 (c : ℝ) / ((0 : ℕ) ! : ℝ) = (L : ℝ) := by
+    simp [logTower, hL]
+  rw [Nat.sub_self, hlog0, hP k hk]
+  rw [add_comm]
+  congr 1
+  · ring
+  · refine Finset.sum_congr rfl (fun i hi => ?_)
+    have hi' := Finset.mem_range.mp hi
+    rw [hP i (by omega)]
+    obtain ⟨m, hm⟩ : ∃ m, k - i = m + 1 := ⟨k - i - 1, by omega⟩
+    rw [hm, ← logTailQ_cast e c hce m]
+
+
+/-! ### 9. Block-level tails: one bound on the `M`-th derivative shared by a block of cells -/
+
+/-- **Majorant of a derivative over a block** (Taylor's theorem for `g j = f (M + j)`).  If `f` has a
+tower of order `M + N` on the block `[cb - ρ, cb + ρ]`, the point coefficients satisfy
+`|f^{(M+j)}(cb)|/(M+j)! ≤ C_j` for `j < N` and `|f^{(M+N)}|/(M+N)! ≤ H` on the block, then
+`|f^{(M)}(x)|/M! ≤ Σ_{j<N} C_j binom(M+j, M) ρ^j + binom(M+N, M) H ρ^N` for `x` in the block. -/
+theorem tower_majorant {f : ℕ → ℝ → ℝ} {cb ρ : ℝ} {M N : ℕ} (hf : IsTower f cb ρ (M + N))
+    {C : ℕ → ℝ} {H : ℝ}
+    (hC : ∀ j < N, |f (M + j) cb| / ((M + j)! : ℝ) ≤ C j)
+    (hH : ∀ x ∈ Icc (cb - ρ) (cb + ρ), |f (M + N) x| / ((M + N)! : ℝ) ≤ H) :
+    ∀ x ∈ Icc (cb - ρ) (cb + ρ), |f M x| / (M ! : ℝ) ≤
+      ∑ j ∈ Finset.range N, C j * ((M + j).choose M : ℝ) * ρ ^ j +
+        ((M + N).choose M : ℝ) * H * ρ ^ N := by
+  intro x hx
+  have hxr : |x - cb| ≤ ρ := abs_le.mpr ⟨by linarith [hx.1], by linarith [hx.2]⟩
+  have hρ : 0 ≤ ρ := (abs_nonneg _).trans hxr
+  have hcI : cb ∈ Icc (cb - ρ) (cb + ρ) := ⟨by linarith, by linarith⟩
+  have hfacMN : (0 : ℝ) < ((M + N)! : ℝ) := by positivity
+  have hH0 : 0 ≤ H := (div_nonneg (abs_nonneg _) hfacMN.le).trans (hH cb hcI)
+  have hbd : ∀ y ∈ Icc (cb - ρ) (cb + ρ), |f (M + N) y| ≤ ((M + N)! : ℝ) * H := by
+    intro y hy
+    have := hH y hy
+    rw [div_le_iff₀ hfacMN] at this
+    linarith
+  have htay := taylor_tower' cb ρ (((M + N)! : ℝ) * H) N (fun j => f (M + j))
+    (fun j hj => hf.cont (M + j) (by omega))
+    (fun j hj y hy => hf.der (M + j) (by omega) y hy) (by simpa using hbd) x hx
+  have htay : |f M x - ∑ j ∈ Finset.range N, f (M + j) cb * (x - cb) ^ j / (j ! : ℝ)| ≤
+      ((M + N)! : ℝ) * H * |x - cb| ^ N / (N ! : ℝ) := htay
+  have hfacM : (0 : ℝ) < (M ! : ℝ) := by positivity
+  rw [div_le_iff₀ hfacM]
+  have hchoose : ∀ j : ℕ, ((M + j)! : ℝ) = ((M + j).choose M : ℝ) * (M ! : ℝ) * (j ! : ℝ) := by
+    intro j
+    have := Nat.add_choose_mul_factorial_mul_factorial M j
+    rw [Nat.choose_symm_of_eq_add rfl] at *
+    have h2 : (((M + j).choose j * M ! * j ! : ℕ) : ℝ) = ((M + j)! : ℝ) := by exact_mod_cast this
+    rw [← h2, ← Nat.choose_symm_of_eq_add (rfl : M + j = M + j)]
+    push_cast; ring
+  have hsum : |f M x| ≤ ∑ j ∈ Finset.range N, |f (M + j) cb| * ρ ^ j / (j ! : ℝ) +
+      ((M + N)! : ℝ) * H * ρ ^ N / (N ! : ℝ) := by
+    have h1 : |f M x| ≤ |∑ j ∈ Finset.range N, f (M + j) cb * (x - cb) ^ j / (j ! : ℝ)| +
+        ((M + N)! : ℝ) * H * |x - cb| ^ N / (N ! : ℝ) := by
+      have := abs_sub_abs_le_abs_sub (f M x) (∑ j ∈ Finset.range N, f (M + j) cb * (x - cb) ^ j / (j ! : ℝ))
+      linarith
+    refine h1.trans (add_le_add ?_ ?_)
+    · refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum (fun j _ => ?_))
+      rw [abs_div, abs_mul, abs_pow, Nat.abs_cast]
+      gcongr
+    · gcongr
+  refine hsum.trans ?_
+  have e1 : ∀ j ∈ Finset.range N, |f (M + j) cb| * ρ ^ j / (j ! : ℝ) ≤
+      C j * ((M + j).choose M : ℝ) * ρ ^ j * (M ! : ℝ) := by
+    intro j _
+    have h1 := hC j (by simpa using ‹j ∈ Finset.range N›)
+    have hfj : (0 : ℝ) < ((M + j)! : ℝ) := by positivity
+    rw [div_le_iff₀ hfj] at h1
+    rw [div_le_iff₀ (by positivity : (0 : ℝ) < (j ! : ℝ))]
+    rw [hchoose j] at h1
+    have hρj : 0 ≤ ρ ^ j := pow_nonneg hρ j
+    calc |f (M + j) cb| * ρ ^ j ≤ C j * (((M + j).choose M : ℝ) * (M ! : ℝ) * (j ! : ℝ)) * ρ ^ j :=
+          mul_le_mul_of_nonneg_right h1 hρj
+      _ = C j * ((M + j).choose M : ℝ) * ρ ^ j * (M ! : ℝ) * (j ! : ℝ) := by ring
+  have e2 : ((M + N)! : ℝ) * H * ρ ^ N / (N ! : ℝ) =
+      ((M + N).choose M : ℝ) * H * ρ ^ N * (M ! : ℝ) := by
+    rw [hchoose N]
+    have : (N ! : ℝ) ≠ 0 := by positivity
+    field_simp
+  rw [e2]
+  calc _ ≤ ∑ j ∈ Finset.range N, C j * ((M + j).choose M : ℝ) * ρ ^ j * (M ! : ℝ) +
+        ((M + N).choose M : ℝ) * H * ρ ^ N * (M ! : ℝ) := add_le_add (Finset.sum_le_sum e1) le_rfl
+    _ = _ := by rw [← Finset.sum_mul]; ring
+
+/-- Rational majorant `Σ_i b_i binom(M + j + i, M) ρ^{j+i}` for a list `b` of coefficient bounds
+(starting at index `M + j`). -/
+def majQ (ρ : ℚ) (M : ℕ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | j, b :: bs => b * ((M + j).choose M : ℚ) * ρ ^ j + majQ ρ M (j + 1) bs
+
+theorem majQ_cast (ρ : ℚ) (M : ℕ) (bs : List ℚ) : ∀ j : ℕ, ((majQ ρ M j bs : ℚ) : ℝ) =
+    ∑ i ∈ Finset.range bs.length, ((bs.getD i 0 : ℚ) : ℝ) * ((M + (j + i)).choose M : ℝ) *
+      (ρ : ℝ) ^ (j + i) := by
+  induction bs with
+  | nil => intro j; simp [majQ]
+  | cons b bs ih =>
+    intro j
+    rw [majQ, List.length_cons, Finset.sum_range_succ']
+    push_cast
+    rw [ih (j + 1)]
+    simp only [List.getD_cons_zero, List.getD_cons_succ, add_zero]
+    rw [add_comm]
+    congr 1
+    refine Finset.sum_congr rfl (fun i _ => ?_)
+    rw [show j + (i + 1) = j + 1 + i by omega]
+
+/-- `Cb` bounds the normalised Taylor coefficients of the polynomial `P` at `cb`:
+`|P^{(k)}(cb)|/k! ≤ Cb_k` for all `k` (the list is at least as long as `P`). -/
+def PolyBnd (P : List ℚ) (cb : ℝ) (Cb : List ℚ) : Prop :=
+  P.length ≤ Cb.length ∧
+    ∀ k < Cb.length, |polyTow P k cb| / (k ! : ℝ) ≤ ((Cb.getD k 0 : ℚ) : ℝ)
+
+/-- Bounds checked against exact Taylor coefficients: `|T_k| ≤ b_k` for `k = k₀, k₀ + 1, ...`. -/
+def absLeAll (T : List ℚ) : ℕ → List ℚ → Bool
+  | _, [] => true
+  | k, b :: bs => decide (qabs' (T.getD k 0) ≤ b) && absLeAll T (k + 1) bs
+
+theorem absLeAll_spec (T : List ℚ) : ∀ (Bl : List ℚ) (k : ℕ), absLeAll T k Bl = true →
+    ∀ i < Bl.length, qabs' (T.getD (k + i) 0) ≤ Bl.getD i 0 := by
+  intro Bl
+  induction Bl with
+  | nil => intro k _ i hi; simp at hi
+  | cons b bs ih =>
+    intro k h i hi
+    simp only [absLeAll, Bool.and_eq_true, decide_eq_true_eq] at h
+    cases i with
+    | zero => simpa using h.1
+    | succ j =>
+      have := ih (k + 1) h.2 j (by simpa using hi)
+      rw [show k + 1 + j = k + (j + 1) by omega] at this
+      simpa using this
+
+/-- The polynomial coefficient bounds from the exact Taylor shift: if `P` is no longer than `Cb`
+and `|T_k| ≤ Cb_k` for the shift `T` at `cb` (to order `|Cb|`), then `PolyBnd`. -/
+theorem polyBnd_of_check (P : List ℚ) (cb : ℚ) (Cb : List ℚ) (hlen : P.length ≤ Cb.length)
+    (hchk : absLeAll (shiftL cb Cb.length P) 0 Cb = true) : PolyBnd P (cb : ℝ) Cb := by
+  refine ⟨hlen, fun k hk => ?_⟩
+  have h := absLeAll_spec _ Cb 0 hchk k hk
+  rw [zero_add] at h
+  have h2 := shiftL_spec cb Cb.length P k hk.le
+  have h3 : ((qabs' ((shiftL cb Cb.length P).getD k 0) : ℚ) : ℝ) ≤ ((Cb.getD k 0 : ℚ) : ℝ) := by
+    exact_mod_cast h
+  rw [qabs'_cast, h2, abs_div, Nat.abs_cast] at h3
+  exact h3
+
+theorem getD_drop' (l : List ℚ) (M j : ℕ) : (l.drop M).getD j 0 = l.getD (M + j) 0 := by
+  simp [List.getD_eq_getElem?_getD, List.getElem?_drop]
+
+/-- **Block bound for a polynomial part**: for `x` in the block `[cb - ρ, cb + ρ]`,
+`|P^{(M)}(x)|/M! ≤ Σ_j Cb_{M+j} binom(M+j, M) ρ^j`, from the Taylor coefficients at the block
+centre only (the derivatives of order `≥ |P|` vanish). -/
+theorem polyTow_block {P : List ℚ} {cb ρ : ℝ} {Cb : List ℚ} (hb : PolyBnd P cb Cb) (ρq : ℚ)
+    (hρ : (ρq : ℝ) = ρ) (M : ℕ) :
+    ∀ x ∈ Icc (cb - ρ) (cb + ρ),
+      |polyTow P M x| / (M ! : ℝ) ≤ ((majQ ρq M 0 (Cb.drop M) : ℚ) : ℝ) := by
+  have hN : M + (Cb.drop M).length ≥ P.length := by
+    have := hb.1; simp only [List.length_drop]; omega
+  have key := tower_majorant (f := polyTow P) (cb := cb) (ρ := ρ) (M := M) (N := (Cb.drop M).length)
+    (isTower_polyTow P cb ρ _) (C := fun j => (((Cb.drop M).getD j 0 : ℚ) : ℝ)) (H := 0)
+    (fun j hj => by
+      rw [getD_drop']
+      exact hb.2 (M + j) (by simp only [List.length_drop] at hj; omega))
+    (fun x _ => by
+      rw [polyTow_eq_zero P _ hN x]; simp)
+  intro x hx
+  refine (key x hx).trans (le_of_eq ?_)
+  rw [majQ_cast, ← hρ]
+  simp
+
+/-- Leibniz bound of a product at a point from bounds of the factors' normalised derivatives. -/
+theorem mulTower_block_bound {u v : ℕ → ℝ → ℝ} {n : ℕ} {x : ℝ} {U V : ℕ → ℝ}
+    (hU : ∀ i ≤ n, |u i x| / (i ! : ℝ) ≤ U i) (hV : ∀ j ≤ n, |v j x| / (j ! : ℝ) ≤ V j) :
+    |mulTower u v n x| / (n ! : ℝ) ≤ ∑ ij ∈ Finset.antidiagonal n, U ij.1 * V ij.2 := by
+  have hf : (0 : ℝ) < (n ! : ℝ) := by positivity
+  have e0 : |mulTower u v n x| / (n ! : ℝ) = |mulTower u v n x / (n ! : ℝ)| := by
+    rw [abs_div, abs_of_pos hf]
+  rw [e0, mulTower_div]
+  refine (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum (fun ij hij => ?_))
+  have h := Finset.mem_antidiagonal.mp hij
+  rw [abs_mul, abs_div, abs_div, Nat.abs_cast, Nat.abs_cast]
+  exact mul_le_mul (hU _ (by omega)) (hV _ (by omega)) (by positivity)
+    ((div_nonneg (abs_nonneg _) (by positivity)).trans (hU _ (by omega)))
+
+/-- Sup-bound vector of the factor `log |x - e|` on a block: `V_0 = Lb`, `V_m = 1/(m dm^m)`. -/
+def logVQ (Lb dm : ℚ) (m : ℕ) : ℚ := if m = 0 then Lb else 1 / ((m : ℚ) * dm ^ m)
+
+theorem logTower_block_bound (e : ℝ) (Lb dm : ℚ) (hdm : 0 < dm) (x : ℝ)
+    (hLb : |Real.log (|x - e|)| ≤ (Lb : ℝ)) (hd : (dm : ℝ) ≤ |x - e|) (j : ℕ) :
+    |logTower e j x| / (j ! : ℝ) ≤ ((logVQ Lb dm j : ℚ) : ℝ) := by
+  cases j with
+  | zero => simpa [logTower, logVQ] using hLb
+  | succ m =>
+    have hdm' : (0 : ℝ) < dm := by exact_mod_cast hdm
+    have hxe : 0 < |x - e| := lt_of_lt_of_le hdm' hd
+    simp only [logTower, logVQ, Nat.succ_ne_zero, if_false]
+    rw [abs_div, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, abs_pow, Nat.abs_cast,
+      Nat.factorial_succ]
+    push_cast
+    have hm : (m ! : ℝ) ≠ 0 := by positivity
+    have e1 : (m ! : ℝ) / |x - e| ^ (m + 1) / (((m : ℝ) + 1) * (m ! : ℝ)) =
+        1 / (((m : ℝ) + 1) * |x - e| ^ (m + 1)) := by
+      field_simp
+    rw [e1]
+    apply one_div_le_one_div_of_le (by positivity)
+    exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hdm'.le hd _) (by positivity)
+
+/-- List of the polynomial block bounds `U_i = Σ_j Cb_{i+j} binom(i+j, i) ρ^j`, `i = 0..M`. -/
+def majList (ρ : ℚ) (Cb : List ℚ) (M : ℕ) : List ℚ :=
+  (List.range (M + 1)).map (fun i => majQ ρ i 0 (Cb.drop i))
+
+/-- The block tail of a `P(x) log|x - e|` piece: `Σ_{i+m=M} U_i V_m`. -/
+def plogTailQ (ρ : ℚ) (Cb : List ℚ) (Lb dm : ℚ) (M : ℕ) : ℚ :=
+  partialConv (majList ρ Cb M) (logVQ Lb dm) M (M + 1)
+
+/-- **Block bound for `P(x) log|x - e|`.**  On the block `[cb - ρ, cb + ρ]`, with `Cb` bounding the
+Taylor coefficients of `P` at `cb`, `|log|x - e|| ≤ Lb` and `|x - e| ≥ dm > 0`:
+`|(P log|x-e|)^{(M)}(x)|/M! ≤ plogTailQ`. -/
+theorem plog_block {P : List ℚ} {e : ℚ} {cb ρ : ℝ} {Cb : List ℚ} (hb : PolyBnd P cb Cb) (ρq : ℚ)
+    (hρ : (ρq : ℝ) = ρ) (Lb dm : ℚ) (hdm : 0 < dm)
+    (hLb : ∀ x ∈ Icc (cb - ρ) (cb + ρ), |Real.log (|x - (e : ℝ)|)| ≤ (Lb : ℝ))
+    (hd : ∀ x ∈ Icc (cb - ρ) (cb + ρ), (dm : ℝ) ≤ |x - (e : ℝ)|) (M : ℕ) :
+    ∀ x ∈ Icc (cb - ρ) (cb + ρ),
+      |mulTower (polyTow P) (logTower (e : ℝ)) M x| / (M ! : ℝ) ≤
+        ((plogTailQ ρq Cb Lb dm M : ℚ) : ℝ) := by
+  intro x hx
+  have hU : ∀ i ≤ M, |polyTow P i x| / (i ! : ℝ) ≤ ((majList ρq Cb M).getD i 0 : ℚ) := by
+    intro i hi
+    have : (majList ρq Cb M).getD i 0 = majQ ρq i 0 (Cb.drop i) := by
+      simp [majList, List.getD_eq_getElem?_getD, List.getElem?_range, Nat.lt_succ_of_le hi]
+    rw [this]
+    exact polyTow_block hb ρq hρ i x hx
+  refine (mulTower_block_bound (U := fun i => (((majList ρq Cb M).getD i 0 : ℚ) : ℝ))
+    (V := fun j => ((logVQ Lb dm j : ℚ) : ℝ)) hU
+    (fun j _ => logTower_block_bound _ Lb dm hdm x (hLb x hx) (hd x hx) j)).trans (le_of_eq ?_)
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => (((majList ρq Cb M).getD i 0 : ℚ) : ℝ) * ((logVQ Lb dm j : ℚ) : ℝ)) M]
+  unfold plogTailQ
+  rw [partialConv_cast]
+
+
+/-! ### 10. Coefficient vectors; pole sums from shared pole-power tables -/
+
+theorem listsum_div {α : Type*} (L : List α) (f g : α → ℚ) (D : ℚ) (h : ∀ a ∈ L, f a = g a / D) :
+    (L.map f).sum = (L.map g).sum / D := by
+  induction L with
+  | nil => simp
+  | cons a L ih =>
+    simp only [List.map_cons, List.sum_cons]
+    rw [h a (by simp), ih (fun b hb => h b (by simp [hb])), add_div]
+
+/-- Entrywise sum of coefficient vectors (padding by `0`). -/
+def vecAdd : List ℚ → List ℚ → List ℚ
+  | a :: as, b :: bs => (a + b) :: vecAdd as bs
+  | [], bs => bs
+  | as, [] => as
+
+theorem vecAdd_getD : ∀ (a b : List ℚ) (k : ℕ), (vecAdd a b).getD k 0 = a.getD k 0 + b.getD k 0 := by
+  intro a
+  induction a with
+  | nil => intro b k; simp [vecAdd]
+  | cons x xs ih =>
+    intro b k
+    cases b with
+    | nil => simp [vecAdd]
+    | cons y ys =>
+      cases k with
+      | zero => simp [vecAdd]
+      | succ k =>
+        simp only [vecAdd, List.getD_cons_succ]
+        rw [ih ys k]
+
+/-- Sum of a list of coefficient vectors. -/
+def vecSum (ls : List (List ℚ)) : List ℚ := ls.foldr vecAdd []
+
+theorem vecSum_getD (ls : List (List ℚ)) (k : ℕ) :
+    (vecSum ls).getD k 0 = (ls.map (fun v => v.getD k 0)).sum := by
+  induction ls with
+  | nil => simp [vecSum]
+  | cons v vs ih => simp only [vecSum, List.foldr_cons] at ih ⊢; rw [vecAdd_getD, ih]; simp
+
+theorem getD_map_range (f : ℕ → ℚ) (n k : ℕ) (hk : k < n) :
+    ((List.range n).map f).getD k 0 = f k := by
+  simp [List.getD_eq_getElem?_getD, List.getElem?_range, hk]
+
+/-- The pole term `(-1)^{k-1}/k · Re[ρ w]` of the `k`-th normalised coefficient, `w = u^k`. -/
+def poleTermQ (rr ri : ℚ) (k : ℕ) (w : ℚ × ℚ) : ℚ :=
+  (-1) ^ (k - 1) / (k : ℚ) * (rr * w.1 - ri * w.2)
+
+/-- The power table `[u, u², ..., u^n]` (by repeated multiplication; each power once). -/
+def powTabAux (u : ℚ × ℚ) : ℕ → ℚ × ℚ → List (ℚ × ℚ)
+  | 0, _ => []
+  | n + 1, w => w :: powTabAux u n (cmulQ w u)
+
+/-- The shared table of a pole *position* `(pr, pi)` at the centre `c`: `[u, ..., u^M]`,
+`u = 1/(c - p)`.  It does not depend on the weights, so every field with the same pole positions
+shares it. -/
+def powTabQ (pr pi c : ℚ) (M : ℕ) : List (ℚ × ℚ) :=
+  powTabAux (uOf ⟨0, 0, pr, pi⟩ c) M (uOf ⟨0, 0, pr, pi⟩ c)
+
+theorem powTabAux_getD (u : ℚ × ℚ) : ∀ (n k : ℕ) (w : ℚ × ℚ), w = cpowQ u k →
+    ∀ i < n, (powTabAux u n w).getD i (0, 0) = cpowQ u (k + i) := by
+  intro n
+  induction n with
+  | zero => intro k w _ i hi; omega
+  | succ n ih =>
+    intro k w hw i hi
+    cases i with
+    | zero => simpa [powTabAux] using hw
+    | succ i =>
+      simp only [powTabAux, List.getD_cons_succ]
+      rw [ih (k + 1) (cmulQ w u) (by rw [hw]; rfl) i (by omega)]
+      rw [show k + 1 + i = k + (i + 1) by omega]
+
+/-- Coefficient vector `[0, a_1, ..., a_M]` of one pole with weight `(rr, ri)` from a power table. -/
+def poleVecTab (rr ri : ℚ) (tab : List (ℚ × ℚ)) : List ℚ :=
+  0 :: (List.range tab.length).map (fun i => poleTermQ rr ri (i + 1) (tab.getD i (0, 0)))
+
+/-- Coefficient vector of the pole sum from shared tables (one table per pole position). -/
+def poleVecShared (poles : List PoleR) (tabs : List (List (ℚ × ℚ))) : List ℚ :=
+  vecSum (List.zipWith (fun q tab => poleVecTab q.rr q.ri tab) poles tabs)
+
+/-- The tables of a pole list at the centre `c`, to order `M`. -/
+def poleTabs (poles : List PoleR) (c : ℚ) (M : ℕ) : List (List (ℚ × ℚ)) :=
+  poles.map (fun q => powTabQ q.pr q.pi c M)
+
+/-- Coefficient vector `[0, a_1, ..., a_M]` of the pole sum (own tables). -/
+def poleVec (poles : List PoleR) (c : ℚ) (M : ℕ) : List ℚ :=
+  poleVecShared poles (poleTabs poles c M)
+
+theorem powTabQ_length (pr pi c : ℚ) (M : ℕ) : (powTabQ pr pi c M).length = M := by
+  unfold powTabQ
+  generalize uOf ⟨0, 0, pr, pi⟩ c = u
+  suffices h : ∀ (n : ℕ) (w : ℚ × ℚ), (powTabAux u n w).length = n from h M u
+  intro n
+  induction n with
+  | zero => intro w; simp [powTabAux]
+  | succ n ih => intro w; simp [powTabAux, ih]
+
+theorem poleVecTab_getD (rr ri : ℚ) (tab : List (ℚ × ℚ)) (k : ℕ) (hk1 : 1 ≤ k) (hk : k ≤ tab.length) :
+    (poleVecTab rr ri tab).getD k 0 = poleTermQ rr ri k (tab.getD (k - 1) (0, 0)) := by
+  obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
+  unfold poleVecTab
+  rw [List.getD_cons_succ, getD_map_range _ _ _ (by omega)]
+  rfl
+
+/-- **Pole-power sharing, exact equality.**  The coefficient `a_k` computed from the power tables
+equals `poleCoeff` (which recomputes `u^k` for every `k`). -/
+theorem poleVec_getD (poles : List PoleR) (c : ℚ) (M : ℕ) (k : ℕ) (hk1 : 1 ≤ k) (hk : k ≤ M) :
+    (poleVec poles c M).getD k 0 = poleCoeff poles c k := by
+  unfold poleVec poleVecShared poleTabs
+  rw [vecSum_getD]
+  unfold poleCoeff
+  have hzip : List.zipWith (fun q tab => poleVecTab q.rr q.ri tab) poles
+      (poles.map (fun q => powTabQ q.pr q.pi c M)) =
+      poles.map (fun q => poleVecTab q.rr q.ri (powTabQ q.pr q.pi c M)) := by
+    induction poles with
+    | nil => rfl
+    | cons q qs ih => simp [List.zipWith_cons_cons, ih]
+  rw [hzip, List.map_map]
+  obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
+  have hfac : (((j + 1)! : ℕ) : ℚ) = ((j : ℚ) + 1) * (j ! : ℚ) := by
+    rw [Nat.factorial_succ]; push_cast; ring
+  have key : ∀ q ∈ poles, (poleVecTab q.rr q.ri (powTabQ q.pr q.pi c M)).getD (j + 1) 0 =
+      poleVal q c j / (((j + 1)! : ℕ) : ℚ) := by
+    intro q _
+    rw [poleVecTab_getD _ _ _ (j + 1) (by omega) (by rw [powTabQ_length]; omega)]
+    have h1 : (powTabQ q.pr q.pi c M).getD (j + 1 - 1) (0, 0) = cpowQ (uOf q c) (j + 1) := by
+      unfold powTabQ
+      rw [Nat.add_sub_cancel]
+      have := powTabAux_getD (uOf ⟨0, 0, q.pr, q.pi⟩ c) M 1 (uOf ⟨0, 0, q.pr, q.pi⟩ c)
+        (by simp [cpowQ, cmulQ]) j (by omega)
+      rw [this, add_comm 1 j]
+      rfl
+    rw [h1]
+    unfold poleTermQ poleVal
+    rw [Nat.add_sub_cancel, hfac]
+    have h2 : (j ! : ℚ) ≠ 0 := by positivity
+    have h3 : ((j : ℚ) + 1) ≠ 0 := by positivity
+    push_cast
+    field_simp
+  have := listsum_div poles (fun q => (poleVecTab q.rr q.ri (powTabQ q.pr q.pi c M)).getD (j + 1) 0)
+    (fun q => poleVal q c j) _ key
+  exact this
+
+
+/-! ### 11. A field: polynomial + `Σ_e P_e(x) log|x - e|` + pole potential -/
+
+/-- The data of a field of the Phase 2 form (all rational): a polynomial part (coefficients low to
+high), pieces `P_e(x) log|x - e|`, and the pole sum (whose potential `F`, with
+`F' = Σ_q Re[ρ_q/(x - p_q)]`, is the function argument of `fieldTower`). -/
+structure FieldQ where
+  poly : List ℚ
+  plogs : List (List ℚ × ℚ)
+  poles : List PoleR
+
+/-- Tower of `Σ_e P_e log|x - e|`. -/
+noncomputable def plogSumTower (plogs : List (List ℚ × ℚ)) (j : ℕ) (x : ℝ) : ℝ :=
+  (plogs.map (fun t => mulTower (polyTow t.1) (logTower (t.2 : ℝ)) j x)).sum
+
+/-- Tower of the whole field: `fieldTower fq F 0 x = poly(x) + Σ_e P_e(x) log|x - e| + F x`. -/
+noncomputable def fieldTower (fq : FieldQ) (F : ℝ → ℝ) (j : ℕ) (x : ℝ) : ℝ :=
+  polyTow fq.poly j x + plogSumTower fq.plogs j x + poleTower fq.poles F j x
+
+theorem isTower_plogSumTower (plogs : List (List ℚ × ℚ)) (c r : ℝ) (M : ℕ)
+    (hne : ∀ t ∈ plogs, ∀ x ∈ Icc (c - r) (c + r), x ≠ (t.2 : ℝ)) :
+    IsTower (plogSumTower plogs) c r M := by
+  induction plogs with
+  | nil =>
+    have h : plogSumTower [] = fun _ _ => 0 := by funext j x; simp [plogSumTower]
+    rw [h]
+    exact ⟨fun j _ => continuousOn_const, fun j _ x _ => hasDerivAt_const x 0⟩
+  | cons t ts ih =>
+    have h : plogSumTower (t :: ts) = fun j x =>
+        mulTower (polyTow t.1) (logTower (t.2 : ℝ)) j x + plogSumTower ts j x := by
+      funext j x; simp [plogSumTower]
+    rw [h]
+    exact ((isTower_polyTow t.1 c r M).mul
+      (isTower_logTower (t.2 : ℝ) c r M (hne t (by simp)))).add
+      (ih (fun s hs => hne s (by simp [hs])))
+
+theorem isTower_fieldTower (fq : FieldQ) (F : ℝ → ℝ) (c r : ℝ) (M : ℕ)
+    (hnee : ∀ t ∈ fq.plogs, ∀ x ∈ Icc (c - r) (c + r), x ≠ (t.2 : ℝ))
+    (hnep : ∀ y ∈ Icc (c - r) (c + r), ∀ q ∈ fq.poles, (y : ℂ) ≠ q.pc)
+    (hF : ∀ y ∈ Icc (c - r) (c + r),
+      HasDerivAt F ((fq.poles.map (fun q => qt q 0 y)).sum) y) :
+    IsTower (fieldTower fq F) c r M :=
+  ((isTower_polyTow fq.poly c r M).add (isTower_plogSumTower fq.plogs c r M hnee)).add
+    (isTower_poleTower fq.poles F c r M hnep hF)
+
+/-- Coefficient vector `[a_0, ..., a_M]` of `P(x) log|x - e|` at `c` (`L = log|c - e|` supplied). -/
+def plogVec (P : List ℚ) (e c L : ℚ) (M : ℕ) : List ℚ :=
+  let Pk := shiftL c M P
+  (List.range (M + 1)).map (fun k => plogCoefQ Pk (c - e) L k)
+
+/-- Sum of the coefficient vectors of the pieces (the logs `Ls` aligned with the pieces). -/
+def plogSumVec (c : ℚ) (M : ℕ) : List (List ℚ × ℚ) → List ℚ → List ℚ
+  | t :: ts, L :: Ls => vecAdd (plogVec t.1 t.2 c L M) (plogSumVec c M ts Ls)
+  | _, _ => []
+
+/-- The logs `L_e` supplied for the pieces (aligned) are rational enclosures of `log |c - e|`:
+`|L_e - log |c - e|| ≤ ε_e` (the exact case is `ε_e = 0`). -/
+def LogVals (c : ℚ) : List (List ℚ × ℚ) → List ℚ → List ℚ → Prop
+  | [], [], [] => True
+  | t :: ts, L :: Ls, ε :: εs =>
+    |(L : ℝ) - Real.log (|(c : ℝ) - (t.2 : ℝ)|)| ≤ (ε : ℝ) ∧ LogVals c ts Ls εs
+  | _, _, _ => False
+
+/-- `P(x) log|x - e|`: the normalised coefficient is *affine* in the value of the log, with
+slope the polynomial coefficient `P_k`, so an enclosure of the log gives
+`|a_k - plogCoefQ ...| ≤ ε |P_k|`. -/
+theorem plogCoef_split (P : List ℚ) (e c : ℚ) (hce : c - e ≠ 0) (K k : ℕ) (hk : k ≤ K) :
+    mulTower (polyTow P) (logTower (e : ℝ)) k (c : ℝ) / (k ! : ℝ) =
+      Real.log (|(c : ℝ) - (e : ℝ)|) * (((shiftL c K P).getD k 0 : ℚ) : ℝ) +
+        ((partialConv (shiftL c K P) (logTailQ (c - e)) k k : ℚ) : ℝ) := by
+  rw [mulTower_div, Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => (polyTow P i (c : ℝ) / (i ! : ℝ)) * (logTower (e : ℝ) j (c : ℝ) / (j ! : ℝ))) k]
+  rw [partialConv_cast, Finset.sum_range_succ]
+  have hP : ∀ i ≤ K, ((( shiftL c K P).getD i 0 : ℚ) : ℝ) = polyTow P i (c : ℝ) / (i ! : ℝ) :=
+    fun i hi => shiftL_spec c K P i hi
+  have hlog0 : logTower (e : ℝ) 0 (c : ℝ) / ((0 : ℕ) ! : ℝ) = Real.log (|(c : ℝ) - (e : ℝ)|) := by
+    simp [logTower]
+  rw [Nat.sub_self, hlog0, hP k hk]
+  rw [add_comm]
+  congr 1
+  · ring
+  · refine Finset.sum_congr rfl (fun i hi => ?_)
+    have hi' := Finset.mem_range.mp hi
+    rw [hP i (by omega)]
+    obtain ⟨m, hm⟩ : ∃ m, k - i = m + 1 := ⟨k - i - 1, by omega⟩
+    rw [hm, ← logTailQ_cast e c hce m]
+
+theorem plogCoef_approx (P : List ℚ) (e c L ε : ℚ) (hce : c - e ≠ 0)
+    (hL : |(L : ℝ) - Real.log (|(c : ℝ) - (e : ℝ)|)| ≤ (ε : ℝ)) (K k : ℕ) (hk : k ≤ K) :
+    |mulTower (polyTow P) (logTower (e : ℝ)) k (c : ℝ) / (k ! : ℝ) -
+        ((plogCoefQ (shiftL c K P) (c - e) L k : ℚ) : ℝ)| ≤
+      ((ε * qabs' ((shiftL c K P).getD k 0) : ℚ) : ℝ) := by
+  rw [plogCoef_split P e c hce K k hk]
+  unfold plogCoefQ
+  push_cast
+  have e1 : Real.log (|(c : ℝ) - (e : ℝ)|) * (((shiftL c K P).getD k 0 : ℚ) : ℝ) +
+        ((partialConv (shiftL c K P) (logTailQ (c - e)) k k : ℚ) : ℝ) -
+      ((L : ℝ) * (((shiftL c K P).getD k 0 : ℚ) : ℝ) +
+        ((partialConv (shiftL c K P) (logTailQ (c - e)) k k : ℚ) : ℝ)) =
+      (Real.log (|(c : ℝ) - (e : ℝ)|) - (L : ℝ)) * (((shiftL c K P).getD k 0 : ℚ) : ℝ) := by
+    ring
+  rw [e1, abs_mul, qabs'_cast, abs_sub_comm]
+  exact mul_le_mul_of_nonneg_right hL (abs_nonneg _)
+
+/-- Error vector of one piece: `ε |P_k|`, `k = 0..M`. -/
+def plogErr1 (P : List ℚ) (c ε : ℚ) (M : ℕ) : List ℚ :=
+  let Pk := shiftL c M P
+  (List.range (M + 1)).map (fun k => ε * qabs' (Pk.getD k 0))
+
+def plogErrSum (c : ℚ) (M : ℕ) : List (List ℚ × ℚ) → List ℚ → List ℚ
+  | t :: ts, ε :: εs => vecAdd (plogErr1 t.1 c ε M) (plogErrSum c M ts εs)
+  | _, _ => []
+
+theorem plogSumVec_approx (c : ℚ) (M : ℕ) : ∀ (plogs : List (List ℚ × ℚ)) (Ls εs : List ℚ),
+    LogVals c plogs Ls εs → (∀ t ∈ plogs, c - t.2 ≠ 0) → ∀ k ≤ M,
+    |plogSumTower plogs k (c : ℝ) / (k ! : ℝ) - (((plogSumVec c M plogs Ls).getD k 0 : ℚ) : ℝ)| ≤
+      (((plogErrSum c M plogs εs).getD k 0 : ℚ) : ℝ) := by
+  intro plogs
+  induction plogs with
+  | nil =>
+    intro Ls εs hL _ k _
+    cases Ls with
+    | nil =>
+      cases εs with
+      | nil => simp [plogSumVec, plogSumTower, plogErrSum]
+      | cons => exact absurd hL (by simp [LogVals])
+    | cons => exact absurd hL (by cases εs <;> simp [LogVals])
+  | cons t ts ih =>
+    intro Ls εs hL hne k hk
+    cases Ls with
+    | nil => exact absurd hL (by cases εs <;> simp [LogVals])
+    | cons L Ls =>
+      cases εs with
+      | nil => exact absurd hL (by simp [LogVals])
+      | cons ε εs =>
+        obtain ⟨hL1, hL2⟩ := hL
+        simp only [plogSumVec, plogErrSum]
+        rw [vecAdd_getD, vecAdd_getD]
+        push_cast
+        have h1 : (plogVec t.1 t.2 c L M).getD k 0 = plogCoefQ (shiftL c M t.1) (c - t.2) L k := by
+          unfold plogVec
+          exact getD_map_range _ _ _ (by omega)
+        have h2 : (plogErr1 t.1 c ε M).getD k 0 = ε * qabs' ((shiftL c M t.1).getD k 0) := by
+          unfold plogErr1
+          exact getD_map_range _ _ _ (by omega)
+        rw [h1, h2]
+        push_cast
+        have a1 := plogCoef_approx t.1 t.2 c L ε (hne t (by simp)) hL1 M k hk
+        have a2 := ih Ls εs hL2 (fun s hs => hne s (by simp [hs])) k hk
+        have e : plogSumTower (t :: ts) k (c : ℝ) / (k ! : ℝ) =
+            mulTower (polyTow t.1) (logTower (t.2 : ℝ)) k (c : ℝ) / (k ! : ℝ) +
+              plogSumTower ts k (c : ℝ) / (k ! : ℝ) := by
+          simp only [plogSumTower, List.map_cons, List.sum_cons]; ring
+        rw [e]
+        push_cast at a1
+        have key := (abs_add_le
+          (mulTower (polyTow t.1) (logTower (t.2 : ℝ)) k (c : ℝ) / (k ! : ℝ) -
+            ((plogCoefQ (shiftL c M t.1) (c - t.2) L k : ℚ) : ℝ))
+          (plogSumTower ts k (c : ℝ) / (k ! : ℝ) -
+            (((plogSumVec c M ts Ls).getD k 0 : ℚ) : ℝ))).trans (add_le_add a1 a2)
+        refine le_trans (le_of_eq ?_) key
+        congr 1
+        ring
+
+/-- Exact coefficients `[a_0, ..., a_M]` of the field at `c` (with the supplied logs); the entry
+`a_0` omits the pole potential `F(c)` (supplied separately as `A0`).  The true coefficients
+differ by at most `plogErrSum` (the log enclosure errors). -/
+def fieldCoefs (fq : FieldQ) (Ls : List ℚ) (c : ℚ) (M : ℕ) : List ℚ :=
+  vecAdd (shiftL c M fq.poly) (vecAdd (plogSumVec c M fq.plogs Ls) (poleVec fq.poles c M))
+
+theorem fieldCoefs_approx (fq : FieldQ) (F : ℝ → ℝ) (Ls εs : List ℚ) (c : ℚ) (M : ℕ)
+    (hL : LogVals c fq.plogs Ls εs) (hne : ∀ t ∈ fq.plogs, c - t.2 ≠ 0) (k : ℕ) (hk1 : 1 ≤ k)
+    (hk : k ≤ M) :
+    |fieldTower fq F k (c : ℝ) / (k ! : ℝ) - (((fieldCoefs fq Ls c M).getD k 0 : ℚ) : ℝ)| ≤
+      (((plogErrSum c M fq.plogs εs).getD k 0 : ℚ) : ℝ) := by
+  unfold fieldCoefs
+  rw [vecAdd_getD, vecAdd_getD, poleVec_getD _ _ _ _ hk1 hk]
+  push_cast
+  rw [shiftL_spec c M fq.poly k hk]
+  obtain ⟨j, rfl⟩ : ∃ j, k = j + 1 := ⟨k - 1, by omega⟩
+  rw [poleCoeff_spec fq.poles F c j]
+  have h := plogSumVec_approx c M fq.plogs Ls εs hL hne (j + 1) hk
+  have e : fieldTower fq F (j + 1) (c : ℝ) / ((j + 1)! : ℝ) =
+      polyTow fq.poly (j + 1) (c : ℝ) / ((j + 1)! : ℝ) +
+      plogSumTower fq.plogs (j + 1) (c : ℝ) / ((j + 1)! : ℝ) +
+      poleTower fq.poles F (j + 1) (c : ℝ) / ((j + 1)! : ℝ) := by
+    simp only [fieldTower]; ring
+  rw [e]
+  refine le_trans (le_of_eq ?_) h
+  congr 1
+  ring
+
+/-- `|T_k| + E_k ≤ b_k` for `k = k₀, k₀ + 1, ...`. -/
+def absLeAllE (T E : List ℚ) : ℕ → List ℚ → Bool
+  | _, [] => true
+  | k, b :: bs => decide (qabs' (T.getD k 0) + E.getD k 0 ≤ b) && absLeAllE T E (k + 1) bs
+
+theorem absLeAllE_spec (T E : List ℚ) : ∀ (Bl : List ℚ) (k : ℕ), absLeAllE T E k Bl = true →
+    ∀ i < Bl.length, qabs' (T.getD (k + i) 0) + E.getD (k + i) 0 ≤ Bl.getD i 0 := by
+  intro Bl
+  induction Bl with
+  | nil => intro k _ i hi; simp at hi
+  | cons b bs ih =>
+    intro k h i hi
+    simp only [absLeAllE, Bool.and_eq_true, decide_eq_true_eq] at h
+    cases i with
+    | zero => simpa using h.1
+    | succ j =>
+      have := ih (k + 1) h.2 j (by simpa using hi)
+      rw [show k + 1 + j = k + (j + 1) by omega] at this
+      simpa using this
+
+/-- **The Boolean cell checker for a general field** (exact coefficients through order
+`|Bl| + 2`, the remainder bound `BM` coming from a block-level tail): the cell `[lo, hi]` avoids
+the logarithmic singularities and the poles, `l1 ≤ a₁ ≤ u1`, `a₂ ≤ A2`, `|a_k| ≤ B_k` for
+`3 ≤ k < M = |Bl| + 3`, and `tmUBQ ≤ T`; the coefficient tests are inflated by the log-enclosure
+errors `εs`.  The remainder hypothesis `BM` is not checked here. -/
+def fieldCellCheck (fq : FieldQ) (Ls εs : List ℚ) (lo hi A0 l1 u1 A2 : ℚ) (Bl : List ℚ)
+    (BM T : ℚ) : Bool :=
+  let cs := fieldCoefs fq Ls ((lo + hi) / 2) (Bl.length + 2)
+  let es := plogErrSum ((lo + hi) / 2) (Bl.length + 2) fq.plogs εs
+  decide (lo ≤ hi) &&
+  fq.plogs.all (fun t => decide (hi < t.2) || decide (t.2 < lo)) &&
+  fq.poles.all (fun q => decide (0 < poleDist q lo hi)) &&
+  decide (l1 ≤ cs.getD 1 0 - es.getD 1 0) && decide (cs.getD 1 0 + es.getD 1 0 ≤ u1) &&
+  decide (cs.getD 2 0 + es.getD 2 0 ≤ A2) &&
+  absLeAllE cs es 3 Bl && decide (tmUBQ A0 l1 u1 A2 ((hi - lo) / 2) Bl BM ≤ T)
+
+/-- **Soundness of the general cell checker.**  `hBM` is the block-level tail:
+`|f^{(M)}|/M! ≤ BM` on a block `[blo, bhi] ⊇ [lo, hi]` (see `blockTailCheck_sound`). -/
+theorem fieldCellCheck_sound (fq : FieldQ) (F : ℝ → ℝ) (Ls εs : List ℚ)
+    (lo hi A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ)
+    (hchk : fieldCellCheck fq Ls εs lo hi A0 l1 u1 A2 Bl BM T = true)
+    (hLs : LogVals ((lo + hi) / 2) fq.plogs Ls εs)
+    (hF : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), HasDerivAt F ((fq.poles.map (fun q => qt q 0 x)).sum) x)
+    (h0 : fieldTower fq F 0 (((lo + hi) / 2 : ℚ) : ℝ) ≤ (A0 : ℝ))
+    (blo bhi : ℚ) (hb1 : blo ≤ lo) (hb2 : hi ≤ bhi)
+    (hBM : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+      |fieldTower fq F (Bl.length + 3) x| / ((Bl.length + 3)! : ℝ) ≤ (BM : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq F 0 x ≤ (T : ℝ) := by
+  simp only [fieldCellCheck, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    Bool.or_eq_true] at hchk
+  obtain ⟨⟨⟨⟨⟨⟨⟨hlh, hplog⟩, hpole⟩, hl1⟩, hu1⟩, hA2⟩, hB⟩, hT⟩ := hchk
+  set c : ℚ := (lo + hi) / 2 with hc
+  set r : ℚ := (hi - lo) / 2 with hr
+  have e1 : (c : ℝ) - (r : ℝ) = (lo : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have e2 : (c : ℝ) + (r : ℝ) = (hi : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have hcell : Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)) = Icc (lo : ℝ) (hi : ℝ) := by
+    rw [e1, e2]
+  have hdl' : ∀ q ∈ fq.poles, 0 < poleDist q lo hi := fun q hq => by simpa using hpole q hq
+  have hnee : ∀ t ∈ fq.plogs, ∀ x ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)),
+      x ≠ (t.2 : ℝ) := by
+    intro t ht x hx hxe
+    rw [hcell] at hx
+    rcases hplog t ht with h | h
+    · have h' : (hi : ℝ) < (t.2 : ℝ) := by exact_mod_cast (by simpa using h : hi < t.2)
+      linarith [hx.2]
+    · have h' : (t.2 : ℝ) < (lo : ℝ) := by exact_mod_cast (by simpa using h : t.2 < lo)
+      linarith [hx.1]
+  have hnec : ∀ t ∈ fq.plogs, c - t.2 ≠ 0 := by
+    intro t ht h
+    rcases hplog t ht with h1 | h1
+    · have : hi < t.2 := by simpa using h1
+      simp only [hc] at h; linarith
+    · have : t.2 < lo := by simpa using h1
+      simp only [hc] at h; linarith
+  have hnep : ∀ y ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)), ∀ q ∈ fq.poles,
+      (y : ℂ) ≠ q.pc := by
+    intro y hy q hq heq
+    rw [hcell] at hy
+    have := poleDist_le_norm q lo hi y hy.1 hy.2
+    rw [heq, sub_self, norm_zero] at this
+    have h2 : (0 : ℝ) < ((poleDist q lo hi : ℚ) : ℝ) := by exact_mod_cast hdl' q hq
+    linarith
+  have hF' : ∀ y ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)),
+      HasDerivAt F ((fq.poles.map (fun q => qt q 0 y)).sum) y := by
+    intro y hy; rw [hcell] at hy; exact hF y hy
+  have hT0 := isTower_fieldTower fq F (c : ℝ) (r : ℝ) (Bl.length + 3) hnee hnep hF'
+  have hspec := fun k hk1 hk =>
+    fieldCoefs_approx fq F Ls εs c (Bl.length + 2) hLs hnec k hk1 hk
+  have hcoef := absLeAllE_spec _ _ Bl 3 hB
+  intro x hx
+  rw [← hcell] at hx
+  have key := taylor_cell_ub_rat (f := fieldTower fq F) (c := (c : ℝ)) (r := (r : ℝ)) Bl hT0
+    (A0 := A0) (l1 := l1) (u1 := u1) (A2 := A2) (BM := BM) h0
+    (by
+      have h := abs_le.mp (hspec 1 le_rfl (by omega))
+      have h1' : (l1 : ℝ) ≤ (((fieldCoefs fq Ls c (Bl.length + 2)).getD 1 0 : ℚ) : ℝ) -
+          (((plogErrSum c (Bl.length + 2) fq.plogs εs).getD 1 0 : ℚ) : ℝ) := by
+        exact_mod_cast hl1
+      have h2 := h.1
+      simp only [Nat.factorial_one, Nat.cast_one, div_one] at h2
+      linarith)
+    (by
+      have h := abs_le.mp (hspec 1 le_rfl (by omega))
+      have h1' : (((fieldCoefs fq Ls c (Bl.length + 2)).getD 1 0 : ℚ) : ℝ) +
+          (((plogErrSum c (Bl.length + 2) fq.plogs εs).getD 1 0 : ℚ) : ℝ) ≤ (u1 : ℝ) := by
+        exact_mod_cast hu1
+      have h2 := h.2
+      simp only [Nat.factorial_one, Nat.cast_one, div_one] at h2
+      linarith)
+    (by
+      have h := abs_le.mp (hspec 2 (by omega) (by omega))
+      have h2' : (((fieldCoefs fq Ls c (Bl.length + 2)).getD 2 0 : ℚ) : ℝ) +
+          (((plogErrSum c (Bl.length + 2) fq.plogs εs).getD 2 0 : ℚ) : ℝ) ≤ (A2 : ℝ) := by
+        exact_mod_cast hA2
+      have h3 := h.2
+      simp only [Nat.factorial, Nat.cast_one, Nat.cast_ofNat, mul_one, one_mul] at h3
+      linarith)
+    (by
+      intro i hi'
+      have h1 := hcoef i hi'
+      have h2 := abs_le.mp (hspec (3 + i) (by omega) (by omega))
+      have h3 : ((qabs' ((fieldCoefs fq Ls c (Bl.length + 2)).getD (3 + i) 0) : ℚ) : ℝ) +
+          (((plogErrSum c (Bl.length + 2) fq.plogs εs).getD (3 + i) 0 : ℚ) : ℝ) ≤
+          ((Bl.getD i 0 : ℚ) : ℝ) := by exact_mod_cast h1
+      rw [qabs'_cast] at h3
+      have e0 : |fieldTower fq F (3 + i) (c : ℝ)| / ((3 + i)! : ℝ) =
+          |fieldTower fq F (3 + i) (c : ℝ) / ((3 + i)! : ℝ)| := by
+        rw [abs_div, Nat.abs_cast]
+      rw [e0, abs_le]
+      constructor <;> linarith [h2.1, h2.2,
+        le_abs_self (((fieldCoefs fq Ls c (Bl.length + 2)).getD (3 + i) 0 : ℚ) : ℝ),
+        neg_abs_le (((fieldCoefs fq Ls c (Bl.length + 2)).getD (3 + i) 0 : ℚ) : ℝ)])
+    (by
+      intro y hy
+      rw [hcell] at hy
+      exact hBM y ⟨le_trans (by exact_mod_cast hb1) hy.1, le_trans hy.2 (by exact_mod_cast hb2)⟩)
+    r (by simp [hr])
+  have := key x hx
+  refine this.trans ?_
+  exact_mod_cast hT
+
+/-! ### 12. Block-level tail of a field -/
+
+/-- Block data of one `P_e log|x - e|` piece: bounds `Cb` of the Taylor coefficients of `P_e` at
+the block centre, `Lb ≥ |log|x - e||` and `dm ≤ |x - e|` on the block. -/
+structure PlogBlk where
+  Cb : List ℚ
+  Lb : ℚ
+  dm : ℚ
+
+/-- Boolean part of the block data of the pieces (aligned with the pieces). -/
+def plogBlkOK (cb blo bhi : ℚ) : List (List ℚ × ℚ) → List PlogBlk → Bool
+  | [], [] => true
+  | t :: ts, b :: bs =>
+    decide (t.1.length ≤ b.Cb.length) && absLeAll (shiftL cb b.Cb.length t.1) 0 b.Cb &&
+    decide (0 < b.dm) && (decide (b.dm ≤ t.2 - bhi) || decide (b.dm ≤ blo - t.2)) &&
+    plogBlkOK cb blo bhi ts bs
+  | _, _ => false
+
+/-- The logarithm bounds `|log |x - e|| ≤ Lb` on the block (real facts, aligned). -/
+def LogBnd (blo bhi : ℚ) : List (List ℚ × ℚ) → List PlogBlk → Prop
+  | [], [] => True
+  | t :: ts, b :: bs =>
+    (∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), |Real.log (|x - (t.2 : ℝ)|)| ≤ (b.Lb : ℝ)) ∧
+      LogBnd blo bhi ts bs
+  | _, _ => False
+
+def plogTailSum (ρ : ℚ) (M : ℕ) : List (List ℚ × ℚ) → List PlogBlk → ℚ
+  | t :: ts, b :: bs => plogTailQ ρ b.Cb b.Lb b.dm M + plogTailSum ρ M ts bs
+  | _, _ => 0
+
+/-- The shared tail bound: polynomial part + `Σ` pieces + poles (the poles directly over the block). -/
+def blockTailQ (fq : FieldQ) (blo bhi : ℚ) (M : ℕ) (CbP : List ℚ) (pb : List PlogBlk) : ℚ :=
+  majQ ((bhi - blo) / 2) M 0 (CbP.drop M) + plogTailSum ((bhi - blo) / 2) M fq.plogs pb +
+    poleRemQ fq.poles blo bhi M
+
+/-- Boolean checker of the block tail: `|f^{(M)}|/M! ≤ BM` on `[blo, bhi]`. -/
+def blockTailCheck (fq : FieldQ) (blo bhi : ℚ) (M : ℕ) (CbP : List ℚ) (pb : List PlogBlk)
+    (BM : ℚ) : Bool :=
+  decide (blo ≤ bhi) && decide (1 ≤ M) &&
+  decide (fq.poly.length ≤ CbP.length) &&
+  absLeAll (shiftL ((blo + bhi) / 2) CbP.length fq.poly) 0 CbP &&
+  plogBlkOK ((blo + bhi) / 2) blo bhi fq.plogs pb &&
+  fq.poles.all (fun q => decide (0 < poleDist q blo bhi)) &&
+  decide (blockTailQ fq blo bhi M CbP pb ≤ BM)
+
+theorem plogSum_block (blo bhi : ℚ) (M : ℕ)
+    (hcell : Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+      ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)) = Icc (blo : ℝ) (bhi : ℝ)) :
+    ∀ (plogs : List (List ℚ × ℚ)) (pb : List PlogBlk),
+      plogBlkOK ((blo + bhi) / 2) blo bhi plogs pb = true → LogBnd blo bhi plogs pb →
+      ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+        |plogSumTower plogs M x| / (M ! : ℝ) ≤
+          ((plogTailSum ((bhi - blo) / 2) M plogs pb : ℚ) : ℝ) := by
+  intro plogs
+  induction plogs with
+  | nil =>
+    intro pb hok hlog x _
+    cases pb with
+    | nil => simp [plogSumTower, plogTailSum]
+    | cons => exact absurd hlog (by simp [LogBnd])
+  | cons t ts ih =>
+    intro pb hok hlog x hx
+    cases pb with
+    | nil => exact absurd hlog (by simp [LogBnd])
+    | cons b bs =>
+      simp only [plogBlkOK, Bool.and_eq_true, decide_eq_true_eq, Bool.or_eq_true] at hok
+      obtain ⟨⟨⟨⟨hlen, hchk⟩, hdm⟩, hside⟩, hrest⟩ := hok
+      obtain ⟨hlog1, hlog2⟩ := hlog
+      have hb := polyBnd_of_check t.1 ((blo + bhi) / 2) b.Cb hlen hchk
+      have hx' : x ∈ Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+          ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)) := by rw [hcell]; exact hx
+      have hd : ∀ y ∈ Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+          ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)),
+          (b.dm : ℝ) ≤ |y - (t.2 : ℝ)| := by
+        intro y hy
+        rw [hcell] at hy
+        rcases hside with h | h
+        · have h' : (b.dm : ℝ) ≤ (t.2 : ℝ) - (bhi : ℝ) := by exact_mod_cast h
+          rw [abs_sub_comm]
+          exact h'.trans ((by linarith [hy.2] : (t.2 : ℝ) - bhi ≤ t.2 - y).trans (le_abs_self _))
+        · have h' : (b.dm : ℝ) ≤ (blo : ℝ) - (t.2 : ℝ) := by exact_mod_cast h
+          exact h'.trans ((by linarith [hy.1] : (blo : ℝ) - t.2 ≤ y - t.2).trans (le_abs_self _))
+      have hlg : ∀ y ∈ Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+          ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)),
+          |Real.log (|y - (t.2 : ℝ)|)| ≤ (b.Lb : ℝ) := by
+        intro y hy; rw [hcell] at hy; exact hlog1 y hy
+      have h1 := plog_block hb ((bhi - blo) / 2) rfl b.Lb b.dm hdm hlg hd M x hx'
+      have h2 := ih bs hrest hlog2 x hx
+      have e : plogSumTower (t :: ts) M x =
+          mulTower (polyTow t.1) (logTower (t.2 : ℝ)) M x + plogSumTower ts M x := by
+        simp [plogSumTower]
+      rw [e, plogTailSum]
+      push_cast
+      calc |mulTower (polyTow t.1) (logTower (t.2 : ℝ)) M x + plogSumTower ts M x| / (M ! : ℝ)
+          ≤ (|mulTower (polyTow t.1) (logTower (t.2 : ℝ)) M x| + |plogSumTower ts M x|) /
+              (M ! : ℝ) :=
+            div_le_div_of_nonneg_right (abs_add_le _ _) (by positivity)
+        _ = |mulTower (polyTow t.1) (logTower (t.2 : ℝ)) M x| / (M ! : ℝ) +
+              |plogSumTower ts M x| / (M ! : ℝ) := by rw [add_div]
+        _ ≤ _ := add_le_add h1 h2
+
+/-- **Soundness of the block-tail checker.**  On the whole block `[blo, bhi]` (a block of
+neighbouring cells), `|f^{(M)}(x)|/M! ≤ BM` for the field tower `fieldTower fq F`, with no
+per-cell data: the tail is computed once from the Taylor coefficients at the block centre. -/
+theorem blockTailCheck_sound (fq : FieldQ) (F : ℝ → ℝ) (blo bhi : ℚ) (M : ℕ) (CbP : List ℚ)
+    (pb : List PlogBlk) (BM : ℚ)
+    (hchk : blockTailCheck fq blo bhi M CbP pb BM = true)
+    (hlog : LogBnd blo bhi fq.plogs pb) :
+    ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), |fieldTower fq F M x| / (M ! : ℝ) ≤ (BM : ℝ) := by
+  simp only [blockTailCheck, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at hchk
+  obtain ⟨⟨⟨⟨⟨⟨hbb, hM1⟩, hlenP⟩, hchkP⟩, hplog⟩, hpole⟩, hBM⟩ := hchk
+  have hcell : Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+      ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)) = Icc (blo : ℝ) (bhi : ℝ) := by
+    have e1 : (((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ) = (blo : ℝ) := by
+      push_cast; ring
+    have e2 : (((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ) = (bhi : ℝ) := by
+      push_cast; ring
+    rw [e1, e2]
+  have hdl' : ∀ q ∈ fq.poles, 0 < poleDist q blo bhi := fun q hq => by simpa using hpole q hq
+  obtain ⟨m, rfl⟩ : ∃ m, M = m + 1 := ⟨M - 1, by omega⟩
+  intro x hx
+  have hb := polyBnd_of_check fq.poly ((blo + bhi) / 2) CbP hlenP hchkP
+  have hx' : x ∈ Icc ((((blo + bhi) / 2 : ℚ) : ℝ) - (((bhi - blo) / 2 : ℚ) : ℝ))
+      ((((blo + bhi) / 2 : ℚ) : ℝ) + (((bhi - blo) / 2 : ℚ) : ℝ)) := by rw [hcell]; exact hx
+  have hP := polyTow_block hb ((bhi - blo) / 2) rfl (m + 1) x hx'
+  have hL := plogSum_block blo bhi (m + 1) hcell fq.plogs pb hplog hlog x hx
+  have hPl := poleTower_rem fq.poles F blo bhi hdl' m x hx.1 hx.2
+  have hfac : (0 : ℝ) < ((m + 1)! : ℝ) := by positivity
+  have e : |fieldTower fq F (m + 1) x| ≤
+      |polyTow fq.poly (m + 1) x| + |plogSumTower fq.plogs (m + 1) x| +
+        |poleTower fq.poles F (m + 1) x| := by
+    unfold fieldTower
+    exact (abs_add_le _ _).trans (add_le_add_left (abs_add_le _ _) _)
+  have hQ : ((blockTailQ fq blo bhi (m + 1) CbP pb : ℚ) : ℝ) ≤ (BM : ℝ) := by
+    exact_mod_cast hBM
+  unfold blockTailQ at hQ
+  push_cast at hQ
+  calc |fieldTower fq F (m + 1) x| / ((m + 1)! : ℝ)
+      ≤ (|polyTow fq.poly (m + 1) x| + |plogSumTower fq.plogs (m + 1) x| +
+        |poleTower fq.poles F (m + 1) x|) / ((m + 1)! : ℝ) :=
+        div_le_div_of_nonneg_right e hfac.le
+    _ = |polyTow fq.poly (m + 1) x| / ((m + 1)! : ℝ) +
+        |plogSumTower fq.plogs (m + 1) x| / ((m + 1)! : ℝ)
+        + |poleTower fq.poles F (m + 1) x| / ((m + 1)! : ℝ) := by rw [add_div, add_div]
+    _ ≤ _ := by linarith
+
+/-! ### 13. Regression for the general field chain: `1 + 2x + log x ≤ 3.73` on `[3/4, 5/4]` -/
+
+/-- One tiny field (`poly = 1 + 2x`, one piece `1 · log |x - 0|`, no poles) through the whole
+chain `fieldCellCheck_sound` + `blockTailCheck_sound` (block = cell). -/
+example : ∀ x ∈ Icc ((3 / 4 : ℚ) : ℝ) ((5 / 4 : ℚ) : ℝ),
+    1 + 2 * x + Real.log x ≤ ((373 / 100 : ℚ) : ℝ) := by
+  let fq : FieldQ := ⟨[1, 2], [([1], 0)], []⟩
+  have hc : fieldCellCheck fq [0] [0] (3 / 4) (5 / 4) 3 3 3 (-1 / 2)
+      [1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7] (5 / 4) (373 / 100) = true := by decide +kernel
+  have hb : blockTailCheck fq (3 / 4) (5 / 4) 8 [3, 2] [⟨[1], 1 / 3, 3 / 4⟩] (5 / 4) = true := by
+    decide +kernel
+  have hlog : LogBnd (3 / 4) (5 / 4) fq.plogs [⟨[1], 1 / 3, 3 / 4⟩] := by
+    refine ⟨fun x hx => ?_, trivial⟩
+    have hx0 : (0 : ℝ) < x := lt_of_lt_of_le (by norm_num) hx.1
+    simp only [Rat.cast_zero, sub_zero, abs_of_pos hx0]
+    have h1 := Real.log_le_sub_one_of_pos hx0
+    have h2 := Real.log_le_sub_one_of_pos (inv_pos.mpr hx0)
+    rw [Real.log_inv] at h2
+    have h3 : x⁻¹ ≤ 4 / 3 := by
+      rw [inv_le_comm₀ hx0 (by norm_num)]
+      have := hx.1; push_cast at this; linarith
+    have h4 := hx.2; push_cast at h4
+    rw [abs_le]
+    constructor <;> push_cast <;> linarith
+  have hLs : LogVals ((3 / 4 + 5 / 4) / 2) fq.plogs [0] [0] := by
+    refine ⟨?_, trivial⟩
+    simp
+    norm_num
+  have key := fieldCellCheck_sound fq (fun _ => 0) [0] [0] (3 / 4) (5 / 4) 3 3 3 (-1 / 2)
+    [1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7] (5 / 4) (373 / 100) hc hLs
+    (fun x _ => by simpa [fq] using hasDerivAt_const x (0 : ℝ))
+    (by simp [fq, fieldTower, polyTow, plogSumTower, poleTower, mulTower, logTower]; norm_num)
+    (3 / 4) (5 / 4) le_rfl le_rfl
+    (blockTailCheck_sound fq (fun _ => 0) (3 / 4) (5 / 4) 8 [3, 2] [⟨[1], 1 / 3, 3 / 4⟩] (5 / 4)
+      hb hlog)
+  intro x hx
+  have h := key x hx
+  have hx0 : x ≠ 0 := (lt_of_lt_of_le (by norm_num) hx.1).ne'
+  simp [fq, fieldTower, polyTow, plogSumTower, poleTower, mulTower, logTower] at h
+  linarith
+
+/-- Negative controls of the field checkers (`decide +kernel` returns `false`). -/
+example : fieldCellCheck ⟨[1, 2], [([1], 0)], []⟩ [0] [0] (3 / 4) (5 / 4) 3 3 3 (-1 / 2)
+    [1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7] (5 / 4) (370 / 100) = false := by decide +kernel
+example : fieldCellCheck ⟨[1, 2], [([1], 0)], []⟩ [0] [0] (3 / 4) (5 / 4) 3 3 3 (-1 / 2)
+    [1 / 3, 1 / 4, 1 / 6, 1 / 6, 1 / 7] (5 / 4) (373 / 100) = false := by decide +kernel
+example : fieldCellCheck ⟨[1, 2], [([1], 0)], []⟩ [0] [0] (-1 / 4) (5 / 4) 3 3 3 (-1 / 2)
+    [1 / 3, 1 / 4, 1 / 5, 1 / 6, 1 / 7] (5 / 4) (373 / 100) = false := by decide +kernel
+example : blockTailCheck ⟨[1, 2], [([1], 0)], []⟩ (3 / 4) (5 / 4) 8 [3, 2]
+    [⟨[1], 1 / 3, 3 / 4⟩] (12 / 10) = false := by decide +kernel
+example : blockTailCheck ⟨[1, 2], [([1], 0)], []⟩ (3 / 4) (5 / 4) 8 [3, 1]
+    [⟨[1], 1 / 3, 3 / 4⟩] (5 / 4) = false := by decide +kernel
+example : blockTailCheck ⟨[1, 2], [([1], 0)], []⟩ (3 / 4) (5 / 4) 8 [3, 2]
+    [⟨[1], 1 / 3, 7 / 8⟩] (5 / 4) = false := by decide +kernel
+
+/-- Power-table sharing agrees with `poleCoeff` on a concrete pole set (exact equality). -/
+example : (poleVec [⟨1, 1 / 2, 3 / 5, 1 / 3⟩, ⟨-2, 0, 7 / 4, 0⟩] (1 / 5) 6) =
+    [0] ++ (List.range 6).map (fun i =>
+      poleCoeff [⟨1, 1 / 2, 3 / 5, 1 / 3⟩, ⟨-2, 0, 7 / 4, 0⟩] (1 / 5) (i + 1)) := by
+  decide +kernel
 end CatalanMeasure.GenD.Signed.TaylorCell
 
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.quad_le_quadSupR
@@ -626,3 +1817,28 @@ end CatalanMeasure.GenD.Signed.TaylorCell
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.poleDist_le_norm
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.poleCellCheck_sound_add
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.isTower_poleTower
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.IsTower.mul
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.mulTower_div
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.hasDerivAt_logTower
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.isTower_logTower
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.hasDerivAt_polyTow
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.polyTow_eq_zero
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.shiftL_spec
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogCoefQ_spec
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.tower_majorant
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.majQ_cast
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.polyBnd_of_check
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.polyTow_block
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.mulTower_block_bound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.logTower_block_bound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plog_block
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.poleVec_getD
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.isTower_fieldTower
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.fieldCellCheck_sound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogSum_block
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.blockTailCheck_sound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogCoef_split
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogCoef_approx
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogSumVec_approx
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.fieldCoefs_approx
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.absLeAllE_spec
