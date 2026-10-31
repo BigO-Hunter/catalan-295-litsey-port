@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Analytic.AtomBase
 public import CatalanMeasure.GenD.Analytic.MarkedMixedMajorant
+public import CatalanMeasure.GenD.Analytic.MarkedSecond
 public import CatalanMeasure.Parametric.MarkedAtomAlmostEverywhere
 public import CatalanMeasure.Lemma6
 
@@ -358,6 +359,18 @@ def FreeNearBound (P : Parameters) (G : ℝ → Prop)
       markedSheetFree P N hpm x y s ≤
         5 ^ m * (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
           Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) + c * N * m)
+
+/-- Conformance: `free_first_bound_end` is `FreeFirstBound` at cost `n0 * c`. -/
+theorem freeFirstBound_of_end {P : Parameters} (hP : Admissible P) {target c : ℝ}
+    (D : FirstTrialBoundsEnd P target c) : FreeFirstBound P target ((P.n0 : ℝ) * c) :=
+  free_first_bound_end hP D
+
+/-- Conformance: `free_large_bound_end` is `FreeLargeBound` at cost `n0 * cost`. -/
+theorem freeLargeBound_of_end {P : Parameters} (hP : Admissible P)
+    {α1 target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBoundsEnd P α1 target residual nearCap cost G) :
+    FreeLargeBound P G target ((P.n0 : ℝ) * cost) α1 :=
+  free_large_bound_end hP D
 
 /-- **Bridge: signed sheet bound to the binomial weighted atom point.**  First case
 (`FreeFirstBound`, cost `c₁`), second case with `m ≤ α₁ n` (the signed bound, `FreeNearBound` with
