@@ -129,6 +129,18 @@ structure CreditWindow (H : WrapPrefixWindow.Setup p q o r n e b d shift N) (w0 
   hwin : w1<w0+p
   hR : r+2*n*p+b+2*d≤w0+2*p
   hW : w1<r+2*n*p+b+2*p
+  /-- The interval starts at least one period after the strip origin
+  (virtual start `≥ p`), so the three-translate overlap translates. -/
+  hfar : n*p+p≤w0
+  /-- The surplus nodes lie in one period after the origin. -/
+  hext : b+2*d≤p
+  hsurR : ∀ z:Fin d,r+2*n*p+b≤WrapPrefixSchur.surplusRow H z ∧
+    WrapPrefixSchur.surplusRow H z<r+2*n*p+b+2*d
+  hsurC : ∀ y:Fin d,r+2*n*p+b≤WrapPrefixSchur.surplusCol H y ∧
+    WrapPrefixSchur.surplusCol H y<r+2*n*p+b+2*d
+  /-- Maximality: an original pole closes the interval on each side. -/
+  hleft : ∀ v,r+2*n*p+b≤v → v<w0 → ∃ k,(p∣k ∨ p∣q*k-o) ∧ v<k ∧ k≤w0
+  hright : ∀ v,w1<v → v<r+2*n*p+b+2*d → ∃ k,(p∣k ∨ p∣q*k-o) ∧ w1<k ∧ k≤v
 
 /-- **The retained-set input.**  For every credited interval of every
 Setup window (in virtual coordinates `w0, w1`, the actual interval being
@@ -166,6 +178,51 @@ theorem supply_R1 (Fr : Frame) (q o : ℕ) : Supply Fr q o cr1 := by
   have hw := W.hwin
   unfold cr1
   omega
+
+/-- **Route R2 ∪ R3: the full closed price.**  Every outside surplus node is
+separated from the anchor by an original pole that closes the credited
+interval: an integer pole (R3, top fractional coefficient and the Harmonic
+Lemma) or a fractional pole (R2, central fractional test).  The kills feed
+`retained_closed_bound`, and the virtual-to-actual translation of the
+three-translate overlap gives the credit `cr3` of the existing checker. -/
+theorem supply_R3 (Fr : Frame) (q o : ℕ) : Supply Fr q o cr3 := by
+  intro T p r n e b d shift N _ hsq D H w0 w1 W
+  classical
+  have hs := WrapFrameResidue.spectral p
+  have hu := WrapFrameResidue.normInv_ne p D
+  have huc := WrapFrameResidue.normInv_constant p D
+  have h0 := mem_Icc.mp W.h0
+  have hext := W.hext
+  have hkill (v : ℕ) (hv1 : r+2*n*p+b≤v) (hv2 : v<r+2*n*p+b+2*d)
+      (hout : ¬∃ w∈Icc (w0+n*p) (w1+n*p),(v:ZMod p)=(w:ZMod p)) :
+      ∃ k,(p∣k ∨ p∣q*k-o) ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)) := by
+    by_cases hlt : v<w0+n*p
+    · obtain ⟨k,hk,h1,h2⟩ := W.hleft v hv1 hlt
+      exact ⟨k,hk,Or.inl ⟨h1,h2.trans h0.1⟩⟩
+    · have hgt : w1+n*p<v := by
+        by_contra hc
+        exact hout ⟨v,mem_Icc.mpr ⟨by omega,by omega⟩,rfl⟩
+      obtain ⟨k,hk,h1,h2⟩ := W.hright v hgt hv2
+      exact ⟨k,hk,Or.inr ⟨by omega,h2⟩⟩
+  have hc := WrapPrefixClosed.retained_closed_bound H W.hb W.hcolour (w0+n*p) (w1+n*p) W.h0 W.hhi
+    W.hdiv W.hw W.hcover W.hwidth W.hwin W.hR W.hW (stdS p) (stdU p Fr) hs hu huc
+    (fun z hz => by
+      obtain ⟨hv1,hv2⟩ := W.hsurR z
+      obtain ⟨k,hk,hsep⟩ := hkill _ hv1 hv2 hz
+      exact Or.inr (WrapPrefixClosed.rowCoupling_pole_ne H (stdS p) (stdU p Fr) hs hu huc z k hk hsep
+        (by omega) (by omega)))
+    (fun y hy => by
+      obtain ⟨hv1,hv2⟩ := W.hsurC y
+      obtain ⟨k,hk,hsep⟩ := hkill _ hv1 hv2 hy
+      exact Or.inr (WrapPrefixClosed.colCoupling_pole_ne H (stdS p) (stdU p Fr) hs hu huc y k hk hsep
+        (by omega) (by omega)))
+  have hfar := W.hfar
+  have ht := WrapPrefixClosed.beta3_translate d (r+n*p+b) p w0 w1 (n*p) (by omega) (by omega)
+  have he : r+2*n*p+b=r+n*p+b+n*p := by ring
+  have hw : w1+n*p+1-(w0+n*p)=w1+1-w0 := by omega
+  rw [he,ht,hw] at hc
+  unfold cr3
+  exact hc
 
 end Supply
 
@@ -397,13 +454,21 @@ end Shapes
 section Block
 variable {Fr : Frame} {p q o r n e shift N b d : ℕ} [Fact p.Prime]
 
+/-- A fractional pole translated by a multiple of the period is a pole. -/
+theorem frac_shift (p q o B k : ℕ) (hB : p∣B) (hk : p∣q*k-o) (hle : o≤q*k) : p∣q*(B+k)-o := by
+  have e : q*(B+k)-o=q*B+(q*k-o) := by rw [Nat.mul_add]; omega
+  rw [e]
+  exact dvd_add (Dvd.dvd.mul_left hB q) hk
+
 /-- One block-bit candidate prices every original common-deletion member
 of the strip, whatever the supplied retained-set bound. -/
 theorem block_gle (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsup : Supply Fr q o cr)
     (S : Shape p q o r n e shift N b d) (T : TwoTermData Fr q o) (D : PoleData Fr p N)
     (hsq : ∀ t,1≤t → t<N → ¬p^2∣q*t-o) (B lo hi : ℕ) (hB : p∣B) (hBr : r+n*p<B+p)
     (hlo : lo<p) (hhi : hi<p)
-    (hNo : ∀ v,B+n*p+lo<v → v≤B+n*p+hi → ¬ttSing p q o (v:ℤ)) (K : Finset (Fin r)) :
+    (hNo : ∀ v,B+n*p+lo<v → v≤B+n*p+hi → ¬ttSing p q o (v:ℤ))
+    (hpl : p∣B+n*p+lo ∨ p∣q*(B+n*p+lo)-o) (hpr : p∣B+n*p+hi+1 ∨ p∣q*(B+n*p+hi+1)-o)
+    (K : Finset (Fin r)) :
     GLE p (cand0 cr d (r+n*p+b) p B lo hi)
       (CatalanCore.Rect.FullN Fr (WrapPrefixMember.common K) (fun i:Fin (n*p+e) => r+2*(i:ℕ))
         (fun i:Fin (n*p+e) => r+2*(i:ℕ)+1) (Polynomial.X:ℚ[X])).det := by
@@ -448,7 +513,13 @@ theorem block_gle (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsup : Sup
           hwidth := S.hwidth
           hwin := by omega
           hR := by omega
-          hW := by omega }
+          hW := by omega
+          hfar := ?_
+          hext := S.hext
+          hsurR := ?_
+          hsurC := ?_
+          hleft := ?_
+          hright := ?_ }
       · rw [hHt0]; exact mem_Icc.mpr ⟨by omega,by omega⟩
       · rw [hdivq (tvv+n*p) (by omega) (by omega),hdivq (B+lo+n*p) (by omega) (by omega)]
       · intro v hv
@@ -469,6 +540,36 @@ theorem block_gle (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsup : Sup
           have hr := S.hcol z
           change WrapPrefixMember.Schur.surplusCol S.H0 z=v
           omega
+      · have hBp : p≤B := by
+          rcases Nat.eq_zero_or_pos L0 with h|h
+          · subst h
+            have : p≤n*p := Nat.le_mul_of_pos_left p S.H0.hn
+            rw [hL0] at hBr
+            simp only [mul_zero,zero_add] at hBr
+            omega
+          · rw [hL0]; exact Nat.le_mul_of_pos_right p h
+        omega
+      · intro z
+        have hr := S.hrow z
+        have hc0 := S.hc0
+        have := z.2
+        change r+2*n*p+b≤WrapPrefixMember.Schur.surplusRow S.H0 z ∧
+          WrapPrefixMember.Schur.surplusRow S.H0 z<r+2*n*p+b+2*d
+        omega
+      · intro y
+        have hr := S.hcol y
+        have hc0 := S.hc0
+        have := y.2
+        change r+2*n*p+b≤WrapPrefixMember.Schur.surplusCol S.H0 y ∧
+          WrapPrefixMember.Schur.surplusCol S.H0 y<r+2*n*p+b+2*d
+        omega
+      · intro v _ hv2
+        exact ⟨B+lo+n*p,by rw [show B+lo+n*p=B+n*p+lo by ring]; exact hpl,hv2,le_rfl⟩
+      · intro v hv1 hv2
+        have hw := S.hwidth
+        by_cases hc : B+hi≤r+n*p+b+p-1
+        · exact ⟨B+n*p+hi+1,hpr,by omega,by omega⟩
+        · exfalso; omega
     have hret := hsup T p r n e b d shift N hsq D H (B+lo) tvv hW
     have hg := window_gle_G H T D hsq S.c0 S.hc0 S.hrow S.hcol S.hwidth S.hbd (by omega)
       t0v tvv (cr d (r+n*p+b) p (B+lo) tvv) hHt0 (by omega) hret K
@@ -524,11 +625,18 @@ theorem member_gle_shape (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (hsu
       have h2 := Nat.mod_lt r hp0
       have h3 : (n+j)*p=n*p+j*p := by ring
       omega
+    have hfr : p∣q*(p*(r/p)+(n+j)*p+n*p+k)-o :=
+      frac_shift p q o _ k hBa hrho (le_of_lt (lt_of_lt_of_le S.H0.hoq (Nat.le_mul_of_pos_right q hk0)))
     cases z
     · have hNo := noSing_blk (ℓ:=0) (uz:=k-1) T S.H0.hqp hBa (show k-1<p by omega) hrho hk0 hkp (Or.inr (by omega))
-      exact block_gle cr hsup S T D hsq _ 0 (k-1) hB hBr (by omega) (by omega) hNo K
+      exact block_gle cr hsup S T D hsq _ 0 (k-1) hB hBr (by omega) (by omega) hNo
+        (Or.inl (by rw [add_zero]; exact hBa))
+        (Or.inr (by rw [show p*(r/p)+(n+j)*p+n*p+(k-1)+1=p*(r/p)+(n+j)*p+n*p+k by omega]; exact hfr)) K
     · have hNo := noSing_blk (ℓ:=k) (uz:=p-1) T S.H0.hqp hBa (show p-1<p by omega) hrho hk0 hkp (Or.inl le_rfl)
-      exact block_gle cr hsup S T D hsq _ k (p-1) hB hBr hkp (by omega) hNo K
+      exact block_gle cr hsup S T D hsq _ k (p-1) hB hBr hkp (by omega) hNo (Or.inr hfr)
+        (Or.inl (by
+          rw [show p*(r/p)+(n+j)*p+n*p+(p-1)+1=p*(r/p)+(n+j)*p+n*p+p*1 by omega]
+          exact dvd_add hBa (dvd_mul_right p 1))) K
   unfold priceG
   exact WrapClosed.gle_min (WrapClosed.gle_min (WrapClosed.gle_min (hcand 0 false) (hcand 0 true))
     (WrapClosed.gle_min (hcand 1 false) (hcand 1 true)))

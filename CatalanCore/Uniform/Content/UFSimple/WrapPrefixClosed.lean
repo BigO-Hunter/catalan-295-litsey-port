@@ -7941,31 +7941,18 @@ theorem embed1_clearedSystem_det {M : ℕ} (H : FibreHyp p q o cn xr yc z M) (s 
   · simp only [↓reduceIte,mul_one,one_pow,one_mul]
     ring
 
-/-- Two cleared adjacent one-parameter fibre systems whose central
-evaluations (integer family undeformed, fractional parameter at the central
-pole) separate have distinct ORIGINAL residue directions. -/
-theorem residue_cross1_ne {M n k1 k2 : ℕ}
+/-- The one-parameter cross argument, parametrised by its input: distinct
+cleared bordered cross products (integer family undeformed) give distinct
+ORIGINAL residue directions. Used by the fractional (central `Y`) test
+below and by the integer (top `Y`) test of R3. -/
+theorem residue_cross1_of_spec {M n k1 k2 : ℕ}
     {cn1 : Fin k1 → ℕ} {xr1 yc1 : Fin n → ℕ} {z1 : ℕ}
     {cn2 : Fin k2 → ℕ} {xr2 yc2 : Fin n → ℕ} {z2 : ℕ}
     (H1 : FibreHyp p q o cn1 xr1 yc1 z1 M) (H2 : FibreHyp p q o cn2 xr2 yc2 z2 M)
     (s u : GaussLoc p) (u0 : ZMod p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
     (hu0 : WrapDeform.residue p (WrapOwnCore.constants p u)=RatFunc.C (RatFunc.C u0))
-    (ev0 : (ZMod p)[X] →+* RatFunc (ZMod p)) (ts : ℕ) (htsM : ts∈Icc 1 M)
-    (hz : ∀ t∈Icc 1 M,(ev0.comp (specInt p)) (dfac p q o t)=0 ↔ t=ts)
-    (hev : ∀ k,(ev0.comp (specInt p)) (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k)
-    (cut1 cut2 : ℕ)
-    (hrow1 : ∀ i,ts≤bordRow xr1 z1 i ↔ cut1≤bordRow xr1 z1 i/p) (hcol1 : ∀ c,ts≤yc1 c ↔ cut1≤yc1 c/p)
-    (hq1 : ∀ i c,((yc1 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr1 z1 i/p:ℕ):RatFunc (ZMod p)))
-    (hrow2 : ∀ i,ts≤bordRow xr2 z2 i ↔ cut2≤bordRow xr2 z2 i/p) (hcol2 : ∀ c,ts≤yc2 c ↔ cut2≤yc2 c/p)
-    (hq2 : ∀ i c,((yc2 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr2 z2 i/p:ℕ):RatFunc (ZMod p)))
-    (hne : (scaledStepLoad (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut1
-          (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det*
-        (scaledStep (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut2
-          (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det≠
-      (scaledStepLoad (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut2
-          (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det*
-        (scaledStep (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut1
-          (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det) :
+    (hbr : specInt p ((clearedD p q o xr1 yc1 z1 M u0 true).det*(clearedD p q o xr2 yc2 z2 M u0 false).det)≠
+      specInt p ((clearedD p q o xr2 yc2 z2 M u0 true).det*(clearedD p q o xr1 yc1 z1 M u0 false).det)) :
     WrapDeform.residue p ((ringSystem1 p q o cn1 xr1 yc1 z1 s u true).det*
       (ringSystem1 p q o cn2 xr2 yc2 z2 s u false).det-
       (ringSystem1 p q o cn2 xr2 yc2 z2 s u true).det*(ringSystem1 p q o cn1 xr1 yc1 z1 s u false).det)≠0 := by
@@ -7973,26 +7960,6 @@ theorem residue_cross1_ne {M n k1 k2 : ℕ}
   have hq := q_zmod_ne p q H1.hq0 H1.hqp
   have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M H1.hq0) H1.hM
   have hcl := specInt_clearing_ne p q o M hMp hq
-  have hD (load : Bool) {xr yc : Fin n → ℕ} {zz : ℕ} (cut : ℕ)
-      (hr : ∀ i,ts≤bordRow xr zz i ↔ cut≤bordRow xr zz i/p) (hc : ∀ c,ts≤yc c ↔ cut≤yc c/p)
-      (hqq : ∀ i c,((yc c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr zz i/p:ℕ):RatFunc (ZMod p))) :
-      (ev0.comp (specInt p)) (clearedD p q o xr yc zz M u0 load).det=
-        ((if load then scaledStepLoad else scaledStep)
-          (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut
-          (fun i => bordRow xr zz i/p) (fun c => yc c/p)).det := by
-    rw [RingHom.map_det]
-    exact congrArg Matrix.det
-      (ev_clearedD (q:=q) (o:=o) (ev0.comp (specInt p)) M ts htsM hz hev u0 cut hr hc hqq load)
-  have hbr : specInt p ((clearedD p q o xr1 yc1 z1 M u0 true).det*(clearedD p q o xr2 yc2 z2 M u0 false).det)≠
-      specInt p ((clearedD p q o xr2 yc2 z2 M u0 true).det*(clearedD p q o xr1 yc1 z1 M u0 false).det) := by
-    intro h
-    apply hne
-    have h' := congrArg ev0 h
-    have e1 : ∀ x,ev0 (specInt p x)=(ev0.comp (specInt p)) x := fun _ => rfl
-    rw [e1,e1,map_mul,map_mul] at h'
-    rw [hD true cut1 hrow1 hcol1 hq1,hD false cut2 hrow2 hcol2 hq2,
-      hD true cut2 hrow2 hcol2 hq2,hD false cut1 hrow1 hcol1 hq1] at h'
-    simpa only [↓reduceIte,Bool.false_eq_true] using h'
   obtain ⟨dAN,cAN⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn1 M u0)
     (clearedB p q o cn1 yc1 M u0 true) (clearedE p q o cn1 xr1 z1 M u0) (clearedD p q o xr1 yc1 z1 M u0 true)
   obtain ⟨dAD,cAD⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn1 M u0)
@@ -8034,6 +8001,58 @@ theorem residue_cross1_ne {M n k1 k2 : ℕ}
     exact sub_eq_zero.mp h
   linear_combination (embed1 p (clearing p q o M)^(2*k1+n)*embed1 p (clearing p q o M)*
     embed1 p (clearing p q o M)^(2*k2+n))*h0
+
+/-- Two cleared adjacent one-parameter fibre systems whose central
+evaluations (integer family undeformed, fractional parameter at the central
+pole) separate have distinct ORIGINAL residue directions. -/
+theorem residue_cross1_ne {M n k1 k2 : ℕ}
+    {cn1 : Fin k1 → ℕ} {xr1 yc1 : Fin n → ℕ} {z1 : ℕ}
+    {cn2 : Fin k2 → ℕ} {xr2 yc2 : Fin n → ℕ} {z2 : ℕ}
+    (H1 : FibreHyp p q o cn1 xr1 yc1 z1 M) (H2 : FibreHyp p q o cn2 xr2 yc2 z2 M)
+    (s u : GaussLoc p) (u0 : ZMod p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu0 : WrapDeform.residue p (WrapOwnCore.constants p u)=RatFunc.C (RatFunc.C u0))
+    (ev0 : (ZMod p)[X] →+* RatFunc (ZMod p)) (ts : ℕ) (htsM : ts∈Icc 1 M)
+    (hz : ∀ t∈Icc 1 M,(ev0.comp (specInt p)) (dfac p q o t)=0 ↔ t=ts)
+    (hev : ∀ k,(ev0.comp (specInt p)) (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k)
+    (cut1 cut2 : ℕ)
+    (hrow1 : ∀ i,ts≤bordRow xr1 z1 i ↔ cut1≤bordRow xr1 z1 i/p) (hcol1 : ∀ c,ts≤yc1 c ↔ cut1≤yc1 c/p)
+    (hq1 : ∀ i c,((yc1 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr1 z1 i/p:ℕ):RatFunc (ZMod p)))
+    (hrow2 : ∀ i,ts≤bordRow xr2 z2 i ↔ cut2≤bordRow xr2 z2 i/p) (hcol2 : ∀ c,ts≤yc2 c ↔ cut2≤yc2 c/p)
+    (hq2 : ∀ i c,((yc2 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr2 z2 i/p:ℕ):RatFunc (ZMod p)))
+    (hne : (scaledStepLoad (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut1
+          (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det*
+        (scaledStep (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut2
+          (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det≠
+      (scaledStepLoad (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut2
+          (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det*
+        (scaledStep (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut1
+          (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det) :
+    WrapDeform.residue p ((ringSystem1 p q o cn1 xr1 yc1 z1 s u true).det*
+      (ringSystem1 p q o cn2 xr2 yc2 z2 s u false).det-
+      (ringSystem1 p q o cn2 xr2 yc2 z2 s u true).det*(ringSystem1 p q o cn1 xr1 yc1 z1 s u false).det)≠0 := by
+  have hq := q_zmod_ne p q H1.hq0 H1.hqp
+  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M H1.hq0) H1.hM
+  have hD (load : Bool) {xr yc : Fin n → ℕ} {zz : ℕ} (cut : ℕ)
+      (hr : ∀ i,ts≤bordRow xr zz i ↔ cut≤bordRow xr zz i/p) (hc : ∀ c,ts≤yc c ↔ cut≤yc c/p)
+      (hqq : ∀ i c,((yc c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr zz i/p:ℕ):RatFunc (ZMod p))) :
+      (ev0.comp (specInt p)) (clearedD p q o xr yc zz M u0 load).det=
+        ((if load then scaledStepLoad else scaledStep)
+          (centralWeight p q o (ev0.comp (specInt p)) u0 M ts) cut
+          (fun i => bordRow xr zz i/p) (fun c => yc c/p)).det := by
+    rw [RingHom.map_det]
+    exact congrArg Matrix.det
+      (ev_clearedD (q:=q) (o:=o) (ev0.comp (specInt p)) M ts htsM hz hev u0 cut hr hc hqq load)
+  have hbr : specInt p ((clearedD p q o xr1 yc1 z1 M u0 true).det*(clearedD p q o xr2 yc2 z2 M u0 false).det)≠
+      specInt p ((clearedD p q o xr2 yc2 z2 M u0 true).det*(clearedD p q o xr1 yc1 z1 M u0 false).det) := by
+    intro h
+    apply hne
+    have h' := congrArg ev0 h
+    have e1 : ∀ x,ev0 (specInt p x)=(ev0.comp (specInt p)) x := fun _ => rfl
+    rw [e1,e1,map_mul,map_mul] at h'
+    rw [hD true cut1 hrow1 hcol1 hq1,hD false cut2 hrow2 hcol2 hq2,
+      hD true cut2 hrow2 hcol2 hq2,hD false cut1 hrow1 hcol1 hq1] at h'
+    simpa only [↓reduceIte,Bool.false_eq_true] using h'
+  exact residue_cross1_of_spec H1 H2 s u u0 hs hu0 hbr
 
 end FractionalClearedSystem
 
@@ -8564,6 +8583,73 @@ variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
 set_option maxHeartbeats 2000000 in
+/-- Binding of a separated pair of fibre directions to the actual
+one-parameter coupling at an outside node `v` against the original anchor:
+the common tail of the fractional (R2) and the integer (R3) kills. -/
+theorem node_coupling1_of_cross (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (v η : ℕ)
+    (hvlo : r+2*n*p≤v) (hvhi : v<r+2*n*p+p) (hvN : v<N)
+    (hPv : ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p)).det≠0)
+    (hps : WrapDeform.residue p
+      ((ringSystem1 p q o (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) v s u true).det*
+        (ringSystem1 p q o (pcn p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val)) (pxr p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val) n) (pyc p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val) n) H.t0 s u false).det-
+      (ringSystem1 p q o (pcn p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val)) (pxr p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val) n) (pyc p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val) n) H.t0 s u true).det*
+        (ringSystem1 p q o (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) v s u false).det)≠0) :
+    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o v)-
+      (fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ
+      (fun i => WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o
+        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))-
+    WrapDeform.residue p (H.anchor s u)*
+    (1-(fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ 1)≠0 := by
+  classical
+  have hres0 : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(H.t0:ZMod p) :=
+    fun i => H.hfree H.t0 (mem_Icc.mpr ⟨le_rfl,H.hle⟩) i
+  have hP0 := fibreCore1_det_ne H s u hs hu huc H.t0 hres0
+  have hRvT := residue_ringSystem1_det p q o _ _ _ v s u true hPv
+  have hRvF := residue_ringSystem1_det p q o _ _ _ v s u false hPv
+  have hR0T := residue_ringSystem1_det p q o _ _ _ H.t0 s u true hP0
+  have hR0F := residue_ringSystem1_det p q o _ _ _ H.t0 s u false hP0
+  simp only [↓reduceIte,Bool.false_eq_true,map_one] at hRvT hRvF hR0T hR0F
+  obtain ⟨hanc,hr0⟩ := residue_anchor1 H s u hs hu huc
+  rw [hanc]
+  intro hc
+  apply hps
+  rw [map_sub,map_mul,map_mul]
+  have key := coupling_cross ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p)).det
+    ((fibreCore1 H s u H.t0).map (WrapDeform.residue p)).det
+    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o v)-
+      (fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ
+      (fun i => WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o
+        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))
+    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o H.t0)-
+      fibreSigma1 H u H.t0 ⬝ᵥ ((fibreCore1 H s u H.t0).map (WrapDeform.residue p))⁻¹ *ᵥ fibreLoad1 H u H.t0)
+    (1-(fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ 1)
+    (1-fibreSigma1 H u H.t0 ⬝ᵥ ((fibreCore1 H s u H.t0).map (WrapDeform.residue p))⁻¹ *ᵥ 1) hr0
+  rw [hc,zero_mul,zero_mul,zero_mul] at key
+  rw [hRvT,hRvF,hR0T,hR0F]
+  exact key.symm
+
+set_option maxHeartbeats 2000000 in
 /-- Section 8.3 in the ONE-parameter ring at an actual outside node `v`
 with fibre bit `η`, separated from the anchor by an original FRACTIONAL
 pole `k`: the actual reduced coupling against the original anchor is
@@ -8600,8 +8686,6 @@ theorem node_coupling1_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (Z
   have ht0N : H.t0<N := lt_of_le_of_lt H.hle H.htvN
   have ht0lo := H.hlo
   have ht0hi : H.t0<r+2*n*p+p := lt_of_le_of_lt H.hle H.hhi
-  have hres0 : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(H.t0:ZMod p) :=
-    fun i => H.hfree H.t0 (mem_Icc.mpr ⟨le_rfl,H.hle⟩) i
   have ho0 : 0<o := by
     rcases Nat.eq_zero_or_pos o with h|h
     · exact absurd (by rw [h]; simp) H.ho
@@ -8667,40 +8751,7 @@ theorem node_coupling1_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (Z
     n N (k-n*p) cut1 cut2 s u u0 (ZMod.val_lt _) (ZMod.val_lt _) hη (bit_le _) H.hn hkv hk0
     hz1 hz2 H.hN H.hq0 H.hqp ho0 H.hoq hs hu0 hu00 (mem_Icc.mpr ⟨hts1,htsN⟩) hI' hF' hcase hw1 hw2
   rw [hpzv,hpz0] at hps
-  have hP0 := fibreCore1_det_ne H s u hs hu huc H.t0 hres0
-  have hRvT := residue_ringSystem1_det p q o _ _ _ v s u true hPv
-  have hRvF := residue_ringSystem1_det p q o _ _ _ v s u false hPv
-  have hR0T := residue_ringSystem1_det p q o _ _ _ H.t0 s u true hP0
-  have hR0F := residue_ringSystem1_det p q o _ _ _ H.t0 s u false hP0
-  simp only [↓reduceIte,Bool.false_eq_true,map_one] at hRvT hRvF hR0T hR0F
-  obtain ⟨hanc,hr0⟩ := residue_anchor1 H s u hs hu huc
-  rw [hanc]
-  intro hc
-  apply hps
-  rw [map_sub,map_mul,map_mul]
-  have key := coupling_cross ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p)).det
-    ((fibreCore1 H s u H.t0).map (WrapDeform.residue p)).det
-    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o v)-
-      (fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ
-      (fun i => WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))
-    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o H.t0)-
-      fibreSigma1 H u H.t0 ⬝ᵥ ((fibreCore1 H s u H.t0).map (WrapDeform.residue p))⁻¹ *ᵥ fibreLoad1 H u H.t0)
-    (1-(fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ 1)
-    (1-fibreSigma1 H u H.t0 ⬝ᵥ ((fibreCore1 H s u H.t0).map (WrapDeform.residue p))⁻¹ *ᵥ 1) hr0
-  rw [hc,zero_mul,zero_mul,zero_mul] at key
-  rw [hRvT,hRvF,hR0T,hR0F]
-  exact key.symm
+  exact node_coupling1_of_cross H s u hs hu huc v η hvlo hvhi hvN hPv hps
 
 /-- R2, ACTUAL one-parameter kill: an outside surplus ROW separated from the
 anchor by an original FRACTIONAL pole has nonzero actual coupling. -/
@@ -9020,6 +9071,1126 @@ theorem harmonic_uniq (A : F) (n : ℕ) (hk : ∀ k,1≤k → k≤2*n → (k:F)�
 
 end HarmonicLemma
 
+/-! ## R3 / Harmonic Lemma: Theorem A (arbitrary split) and the harmonic
+bordered system.  The bordered matrix `[Q | col]` on row nodes `xs` and
+column nodes `ys` (an ARBITRARY split of `κ..κ+2n`) with harmonic load
+`L(κ+s) = c + ℓ_A(s)` is nonsingular, and its direction is
+`c + ℓ_A(n) + γ_n` with `γ_n` depending only on `n`. -/
+
+section HarmonicBordered
+open fwdDiff
+variable {F : Type*} [Field F]
+
+theorem fd_congr (g1 g2 : ℕ → F) (m y : ℕ) (h : ∀ s≤m,g1 (y+s)=g2 (y+s)) : fd g1 m y=fd g2 m y := by
+  unfold fd
+  apply Finset.sum_congr rfl
+  intro s hs
+  rw [h s (by have := Finset.mem_range.mp hs; omega)]
+
+theorem fd_lin (a : F) (f g : ℕ → F) (m y : ℕ) :
+    fd (fun s => a*f s+g s) m y=a*fd f m y+fd g m y := by
+  unfold fd
+  rw [Finset.mul_sum,← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro s _
+  ring
+
+theorem fd_poly (P : F[X]) (κ m y : ℕ) :
+    fd (fun s => P.eval ((κ+s:ℕ):F)) m y=(Δ_[1]^[m] P.eval) ((κ+y:ℕ):F) := by
+  rw [fwdDiff_iter_eq_sum_shift]
+  unfold fd
+  apply Finset.sum_congr rfl
+  intro s _
+  rw [zsmul_eq_mul,nsmul_eq_mul,mul_one]
+  push_cast
+  ring_nf
+
+theorem fd_poly_hi (P : F[X]) (κ m y : ℕ) (h : P.natDegree<m) :
+    fd (fun s => P.eval ((κ+s:ℕ):F)) m y=0 := by
+  rw [fd_poly,Polynomial.fwdDiff_iter_eq_zero_of_degree_lt h]
+  rfl
+
+theorem fd_poly_top (P : F[X]) (κ n y : ℕ) (h : P.natDegree≤n) :
+    fd (fun s => P.eval ((κ+s:ℕ):F)) n y=P.coeff n*(n.factorial:F) := by
+  rcases lt_or_eq_of_le h with h'|h'
+  · rw [fd_poly_hi P κ n y h',Polynomial.coeff_eq_zero_of_natDegree_lt h',zero_mul]
+  · rw [fd_poly,← h',P.fwdDiff_iter_degree_eq_factorial]
+    simp only [Pi.smul_apply,Pi.natCast_apply,smul_eq_mul]
+    rfl
+
+/-- Newton's forward formula for a function whose high differences at `0` vanish. -/
+theorem newton_fd (g : ℕ → F) (n : ℕ) (hz : ∀ k,n<k → fd g k 0=0) (s : ℕ) :
+    g s=∑ k∈range (n+1),(s.choose k:F)*fd g k 0 := by
+  have h := shift_eq_sum_fwdDiff_iter (1:ℕ) g s 0
+  simp only [zero_add,smul_eq_mul,mul_one,nsmul_eq_mul] at h
+  rw [h]
+  simp only [← fd_eq]
+  have e1 : ∑ k∈range (s+1),(s.choose k:F)*fd g k 0=∑ k∈range (s+n+1),(s.choose k:F)*fd g k 0 := by
+    apply Finset.sum_subset (Finset.range_subset_range.mpr (by omega))
+    intro k hk hk'
+    simp only [Finset.mem_range] at hk hk'
+    rw [Nat.choose_eq_zero_of_lt (by omega)]
+    simp
+  have e2 : ∑ k∈range (n+1),(s.choose k:F)*fd g k 0=∑ k∈range (s+n+1),(s.choose k:F)*fd g k 0 := by
+    apply Finset.sum_subset (Finset.range_subset_range.mpr (by omega))
+    intro k hk hk'
+    simp only [Finset.mem_range] at hk hk'
+    rw [hz k (by omega)]
+    simp
+  rw [e1,e2]
+
+variable (F) in
+/-- `W(t) = ∏_j (t - y_j)`. -/
+noncomputable def wpoly {n : ℕ} (ys : Fin n → ℕ) : F[X] := ∏ j,(X-C (ys j:F))
+
+variable (F) in
+/-- `W(t)/(t - y_j)`. -/
+noncomputable def ppoly {n : ℕ} (ys : Fin n → ℕ) (j : Fin n) : F[X] :=
+  ∏ j'∈univ.erase j,(X-C (ys j':F))
+
+theorem wpoly_eq {n : ℕ} (ys : Fin n → ℕ) (j : Fin n) :
+    wpoly F ys=(X-C (ys j:F))*ppoly F ys j :=
+  (Finset.mul_prod_erase univ (fun j' => (X-C (ys j':F))) (mem_univ j)).symm
+
+theorem wpoly_monic {n : ℕ} (ys : Fin n → ℕ) : (wpoly F ys).Monic :=
+  Polynomial.monic_prod_of_monic _ _ (fun j _ => Polynomial.monic_X_sub_C _)
+
+theorem wpoly_natDegree {n : ℕ} (ys : Fin n → ℕ) : (wpoly F ys).natDegree=n := by
+  unfold wpoly
+  rw [Polynomial.natDegree_prod_of_monic _ _ (fun j _ => Polynomial.monic_X_sub_C _)]
+  simp only [Polynomial.natDegree_X_sub_C,Finset.sum_const,Finset.card_univ,Fintype.card_fin,smul_eq_mul,mul_one]
+
+theorem ppoly_natDegree {n : ℕ} (ys : Fin n → ℕ) (j : Fin n) : (ppoly F ys j).natDegree=n-1 := by
+  unfold ppoly
+  rw [Polynomial.natDegree_prod_of_monic _ _ (fun j _ => Polynomial.monic_X_sub_C _)]
+  simp only [Polynomial.natDegree_X_sub_C,Finset.sum_const,Finset.card_erase_of_mem (mem_univ j),
+    Finset.card_univ,Fintype.card_fin,smul_eq_mul,mul_one]
+
+theorem ppoly_coeff {n : ℕ} (ys : Fin n → ℕ) (j : Fin n) : (ppoly F ys j).coeff n=0 :=
+  Polynomial.coeff_eq_zero_of_natDegree_lt (by rw [ppoly_natDegree]; have := j.2; omega)
+
+theorem wpoly_coeff {n : ℕ} (ys : Fin n → ℕ) : (wpoly F ys).coeff n=1 := by
+  have h := (wpoly_monic (F:=F) ys).leadingCoeff
+  rwa [Polynomial.leadingCoeff,wpoly_natDegree] at h
+
+theorem ppoly_eval_other {n : ℕ} (ys : Fin n → ℕ) (j j' : Fin n) (h : j'≠j) :
+    (ppoly F ys j').eval (ys j:F)=0 := by
+  unfold ppoly
+  rw [Polynomial.eval_prod]
+  apply Finset.prod_eq_zero (i:=j) (Finset.mem_erase.mpr ⟨fun e => h e.symm,mem_univ _⟩)
+  simp
+
+theorem ppoly_eval_self {n : ℕ} (ys : Fin n → ℕ) (hy : ∀ a b,a≠b → (ys a:F)≠(ys b:F)) (j : Fin n) :
+    (ppoly F ys j).eval (ys j:F)≠0 := by
+  unfold ppoly
+  rw [Polynomial.eval_prod]
+  apply Finset.prod_ne_zero_iff.mpr
+  intro j' hj'
+  simp only [Polynomial.eval_sub,Polynomial.eval_X,Polynomial.eval_C]
+  exact sub_ne_zero.mpr (hy j j' (Finset.mem_erase.mp hj').1.symm)
+
+theorem wpoly_eval_ne {n : ℕ} (ys : Fin n → ℕ) (x : F) (hx : ∀ j,x≠(ys j:F)) :
+    (wpoly F ys).eval x≠0 := by
+  unfold wpoly
+  rw [Polynomial.eval_prod]
+  apply Finset.prod_ne_zero_iff.mpr
+  intro j _
+  simp only [Polynomial.eval_sub,Polynomial.eval_X,Polynomial.eval_C]
+  exact sub_ne_zero.mpr (hx j)
+
+/-- The bordered matrix `[Q | col]`, `Q_{ij} = (L(y_j)-L(x_i))/(y_j-x_i)`, rows
+`xs`, columns `ys` (any split; the zone row is just one of the rows). -/
+noncomputable def bmat {n : ℕ} (xs : Fin (n+1) → ℕ) (ys : Fin n → ℕ) (L : ℕ → F) (col : Fin (n+1) → F) :
+    Matrix (Fin (n+1)) (Fin (n+1)) F :=
+  Matrix.of fun i j => if h : (j:ℕ)<n then (L (ys ⟨j,h⟩)-L (xs i))/((ys ⟨j,h⟩:F)-(xs i:F)) else col i
+
+theorem bmat_mulVec {n : ℕ} (xs : Fin (n+1) → ℕ) (ys : Fin n → ℕ) (L : ℕ → F) (col : Fin (n+1) → F)
+    (w : Fin (n+1) → F) (i : Fin (n+1)) :
+    (bmat xs ys L col *ᵥ w) i=∑ j:Fin n,(L (ys j)-L (xs i))/((ys j:F)-(xs i:F))*w (Fin.castSucc j)+
+      col i*w (Fin.last n) := by
+  simp only [Matrix.mulVec,dotProduct,Fin.sum_univ_castSucc,bmat,Matrix.of_apply,Fin.coe_castSucc,
+    Fin.is_lt,dif_pos,Fin.val_last,lt_irrefl,dif_neg,not_false_eq_true]
+
+/-- Theorem A: denominator `D = λW - Σ_j w_j W/(t-y_j)`. -/
+noncomputable def dpoly {n : ℕ} (ys : Fin n → ℕ) (w : Fin (n+1) → F) (lam : F) : F[X] :=
+  C lam*wpoly F ys-∑ j,C (w (Fin.castSucc j))*ppoly F ys j
+
+/-- Theorem A: numerator `N = δW - Σ_j w_j L(y_j) W/(t-y_j)`. -/
+noncomputable def npoly {n : ℕ} (ys : Fin n → ℕ) (L : ℕ → F) (w : Fin (n+1) → F) : F[X] :=
+  C (w (Fin.last n))*wpoly F ys-∑ j,C (w (Fin.castSucc j)*L (ys j))*ppoly F ys j
+
+theorem dpoly_natDegree {n : ℕ} (ys : Fin n → ℕ) (w : Fin (n+1) → F) (lam : F) :
+    (dpoly ys w lam).natDegree≤n := by
+  unfold dpoly
+  refine (Polynomial.natDegree_sub_le _ _).trans (max_le ?_ ?_)
+  · exact (Polynomial.natDegree_C_mul_le _ _).trans (wpoly_natDegree ys).le
+  · apply Polynomial.natDegree_sum_le_of_forall_le
+    intro j _
+    exact (Polynomial.natDegree_C_mul_le _ _).trans (by rw [ppoly_natDegree]; omega)
+
+theorem npoly_natDegree {n : ℕ} (ys : Fin n → ℕ) (L : ℕ → F) (w : Fin (n+1) → F) :
+    (npoly ys L w).natDegree≤n := by
+  unfold npoly
+  refine (Polynomial.natDegree_sub_le _ _).trans (max_le ?_ ?_)
+  · exact (Polynomial.natDegree_C_mul_le _ _).trans (wpoly_natDegree ys).le
+  · apply Polynomial.natDegree_sum_le_of_forall_le
+    intro j _
+    exact (Polynomial.natDegree_C_mul_le _ _).trans (by rw [ppoly_natDegree]; omega)
+
+theorem dpoly_coeff {n : ℕ} (ys : Fin n → ℕ) (w : Fin (n+1) → F) (lam : F) :
+    (dpoly ys w lam).coeff n=lam := by
+  unfold dpoly
+  simp only [Polynomial.coeff_sub,Polynomial.coeff_C_mul,wpoly_coeff,Polynomial.finsetSum_coeff,ppoly_coeff,
+    mul_zero,Finset.sum_const_zero,sub_zero,mul_one]
+
+theorem npoly_coeff {n : ℕ} (ys : Fin n → ℕ) (L : ℕ → F) (w : Fin (n+1) → F) :
+    (npoly ys L w).coeff n=w (Fin.last n) := by
+  unfold npoly
+  simp only [Polynomial.coeff_sub,Polynomial.coeff_C_mul,wpoly_coeff,Polynomial.finsetSum_coeff,ppoly_coeff,
+    mul_zero,Finset.sum_const_zero,sub_zero,mul_one]
+
+theorem dpoly_eval_y {n : ℕ} (ys : Fin n → ℕ) (w : Fin (n+1) → F) (lam : F) (j : Fin n) :
+    (dpoly ys w lam).eval (ys j:F)=-(w (Fin.castSucc j)*(ppoly F ys j).eval (ys j:F)) := by
+  unfold dpoly
+  rw [Polynomial.eval_sub,Polynomial.eval_mul,wpoly_eq ys j,Polynomial.eval_mul,Polynomial.eval_finset_sum,
+    Finset.sum_eq_single j (fun j' _ h => by rw [Polynomial.eval_mul,ppoly_eval_other ys j j' h,mul_zero])
+      (fun h => absurd (mem_univ j) h)]
+  simp
+
+theorem npoly_eval_y {n : ℕ} (ys : Fin n → ℕ) (L : ℕ → F) (w : Fin (n+1) → F) (j : Fin n) :
+    (npoly ys L w).eval (ys j:F)=-(w (Fin.castSucc j)*L (ys j)*(ppoly F ys j).eval (ys j:F)) := by
+  unfold npoly
+  rw [Polynomial.eval_sub,Polynomial.eval_mul,wpoly_eq ys j,Polynomial.eval_mul,Polynomial.eval_finset_sum,
+    Finset.sum_eq_single j (fun j' _ h => by rw [Polynomial.eval_mul,ppoly_eval_other ys j j' h,mul_zero])
+      (fun h => absurd (mem_univ j) h)]
+  simp
+
+/-- Theorem A, row equations: a row of `[Q | 1] w = λ L` is the
+interpolation condition `N(x) = L(x) D(x)` at that row node. -/
+theorem interp_x {n : ℕ} (ys : Fin n → ℕ) (L : ℕ → F) (w : Fin (n+1) → F) (lam : F) (x : ℕ)
+    (hx : ∀ j,(x:F)≠(ys j:F))
+    (hrow : ∑ j:Fin n,(L (ys j)-L x)/((ys j:F)-(x:F))*w (Fin.castSucc j)+w (Fin.last n)=lam*L x) :
+    (npoly ys L w).eval (x:F)=L x*(dpoly ys w lam).eval (x:F) := by
+  have key : ∀ j,(L (ys j)-L x)/((ys j:F)-(x:F))*w (Fin.castSucc j)*(wpoly F ys).eval (x:F)=
+      -((L (ys j)-L x)*w (Fin.castSucc j)*(ppoly F ys j).eval (x:F)) := by
+    intro j
+    have hne : (ys j:F)-(x:F)≠0 := sub_ne_zero.mpr (hx j).symm
+    rw [wpoly_eq ys j,Polynomial.eval_mul]
+    simp only [Polynomial.eval_sub,Polynomial.eval_X,Polynomial.eval_C]
+    field_simp
+    ring
+  have hs : (∑ j:Fin n,(L (ys j)-L x)/((ys j:F)-(x:F))*w (Fin.castSucc j))*(wpoly F ys).eval (x:F)=
+      -∑ j:Fin n,(L (ys j)-L x)*w (Fin.castSucc j)*(ppoly F ys j).eval (x:F) := by
+    rw [Finset.sum_mul,← Finset.sum_neg_distrib]
+    exact Finset.sum_congr rfl (fun j _ => key j)
+  have hs2 : ∑ j:Fin n,(L (ys j)-L x)*w (Fin.castSucc j)*(ppoly F ys j).eval (x:F)=
+      ∑ j:Fin n,w (Fin.castSucc j)*L (ys j)*(ppoly F ys j).eval (x:F)-
+        L x*∑ j:Fin n,w (Fin.castSucc j)*(ppoly F ys j).eval (x:F) := by
+    rw [Finset.mul_sum,← Finset.sum_sub_distrib]
+    exact Finset.sum_congr rfl (fun j _ => by ring)
+  simp only [npoly,dpoly,Polynomial.eval_sub,Polynomial.eval_mul,Polynomial.eval_C,Polynomial.eval_finset_sum]
+  linear_combination (wpoly F ys).eval (x:F)*hrow-hs+hs2
+
+theorem cast_ne_off (N a b : ℕ) (hk : ∀ k,1≤k → k≤N → (k:F)≠0) (κ : ℕ) (ha : κ≤a ∧ a≤κ+N)
+    (hb : κ≤b ∧ b≤κ+N) (hab : a≠b) : (a:F)≠(b:F) := by
+  intro h
+  rcases Nat.lt_or_gt_of_ne hab with h'|h'
+  · apply hk (b-a) (by omega) (by omega)
+    rw [Nat.cast_sub h'.le,h,sub_self]
+  · apply hk (a-b) (by omega) (by omega)
+    rw [Nat.cast_sub h'.le,h,sub_self]
+
+/-- The Cauchy matrix `[1/(m-k)]`, `m = n+1..2n`, `k = 0..n-1`. -/
+noncomputable def hcauchy (F : Type*) [Field F] (n : ℕ) : Matrix (Fin n) (Fin n) F :=
+  WrapCauchy.matrix (fun i:Fin n => ((n+1+(i:ℕ):ℕ):F)) (fun k:Fin n => ((k:ℕ):F))
+
+/-- Its solution against `-1/(m-n)`: independent of the load parameter. -/
+noncomputable def heps (F : Type*) [Field F] (n : ℕ) : Fin n → F :=
+  (hcauchy F n)⁻¹ *ᵥ (fun i => -1/(((n+1+(i:ℕ):ℕ):F)-(n:F)))
+
+/-- The constant `γ_n` of the harmonic direction `c + ℓ_A(n) + γ_n`. -/
+noncomputable def hgam (F : Type*) [Field F] (n : ℕ) : F :=
+  -∑ k:Fin n,heps F n k/((n:F)-((k:ℕ):F))
+
+theorem hcauchy_det_ne (n : ℕ) (hk : ∀ k,1≤k → k≤2*n → (k:F)≠0) : (hcauchy F n).det≠0 :=
+  WrapCauchy.det_ne (fun i:Fin n => ((n+1+(i:ℕ):ℕ):F)) (fun k:Fin n => ((k:ℕ):F))
+    (fun a b h => Fin.ext (by
+      by_contra hne
+      exact cast_ne_of_le n _ _ hk (by have := a.2; omega) (by have := b.2; omega)
+        (by intro h'; apply hne; omega) h))
+    (fun a b h => Fin.ext (by
+      by_contra hne
+      exact cast_ne_of_le n _ _ hk (by have := a.2; omega) (by have := b.2; omega) hne h))
+    (fun a b h => cast_ne_of_le n _ _ hk (by have := a.2; omega) (by have := b.2; omega)
+      (by have := b.2; omega) h)
+
+/-- Hypotheses of the harmonic bordered system on an ARBITRARY split of the
+nodes `κ..κ+2n` into `n+1` rows and `n` columns. -/
+structure HSplit (n κ : ℕ) (A c : F) (L : ℕ → F) (xs : Fin (n+1) → ℕ) (ys : Fin n → ℕ) : Prop where
+  hn : 1≤n
+  hk : ∀ k,1≤k → k≤2*n → (k:F)≠0
+  hA : ∀ h<2*n,A+(h:F)≠0
+  hL : ∀ s≤2*n,L (κ+s)=c+hload A s
+  hxr : ∀ i,κ≤xs i ∧ xs i≤κ+2*n
+  hyr : ∀ j,κ≤ys j ∧ ys j≤κ+2*n
+  hxy : ∀ i j,xs i≠ys j
+  hyy : Function.Injective ys
+  hcov : ∀ s≤2*n,(∃ i,xs i=κ+s) ∨ (∃ j,ys j=κ+s)
+
+variable {n κ : ℕ} {A c : F} {L : ℕ → F} {xs : Fin (n+1) → ℕ} {ys : Fin n → ℕ}
+
+theorem HSplit.cxy (H : HSplit n κ A c L xs ys) (i : Fin (n+1)) (j : Fin n) : (xs i:F)≠(ys j:F) :=
+  cast_ne_off (2*n) _ _ H.hk κ (H.hxr i) (H.hyr j) (H.hxy i j)
+
+theorem HSplit.cyy (H : HSplit n κ A c L xs ys) (a b : Fin n) (h : a≠b) : (ys a:F)≠(ys b:F) :=
+  cast_ne_off (2*n) _ _ H.hk κ (H.hyr a) (H.hyr b) (fun e => h (H.hyy e))
+
+/-- Theorem A on the whole node set: `N = L D` at every node. -/
+theorem HSplit.interp (H : HSplit n κ A c L xs ys) (w : Fin (n+1) → F) (lam : F)
+    (hw : bmat xs ys L 1 *ᵥ w=fun i => lam*L (xs i)) (s : ℕ) (hs : s≤2*n) :
+    (npoly ys L w).eval ((κ+s:ℕ):F)=L (κ+s)*(dpoly ys w lam).eval ((κ+s:ℕ):F) := by
+  rcases H.hcov s hs with ⟨i,hi⟩|⟨j,hj⟩
+  · rw [← hi]
+    apply interp_x ys L w lam (xs i) (fun j => H.cxy i j)
+    have h := congrFun hw i
+    rw [bmat_mulVec] at h
+    simpa only [Pi.one_apply,one_mul] using h
+  · rw [← hj,npoly_eval_y,dpoly_eval_y]
+    ring
+
+/-- The difference identities shared by the homogeneous and the
+inhomogeneous case (orders `n+1..2n`, and order `n`). -/
+theorem HSplit.core (H : HSplit n κ A c L xs ys) (w : Fin (n+1) → F) (lam : F)
+    (hw : bmat xs ys L 1 *ᵥ w=fun i => lam*L (xs i)) :
+    (∀ m,n<m → m≤2*n → ∑ k∈range (n+1),fd (fun s => (dpoly ys w lam).eval ((κ+s:ℕ):F)) k 0*
+        ((m.choose k:F)*fd (hload A) (m-k) k)=0) ∧
+    (w (Fin.last n)*(n.factorial:F)=c*(lam*(n.factorial:F))+∑ k∈range (n+1),
+        fd (fun s => (dpoly ys w lam).eval ((κ+s:ℕ):F)) k 0*((n.choose k:F)*fd (hload A) (n-k) k)) := by
+  set g := fun s => (dpoly ys w lam).eval ((κ+s:ℕ):F) with hg
+  have hzD : ∀ k,n<k → fd g k 0=0 := fun k hk =>
+    fd_poly_hi _ κ k 0 (lt_of_le_of_lt (dpoly_natDegree ys w lam) hk)
+  have hN (m : ℕ) (hnm : n≤m) (hm : m≤2*n) : fd (fun s => (npoly ys L w).eval ((κ+s:ℕ):F)) m 0=
+      c*fd g m 0+∑ k∈range (n+1),fd g k 0*((m.choose k:F)*fd (hload A) (m-k) k) := by
+    rw [fd_congr _ (fun s => c*g s+∑ k∈range (n+1),fd g k 0*((s.choose k:F)*hload A s)) m 0 (by
+      intro s hs
+      simp only [zero_add]
+      rw [H.interp w lam hw s (by omega),H.hL s (by omega)]
+      change (c+hload A s)*g s=c*g s+∑ k∈range (n+1),fd g k 0*((s.choose k:F)*hload A s)
+      rw [add_mul]
+      congr 1
+      rw [newton_fd g n hzD s,Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro k _
+      ring),fd_lin,fd_sum (range (n+1)) (fun k => fd g k 0) (fun k s => (s.choose k:F)*hload A s)]
+    congr 1
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [fd_choose_mul _ _ _ (by have := Finset.mem_range.mp hk; omega)]
+  refine ⟨fun m h1 h2 => ?_,?_⟩
+  · have h := hN m h1.le h2
+    rw [fd_poly_hi _ κ m 0 (lt_of_le_of_lt (npoly_natDegree ys L w) h1),hzD m h1,mul_zero,zero_add] at h
+    exact h.symm
+  · have h := hN n le_rfl (by have := H.hn; omega)
+    rw [fd_poly_top _ κ n 0 (npoly_natDegree ys L w),npoly_coeff] at h
+    have hd : fd g n 0=lam*(n.factorial:F) := by
+      rw [hg,fd_poly_top _ κ n 0 (dpoly_natDegree ys w lam),dpoly_coeff]
+    rw [hd] at h
+    exact h
+
+/-- Nonsingularity of the harmonic bordered system, for every split. -/
+theorem HSplit.det_ne (H : HSplit n κ A c L xs ys) : (bmat xs ys L 1).det≠0 := by
+  intro h0
+  obtain ⟨w,hw0,hw⟩ := Matrix.exists_mulVec_eq_zero_iff.mpr h0
+  apply hw0
+  have hw' : bmat xs ys L 1 *ᵥ w=fun i => (0:F)*L (xs i) := by
+    rw [hw]; funext i; simp
+  obtain ⟨h1,-⟩ := H.core w 0 hw'
+  set g := fun s => (dpoly ys w 0).eval ((κ+s:ℕ):F) with hg
+  have hzD : ∀ k,n<k → fd g k 0=0 := fun k hk =>
+    fd_poly_hi _ κ k 0 (lt_of_le_of_lt (dpoly_natDegree ys w 0) hk)
+  have hdn : fd g n 0=0 := by
+    rw [hg,fd_poly_top _ κ n 0 (dpoly_natDegree ys w 0),dpoly_coeff,zero_mul]
+  have hlow : ∀ k<n,fd g k 0=0 := harmonic_uniq A n H.hk H.hA (fun k => fd g k 0) (by
+    intro m h1' h2'
+    rw [fd_sum (range n) (fun k => fd g k 0) (fun k s => (s.choose k:F)*hload A s)]
+    have := h1 m (by omega) h2'
+    rw [Finset.sum_range_succ,hdn,zero_mul,add_zero] at this
+    rw [← this]
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [fd_choose_mul _ _ _ (by have := Finset.mem_range.mp hk; omega)])
+  have hg0 : ∀ s,g s=0 := by
+    intro s
+    rw [newton_fd g n hzD s]
+    apply Finset.sum_eq_zero
+    intro k hk
+    have hk' := Finset.mem_range.mp hk
+    rcases Nat.lt_or_ge k n with h|h
+    · rw [hlow k h,mul_zero]
+    · rw [show k=n by omega,hdn,mul_zero]
+  have hD (a : ℕ) (ha : κ≤a) : (dpoly ys w 0).eval (a:F)=0 := by
+    have := hg0 (a-κ)
+    simp only [hg] at this
+    rwa [Nat.add_sub_cancel' ha] at this
+  have hwj : ∀ j,w (Fin.castSucc j)=0 := by
+    intro j
+    have h := hD (ys j) (H.hyr j).1
+    rw [dpoly_eval_y] at h
+    exact (mul_eq_zero.mp (neg_eq_zero.mp h)).resolve_right (ppoly_eval_self ys H.cyy j)
+  have hwl : w (Fin.last n)=0 := by
+    have hi := H.interp w 0 hw' (xs 0-κ) (by have := H.hxr 0; omega)
+    rw [Nat.add_sub_cancel' (H.hxr 0).1,hD (xs 0) (H.hxr 0).1,mul_zero] at hi
+    simp only [npoly,Polynomial.eval_sub,Polynomial.eval_mul,Polynomial.eval_C,
+      Polynomial.eval_finset_sum,hwj,zero_mul,Finset.sum_const_zero,sub_zero] at hi
+    exact (mul_eq_zero.mp hi).resolve_right (wpoly_eval_ne ys _ (fun j => H.cxy 0 j))
+  funext i
+  rw [Pi.zero_apply]
+  induction i using Fin.lastCases with
+  | last => exact hwl
+  | cast j => exact hwj j
+
+theorem neg_one_pow_pair (n : ℕ) (hn : 1≤n) : (-1:F)^(n-1)*(-1:F)^n=-1 := by
+  obtain ⟨j,rfl⟩ : ∃ j,n=j+1 := ⟨n-1,by omega⟩
+  rw [show j+1-1=j by omega,pow_succ,← mul_assoc,← pow_add,← two_mul,pow_mul]
+  norm_num
+
+/-- The direction of the harmonic bordered system (Cramer form):
+`det[Q | L] = (c + ℓ_A(n) + γ_n) det[Q | 1]`, for every split. -/
+theorem HSplit.dir (H : HSplit n κ A c L xs ys) :
+    (bmat xs ys L (fun i => L (xs i))).det=(c+hload A n+hgam F n)*(bmat xs ys L 1).det := by
+  have hd := H.det_ne
+  set B := bmat xs ys L 1 with hB
+  set w := B⁻¹ *ᵥ (fun i => L (xs i)) with hwdef
+  have hw : B *ᵥ w=fun i => 1*L (xs i) := by
+    rw [hwdef,Matrix.mulVec_mulVec,Matrix.mul_nonsing_inv _ (isUnit_iff_ne_zero.mpr hd),Matrix.one_mulVec]
+    funext i; simp
+  have hupd : bmat xs ys L (fun i => L (xs i))=B.updateCol (Fin.last n) (fun i => L (xs i)) := by
+    ext i j
+    simp only [hB,bmat,Matrix.updateCol_apply,Matrix.of_apply]
+    by_cases hj : j=Fin.last n
+    · subst hj; simp
+    · have hj' : (j:ℕ)<n := by
+        have := j.2
+        have : (j:ℕ)≠n := fun e => hj (Fin.ext (by simpa using e))
+        omega
+      simp [hj,hj']
+  have hcr : (B.updateCol (Fin.last n) (fun i => L (xs i))).det=B.det*w (Fin.last n) := by
+    rw [← Matrix.cramer_apply,Matrix.cramer_eq_adjugate_mulVec,hwdef,Matrix.inv_def,
+      Matrix.smul_mulVec,Pi.smul_apply,smul_eq_mul,Ring.inverse_eq_inv']
+    field_simp
+  rw [hupd,hcr,mul_comm]
+  congr 1
+  obtain ⟨h1,h2⟩ := H.core w 1 hw
+  set g := fun s => (dpoly ys w 1).eval ((κ+s:ℕ):F) with hg
+  have hdn : fd g n 0=(n.factorial:F) := by
+    rw [hg,fd_poly_top _ κ n 0 (dpoly_natDegree ys w 1),dpoly_coeff,one_mul]
+  set E : ℕ → F := fun k => (-1:F)^k*rise A k/(k.factorial:F) with hE
+  set ρ : F := (n.factorial:F)*E n with hρ
+  have hnf : (n.factorial:F)≠0 := fact_ne n n H.hk (by omega)
+  have hRn : rise A n≠0 := rise_ne _ _ (fun i hi => H.hA i (by omega))
+  have hρ0 : ρ≠0 := by
+    rw [hρ,hE]
+    exact mul_ne_zero hnf (div_ne_zero (mul_ne_zero (pow_ne_zero _ (by norm_num)) hRn) hnf)
+  -- the high-order equations as a Cauchy system
+  have hA1 (m : ℕ) (hm1 : n<m) (hm2 : m≤2*n) :
+      ∑ k∈range (n+1),fd g k 0*(E k/((m:F)-(k:F)))=0 := by
+    have h := h1 m hm1 hm2
+    have hCm : (-1:F)^(m-1)*(m.factorial:F)/rise A m≠0 :=
+      div_ne_zero (mul_ne_zero (pow_ne_zero _ (by norm_num)) (fact_ne n m H.hk hm2))
+        (rise_ne _ _ (fun i hi => H.hA i (by omega)))
+    have h' : ((-1:F)^(m-1)*(m.factorial:F)/rise A m)*
+        ∑ k∈range (n+1),fd g k 0*(E k/((m:F)-(k:F)))=0 := by
+      rw [← h,Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro k hk
+      rw [harmonic_term A n m k (by have := Finset.mem_range.mp hk; omega) hm2 H.hk H.hA]
+      simp only [hE]
+      ring
+    exact (mul_eq_zero.mp h').resolve_left hCm
+  set x : Fin n → F := fun k => fd g k 0*E k/ρ with hx
+  have hcx : hcauchy F n *ᵥ x=fun i:Fin n => -1/(((n+1+(i:ℕ):ℕ):F)-(n:F)) := by
+    funext i
+    have h := hA1 (n+1+(i:ℕ)) (by omega) (by have := i.2; omega)
+    rw [Finset.sum_range_succ,hdn] at h
+    have hmn : (((n+1+(i:ℕ):ℕ):F)-(n:F))≠0 := by
+      have := H.hk ((i:ℕ)+1) (by omega) (by have := i.2; omega)
+      push_cast at this ⊢
+      rwa [show (n:F)+1+(i:F)-(n:F)=(i:F)+1 by ring]
+    simp only [hcauchy,WrapCauchy.matrix,Matrix.mulVec,dotProduct,Matrix.of_apply]
+    rw [Fin.sum_univ_eq_sum_range (fun k => 1/(((n+1+(i:ℕ):ℕ):F)-(k:F))*(fd g k 0*E k/ρ))]
+    have hs : ∑ k∈range n,1/(((n+1+(i:ℕ):ℕ):F)-(k:F))*(fd g k 0*E k/ρ)=
+        (1/ρ)*∑ k∈range n,fd g k 0*(E k/(((n+1+(i:ℕ):ℕ):F)-(k:F))) := by
+      rw [Finset.mul_sum]
+      apply Finset.sum_congr rfl
+      intro k _
+      ring
+    rw [hs]
+    have h3 : ∑ k∈range n,fd g k 0*(E k/(((n+1+(i:ℕ):ℕ):F)-(k:F)))=
+        -(ρ/(((n+1+(i:ℕ):ℕ):F)-(n:F))) := by
+      rw [hρ]; linear_combination h
+    rw [h3]
+    field_simp
+  have hxe : x=heps F n := by
+    have hdc := hcauchy_det_ne (F:=F) n H.hk
+    rw [heps,← hcx,Matrix.mulVec_mulVec,Matrix.nonsing_inv_mul _ (isUnit_iff_ne_zero.mpr hdc),
+      Matrix.one_mulVec]
+  -- the order-n equation gives the direction
+  rw [Finset.sum_range_succ,hdn,Nat.choose_self,Nat.sub_self,fd_zero] at h2
+  have hlow : ∑ k∈range n,fd g k 0*((n.choose k:F)*fd (hload A) (n-k) k)=
+      ((-1:F)^(n-1)*(n.factorial:F)/rise A n)*ρ*∑ k:Fin n,heps F n k/((n:F)-((k:ℕ):F)) := by
+    rw [← hxe,hx]
+    beta_reduce
+    rw [Fin.sum_univ_eq_sum_range (fun k => fd g k 0*E k/ρ/((n:F)-(k:F))),Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k hk
+    rw [harmonic_term A n n k (Finset.mem_range.mp hk) (by omega) H.hk H.hA]
+    simp only [hE]
+    field_simp
+  have hcr : ((-1:F)^(n-1)*(n.factorial:F)/rise A n)*ρ=-(n.factorial:F) := by
+    rw [hρ]
+    simp only [hE]
+    rw [show (-1:F)^(n-1)*(n.factorial:F)/rise A n*((n.factorial:F)*((-1:F)^n*rise A n/(n.factorial:F)))=
+      ((-1:F)^(n-1)*(-1:F)^n)*(n.factorial:F) by field_simp; try ring,neg_one_pow_pair n H.hn]
+    ring
+  rw [hlow,hcr] at h2
+  rw [hgam]
+  apply mul_right_cancel₀ hnf
+  push_cast at h2
+  linear_combination h2
+
+end HarmonicBordered
+
+/-! ## R3: the top fractional coefficient (`Y = ∞`) of the cleared world
+
+With the integer family undeformed (`specInt`), every cleared entry is a
+polynomial in the fractional parameter `Y` of degree at most the number
+`F` of original fractional poles; its `Y^F` coefficient keeps only the
+integer poles, i.e. the harmonic load. -/
+
+section TopCoefficient
+variable {R : Type*} [CommRing R]
+
+theorem prod_top {ι : Type*} [DecidableEq ι] (s : Finset ι) (f : ι → R[X]) (e : ι → ℕ)
+    (h : ∀ i∈s,(f i).natDegree≤e i) :
+    (∏ i∈s,f i).natDegree≤∑ i∈s,e i ∧ (∏ i∈s,f i).coeff (∑ i∈s,e i)=∏ i∈s,(f i).coeff (e i) := by
+  induction s using Finset.induction_on with
+  | empty => simp
+  | insert a s ha ih =>
+    obtain ⟨h1,h2⟩ := ih (fun i hi => h i (Finset.mem_insert_of_mem hi))
+    have ha' := h a (Finset.mem_insert_self a s)
+    rw [Finset.prod_insert ha,Finset.sum_insert ha,Finset.prod_insert ha]
+    exact ⟨Polynomial.natDegree_mul_le.trans (add_le_add ha' h1),
+      by rw [Polynomial.coeff_mul_add_eq_of_natDegree_le ha' h1,h2]⟩
+
+/-- Column-degree top coefficient of a polynomial determinant. -/
+theorem det_top {ι : Type*} [Fintype ι] [DecidableEq ι] (M : Matrix ι ι R[X]) (d : ι → ℕ)
+    (h : ∀ i j,(M i j).natDegree≤d j) :
+    M.det.natDegree≤∑ j,d j ∧ M.det.coeff (∑ j,d j)=(Matrix.of fun i j => (M i j).coeff (d j)).det := by
+  have hσ : ∀ σ : Equiv.Perm ι,(∏ i,M (σ i) i).natDegree≤∑ j,d j ∧
+      (∏ i,M (σ i) i).coeff (∑ j,d j)=∏ i,(M (σ i) i).coeff (d i) :=
+    fun σ => prod_top univ (fun i => M (σ i) i) d (fun i _ => h _ _)
+  rw [Matrix.det_apply',Matrix.det_apply']
+  constructor
+  · apply Polynomial.natDegree_sum_le_of_forall_le
+    intro σ _
+    rw [← Polynomial.C_eq_intCast]
+    exact (Polynomial.natDegree_C_mul_le _ _).trans (hσ σ).1
+  · rw [Polynomial.finsetSum_coeff]
+    apply Finset.sum_congr rfl
+    intro σ _
+    rw [← Polynomial.C_eq_intCast,Polynomial.coeff_C_mul,(hσ σ).2]
+    simp only [Matrix.of_apply]
+
+end TopCoefficient
+
+/-- Harmonic numbers `H_m = Σ_{h<m} 1/(h+1)`. -/
+noncomputable def harmSum (F : Type*) [Field F] (m : ℕ) : F := ∑ h∈range m,1/((h:F)+1)
+
+theorem harmSum_add {F : Type*} [Field F] (κ s : ℕ) :
+    harmSum F (κ+s)=harmSum F κ+hload ((κ:F)+1) s := by
+  unfold harmSum hload
+  rw [Finset.sum_range_add]
+  congr 1
+  apply Finset.sum_congr rfl
+  intro h _
+  push_cast
+  ring_nf
+
+theorem harmSum_succ {F : Type*} [Field F] (m : ℕ) : harmSum F (m+1)=harmSum F m+1/((m:F)+1) := by
+  unfold harmSum
+  rw [Finset.sum_range_succ]
+
+/-- The integer poles up to `a` contribute `H_{a/p}`. -/
+theorem int_pole_sum {F : Type*} [Field F] (p a : ℕ) :
+    ∑ t∈Icc 1 a,(if p∣t then ((t/p:ℕ):F)⁻¹ else 0)=harmSum F (a/p) := by
+  induction a with
+  | zero => simp [harmSum]
+  | succ a ih =>
+    rw [Finset.sum_Icc_succ_top (by omega),ih,Nat.succ_div]
+    by_cases h : p∣a+1
+    · rw [if_pos h,if_pos h,harmSum_succ]
+      push_cast
+      ring
+    · rw [if_neg h,if_neg h,add_zero,add_zero]
+
+section ClearedTop
+variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
+
+/-- Top fractional degree and leading coefficient of one original
+denominator with the integer family undeformed. -/
+def topDeg (t : ℕ) : ℕ := if p∣t then 0 else if p∣q*t-o then 1 else 0
+noncomputable def topLead (t : ℕ) : ZMod p :=
+  if p∣t then ((t/p:ℕ):ZMod p) else if p∣q*t-o then (q:ZMod p) else 1
+
+/-- The number of original fractional poles in `[1, M]`. -/
+def fracCount (M : ℕ) : ℕ := ∑ t∈Icc 1 M,topDeg p q o t
+/-- The top coefficient of the cleared clearing factor. -/
+noncomputable def topClear (M : ℕ) : ZMod p := ∏ t∈Icc 1 M,topLead p q o t
+
+theorem specInt_bconst (k : ZMod p) : specInt p (bconst p k)=Polynomial.C k := by
+  simp [specInt,bconst]
+
+theorem specInt_dfac_top (t : ℕ) :
+    (specInt p (dfac p q o t)).natDegree≤topDeg p q o t ∧
+      (specInt p (dfac p q o t)).coeff (topDeg p q o t)=topLead p q o t := by
+  rw [specInt_dfac]
+  unfold topDeg topLead
+  split_ifs with h1 h2
+  · simp
+  · refine ⟨?_,?_⟩
+    · rw [add_comm]; exact Polynomial.natDegree_linear_le
+    · simp [Polynomial.coeff_C,Polynomial.coeff_X_one]
+  · simp
+
+theorem topLead_ne (M : ℕ) (hM : M<p*p) (hq : (q:ZMod p)≠0) (t : ℕ) (ht : t∈Icc 1 M) :
+    topLead p q o t≠0 := by
+  unfold topLead
+  split_ifs with h1 h2
+  · exact quot_ne_zero p M t hM ht h1
+  · exact hq
+  · exact one_ne_zero
+
+theorem topClear_ne (M : ℕ) (hM : M<p*p) (hq : (q:ZMod p)≠0) : topClear p q o M≠0 :=
+  Finset.prod_ne_zero_iff.mpr (fun t ht => topLead_ne p q o M hM hq t ht)
+
+theorem cofactor_top (M t : ℕ) (ht : t∈Icc 1 M) :
+    (specInt p (cofactor p q o M t)).natDegree≤fracCount p q o M-topDeg p q o t ∧
+      (specInt p (cofactor p q o M t)).coeff (fracCount p q o M-topDeg p q o t)=
+        ∏ t'∈(Icc 1 M).erase t,topLead p q o t' := by
+  have hs : ∑ t'∈(Icc 1 M).erase t,topDeg p q o t'=fracCount p q o M-topDeg p q o t := by
+    have := Finset.add_sum_erase (Icc 1 M) (topDeg p q o) ht
+    unfold fracCount; omega
+  unfold cofactor
+  rw [map_prod,← hs]
+  exact prod_top _ _ _ (fun t' _ => (specInt_dfac_top p q o t').1)
+    |>.imp id (fun h => h.trans (Finset.prod_congr rfl (fun t' _ => (specInt_dfac_top p q o t').2)))
+
+theorem clearedDelta_top (M t : ℕ) (hM : M<p*p) (ht : t∈Icc 1 M) :
+    (specInt p (clearedDelta p q o M t)).natDegree≤fracCount p q o M ∧
+      (specInt p (clearedDelta p q o M t)).coeff (fracCount p q o M)=
+        if p∣t then topClear p q o M*((t/p:ℕ):ZMod p)⁻¹ else 0 := by
+  obtain ⟨hd,hc⟩ := cofactor_top p q o M t ht
+  have hF : topDeg p q o t≤fracCount p q o M :=
+    Finset.single_le_sum (f:=topDeg p q o) (fun _ _ => Nat.zero_le _) ht
+  unfold clearedDelta deltaWeight
+  by_cases h1 : p∣t
+  · have h0 : topDeg p q o t=0 := by unfold topDeg; rw [if_pos h1]
+    rw [h0,Nat.sub_zero] at hd hc
+    simp only [if_pos h1,map_mul,map_one,one_mul]
+    refine ⟨hd,?_⟩
+    rw [hc]
+    have hq := quot_ne_zero p M t hM ht h1
+    have hm := Finset.mul_prod_erase (Icc 1 M) (topLead p q o) ht
+    have hl : topLead p q o t=((t/p:ℕ):ZMod p) := by unfold topLead; rw [if_pos h1]
+    rw [hl] at hm
+    unfold topClear
+    rw [← hm]
+    field_simp
+  · by_cases h2 : p∣q*t-o
+    · have h0 : topDeg p q o t=1 := by unfold topDeg; rw [if_neg h1,if_pos h2]
+      rw [h0] at hd hF
+      simp only [if_neg h1,if_pos h2,map_mul,map_neg,specInt_bconst]
+      refine ⟨Polynomial.natDegree_mul_le.trans (by
+        rw [Polynomial.natDegree_neg,Polynomial.natDegree_C,zero_add]; exact hd.trans (Nat.sub_le _ _)),?_⟩
+      rw [neg_mul,Polynomial.coeff_neg,Polynomial.coeff_C_mul,
+        Polynomial.coeff_eq_zero_of_natDegree_lt (lt_of_le_of_lt hd (by omega))]
+      simp
+    · simp only [if_neg h1,if_neg h2,map_mul,map_zero,zero_mul,Polynomial.natDegree_zero,
+        Polynomial.coeff_zero,Nat.zero_le,and_self]
+
+theorem clearedLoad_top (M a : ℕ) (haM : a≤M) (hM : M<p*p) :
+    (specInt p (clearedLoad p q o M a)).natDegree≤fracCount p q o M ∧
+      (specInt p (clearedLoad p q o M a)).coeff (fracCount p q o M)=
+        topClear p q o M*harmSum (ZMod p) (a/p) := by
+  have hin : ∀ t∈Icc 1 a,t∈Icc 1 M := fun t ht => by
+    have := mem_Icc.mp ht; exact mem_Icc.mpr ⟨this.1,this.2.trans haM⟩
+  unfold clearedLoad
+  rw [map_sum]
+  refine ⟨Polynomial.natDegree_sum_le_of_forall_le _ _ (fun t ht => (clearedDelta_top p q o M t hM (hin t ht)).1),?_⟩
+  rw [Polynomial.finsetSum_coeff,← int_pole_sum p a,Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro t ht
+  rw [(clearedDelta_top p q o M t hM (hin t ht)).2]
+  split_ifs <;> simp
+
+theorem clearedEntry_top (M : ℕ) (hM : M<p*p) (u0 : ZMod p) (a b : ℕ) (ha : a≤M) (hb : b≤M) :
+    (specInt p (clearedEntry p q o M u0 a b)).natDegree≤fracCount p q o M ∧
+      (specInt p (clearedEntry p q o M u0 a b)).coeff (fracCount p q o M)=
+        u0/(((b/p:ℕ):ZMod p)-((a/p:ℕ):ZMod p))*
+          (topClear p q o M*harmSum (ZMod p) (b/p)-topClear p q o M*harmSum (ZMod p) (a/p)) := by
+  obtain ⟨hb1,hb2⟩ := clearedLoad_top p q o M b hb hM
+  obtain ⟨ha1,ha2⟩ := clearedLoad_top p q o M a ha hM
+  unfold clearedEntry
+  rw [map_mul,map_sub,specInt_bconst]
+  refine ⟨(Polynomial.natDegree_C_mul_le _ _).trans
+    ((Polynomial.natDegree_sub_le _ _).trans (max_le hb1 ha1)),?_⟩
+  rw [Polynomial.coeff_C_mul,Polynomial.coeff_sub,hb2,ha2]
+
+theorem clearedLoadRow_top (M : ℕ) (hM : M<p*p) (u0 : ZMod p) (a : ℕ) (ha : a≤M) :
+    (specInt p (clearedLoadRow p q o M u0 a)).natDegree≤fracCount p q o M ∧
+      (specInt p (clearedLoadRow p q o M u0 a)).coeff (fracCount p q o M)=
+        u0*(topClear p q o M*harmSum (ZMod p) (a/p)) := by
+  obtain ⟨ha1,ha2⟩ := clearedLoad_top p q o M a ha hM
+  unfold clearedLoadRow
+  rw [map_mul,specInt_bconst]
+  exact ⟨(Polynomial.natDegree_C_mul_le _ _).trans ha1,by rw [Polynomial.coeff_C_mul,ha2]⟩
+
+variable {p q o}
+variable {k n : ℕ} {cn : Fin k → ℕ} {xr yc : Fin n → ℕ} {z : ℕ}
+
+/-- The top fractional coefficient of the cleared bordered block is the
+harmonic bordered determinant on the fibre quotients, times powers of the
+nonzero scalar `u0 · topClear`. -/
+theorem clearedD_top {M : ℕ} (H : FibreHyp p q o cn xr yc z M) (u0 : ZMod p) (load : Bool) :
+    (specInt p (clearedD p q o xr yc z M u0 load).det).natDegree≤
+        n*fracCount p q o M+(if load then fracCount p q o M else 0) ∧
+      (specInt p (clearedD p q o xr yc z M u0 load).det).coeff
+          (n*fracCount p q o M+(if load then fracCount p q o M else 0))=
+        (u0*topClear p q o M)^n*(if load then u0*topClear p q o M else 1)*
+          (bmat (fun i => bordRow xr z i/p) (fun c => yc c/p) (harmSum (ZMod p))
+            (if load then (fun i => harmSum (ZMod p) (bordRow xr z i/p)) else 1)).det := by
+  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M H.hq0) H.hM
+  set Fd := fracCount p q o M
+  set d : Fin (n+1) → ℕ := fun j => if (j:ℕ)<n then Fd else if load then Fd else 0 with hd
+  have hsum : ∑ j,d j=n*Fd+(if load then Fd else 0) := by
+    rw [Fin.sum_univ_castSucc]
+    simp [hd]
+  have hdeg : ∀ i j,((clearedD p q o xr yc z M u0 load).map (specInt p) i j).natDegree≤d j := by
+    intro i j
+    simp only [Matrix.map_apply,clearedD,Matrix.of_apply,hd]
+    by_cases hj : (j:ℕ)<n
+    · rw [dif_pos hj,if_pos hj]
+      exact (clearedEntry_top p q o M hMp u0 _ _ (H.bord_le i) (H.hyc _)).1
+    · rw [dif_neg hj,if_neg hj]
+      cases load
+      · simp
+      · simp only [↓reduceIte]
+        exact (clearedLoadRow_top p q o M hMp u0 _ (H.bord_le i)).1
+  obtain ⟨h1,h2⟩ := det_top _ d hdeg
+  have he : ((clearedD p q o xr yc z M u0 load).map (specInt p)).det=
+      specInt p (clearedD p q o xr yc z M u0 load).det := (RingHom.map_det _ _).symm
+  rw [he,hsum] at h1 h2
+  refine ⟨h1,?_⟩
+  rw [h2]
+  set v : Fin (n+1) → ZMod p := fun j => if (j:ℕ)<n then u0*topClear p q o M else
+    if load then u0*topClear p q o M else 1 with hv
+  have hm : (Matrix.of fun i j => ((clearedD p q o xr yc z M u0 load).map (specInt p) i j).coeff (d j))=
+      Matrix.of fun i j => v j*
+        (bmat (fun i => bordRow xr z i/p) (fun c => yc c/p) (harmSum (ZMod p))
+          (if load then (fun i => harmSum (ZMod p) (bordRow xr z i/p)) else 1)) i j := by
+    ext i j
+    simp only [Matrix.map_apply,clearedD,Matrix.of_apply,hd,hv,bmat]
+    by_cases hj : (j:ℕ)<n
+    · rw [dif_pos hj,if_pos hj,dif_pos hj,if_pos hj,
+        (clearedEntry_top p q o M hMp u0 _ _ (H.bord_le i) (H.hyc _)).2]
+      ring
+    · rw [dif_neg hj,if_neg hj,dif_neg hj,if_neg hj]
+      cases load
+      · simp
+      · simp only [↓reduceIte]
+        rw [(clearedLoadRow_top p q o M hMp u0 _ (H.bord_le i)).2]
+        ring
+  rw [hm,Matrix.det_mul_row,Fin.prod_univ_castSucc]
+  simp only [hv,Fin.coe_castSucc,Fin.is_lt,↓reduceIte,Fin.val_last,lt_irrefl,Finset.prod_const,
+    Finset.card_univ,Fintype.card_fin]
+
+end ClearedTop
+
+/-! ## R3: separation across INTEGER cuts (top fractional coefficient) -/
+
+section IntegerCross
+variable {p : ℕ} [Fact p.Prime] {q o : ℕ}
+
+/-- Integer cut: the top fractional coefficients of the two cleared fibre
+systems are the harmonic bordered systems on the fibre quotients; their
+directions `H_{κ+n} + γ_n` differ, so the ORIGINAL residue directions do. -/
+theorem residue_cross_top_ne {M n k1 k2 : ℕ}
+    {cn1 : Fin k1 → ℕ} {xr1 yc1 : Fin n → ℕ} {z1 : ℕ}
+    {cn2 : Fin k2 → ℕ} {xr2 yc2 : Fin n → ℕ} {z2 : ℕ}
+    (H1 : FibreHyp p q o cn1 xr1 yc1 z1 M) (H2 : FibreHyp p q o cn2 xr2 yc2 z2 M)
+    (s u : GaussLoc p) (u0 : ZMod p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu0 : WrapDeform.residue p (WrapOwnCore.constants p u)=RatFunc.C (RatFunc.C u0)) (hu00 : u0≠0)
+    (κ1 κ2 : ℕ)
+    (hS1 : HSplit n κ1 ((κ1:ZMod p)+1) (harmSum (ZMod p) κ1) (harmSum (ZMod p))
+      (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p))
+    (hS2 : HSplit n κ2 ((κ2:ZMod p)+1) (harmSum (ZMod p) κ2) (harmSum (ZMod p))
+      (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p))
+    (hδ : harmSum (ZMod p) (κ1+n)≠harmSum (ZMod p) (κ2+n)) :
+    WrapDeform.residue p ((ringSystem1 p q o cn1 xr1 yc1 z1 s u true).det*
+      (ringSystem1 p q o cn2 xr2 yc2 z2 s u false).det-
+      (ringSystem1 p q o cn2 xr2 yc2 z2 s u true).det*(ringSystem1 p q o cn1 xr1 yc1 z1 s u false).det)≠0 := by
+  apply residue_cross1_of_spec H1 H2 s u u0 hs hu0
+  have hq := q_zmod_ne p q H1.hq0 H1.hqp
+  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M H1.hq0) H1.hM
+  have hsc : u0*topClear p q o M≠0 := mul_ne_zero hu00 (topClear_ne p q o M hMp hq)
+  obtain ⟨d1t,c1t⟩ := clearedD_top H1 u0 true
+  obtain ⟨d1f,c1f⟩ := clearedD_top H1 u0 false
+  obtain ⟨d2t,c2t⟩ := clearedD_top H2 u0 true
+  obtain ⟨d2f,c2f⟩ := clearedD_top H2 u0 false
+  simp only [↓reduceIte,Bool.false_eq_true,add_zero,mul_one] at d1t c1t d1f c1f d2t c2t d2f c2f
+  have e1 := hS1.dir
+  have e2 := hS2.dir
+  have n1 := hS1.det_ne
+  have n2 := hS2.det_ne
+  beta_reduce at e1 e2 n1 n2
+  rw [← harmSum_add] at e1 e2
+  intro h
+  rw [map_mul,map_mul] at h
+  have hc := congrArg (fun P : (ZMod p)[X] => P.coeff
+    ((n*fracCount p q o M+fracCount p q o M)+n*fracCount p q o M)) h
+  rw [Polynomial.coeff_mul_add_eq_of_natDegree_le d1t d2f,Polynomial.coeff_mul_add_eq_of_natDegree_le d2t d1f,
+    c1t,c1f,c2t,c2f,e1,e2] at hc
+  apply hδ
+  have key : ((u0*topClear p q o M)^n*(u0*topClear p q o M)*(u0*topClear p q o M)^n)*
+      (((harmSum (ZMod p) (κ1+n)+hgam (ZMod p) n)-(harmSum (ZMod p) (κ2+n)+hgam (ZMod p) n))*
+        ((bmat (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p) (harmSum (ZMod p)) 1).det*
+          (bmat (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p) (harmSum (ZMod p)) 1).det))=0 := by
+    linear_combination hc
+  have hpow : (u0*topClear p q o M)^n*(u0*topClear p q o M)*(u0*topClear p q o M)^n≠0 :=
+    mul_ne_zero (mul_ne_zero (pow_ne_zero _ hsc) hsc) (pow_ne_zero _ hsc)
+  have h3 := (mul_eq_zero.mp key).resolve_left hpow
+  have h4 := (mul_eq_zero.mp h3).resolve_right (mul_ne_zero n1 n2)
+  linear_combination h4
+
+end IntegerCross
+
+section IntegerSeparation
+variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
+
+theorem zmod_nat_ne (a : ℕ) (h1 : 1≤a) (h2 : a<p) : (a:ZMod p)≠0 := by
+  simpa using zmod_cast_ne p a 0 h2 (Fact.out:p.Prime).pos (by omega)
+
+/-- An actual fibre profile is a split of `κ..κ+2n` for the harmonic system. -/
+theorem profile_split (κ η n : ℕ) (hη : η≤1) (hn : 1≤n) (hp : κ+2*n<p) :
+    HSplit n κ ((κ:ZMod p)+1) (harmSum (ZMod p) κ) (harmSum (ZMod p))
+      (profileRowQ κ η n) (profileColQ κ η n) where
+  hn := hn
+  hk := fun k h1 h2 => zmod_nat_ne p k h1 (by omega)
+  hA := fun h hh => by
+    have := zmod_nat_ne p (κ+1+h) (by omega) (by omega)
+    push_cast at this
+    exact this
+  hL := fun s _ => harmSum_add κ s
+  hxr := fun i => by unfold profileRowQ; have := i.2; split_ifs <;> omega
+  hyr := fun j => by unfold profileColQ; have := j.2; omega
+  hxy := fun i j => by unfold profileRowQ profileColQ; have := i.2; have := j.2; split_ifs <;> omega
+  hyy := fun a b h => by unfold profileColQ at h; exact Fin.ext (by omega)
+  hcov := fun s hs => by
+    by_cases h2 : s=2*n
+    · left
+      refine ⟨Fin.last n,?_⟩
+      unfold profileRowQ
+      simp only [Fin.val_last,lt_irrefl,↓reduceIte]
+      omega
+    · rcases Nat.even_or_odd' s with ⟨t,ht|ht⟩ <;>
+        rcases Nat.le_one_iff_eq_zero_or_eq_one.mp hη with rfl|rfl
+      · left; refine ⟨⟨t,by omega⟩,?_⟩; unfold profileRowQ; simp only; rw [if_pos (by omega)]; omega
+      · right; refine ⟨⟨t,by omega⟩,?_⟩; unfold profileColQ; simp only; omega
+      · right; refine ⟨⟨t,by omega⟩,?_⟩; unfold profileColQ; simp only; omega
+      · left; refine ⟨⟨t,by omega⟩,?_⟩; unfold profileRowQ; simp only; rw [if_pos (by omega)]; omega
+
+/-- Section 8.3 in the ONE-parameter ring at an INTEGER cut: two actual
+fibres with adjacent counts `κ`, `κ+1` (any bits) have distinct ORIGINAL
+residue directions. The test is the top fractional coefficient (`Y = ∞`)
+of ORIGINAL cleared numerators; the conditions are the fibres' own
+quotient bounds `κ_i + 2n < p`. -/
+theorem profile_separation_int (γ1 k1 η1 γ2 k2 η2 n M : ℕ) (s u : GaussLoc p) (u0 : ZMod p)
+    (hγ1 : γ1<p) (hγ2 : γ2<p) (hη1 : η1≤1) (hη2 : η2≤1) (hn : 1≤n)
+    (hk1 : k1+2*n<p) (hk2 : k2+2*n<p) (hz1 : pz p γ1 k1 n≤M) (hz2 : pz p γ2 k2 n≤M)
+    (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p) (ho0 : 0<o) (hoq : o<q)
+    (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu0 : WrapDeform.residue p (WrapOwnCore.constants p u)=RatFunc.C (RatFunc.C u0))
+    (hu00 : u0≠0) (hadj : k2=k1+1 ∨ k1=k2+1) :
+    WrapDeform.residue p
+      ((ringSystem1 p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u true).det*
+        (ringSystem1 p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u false).det-
+      (ringSystem1 p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u true).det*
+        (ringSystem1 p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u false).det)≠0 := by
+  have H1 := profileHyp p q o γ1 k1 η1 n M hγ1 hη1 hk1 hz1 hM hq0 hqp ho0 hoq
+  have H2 := profileHyp p q o γ2 k2 η2 n M hγ2 hη2 hk2 hz2 hM hq0 hqp ho0 hoq
+  have hr1 : (fun i => bordRow (pxr p γ1 k1 η1 n) (pz p γ1 k1 n) i/p)=profileRowQ k1 η1 n :=
+    funext (bord_quot p _ _ _ _ hγ1)
+  have hr2 : (fun i => bordRow (pxr p γ2 k2 η2 n) (pz p γ2 k2 n) i/p)=profileRowQ k2 η2 n :=
+    funext (bord_quot p _ _ _ _ hγ2)
+  have hcc1 : (fun c => pyc p γ1 k1 η1 n c/p)=profileColQ k1 η1 n := funext (col_quot p _ _ _ _ hγ1)
+  have hcc2 : (fun c => pyc p γ2 k2 η2 n c/p)=profileColQ k2 η2 n := funext (col_quot p _ _ _ _ hγ2)
+  apply residue_cross_top_ne H1 H2 s u u0 hs hu0 hu00 k1 k2
+  · rw [hr1,hcc1]; exact profile_split p k1 η1 n hη1 hn hk1
+  · rw [hr2,hcc2]; exact profile_split p k2 η2 n hη2 hn hk2
+  · have hstep (κ : ℕ) (hκ : κ+n+1<p) : harmSum (ZMod p) (κ+n)≠harmSum (ZMod p) (κ+1+n) := by
+      rw [show κ+1+n=(κ+n)+1 by omega,harmSum_succ]
+      intro h
+      have h0 : 1/((κ:ZMod p)+(n:ZMod p)+1)=0 := by push_cast at h; linear_combination -h
+      have := zmod_nat_ne p (κ+n+1) (by omega) hκ
+      push_cast at this
+      exact one_div_ne_zero this h0
+    rcases hadj with rfl|rfl
+    · exact hstep k1 (by omega)
+    · exact fun h => hstep k2 (by omega) h.symm
+
+end IntegerSeparation
+
+section IntegerKills
+variable {p : ℕ} [Fact p.Prime]
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+/-- Two fibre tips separated by an integer pole within one period have
+adjacent quotients. -/
+theorem int_adjacent (A1 K1 A2 K2 p j : ℕ) (hA1 : A1<p) (hA2 : A2<p) (h1 : A1+K1*p<j*p)
+    (h2 : j*p≤A2+K2*p) (h3 : A2+K2*p<A1+K1*p+p) : K2=K1+1 := by
+  have a : K1<j := by
+    by_contra hc
+    have := Nat.mul_le_mul_right p (not_lt.mp hc)
+    omega
+  have b : j≤K2 := by
+    by_contra hc
+    have := Nat.mul_le_mul_right p (show K2+1≤j by omega)
+    have e : (K2+1)*p=K2*p+p := by ring
+    omega
+  have c : K2≤K1+1 := by
+    by_contra hc
+    have := Nat.mul_le_mul_right p (show K1+2≤K2 by omega)
+    have e : (K1+2)*p=K1*p+p+p := by ring
+    omega
+  omega
+
+set_option maxHeartbeats 2000000 in
+/-- Section 8.3 in the ONE-parameter ring at an actual outside node `v`
+with fibre bit `η`, separated from the anchor by an original INTEGER pole
+`k`: the actual reduced coupling against the original anchor is nonzero.
+The two fibres have adjacent counts; each satisfies its own quotient bound,
+so the upper one gives `p > κ+2n+1`. -/
+theorem node_coupling_int_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (v k η : ℕ) (hη : η≤1)
+    (hkI : p∣k)
+    (hsep : (v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v))
+    (hvlo : r+2*n*p≤v) (hvhi : v<r+2*n*p+p) (hvN : v<N)
+    (hPv : ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p)).det≠0) :
+    (WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o v)-
+      (fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ
+      (fun i => WrapDeform.residue p (WrapOwnCore.constants p u*WrapEntryRelation.load p q o
+        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))-
+    WrapDeform.residue p (H.anchor s u)*
+    (1-(fun j => WrapDeform.residue p (WrapDeformedEntry.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
+      ((WrapFibreCore.core p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
+        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
+        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (WrapDeform.residue p))⁻¹ *ᵥ 1)≠0 := by
+  classical
+  obtain ⟨u0,hu0'⟩ := huc
+  have huc : WrapConstant.Has p u := ⟨u0,hu0'⟩
+  have hu0 := residue_constants1 p u u0 hu0'
+  have hu00 : u0≠0 := by
+    intro h; apply hu; rw [hu0',h,map_zero]
+  have ht0N : H.t0<N := lt_of_le_of_lt H.hle H.htvN
+  have ht0lo := H.hlo
+  have ht0hi : H.t0<r+2*n*p+p := lt_of_le_of_lt H.hle H.hhi
+  have ho0 : 0<o := by
+    rcases Nat.eq_zero_or_pos o with h|h
+    · exact absurd (by rw [h]; simp) H.ho
+    · exact h
+  have htv := (fibre_tip (p:=p) (r:=r) (n:=n) v hvlo hvhi).symm
+  have ht0 := (fibre_tip (p:=p) (r:=r) (n:=n) H.t0 ht0lo ht0hi).symm
+  unfold pz at htv ht0
+  have hNp : N<p*p := single_bound H
+  have hkv : WrapJointProfile.count p r (v:ZMod p).val+2*n<p := by
+    by_contra hc
+    have : p*p≤(WrapJointProfile.count p r (v:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
+    omega
+  have hk0 : WrapJointProfile.count p r (H.t0:ZMod p).val+2*n<p := by
+    by_contra hc
+    have : p*p≤(WrapJointProfile.count p r (H.t0:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
+    omega
+  have hpzv : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n=v := by
+    unfold pz; exact htv.symm
+  have hpz0 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n=H.t0 := by
+    unfold pz; exact ht0.symm
+  have hz1 : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n≤N := by
+    rw [hpzv]; exact hvN.le
+  have hz2 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n≤N := by
+    rw [hpz0]; exact ht0N.le
+  have hadj : WrapJointProfile.count p r (H.t0:ZMod p).val=WrapJointProfile.count p r (v:ZMod p).val+1 ∨
+      WrapJointProfile.count p r (v:ZMod p).val=WrapJointProfile.count p r (H.t0:ZMod p).val+1 := by
+    obtain ⟨j,rfl⟩ := hkI
+    rcases hsep with ⟨h1,h2⟩|⟨h1,h2⟩
+    · left
+      have := int_adjacent _ _ _ _ p j (ZMod.val_lt (v:ZMod p)) (ZMod.val_lt (H.t0:ZMod p))
+        (by rw [← htv,mul_comm j p]; exact h1) (by rw [← ht0,mul_comm j p]; exact h2)
+        (by rw [← htv,← ht0]; omega)
+      omega
+    · right
+      have := int_adjacent _ _ _ _ p j (ZMod.val_lt (H.t0:ZMod p)) (ZMod.val_lt (v:ZMod p))
+        (by rw [← ht0,mul_comm j p]; exact h1) (by rw [← htv,mul_comm j p]; exact h2)
+        (by rw [← htv,← ht0]; omega)
+      omega
+  have hps := profile_separation_int p q o (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)
+    η (H.t0:ZMod p).val
+    (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val)
+    n N s u u0 (ZMod.val_lt _) (ZMod.val_lt _) hη (bit_le _) H.hn hkv hk0
+    hz1 hz2 H.hN H.hq0 H.hqp ho0 H.hoq hs hu0 hu00 hadj
+  rw [hpzv,hpz0] at hps
+  exact node_coupling1_of_cross H s u hs hu huc v η hvlo hvhi hvN hPv hps
+
+/-- R3, ACTUAL one-parameter kill: an outside surplus ROW separated from the
+anchor by an original INTEGER pole has nonzero actual coupling. -/
+theorem rowCoupling_int_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (z : Fin d) (k : ℕ) (hkI : p∣k)
+    (hsep : (WrapPrefixSchur.surplusRow H z<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusRow H z))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusRow H z)
+    (hvhi : WrapPrefixSchur.surplusRow H z<r+2*n*p+p) :
+    WrapPrefixSchur.rowCoupling H s u z≠0 := by
+  have hvN : WrapPrefixSchur.surplusRow H z<N := WrapPrefixSchur.surplus_row_bound H z
+  have hresv := surplus_not_residual H z
+  unfold WrapPrefixSchur.rowCoupling
+  rw [map_sub,map_mul,residue_rowMoment1 H s u hs hu huc,residue_rowRef1 H s u hs hu huc,
+    fibre_load1 H s u hs hu huc _ hvN hresv,fibre_one1 H s u hs hu huc _ hvN hresv]
+  exact node_coupling_int_ne H s u hs hu huc _ k _ (bit_le _) hkI hsep hvlo hvhi hvN
+    (fibreCore1_det_ne H s u hs hu huc _ hresv)
+
+/-- R3, ACTUAL one-parameter kill: an outside surplus COLUMN separated from
+the anchor by an original INTEGER pole has nonzero actual coupling. -/
+theorem colCoupling_int_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (y : Fin d) (k : ℕ) (hkI : p∣k)
+    (hsep : (WrapPrefixSchur.surplusCol H y<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusCol H y))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusCol H y)
+    (hvhi : WrapPrefixSchur.surplusCol H y<r+2*n*p+p) :
+    WrapPrefixSchur.colCoupling H s u y≠0 := by
+  have hvN : WrapPrefixSchur.surplusCol H y<N := WrapPrefixSchur.surplus_col_bound H y
+  have hresv := surplus_col_not_residual H y
+  unfold WrapPrefixSchur.colCoupling
+  rw [map_sub,map_mul,residue_colMoment1 H s u hs hu huc,residue_colRef1 H s u hs hu huc,
+    col_fibre_load1 H s u hs hu huc _ hvN hresv,col_fibre_one1 H s u hs hu huc _ hvN hresv]
+  exact node_coupling_int_ne H s u hs hu huc _ k _ (by omega) hkI hsep hvlo hvhi hvN
+    (colFibre1_det_ne H s u hs hu huc _ hresv)
+
+/-- R3 kill supplier in exactly the `hO` form consumed by
+`retained_credit_bound`: every actual outside surplus node separated from
+the anchor by an original INTEGER pole is a zero-weight colour or killed. -/
+theorem integer_outside_kills (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (O : Finset ℕ)
+    (hcover : ∀ v∈O,(∃ z:Fin d,WrapPrefixSchur.surplusRow H z=v) ∨
+      (∃ y:Fin d,WrapPrefixSchur.surplusCol H y=v))
+    (hint : ∀ v∈O,∃ k,p∣k ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)))
+    (hlo : ∀ v∈O,r+2*n*p≤v) (hhi : ∀ v∈O,v<r+2*n*p+p) :
+    ∀ gamma∈O.image (fun v:ℕ => (v:ZMod p)),H.weight s u gamma=0 ∨
+      gamma∈WrapPrefixSchur.killedColumns H s u∪WrapPrefixSchur.killedRows H s u := by
+  classical
+  intro gamma hg
+  obtain ⟨v,hv,rfl⟩ := mem_image.mp hg
+  obtain ⟨k,hkI,hsep⟩ := hint v hv
+  rcases hcover v hv with ⟨z,hz⟩|⟨y,hy⟩
+  · subst hz
+    by_cases hwv : H.weight s u (WrapPrefixSchur.surplusRow H z:ZMod p)=0
+    · exact Or.inl hwv
+    · exact Or.inr (mem_union_right _ (row_killed_colour H s u z
+        (rowCoupling_int_ne H s u hs hu huc z k hkI hsep (hlo _ hv) (hhi _ hv)) hwv))
+  · subst hy
+    exact Or.inr (mem_union_left _ (col_killed_colour H s u y
+      (colCoupling_int_ne H s u hs hu huc y k hkI hsep (hlo _ hv) (hhi _ hv))))
+
+/-- The combined R2 ∪ R3 kill set, in the `hO` form of
+`retained_credit_bound`: every actual outside surplus node separated from
+the anchor by ANY original pole (integer or fractional). -/
+theorem pole_outside_kills (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (O : Finset ℕ)
+    (hcover : ∀ v∈O,(∃ z:Fin d,WrapPrefixSchur.surplusRow H z=v) ∨
+      (∃ y:Fin d,WrapPrefixSchur.surplusCol H y=v))
+    (hpole : ∀ v∈O,∃ k,(p∣k ∨ p∣q*k-o) ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)))
+    (hlo : ∀ v∈O,r+2*n*p≤v) (hhi : ∀ v∈O,v<r+2*n*p+p) :
+    ∀ gamma∈O.image (fun v:ℕ => (v:ZMod p)),H.weight s u gamma=0 ∨
+      gamma∈WrapPrefixSchur.killedColumns H s u∪WrapPrefixSchur.killedRows H s u := by
+  classical
+  intro gamma hg
+  obtain ⟨v,hv,rfl⟩ := mem_image.mp hg
+  obtain ⟨k,hk,hsep⟩ := hpole v hv
+  have hone : ∀ w∈({v}:Finset ℕ),w=v := fun w hw => mem_singleton.mp hw
+  have hv1 : (v:ZMod p)∈({v}:Finset ℕ).image (fun v:ℕ => (v:ZMod p)) :=
+    mem_image_of_mem _ (mem_singleton_self v)
+  by_cases hkI : p∣k
+  · exact integer_outside_kills H s u hs hu huc {v}
+      (fun w hw => by rw [hone w hw]; exact hcover v hv)
+      (fun w hw => ⟨k,hkI,by rw [hone w hw]; exact hsep⟩)
+      (fun w hw => by rw [hone w hw]; exact hlo v hv)
+      (fun w hw => by rw [hone w hw]; exact hhi v hv) _ hv1
+  · exact fractional_outside_kills H s u hs hu huc {v}
+      (fun w hw => by rw [hone w hw]; exact hcover v hv)
+      (fun w hw => ⟨k,hkI,hk.resolve_left hkI,by rw [hone w hw]; exact hsep⟩)
+      (fun w hw => by rw [hone w hw]; exact hlo v hv)
+      (fun w hw => by rw [hone w hw]; exact hhi v hv) _ hv1
+
+end IntegerKills
+
+section PoleKills
+variable {p : ℕ} [Fact p.Prime]
+variable {q o r n e b d shift N : ℕ}
+variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
+
+/-- R2 ∪ R3 row kill: an outside surplus ROW separated from the anchor by
+any original pole (integer or fractional) has nonzero actual coupling. -/
+theorem rowCoupling_pole_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (z : Fin d) (k : ℕ) (hk : p∣k ∨ p∣q*k-o)
+    (hsep : (WrapPrefixSchur.surplusRow H z<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusRow H z))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusRow H z)
+    (hvhi : WrapPrefixSchur.surplusRow H z<r+2*n*p+p) :
+    WrapPrefixSchur.rowCoupling H s u z≠0 := by
+  by_cases hkI : p∣k
+  · exact rowCoupling_int_ne H s u hs hu huc z k hkI hsep hvlo hvhi
+  · exact rowCoupling_frac_ne H s u hs hu huc z k hkI (hk.resolve_left hkI) hsep hvlo hvhi
+
+/-- R2 ∪ R3 column kill. -/
+theorem colCoupling_pole_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
+    (hu : res p u≠0) (huc : WrapConstant.Has p u) (y : Fin d) (k : ℕ) (hk : p∣k ∨ p∣q*k-o)
+    (hsep : (WrapPrefixSchur.surplusCol H y<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusCol H y))
+    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusCol H y)
+    (hvhi : WrapPrefixSchur.surplusCol H y<r+2*n*p+p) :
+    WrapPrefixSchur.colCoupling H s u y≠0 := by
+  by_cases hkI : p∣k
+  · exact colCoupling_int_ne H s u hs hu huc y k hkI hsep hvlo hvhi
+  · exact colCoupling_frac_ne H s u hs hu huc y k hkI (hk.resolve_left hkI) hsep hvlo hvhi
+
+end PoleKills
+
+theorem ovl_translate (r R a b c : ℕ) : ovl (r+c) (R+c) (a+c) (b+c)=ovl r R a b := by
+  unfold ovl
+  omega
+
+/-- The three-translate border overlap is invariant under a common
+translation of the border and the credited window (virtual to actual
+coordinates), once the window starts at least one period in. -/
+theorem beta3_translate (m a p w0 w1 c : ℕ) (hw0 : p≤w0) (hw : w0≤w1) :
+    beta3 m (a+c) p (w0+c) (w1+c)=beta3 m a p w0 w1 := by
+  unfold beta3
+  rw [show a+c+2*m=(a+2*m)+c by ring,show w0+c+p=(w0+p)+c by ring,show w1+c+p=(w1+p)+c by ring,
+    show w0+c-p=(w0-p)+c by omega,show w1+c-p=(w1-p)+c by omega,ovl_translate,ovl_translate,ovl_translate]
+
+
 -- R3_MARKER
 
 
@@ -9053,5 +10224,22 @@ end HarmonicLemma
 #print axioms hload_fd
 #print axioms fd_choose_mul
 #print axioms harmonic_uniq
+#print axioms residue_cross1_of_spec
+#print axioms residue_cross1_ne
+#print axioms node_coupling1_of_cross
+#print axioms node_coupling1_ne
+#print axioms HSplit.det_ne
+#print axioms HSplit.dir
+#print axioms clearedD_top
+#print axioms residue_cross_top_ne
+#print axioms profile_separation_int
+#print axioms node_coupling_int_ne
+#print axioms rowCoupling_int_ne
+#print axioms colCoupling_int_ne
+#print axioms integer_outside_kills
+#print axioms pole_outside_kills
+#print axioms rowCoupling_pole_ne
+#print axioms colCoupling_pole_ne
+#print axioms beta3_translate
 
 end CatalanCore.Uniform.Content.UFSimple.WrapPrefixClosed

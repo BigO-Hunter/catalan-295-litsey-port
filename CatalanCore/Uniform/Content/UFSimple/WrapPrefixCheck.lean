@@ -190,6 +190,17 @@ theorem catValid_prefix (c : ℚ) (hc : 0<c) {Fr : Frame} {q o : ℕ}
     (WrapExpr.tWrap n) (fun r p m k => by
       rw [WrapExpr.evalN_tWrap,WrapPrefixLayer.price_eq_priceG])
 
+/-- **Full closed price (R2 ∪ R3)**: every original prefix strip `n ≥ 1`
+with the existing checker branch `brPrefix n` (credited interval plus the
+`(2d - β)` outside kills), from built theorems only: the outside kills are
+the fractional-cut (R2) and integer-cut (R3, Harmonic Lemma) separations. -/
+theorem catValid_prefix_full (c : ℚ) (hc : 0<c) {Fr : Frame} {q o : ℕ}
+    (T : TwoTermData Fr q o) {nm : ℕ} (hnorm : Fr.norm=(nm:ℚ))
+    (depth Pbad N0 n : ℕ) (hn : 1≤n)
+    (hP : ∀ p : ℕ,p.Prime → Pbad<p → ¬p∣nm ∧ q<p) :
+    CatValid c hc Fr depth q o Pbad N0 [brPrefix n] :=
+  catValid_prefix c hc T hnorm depth Pbad N0 n hn hP (WrapPrefixLayer.supply_R3 Fr q o)
+
 end Supplier
 
 end CatalanCore.Uniform.Content.UFSimple.WrapPrefixCheck
