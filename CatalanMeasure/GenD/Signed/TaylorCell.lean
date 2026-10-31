@@ -1799,6 +1799,835 @@ example : (poleVec [⟨1, 1 / 2, 3 / 5, 1 / 3⟩, ⟨-2, 0, 7 / 4, 0⟩] (1 / 5)
     [0] ++ (List.range 6).map (fun i =>
       poleCoeff [⟨1, 1 / 2, 3 / 5, 1 / 3⟩, ⟨-2, 0, 7 / 4, 0⟩] (1 / 5) (i + 1)) := by
   decide +kernel
+
+/-! ### 14. Laurent terms: polynomials in `1/x` times `log |a x - b|` (cells away from `0`)
+
+The dilated potentials `dilPot qs c = -(log|c| m(ℝ) + V(1/c))` are *Laurent* in `x`: `Σ_s a_s x^{-s}`
+times `log|x|`, `log|a x - 1|`.  A Laurent term is a pair `(a, o)`: the coefficient list `a`
+(`Σ_s a_s x^{-s}`) and a factor `o`, either `none` (the constant `1`) or `some (α, β)` (the factor
+`log|α x - β|`).  Taylor coefficients at the centre `c ≠ 0` of `x^{-s}` are exact rationals
+`(-1)^k C(s+k-1, k) c^{-(s+k)}`; the derivatives of `log|α x - β|` of order `≥ 1` are rational and
+only its value is an enclosure.  Block bounds of `x^{-s}` need only a lower bound `mx ≤ |x|`. -/
+
+/-- The tower of `x^{-s}`: `(-1)^j s (s+1) ⋯ (s+j-1) x^{-(s+j)}`. -/
+noncomputable def monoInv (s j : ℕ) (x : ℝ) : ℝ :=
+  (-1 : ℝ) ^ j * (s.ascFactorial j : ℝ) * (x ^ (s + j))⁻¹
+
+theorem hasDerivAt_monoInv (s j : ℕ) (x : ℝ) (hx : x ≠ 0) :
+    HasDerivAt (monoInv s j) (monoInv s (j + 1) x) x := by
+  have h1 : HasDerivAt (fun y : ℝ => (y ^ (s + j))⁻¹)
+      (-(((s + j : ℕ) : ℝ)) * (x ^ (s + j + 1))⁻¹) x := by
+    have := (hasDerivAt_pow (s + j) x).inv (pow_ne_zero _ hx)
+    refine this.congr_deriv ?_
+    cases hn : s + j with
+    | zero => simp
+    | succ m =>
+      have hxm : x ^ m ≠ 0 := pow_ne_zero _ hx
+      simp only [Nat.add_sub_cancel]
+      push_cast
+      field_simp
+      ring
+  have h2 := h1.const_mul ((-1 : ℝ) ^ j * (s.ascFactorial j : ℝ))
+  have hf : monoInv s j = fun y : ℝ => ((-1 : ℝ) ^ j * (s.ascFactorial j : ℝ)) * (y ^ (s + j))⁻¹ :=
+    rfl
+  rw [hf]
+  refine h2.congr_deriv ?_
+  have ha : (s.ascFactorial (j + 1) : ℝ) = ((s : ℝ) + j) * (s.ascFactorial j : ℝ) := by
+    rw [show s.ascFactorial (j + 1) = (s + j) * s.ascFactorial j from rfl]
+    push_cast; ring
+  unfold monoInv
+  rw [ha, show s + (j + 1) = s + j + 1 from rfl]
+  push_cast
+  ring
+
+/-- Tower of `Σ_i a_i x^{-(s+i)}`. -/
+noncomputable def zTowAux : ℕ → List ℚ → ℕ → ℝ → ℝ
+  | _, [], _, _ => 0
+  | s, a :: as, j, x => (a : ℝ) * monoInv s j x + zTowAux (s + 1) as j x
+
+/-- Tower of the polynomial in `1/x`, `Σ_s a_s x^{-s}`. -/
+noncomputable def zTow (a : List ℚ) : ℕ → ℝ → ℝ := zTowAux 0 a
+
+theorem isTower_monoInv (s : ℕ) (c r : ℝ) (M : ℕ) (h0 : ∀ x ∈ Icc (c - r) (c + r), x ≠ 0) :
+    IsTower (monoInv s) c r M where
+  cont j _ y hy := (hasDerivAt_monoInv s j y (h0 y hy)).continuousAt.continuousWithinAt
+  der j _ y hy := hasDerivAt_monoInv s j y (h0 y ⟨hy.1.le, hy.2.le⟩)
+
+theorem isTower_zTowAux (c r : ℝ) (M : ℕ) (h0 : ∀ x ∈ Icc (c - r) (c + r), x ≠ 0) :
+    ∀ (a : List ℚ) (s : ℕ), IsTower (zTowAux s a) c r M := by
+  intro a
+  induction a with
+  | nil =>
+    intro s
+    have h : zTowAux s [] = fun _ _ => 0 := by funext j x; simp [zTowAux]
+    rw [h]
+    exact ⟨fun j _ => continuousOn_const, fun j _ x _ => hasDerivAt_const x 0⟩
+  | cons a as ih =>
+    intro s
+    have h : zTowAux s (a :: as) = fun j x => (a : ℝ) * monoInv s j x + zTowAux (s + 1) as j x := by
+      funext j x; simp [zTowAux]
+    rw [h]
+    exact ((isTower_monoInv s c r M h0).smul (a : ℝ)).add (ih (s + 1))
+
+theorem isTower_zTow (a : List ℚ) (c r : ℝ) (M : ℕ) (h0 : ∀ x ∈ Icc (c - r) (c + r), x ≠ 0) :
+    IsTower (zTow a) c r M := isTower_zTowAux c r M h0 a 0
+
+/-- Tower of `log |α x - β|`. -/
+noncomputable def linLogTower (a b : ℝ) : ℕ → ℝ → ℝ
+  | 0 => fun x => Real.log |a * x - b|
+  | m + 1 => fun x => (-1 : ℝ) ^ m * (m ! : ℝ) * a ^ (m + 1) / (a * x - b) ^ (m + 1)
+
+/-- Tower of the constant `1`. -/
+noncomputable def oneTower : ℕ → ℝ → ℝ
+  | 0 => fun _ => 1
+  | _ + 1 => fun _ => 0
+
+/-- The factor of a Laurent term: `none` is the constant `1`, `some (α, β)` is `log |α x - β|`. -/
+noncomputable def lfTower : Option (ℚ × ℚ) → ℕ → ℝ → ℝ
+  | none => oneTower
+  | some ab => linLogTower (ab.1 : ℝ) (ab.2 : ℝ)
+
+theorem hasDerivAt_linLogTower (a b : ℝ) (j : ℕ) (x : ℝ) (hx : a * x - b ≠ 0) :
+    HasDerivAt (linLogTower a b j) (linLogTower a b (j + 1) x) x := by
+  have h1 : HasDerivAt (fun y : ℝ => a * y - b) a x := by
+    have := ((hasDerivAt_id' x).const_mul a).sub_const b
+    simpa using this
+  cases j with
+  | zero =>
+    have h2 := h1.log hx
+    have hf : linLogTower a b 0 = fun y : ℝ => Real.log (a * y - b) := by
+      funext y; exact Real.log_abs _
+    rw [hf]
+    refine h2.congr_deriv ?_
+    simp [linLogTower]
+  | succ m =>
+    have h3 : HasDerivAt (fun y : ℝ => (a * y - b) ^ (m + 1))
+        (((m + 1 : ℕ) : ℝ) * (a * x - b) ^ m * a) x := h1.pow (m + 1)
+    have h4 := (hasDerivAt_const x ((-1 : ℝ) ^ m * (m ! : ℝ) * a ^ (m + 1))).div h3
+      (pow_ne_zero _ hx)
+    simp only [linLogTower]
+    refine h4.congr_deriv ?_
+    rw [Nat.factorial_succ]
+    push_cast
+    have hm : (m ! : ℝ) ≠ 0 := by positivity
+    field_simp
+    ring
+
+theorem isTower_lfTower (o : Option (ℚ × ℚ)) (c r : ℝ) (M : ℕ)
+    (hne : ∀ ab, o = some ab → ∀ x ∈ Icc (c - r) (c + r), (ab.1 : ℝ) * x - (ab.2 : ℝ) ≠ 0) :
+    IsTower (lfTower o) c r M := by
+  cases o with
+  | none =>
+    have h : lfTower none = oneTower := rfl
+    rw [h]
+    refine ⟨fun j _ => ?_, fun j _ x _ => ?_⟩
+    · cases j <;> simp [oneTower] <;> exact continuousOn_const
+    · cases j <;> simp [oneTower] <;> exact hasDerivAt_const x _
+  | some ab =>
+    exact ⟨fun j _ y hy => (hasDerivAt_linLogTower _ _ j y (hne ab rfl y hy)).continuousAt.continuousWithinAt,
+      fun j _ y hy => hasDerivAt_linLogTower _ _ j y (hne ab rfl y ⟨hy.1.le, hy.2.le⟩)⟩
+
+/-- A Laurent term: the `1/x`-polynomial coefficients and the factor. -/
+abbrev LTerm := List ℚ × Option (ℚ × ℚ)
+
+/-- The tower of a list of Laurent terms. -/
+noncomputable def lfieldTower (ts : List LTerm) (j : ℕ) (x : ℝ) : ℝ :=
+  (ts.map (fun t => mulTower (zTow t.1) (lfTower t.2) j x)).sum
+
+theorem isTower_lfieldTower (ts : List LTerm) (c r : ℝ) (M : ℕ)
+    (h0 : ∀ x ∈ Icc (c - r) (c + r), x ≠ 0)
+    (hne : ∀ t ∈ ts, ∀ ab, t.2 = some ab → ∀ x ∈ Icc (c - r) (c + r),
+      (ab.1 : ℝ) * x - (ab.2 : ℝ) ≠ 0) :
+    IsTower (lfieldTower ts) c r M := by
+  induction ts with
+  | nil =>
+    have h : lfieldTower [] = fun _ _ => 0 := by funext j x; simp [lfieldTower]
+    rw [h]
+    exact ⟨fun j _ => continuousOn_const, fun j _ x _ => hasDerivAt_const x 0⟩
+  | cons t ts ih =>
+    have h : lfieldTower (t :: ts) = fun j x =>
+        mulTower (zTow t.1) (lfTower t.2) j x + lfieldTower ts j x := by
+      funext j x; simp [lfieldTower]
+    rw [h]
+    exact ((isTower_zTow t.1 c r M h0).mul
+      (isTower_lfTower t.2 c r M (hne t (by simp)))).add
+      (ih (fun s hs => hne s (by simp [hs])))
+
+/-! Exact coefficients. -/
+
+/-- `Σ_{i<n} u_i v_{k-i}`. -/
+def convQ (u v : ℕ → ℚ) (k : ℕ) : ℕ → ℚ
+  | 0 => 0
+  | n + 1 => convQ u v k n + u n * v (k - n)
+
+theorem convQ_cast (u v : ℕ → ℚ) (k n : ℕ) :
+    ((convQ u v k n : ℚ) : ℝ) = ∑ i ∈ Finset.range n, ((u i : ℚ) : ℝ) * ((v (k - i) : ℚ) : ℝ) := by
+  induction n with
+  | zero => simp [convQ]
+  | succ n ih => rw [convQ, Finset.sum_range_succ, ← ih]; push_cast; rfl
+
+/-- Normalised Taylor coefficient `k` at `c` of `Σ_i a_i x^{-(s+i)}`. -/
+def zHatAux : ℕ → List ℚ → ℚ → ℕ → ℚ
+  | _, [], _, _ => 0
+  | s, a :: as, c, k =>
+    a * ((-1) ^ k * (s.ascFactorial k : ℚ) / ((k ! : ℕ) : ℚ) / c ^ (s + k)) +
+      zHatAux (s + 1) as c k
+
+def zHat (a : List ℚ) : ℚ → ℕ → ℚ := zHatAux 0 a
+
+theorem zTowAux_coef (c : ℚ) (hc : c ≠ 0) :
+    ∀ (a : List ℚ) (s k : ℕ), zTowAux s a k (c : ℝ) / (k ! : ℝ) = ((zHatAux s a c k : ℚ) : ℝ) := by
+  intro a
+  induction a with
+  | nil => intro s k; simp [zTowAux, zHatAux]
+  | cons a as ih =>
+    intro s k
+    have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+    rw [zTowAux, add_div, ih (s + 1) k, zHatAux]
+    push_cast
+    unfold monoInv
+    have hk : (k ! : ℝ) ≠ 0 := by positivity
+    field_simp
+
+/-- Normalised coefficient `m` of the factor at `c`; the value (`m = 0`) of `log |α x - β|` is the
+supplied `L`. -/
+def lfHat : Option (ℚ × ℚ) → ℚ → ℚ → ℕ → ℚ
+  | none, _, _, 0 => 1
+  | none, _, _, _ + 1 => 0
+  | some _, _, L, 0 => L
+  | some ab, c, _, m + 1 =>
+    (-1) ^ m * ab.1 ^ (m + 1) / (((m : ℚ) + 1) * (ab.1 * c - ab.2) ^ (m + 1))
+
+theorem lfTower_coef (o : Option (ℚ × ℚ)) (c L : ℚ)
+    (hne : ∀ ab, o = some ab → ab.1 * c - ab.2 ≠ 0) (m : ℕ) :
+    lfTower o (m + 1) (c : ℝ) / ((m + 1)! : ℝ) = ((lfHat o c L (m + 1) : ℚ) : ℝ) := by
+  cases o with
+  | none => simp [lfTower, oneTower, lfHat]
+  | some ab =>
+    have h : (ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ) ≠ 0 := by
+      have := hne ab rfl
+      exact_mod_cast this
+    simp only [lfTower, linLogTower, lfHat]
+    rw [Nat.factorial_succ]
+    push_cast
+    have hm : (m ! : ℝ) ≠ 0 := by positivity
+    have hm1 : ((m : ℝ) + 1) ≠ 0 := by positivity
+    field_simp
+
+/-- Error multiplier of the enclosure of the factor value. -/
+def lEps : Option (ℚ × ℚ) → ℚ → ℚ
+  | none, _ => 0
+  | some _, ε => ε
+
+/-- Coefficient `k` of one Laurent term at `c`. -/
+def lTermCoef (t : LTerm) (c L : ℚ) (k : ℕ) : ℚ :=
+  convQ (zHat t.1 c) (lfHat t.2 c L) k (k + 1)
+
+theorem lTerm_approx (t : LTerm) (c : ℚ) (hc : c ≠ 0) (L ε : ℚ)
+    (hne : ∀ ab, t.2 = some ab → ab.1 * c - ab.2 ≠ 0)
+    (hL : ∀ ab, t.2 = some ab → |(L : ℝ) - Real.log (|(ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ)|)| ≤ (ε : ℝ))
+    (k : ℕ) :
+    |mulTower (zTow t.1) (lfTower t.2) k (c : ℝ) / (k ! : ℝ) - ((lTermCoef t c L k : ℚ) : ℝ)| ≤
+      ((lEps t.2 ε * qabs' (zHat t.1 c k) : ℚ) : ℝ) := by
+  rw [mulTower_div, Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => (zTow t.1 i (c : ℝ) / (i ! : ℝ)) * (lfTower t.2 j (c : ℝ) / (j ! : ℝ))) k]
+  unfold lTermCoef
+  rw [convQ_cast, Finset.sum_range_succ, Finset.sum_range_succ]
+  have hsum : ∑ i ∈ Finset.range k, (zTow t.1 i (c : ℝ) / (i ! : ℝ)) *
+        (lfTower t.2 (k - i) (c : ℝ) / ((k - i)! : ℝ)) =
+      ∑ i ∈ Finset.range k, ((zHat t.1 c i : ℚ) : ℝ) * ((lfHat t.2 c L (k - i) : ℚ) : ℝ) := by
+    refine Finset.sum_congr rfl (fun i hi => ?_)
+    have hi' := Finset.mem_range.mp hi
+    obtain ⟨m, hm⟩ : ∃ m, k - i = m + 1 := ⟨k - i - 1, by omega⟩
+    rw [hm, lfTower_coef t.2 c L hne m]
+    congr 1
+    exact zTowAux_coef c hc t.1 0 i
+  rw [hsum]
+  have hk : zTow t.1 k (c : ℝ) / (k ! : ℝ) = ((zHat t.1 c k : ℚ) : ℝ) := zTowAux_coef c hc t.1 0 k
+  rw [hk, Nat.sub_self]
+  have e : ∑ i ∈ Finset.range k, ((zHat t.1 c i : ℚ) : ℝ) * ((lfHat t.2 c L (k - i) : ℚ) : ℝ) +
+      ((zHat t.1 c k : ℚ) : ℝ) * (lfTower t.2 0 (c : ℝ) / ((0 : ℕ)! : ℝ)) -
+      (∑ i ∈ Finset.range k, ((zHat t.1 c i : ℚ) : ℝ) * ((lfHat t.2 c L (k - i) : ℚ) : ℝ) +
+        ((zHat t.1 c k : ℚ) : ℝ) * ((lfHat t.2 c L 0 : ℚ) : ℝ)) =
+      ((zHat t.1 c k : ℚ) : ℝ) * (lfTower t.2 0 (c : ℝ) / ((0 : ℕ)! : ℝ) -
+        ((lfHat t.2 c L 0 : ℚ) : ℝ)) := by ring
+  rw [e, abs_mul]
+  push_cast
+  rw [qabs'_cast, mul_comm]
+  refine mul_le_mul_of_nonneg_right ?_ (abs_nonneg _)
+  rcases ho : t.2 with _ | ab
+  · simp [ho, lEps, lfTower, oneTower, lfHat]
+  · have h1 := hL ab ho
+    simp only [ho, lEps, lfTower, linLogTower, lfHat, Nat.factorial_zero, Nat.cast_one, div_one]
+    rw [abs_sub_comm]
+    exact h1
+
+
+/-- Coefficient `k` of a list of Laurent terms (the enclosures `(L, ε)` aligned with the terms). -/
+def lCoef : List LTerm → List (ℚ × ℚ) → ℚ → ℕ → ℚ
+  | t :: ts, v :: vs, c, k => lTermCoef t c v.1 k + lCoef ts vs c k
+  | _, _, _, _ => 0
+
+/-- Coefficient error of a list of Laurent terms. -/
+def lErr : List LTerm → List (ℚ × ℚ) → ℚ → ℕ → ℚ
+  | t :: ts, v :: vs, c, k => lEps t.2 v.2 * qabs' (zHat t.1 c k) + lErr ts vs c k
+  | _, _, _, _ => 0
+
+/-- The supplied `(L, ε)` enclose `log |α c - β|` for the logarithmic factors (aligned). -/
+def LLogVals (c : ℚ) : List LTerm → List (ℚ × ℚ) → Prop
+  | [], [] => True
+  | t :: ts, v :: vs =>
+    (∀ ab, t.2 = some ab →
+      |(v.1 : ℝ) - Real.log (|(ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ)|)| ≤ (v.2 : ℝ)) ∧
+      LLogVals c ts vs
+  | _, _ => False
+
+theorem lfield_approx (c : ℚ) (hc : c ≠ 0) : ∀ (ts : List LTerm) (vs : List (ℚ × ℚ)),
+    LLogVals c ts vs → (∀ t ∈ ts, ∀ ab, t.2 = some ab → ab.1 * c - ab.2 ≠ 0) → ∀ k : ℕ,
+    |lfieldTower ts k (c : ℝ) / (k ! : ℝ) - ((lCoef ts vs c k : ℚ) : ℝ)| ≤
+      ((lErr ts vs c k : ℚ) : ℝ) := by
+  intro ts
+  induction ts with
+  | nil =>
+    intro vs hv _ k
+    cases vs with
+    | nil => simp [lfieldTower, lCoef, lErr]
+    | cons => exact absurd hv (by simp [LLogVals])
+  | cons t ts ih =>
+    intro vs hv hne k
+    cases vs with
+    | nil => exact absurd hv (by simp [LLogVals])
+    | cons v vs =>
+      obtain ⟨hv1, hv2⟩ := hv
+      have a1 := lTerm_approx t c hc v.1 v.2 (hne t (by simp)) hv1 k
+      have a2 := ih vs hv2 (fun s hs => hne s (by simp [hs])) k
+      have e : lfieldTower (t :: ts) k (c : ℝ) / (k ! : ℝ) =
+          mulTower (zTow t.1) (lfTower t.2) k (c : ℝ) / (k ! : ℝ) +
+            lfieldTower ts k (c : ℝ) / (k ! : ℝ) := by
+        simp only [lfieldTower, List.map_cons, List.sum_cons]; ring
+      rw [e]
+      simp only [lCoef, lErr]
+      push_cast
+      push_cast at a1
+      have key := (abs_add_le
+        (mulTower (zTow t.1) (lfTower t.2) k (c : ℝ) / (k ! : ℝ) -
+          ((lTermCoef t c v.1 k : ℚ) : ℝ))
+        (lfieldTower ts k (c : ℝ) / (k ! : ℝ) - ((lCoef ts vs c k : ℚ) : ℝ))).trans
+        (add_le_add a1 a2)
+      refine le_trans (le_of_eq ?_) key
+      congr 1
+      push_cast
+      ring
+
+/-! Block bounds: only a lower bound `mx ≤ |x|` and a lower bound `dm ≤ |α x - β|` are used. -/
+
+/-- Bound vector of `Σ_i a_i x^{-(s+i)}` (order `j`) on a block with `mx ≤ |x|`. -/
+def zBndAux : ℕ → List ℚ → ℚ → ℕ → ℚ
+  | _, [], _, _ => 0
+  | s, a :: as, mx, j =>
+    qabs' a * ((s.ascFactorial j : ℚ) / ((j ! : ℕ) : ℚ)) / mx ^ (s + j) + zBndAux (s + 1) as mx j
+
+def zBnd (a : List ℚ) : ℚ → ℕ → ℚ := zBndAux 0 a
+
+theorem monoInv_block (mx : ℚ) (hmx : 0 < mx) (x : ℝ) (hx : (mx : ℝ) ≤ |x|) (s j : ℕ) :
+    |monoInv s j x| / (j ! : ℝ) ≤
+      (s.ascFactorial j : ℝ) / (j ! : ℝ) / (mx : ℝ) ^ (s + j) := by
+  have hmx' : (0 : ℝ) < mx := by exact_mod_cast hmx
+  have hxpos : 0 < |x| := lt_of_lt_of_le hmx' hx
+  unfold monoInv
+  rw [abs_mul, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul, Nat.abs_cast, abs_inv,
+    abs_pow]
+  have hj : (0 : ℝ) < (j ! : ℝ) := by positivity
+  calc (s.ascFactorial j : ℝ) * (|x| ^ (s + j))⁻¹ / (j ! : ℝ)
+      = ((s.ascFactorial j : ℝ) / (j ! : ℝ)) * (|x| ^ (s + j))⁻¹ := by ring
+    _ ≤ ((s.ascFactorial j : ℝ) / (j ! : ℝ)) * ((mx : ℝ) ^ (s + j))⁻¹ := by
+        refine mul_le_mul_of_nonneg_left ?_ (by positivity)
+        exact inv_anti₀ (pow_pos hmx' _) (pow_le_pow_left₀ hmx'.le hx _)
+    _ = _ := by ring
+
+theorem zTowAux_block (mx : ℚ) (hmx : 0 < mx) (x : ℝ) (hx : (mx : ℝ) ≤ |x|) (j : ℕ) :
+    ∀ (a : List ℚ) (s : ℕ), |zTowAux s a j x| / (j ! : ℝ) ≤ ((zBndAux s a mx j : ℚ) : ℝ) := by
+  intro a
+  induction a with
+  | nil => intro s; simp [zTowAux, zBndAux]
+  | cons a as ih =>
+    intro s
+    have hj : (0 : ℝ) < (j ! : ℝ) := by positivity
+    have h1 := monoInv_block mx hmx x hx s j
+    have h2 := ih (s + 1)
+    simp only [zTowAux, zBndAux]
+    push_cast
+    rw [qabs'_cast]
+    calc |(a : ℝ) * monoInv s j x + zTowAux (s + 1) as j x| / (j ! : ℝ)
+        ≤ (|(a : ℝ)| * |monoInv s j x| + |zTowAux (s + 1) as j x|) / (j ! : ℝ) := by
+          refine div_le_div_of_nonneg_right ?_ hj.le
+          rw [← abs_mul]; exact abs_add_le _ _
+      _ = |(a : ℝ)| * (|monoInv s j x| / (j ! : ℝ)) + |zTowAux (s + 1) as j x| / (j ! : ℝ) := by
+          rw [add_div]; ring
+      _ ≤ |(a : ℝ)| * ((s.ascFactorial j : ℝ) / (j ! : ℝ) / (mx : ℝ) ^ (s + j)) +
+          ((zBndAux (s + 1) as mx j : ℚ) : ℝ) :=
+          add_le_add (mul_le_mul_of_nonneg_left h1 (abs_nonneg _)) h2
+      _ = _ := by
+          push_cast
+          ring
+
+/-- Bound vector of the factor `lfTower o` on a block: `|log |α x - β|| ≤ Lb`, `|α x - β| ≥ dm`. -/
+def lfBnd : Option (ℚ × ℚ) → ℚ → ℚ → ℕ → ℚ
+  | none, _, _, 0 => 1
+  | none, _, _, _ + 1 => 0
+  | some _, Lb, _, 0 => Lb
+  | some ab, _, dm, m + 1 => qabs' ab.1 ^ (m + 1) / (((m : ℚ) + 1) * dm ^ (m + 1))
+
+theorem lfTower_bnd (o : Option (ℚ × ℚ)) (Lb dm : ℚ) (x : ℝ) (hdm : ∀ ab, o = some ab → 0 < dm)
+    (hLb : ∀ ab, o = some ab → |Real.log (|(ab.1 : ℝ) * x - (ab.2 : ℝ)|)| ≤ (Lb : ℝ))
+    (hd : ∀ ab, o = some ab → (dm : ℝ) ≤ |(ab.1 : ℝ) * x - (ab.2 : ℝ)|) (m : ℕ) :
+    |lfTower o m x| / (m ! : ℝ) ≤ ((lfBnd o Lb dm m : ℚ) : ℝ) := by
+  cases o with
+  | none =>
+    cases m with
+    | zero => simp [lfTower, oneTower, lfBnd]
+    | succ m => simp [lfTower, oneTower, lfBnd]
+  | some ab =>
+    cases m with
+    | zero => simpa [lfTower, linLogTower, lfBnd] using hLb ab rfl
+    | succ m =>
+      have hdm' : (0 : ℝ) < dm := by exact_mod_cast hdm ab rfl
+      have hd' := hd ab rfl
+      have hpos : 0 < |(ab.1 : ℝ) * x - (ab.2 : ℝ)| := lt_of_lt_of_le hdm' hd'
+      simp only [lfTower, linLogTower, lfBnd]
+      simp only [abs_div, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
+        Nat.abs_cast, Nat.factorial_succ]
+      push_cast
+      rw [qabs'_cast]
+      have hm : (m ! : ℝ) ≠ 0 := by positivity
+      have e1 : (m ! : ℝ) * |(ab.1 : ℝ)| ^ (m + 1) / |(ab.1 : ℝ) * x - (ab.2 : ℝ)| ^ (m + 1) /
+          (((m : ℝ) + 1) * (m ! : ℝ)) =
+          |(ab.1 : ℝ)| ^ (m + 1) / (((m : ℝ) + 1) * |(ab.1 : ℝ) * x - (ab.2 : ℝ)| ^ (m + 1)) := by
+        field_simp
+      rw [e1]
+      refine div_le_div_of_nonneg_left (by positivity) (by positivity) ?_
+      exact mul_le_mul_of_nonneg_left (pow_le_pow_left₀ hdm'.le hd' _) (by positivity)
+
+/-- Block tail of one Laurent term. -/
+def lTermTail (t : LTerm) (mx Lb dm : ℚ) (M : ℕ) : ℚ :=
+  convQ (zBnd t.1 mx) (lfBnd t.2 Lb dm) M (M + 1)
+
+theorem lTerm_block (t : LTerm) (mx Lb dm : ℚ) (hmx : 0 < mx) (hdm : ∀ ab, t.2 = some ab → 0 < dm) (x : ℝ)
+    (hx : (mx : ℝ) ≤ |x|)
+    (hLb : ∀ ab, t.2 = some ab → |Real.log (|(ab.1 : ℝ) * x - (ab.2 : ℝ)|)| ≤ (Lb : ℝ))
+    (hd : ∀ ab, t.2 = some ab → (dm : ℝ) ≤ |(ab.1 : ℝ) * x - (ab.2 : ℝ)|) (M : ℕ) :
+    |mulTower (zTow t.1) (lfTower t.2) M x| / (M ! : ℝ) ≤ ((lTermTail t mx Lb dm M : ℚ) : ℝ) := by
+  refine (mulTower_block_bound (U := fun i => ((zBnd t.1 mx i : ℚ) : ℝ))
+    (V := fun j => ((lfBnd t.2 Lb dm j : ℚ) : ℝ))
+    (fun i _ => zTowAux_block mx hmx x hx i t.1 0)
+    (fun j _ => lfTower_bnd t.2 Lb dm x hdm hLb hd j)).trans (le_of_eq ?_)
+  rw [Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => ((zBnd t.1 mx i : ℚ) : ℝ) * ((lfBnd t.2 Lb dm j : ℚ) : ℝ)) M]
+  unfold lTermTail
+  rw [convQ_cast]
+
+/-- Linear forms on a block. -/
+theorem lin_ge (a b lo hi x d : ℝ) (hx1 : lo ≤ x) (hx2 : x ≤ hi) (h1 : d ≤ a * lo - b)
+    (h2 : d ≤ a * hi - b) : d ≤ a * x - b := by
+  rcases le_total 0 a with ha | ha
+  · nlinarith [mul_le_mul_of_nonneg_left hx1 ha]
+  · nlinarith [mul_le_mul_of_nonpos_left hx2 ha]
+
+theorem lin_le (a b lo hi x d : ℝ) (hx1 : lo ≤ x) (hx2 : x ≤ hi) (h1 : a * lo - b ≤ d)
+    (h2 : a * hi - b ≤ d) : a * x - b ≤ d := by
+  rcases le_total 0 a with ha | ha
+  · nlinarith [mul_le_mul_of_nonneg_left hx2 ha]
+  · nlinarith [mul_le_mul_of_nonpos_left hx1 ha]
+
+theorem lin_pos (a b lo hi x : ℝ) (hx1 : lo ≤ x) (hx2 : x ≤ hi) (h1 : 0 < a * lo - b)
+    (h2 : 0 < a * hi - b) : 0 < a * x - b := by
+  rcases le_total 0 a with ha | ha
+  · nlinarith [mul_le_mul_of_nonneg_left hx1 ha]
+  · nlinarith [mul_le_mul_of_nonpos_left hx2 ha]
+
+theorem lin_neg (a b lo hi x : ℝ) (hx1 : lo ≤ x) (hx2 : x ≤ hi) (h1 : a * lo - b < 0)
+    (h2 : a * hi - b < 0) : a * x - b < 0 := by
+  rcases le_total 0 a with ha | ha
+  · nlinarith [mul_le_mul_of_nonneg_left hx2 ha]
+  · nlinarith [mul_le_mul_of_nonpos_left hx1 ha]
+
+/-- Boolean block condition of a factor: `|α x - β| ≥ dm > 0` on `[blo, bhi]`. -/
+def linOK (blo bhi dm : ℚ) : Option (ℚ × ℚ) → Bool
+  | none => true
+  | some ab =>
+    decide (0 < dm) &&
+      ((decide (dm ≤ ab.1 * blo - ab.2) && decide (dm ≤ ab.1 * bhi - ab.2)) ||
+        (decide (ab.1 * blo - ab.2 ≤ -dm) && decide (ab.1 * bhi - ab.2 ≤ -dm)))
+
+theorem linOK_sound (blo bhi dm : ℚ) (o : Option (ℚ × ℚ)) (h : linOK blo bhi dm o = true) :
+    ∀ ab, o = some ab → 0 < dm ∧ ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+      (dm : ℝ) ≤ |(ab.1 : ℝ) * x - (ab.2 : ℝ)| := by
+  intro ab hab
+  subst hab
+  simp only [linOK, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at h
+  obtain ⟨hdm, h1 | h1⟩ := h
+  · refine ⟨hdm, fun x hx => ?_⟩
+    have a1 : (dm : ℝ) ≤ (ab.1 : ℝ) * blo - ab.2 := by exact_mod_cast h1.1
+    have a2 : (dm : ℝ) ≤ (ab.1 : ℝ) * bhi - ab.2 := by exact_mod_cast h1.2
+    exact (lin_ge _ _ _ _ x _ hx.1 hx.2 a1 a2).trans (le_abs_self _)
+  · refine ⟨hdm, fun x hx => ?_⟩
+    have a1 : (ab.1 : ℝ) * blo - ab.2 ≤ -(dm : ℝ) := by exact_mod_cast h1.1
+    have a2 : (ab.1 : ℝ) * bhi - ab.2 ≤ -(dm : ℝ) := by exact_mod_cast h1.2
+    have := lin_le _ _ _ _ x _ hx.1 hx.2 a1 a2
+    exact (by linarith : (dm : ℝ) ≤ -((ab.1 : ℝ) * x - ab.2)).trans (neg_le_abs _)
+
+/-- Block data of a Laurent term: `Lb ≥ |log |α x - β||`, `dm ≤ |α x - β|`. -/
+structure LBlk where
+  Lb : ℚ
+  dm : ℚ
+
+def lBlkOK (blo bhi : ℚ) : List LTerm → List LBlk → Bool
+  | [], [] => true
+  | t :: ts, b :: bs => linOK blo bhi b.dm t.2 && lBlkOK blo bhi ts bs
+  | _, _ => false
+
+def LLogBnd (blo bhi : ℚ) : List LTerm → List LBlk → Prop
+  | [], [] => True
+  | t :: ts, b :: bs =>
+    (∀ ab, t.2 = some ab → ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+      |Real.log (|(ab.1 : ℝ) * x - (ab.2 : ℝ)|)| ≤ (b.Lb : ℝ)) ∧ LLogBnd blo bhi ts bs
+  | _, _ => False
+
+def lTailSum (mx : ℚ) (M : ℕ) : List LTerm → List LBlk → ℚ
+  | t :: ts, b :: bs => lTermTail t mx b.Lb b.dm M + lTailSum mx M ts bs
+  | _, _ => 0
+
+/-- **Block tail checker of the Laurent part**: `|(Σ terms)^{(M)}|/M! ≤ BM` on `[blo, bhi]`, where
+`mx ≤ |x|` there. -/
+def lTailCheck (blo bhi mx : ℚ) (M : ℕ) (ts : List LTerm) (bs : List LBlk) (BM : ℚ) : Bool :=
+  decide (blo ≤ bhi) && decide (0 < mx) && (decide (mx ≤ blo) || decide (bhi ≤ -mx)) &&
+    lBlkOK blo bhi ts bs && decide (lTailSum mx M ts bs ≤ BM)
+
+theorem lTail_block (blo bhi mx : ℚ) (M : ℕ) (hmx : 0 < mx)
+    (hside : (mx ≤ blo) ∨ (bhi ≤ -mx)) :
+    ∀ (ts : List LTerm) (bs : List LBlk), lBlkOK blo bhi ts bs = true → LLogBnd blo bhi ts bs →
+      ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+        |lfieldTower ts M x| / (M ! : ℝ) ≤ ((lTailSum mx M ts bs : ℚ) : ℝ) := by
+  have hx : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), (mx : ℝ) ≤ |x| := by
+    intro x hx
+    rcases hside with h | h
+    · have : (mx : ℝ) ≤ blo := by exact_mod_cast h
+      exact (this.trans hx.1).trans (le_abs_self _)
+    · have : (bhi : ℝ) ≤ -(mx : ℝ) := by exact_mod_cast h
+      exact (by linarith [hx.2] : (mx : ℝ) ≤ -x).trans (neg_le_abs _)
+  intro ts
+  induction ts with
+  | nil =>
+    intro bs hok hlog x _
+    cases bs with
+    | nil => simp [lfieldTower, lTailSum]
+    | cons => exact absurd hlog (by simp [LLogBnd])
+  | cons t ts ih =>
+    intro bs hok hlog x hxI
+    cases bs with
+    | nil => exact absurd hlog (by simp [LLogBnd])
+    | cons b bs =>
+      simp only [lBlkOK, Bool.and_eq_true] at hok
+      obtain ⟨hl1, hl2⟩ := hok
+      obtain ⟨hg1, hg2⟩ := hlog
+      have hdm : ∀ ab, t.2 = some ab → 0 < b.dm :=
+        fun ab hab => (linOK_sound blo bhi b.dm t.2 hl1 ab hab).1
+      have hd : ∀ ab, t.2 = some ab →
+          (b.dm : ℝ) ≤ |(ab.1 : ℝ) * x - (ab.2 : ℝ)| :=
+        fun ab hab => (linOK_sound blo bhi b.dm t.2 hl1 ab hab).2 x hxI
+      have hLb : ∀ ab, t.2 = some ab →
+          |Real.log (|(ab.1 : ℝ) * x - (ab.2 : ℝ)|)| ≤ (b.Lb : ℝ) :=
+        fun ab hab => hg1 ab hab x hxI
+      have h1 := lTerm_block t mx b.Lb b.dm hmx hdm x (hx x hxI) hLb hd M
+      have h2 := ih bs hl2 hg2 x hxI
+      have e : lfieldTower (t :: ts) M x =
+          mulTower (zTow t.1) (lfTower t.2) M x + lfieldTower ts M x := by
+        simp [lfieldTower]
+      rw [e, lTailSum]
+      push_cast
+      calc |mulTower (zTow t.1) (lfTower t.2) M x + lfieldTower ts M x| / (M ! : ℝ)
+          ≤ (|mulTower (zTow t.1) (lfTower t.2) M x| + |lfieldTower ts M x|) / (M ! : ℝ) :=
+            div_le_div_of_nonneg_right (abs_add_le _ _) (by positivity)
+        _ = |mulTower (zTow t.1) (lfTower t.2) M x| / (M ! : ℝ) +
+              |lfieldTower ts M x| / (M ! : ℝ) := by rw [add_div]
+        _ ≤ _ := add_le_add h1 h2
+
+theorem lTailCheck_sound (blo bhi mx : ℚ) (M : ℕ) (ts : List LTerm) (bs : List LBlk) (BM : ℚ)
+    (hchk : lTailCheck blo bhi mx M ts bs BM = true) (hlog : LLogBnd blo bhi ts bs) :
+    ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ), |lfieldTower ts M x| / (M ! : ℝ) ≤ (BM : ℝ) := by
+  simp only [lTailCheck, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨⟨_, hmx⟩, hside⟩, hok⟩, hBM⟩ := hchk
+  intro x hx
+  have := lTail_block blo bhi mx M hmx hside ts bs hok hlog x hx
+  exact this.trans (by exact_mod_cast hBM)
+
+/-- Cell condition for the Laurent part: the cell avoids `0` and every `α x = β`. -/
+def lAvoidOne (lo hi : ℚ) : Option (ℚ × ℚ) → Bool
+  | none => true
+  | some ab =>
+    (decide (0 < ab.1 * lo - ab.2) && decide (0 < ab.1 * hi - ab.2)) ||
+      (decide (ab.1 * lo - ab.2 < 0) && decide (ab.1 * hi - ab.2 < 0))
+
+def lAvoid (lo hi : ℚ) (ts : List LTerm) : Bool :=
+  (decide (0 < lo) || decide (hi < 0)) && ts.all (fun t => lAvoidOne lo hi t.2)
+
+theorem lAvoid_sound (lo hi : ℚ) (ts : List LTerm) (h : lAvoid lo hi ts = true) :
+    (∀ x ∈ Icc (lo : ℝ) (hi : ℝ), x ≠ 0) ∧
+      ∀ t ∈ ts, ∀ ab, t.2 = some ab → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+        (ab.1 : ℝ) * x - (ab.2 : ℝ) ≠ 0 := by
+  simp only [lAvoid, Bool.and_eq_true, Bool.or_eq_true, decide_eq_true_eq, List.all_eq_true] at h
+  obtain ⟨hz, ht⟩ := h
+  refine ⟨?_, ?_⟩
+  · intro x hx
+    rcases hz with h | h
+    · have : (0 : ℝ) < lo := by exact_mod_cast h
+      exact (lt_of_lt_of_le this hx.1).ne'
+    · have : (hi : ℝ) < 0 := by exact_mod_cast h
+      exact (lt_of_le_of_lt hx.2 this).ne
+  · intro t htm ab hab x hx
+    have h1 := ht t htm
+    rw [hab] at h1
+    simp only [lAvoidOne, Bool.or_eq_true, Bool.and_eq_true, decide_eq_true_eq] at h1
+    rcases h1 with ⟨a1, a2⟩ | ⟨a1, a2⟩
+    · have b1 : (0 : ℝ) < (ab.1 : ℝ) * lo - ab.2 := by exact_mod_cast a1
+      have b2 : (0 : ℝ) < (ab.1 : ℝ) * hi - ab.2 := by exact_mod_cast a2
+      exact (lin_pos _ _ _ _ x hx.1 hx.2 b1 b2).ne'
+    · have b1 : (ab.1 : ℝ) * lo - ab.2 < 0 := by exact_mod_cast a1
+      have b2 : (ab.1 : ℝ) * hi - ab.2 < 0 := by exact_mod_cast a2
+      exact (lin_neg _ _ _ _ x hx.1 hx.2 b1 b2).ne
+
+
+/-! The cell checker for `fieldTower fq F + lfieldTower ts` (polynomial/log/pole part plus Laurent part). -/
+
+/-- **Generic cell core**: a tower on the cell with enclosed point coefficients `cs ± es` gives the
+Taylor-model bound (the final step of `fieldCellCheck_sound`, for an abstract tower). -/
+theorem cellCore {f : ℕ → ℝ → ℝ} (lo hi A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ)
+    (cs es : List ℚ)
+    (hT0 : IsTower f (((lo + hi) / 2 : ℚ) : ℝ) (((hi - lo) / 2 : ℚ) : ℝ) (Bl.length + 3))
+    (hspec : ∀ k, 1 ≤ k → k ≤ Bl.length + 2 →
+      |f k (((lo + hi) / 2 : ℚ) : ℝ) / (k ! : ℝ) - ((cs.getD k 0 : ℚ) : ℝ)| ≤
+        ((es.getD k 0 : ℚ) : ℝ))
+    (hl1 : l1 ≤ cs.getD 1 0 - es.getD 1 0) (hu1 : cs.getD 1 0 + es.getD 1 0 ≤ u1)
+    (hA2 : cs.getD 2 0 + es.getD 2 0 ≤ A2) (hB : absLeAllE cs es 3 Bl = true)
+    (hT : tmUBQ A0 l1 u1 A2 ((hi - lo) / 2) Bl BM ≤ T)
+    (h0 : f 0 (((lo + hi) / 2 : ℚ) : ℝ) ≤ (A0 : ℝ))
+    (blo bhi : ℚ) (hb1 : blo ≤ lo) (hb2 : hi ≤ bhi)
+    (hBM : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+      |f (Bl.length + 3) x| / ((Bl.length + 3)! : ℝ) ≤ (BM : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), f 0 x ≤ (T : ℝ) := by
+  set c : ℚ := (lo + hi) / 2 with hc
+  set r : ℚ := (hi - lo) / 2 with hr
+  have e1 : (c : ℝ) - (r : ℝ) = (lo : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have e2 : (c : ℝ) + (r : ℝ) = (hi : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have hcell : Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)) = Icc (lo : ℝ) (hi : ℝ) := by
+    rw [e1, e2]
+  have hcoef := absLeAllE_spec _ _ Bl 3 hB
+  intro x hx
+  rw [← hcell] at hx
+  have key := taylor_cell_ub_rat (f := f) (c := (c : ℝ)) (r := (r : ℝ)) Bl hT0
+    (A0 := A0) (l1 := l1) (u1 := u1) (A2 := A2) (BM := BM) h0
+    (by
+      have h := abs_le.mp (hspec 1 le_rfl (by omega))
+      have h1' : (l1 : ℝ) ≤ ((cs.getD 1 0 : ℚ) : ℝ) - ((es.getD 1 0 : ℚ) : ℝ) := by
+        exact_mod_cast hl1
+      have h2 := h.1
+      simp only [Nat.factorial_one, Nat.cast_one, div_one] at h2
+      linarith)
+    (by
+      have h := abs_le.mp (hspec 1 le_rfl (by omega))
+      have h1' : ((cs.getD 1 0 : ℚ) : ℝ) + ((es.getD 1 0 : ℚ) : ℝ) ≤ (u1 : ℝ) := by
+        exact_mod_cast hu1
+      have h2 := h.2
+      simp only [Nat.factorial_one, Nat.cast_one, div_one] at h2
+      linarith)
+    (by
+      have h := abs_le.mp (hspec 2 (by omega) (by omega))
+      have h2' : ((cs.getD 2 0 : ℚ) : ℝ) + ((es.getD 2 0 : ℚ) : ℝ) ≤ (A2 : ℝ) := by
+        exact_mod_cast hA2
+      have h3 := h.2
+      simp only [Nat.factorial, Nat.cast_one, Nat.cast_ofNat, mul_one, one_mul] at h3
+      linarith)
+    (by
+      intro i hi'
+      have h1 := hcoef i hi'
+      have h2 := abs_le.mp (hspec (3 + i) (by omega) (by omega))
+      have h3 : ((qabs' (cs.getD (3 + i) 0) : ℚ) : ℝ) + ((es.getD (3 + i) 0 : ℚ) : ℝ) ≤
+          ((Bl.getD i 0 : ℚ) : ℝ) := by exact_mod_cast h1
+      rw [qabs'_cast] at h3
+      have e0 : |f (3 + i) (c : ℝ)| / ((3 + i)! : ℝ) = |f (3 + i) (c : ℝ) / ((3 + i)! : ℝ)| := by
+        rw [abs_div, Nat.abs_cast]
+      rw [e0, abs_le]
+      constructor <;> linarith [h2.1, h2.2, le_abs_self ((cs.getD (3 + i) 0 : ℚ) : ℝ),
+        neg_abs_le ((cs.getD (3 + i) 0 : ℚ) : ℝ)])
+    (by
+      intro y hy
+      rw [hcell] at hy
+      exact hBM y ⟨le_trans (by exact_mod_cast hb1) hy.1, le_trans hy.2 (by exact_mod_cast hb2)⟩)
+    r (by simp [hr])
+  have := key x hx
+  refine this.trans ?_
+  exact_mod_cast hT
+
+/-- **The Boolean cell checker for a field with a Laurent part**: `fieldTower fq F + lfieldTower ts`
+on the cell `[lo, hi]` (away from `0`, the poles, the logarithmic singularities and `α x = β`);
+coefficients are those of `fieldCellCheck` plus the Laurent coefficients `lCoef`, errors added. -/
+def lfCellCheck (fq : FieldQ) (ts : List LTerm) (Ls εs : List ℚ) (Lv : List (ℚ × ℚ))
+    (lo hi A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ) : Bool :=
+  let cs := (List.range (Bl.length + 3)).map (fun k =>
+    (fieldCoefs fq Ls ((lo + hi) / 2) (Bl.length + 2)).getD k 0 + lCoef ts Lv ((lo + hi) / 2) k)
+  let es := (List.range (Bl.length + 3)).map (fun k =>
+    (plogErrSum ((lo + hi) / 2) (Bl.length + 2) fq.plogs εs).getD k 0 +
+      lErr ts Lv ((lo + hi) / 2) k)
+  decide (lo ≤ hi) &&
+  fq.plogs.all (fun t => decide (hi < t.2) || decide (t.2 < lo)) &&
+  fq.poles.all (fun q => decide (0 < poleDist q lo hi)) && lAvoid lo hi ts &&
+  decide (l1 ≤ cs.getD 1 0 - es.getD 1 0) && decide (cs.getD 1 0 + es.getD 1 0 ≤ u1) &&
+  decide (cs.getD 2 0 + es.getD 2 0 ≤ A2) &&
+  absLeAllE cs es 3 Bl && decide (tmUBQ A0 l1 u1 A2 ((hi - lo) / 2) Bl BM ≤ T)
+
+/-- **Soundness of `lfCellCheck`.**  `hBM` is the block tail of the *sum* (add the bounds of
+`blockTailCheck_sound` and `lTailCheck_sound`, `lTail_add`). -/
+theorem lfCellCheck_sound (fq : FieldQ) (F : ℝ → ℝ) (ts : List LTerm) (Ls εs : List ℚ)
+    (Lv : List (ℚ × ℚ)) (lo hi A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ)
+    (hchk : lfCellCheck fq ts Ls εs Lv lo hi A0 l1 u1 A2 Bl BM T = true)
+    (hLs : LogVals ((lo + hi) / 2) fq.plogs Ls εs)
+    (hLv : LLogVals ((lo + hi) / 2) ts Lv)
+    (hF : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), HasDerivAt F ((fq.poles.map (fun q => qt q 0 x)).sum) x)
+    (h0 : fieldTower fq F 0 (((lo + hi) / 2 : ℚ) : ℝ) + lfieldTower ts 0 (((lo + hi) / 2 : ℚ) : ℝ) ≤
+      (A0 : ℝ))
+    (blo bhi : ℚ) (hb1 : blo ≤ lo) (hb2 : hi ≤ bhi)
+    (hBM : ∀ x ∈ Icc (blo : ℝ) (bhi : ℝ),
+      |fieldTower fq F (Bl.length + 3) x + lfieldTower ts (Bl.length + 3) x| /
+        ((Bl.length + 3)! : ℝ) ≤ (BM : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq F 0 x + lfieldTower ts 0 x ≤ (T : ℝ) := by
+  simp only [lfCellCheck, Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true,
+    Bool.or_eq_true] at hchk
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨hlh, hplog⟩, hpole⟩, hav⟩, hl1⟩, hu1⟩, hA2⟩, hB⟩, hT⟩ := hchk
+  set c : ℚ := (lo + hi) / 2 with hc
+  set r : ℚ := (hi - lo) / 2 with hr
+  have e1 : (c : ℝ) - (r : ℝ) = (lo : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have e2 : (c : ℝ) + (r : ℝ) = (hi : ℝ) := by simp only [hc, hr]; push_cast; ring
+  have hcell : Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)) = Icc (lo : ℝ) (hi : ℝ) := by
+    rw [e1, e2]
+  have hdl' : ∀ q ∈ fq.poles, 0 < poleDist q lo hi := fun q hq => by simpa using hpole q hq
+  have hnee : ∀ t ∈ fq.plogs, ∀ x ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)),
+      x ≠ (t.2 : ℝ) := by
+    intro t ht x hx hxe
+    rw [hcell] at hx
+    rcases hplog t ht with h | h
+    · have h' : (hi : ℝ) < (t.2 : ℝ) := by exact_mod_cast (by simpa using h : hi < t.2)
+      linarith [hx.2]
+    · have h' : (t.2 : ℝ) < (lo : ℝ) := by exact_mod_cast (by simpa using h : t.2 < lo)
+      linarith [hx.1]
+  have hnec : ∀ t ∈ fq.plogs, c - t.2 ≠ 0 := by
+    intro t ht h
+    rcases hplog t ht with h1 | h1
+    · have : hi < t.2 := by simpa using h1
+      simp only [hc] at h; linarith
+    · have : t.2 < lo := by simpa using h1
+      simp only [hc] at h; linarith
+  have hnep : ∀ y ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)), ∀ q ∈ fq.poles,
+      (y : ℂ) ≠ q.pc := by
+    intro y hy q hq heq
+    rw [hcell] at hy
+    have := poleDist_le_norm q lo hi y hy.1 hy.2
+    rw [heq, sub_self, norm_zero] at this
+    have h2 : (0 : ℝ) < ((poleDist q lo hi : ℚ) : ℝ) := by exact_mod_cast hdl' q hq
+    linarith
+  have hF' : ∀ y ∈ Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)),
+      HasDerivAt F ((fq.poles.map (fun q => qt q 0 y)).sum) y := by
+    intro y hy; rw [hcell] at hy; exact hF y hy
+  obtain ⟨hz, hne⟩ := lAvoid_sound lo hi ts hav
+  have hlh' : (lo : ℝ) ≤ hi := by exact_mod_cast hlh
+  have hr0 : (0 : ℝ) ≤ (r : ℝ) := by simp only [hr]; push_cast; linarith [hlh']
+  have hcI : (c : ℝ) ∈ Icc (lo : ℝ) (hi : ℝ) := ⟨by rw [← e1]; linarith, by rw [← e2]; linarith⟩
+  have hc0 : c ≠ 0 := by
+    intro h; exact hz _ hcI (by rw [h]; simp)
+  have hneQ : ∀ t ∈ ts, ∀ ab, t.2 = some ab → ab.1 * c - ab.2 ≠ 0 := by
+    intro t ht ab hab h
+    refine hne t ht ab hab _ hcI ?_
+    have : (ab.1 : ℝ) * (c : ℝ) - (ab.2 : ℝ) = 0 := by exact_mod_cast h
+    exact this
+  have hT1 := isTower_fieldTower fq F (c : ℝ) (r : ℝ) (Bl.length + 3) hnee hnep hF'
+  have hT2 := isTower_lfieldTower ts (c : ℝ) (r : ℝ) (Bl.length + 3)
+    (fun x hx => hz x (by rw [← hcell]; exact hx))
+    (fun t ht ab hab x hx => hne t ht ab hab x (by rw [← hcell]; exact hx))
+  have hTT : IsTower (fun j x => fieldTower fq F j x + lfieldTower ts j x) (c : ℝ) (r : ℝ)
+      (Bl.length + 3) := hT1.add hT2
+  refine cellCore (f := fun j x => fieldTower fq F j x + lfieldTower ts j x) lo hi A0 l1 u1 A2 Bl BM T
+    _ _ hTT ?_ hl1 hu1 hA2 hB hT h0 blo bhi hb1 hb2 hBM
+  intro k hk1 hk
+  beta_reduce
+  have hkM : k < Bl.length + 3 := by omega
+  have g1 : ((List.range (Bl.length + 3)).map (fun k =>
+      (fieldCoefs fq Ls c (Bl.length + 2)).getD k 0 + lCoef ts Lv c k)).getD k 0 =
+      (fieldCoefs fq Ls c (Bl.length + 2)).getD k 0 + lCoef ts Lv c k :=
+    getD_map_range _ _ _ hkM
+  have g2 : ((List.range (Bl.length + 3)).map (fun k =>
+      (plogErrSum c (Bl.length + 2) fq.plogs εs).getD k 0 + lErr ts Lv c k)).getD k 0 =
+      (plogErrSum c (Bl.length + 2) fq.plogs εs).getD k 0 + lErr ts Lv c k :=
+    getD_map_range _ _ _ hkM
+  rw [g1, g2]
+  have a1 := fieldCoefs_approx fq F Ls εs c (Bl.length + 2) hLs hnec k hk1 hk
+  have a2 := lfield_approx c hc0 ts Lv hLv hneQ k
+  simp only [Rat.cast_add]
+  have e : (fieldTower fq F k (c : ℝ) + lfieldTower ts k (c : ℝ)) / (k ! : ℝ) =
+      fieldTower fq F k (c : ℝ) / (k ! : ℝ) + lfieldTower ts k (c : ℝ) / (k ! : ℝ) := by ring
+  rw [e]
+  have key := (abs_add_le (fieldTower fq F k (c : ℝ) / (k ! : ℝ) -
+      (((fieldCoefs fq Ls c (Bl.length + 2)).getD k 0 : ℚ) : ℝ))
+    (lfieldTower ts k (c : ℝ) / (k ! : ℝ) - ((lCoef ts Lv c k : ℚ) : ℝ))).trans
+    (add_le_add a1 a2)
+  refine le_trans (le_of_eq ?_) key
+  congr 1
+  ring
+
+/-- Sum of the block tails (the field part and the Laurent part). -/
+theorem lTail_add {A B : ℝ → ℝ} {M : ℕ} {x : ℝ} {BA BB : ℝ}
+    (hA : |A x| / (M ! : ℝ) ≤ BA) (hB : |B x| / (M ! : ℝ) ≤ BB) :
+    |A x + B x| / (M ! : ℝ) ≤ BA + BB := by
+  have hf : (0 : ℝ) < (M ! : ℝ) := by positivity
+  calc |A x + B x| / (M ! : ℝ) ≤ (|A x| + |B x|) / (M ! : ℝ) :=
+        div_le_div_of_nonneg_right (abs_add_le _ _) hf.le
+    _ = |A x| / (M ! : ℝ) + |B x| / (M ! : ℝ) := by rw [add_div]
+    _ ≤ BA + BB := add_le_add hA hB
+
+
+/-- At order `0`, the Laurent polynomial is the polynomial evaluated at `1/x`. -/
+theorem zTowAux_zero (x : ℝ) : ∀ (a : List ℚ) (s : ℕ),
+    zTowAux s a 0 x = (x⁻¹) ^ s * polyTow a 0 x⁻¹ := by
+  intro a
+  induction a with
+  | nil => intro s; simp [zTowAux, polyTow]
+  | cons a as ih =>
+    intro s
+    rw [zTowAux, ih (s + 1)]
+    have h : polyTow (a :: as) 0 x⁻¹ = (a : ℝ) + x⁻¹ * polyTow as 0 x⁻¹ := rfl
+    rw [h]
+    simp only [monoInv, pow_zero, add_zero, Nat.ascFactorial_zero, Nat.cast_one, one_mul, inv_pow]
+    ring
+
+theorem zTow_zero (a : List ℚ) (x : ℝ) : zTow a 0 x = polyTow a 0 x⁻¹ := by
+  unfold zTow; rw [zTowAux_zero]; simp
+
+/-- Regression: `1/x ≤ 1.34` on `[3/4, 5/4]` through the Laurent cell checker and block tail
+(`T = 1.34`; the checker rejects `T = 1.33`, below the true supremum `4/3`). -/
+example : lfCellCheck ⟨[], [], []⟩ [([0, 1], none)] [] [] [(0, 0)] (3 / 4) (5 / 4) 1 (-1) (-1) 1
+    [1, 1, 1, 1, 1] 14 (134 / 100) = true := by decide +kernel
+example : lfCellCheck ⟨[], [], []⟩ [([0, 1], none)] [] [] [(0, 0)] (3 / 4) (5 / 4) 1 (-1) (-1) 1
+    [1, 1, 1, 1, 1] 14 (133 / 100) = false := by decide +kernel
+example : lfCellCheck ⟨[], [], []⟩ [([0, 1], none)] [] [] [(0, 0)] (-1 / 4) (5 / 4) 1 (-1) (-1) 1
+    [1, 1, 1, 1, 1] 14 (134 / 100) = false := by decide +kernel
+example : lTailCheck (3 / 4) (5 / 4) (3 / 4) 8 [([0, 1], none)] [⟨0, 0⟩] 14 = true := by
+  decide +kernel
+example : lTailCheck (3 / 4) (5 / 4) (3 / 4) 8 [([0, 1], none)] [⟨0, 0⟩] 13 = false := by
+  decide +kernel
+/-- A logarithmic Laurent term: `(log x)/x` has Taylor data `L = log 1 = 0` at `c = 1`. -/
+example : lfCellCheck ⟨[], [], []⟩ [([0, 1], some (1, 0))] [] [] [(0, 0)] (3 / 4) (5 / 4) 0 1 1 (-3 / 2)
+    [2, 3, 3, 3, 3] 400 (21 / 100) = true := by decide +kernel
+example : lfCellCheck ⟨[], [], []⟩ [([0, 1], some (1, 0))] [] [] [(0, 0)] (3 / 4) (5 / 4) 0 1 1 (-3 / 2)
+    [2, 3, 3, 3, 3] 400 (17 / 100) = false := by decide +kernel
+
 end CatalanMeasure.GenD.Signed.TaylorCell
 
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.quad_le_quadSupR
@@ -1842,3 +2671,12 @@ end CatalanMeasure.GenD.Signed.TaylorCell
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.plogSumVec_approx
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.fieldCoefs_approx
 #print axioms CatalanMeasure.GenD.Signed.TaylorCell.absLeAllE_spec
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.hasDerivAt_monoInv
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.isTower_lfieldTower
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lTerm_approx
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lfield_approx
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lTerm_block
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lTailCheck_sound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lAvoid_sound
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.cellCore
+#print axioms CatalanMeasure.GenD.Signed.TaylorCell.lfCellCheck_sound

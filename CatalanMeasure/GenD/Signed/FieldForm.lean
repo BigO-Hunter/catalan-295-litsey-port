@@ -976,6 +976,8 @@ structure TrialForm.Spec (F : TrialForm) (D : SignedData) : Prop where
   hμF : D.μ false = polyMeas F.qF
   hμfT : D.μf true = polyMeas F.qTf
   hμfF : D.μf false = polyMeas F.qFf
+  /-- The fixed reference has the same true species as the trial (so `phConst = 0`). -/
+  hqTf : F.qTf = F.qT
   pT : ∀ q ∈ F.qT, PieceOK q
   pF : ∀ q ∈ F.qF, PieceOK q
   pTf : ∀ q ∈ F.qTf, PieceOK q
@@ -1025,6 +1027,20 @@ theorem isGeom_mpos' (h : F.Spec D) : IsGeom D.τ (mpos D.μ D.τ) :=
 
 theorem isGeom_t (h : F.Spec D) : IsGeom D.τ D.t := by
   rw [h.ht]; exact isGeom_mneg' h
+
+/-- **The arcsine cross constant vanishes**: at the tilt `t = mneg μ` the first cross is
+`ip (arcNeg, 0)` and the second is `ip (0, arcPos)` since the true species agree
+(`qTf = qT`); no limit is needed. -/
+theorem phConst_eq_zero (h : F.Spec D) : D.phConst = 0 := by
+  have e1 : (fun n => mneg D.μ D.τ n - D.t n) = fun _ => (0 : ℝ) := by
+    funext n; rw [h.ht]; ring
+  have e2 : (fun n => mpos D.μ D.τ n - mpos D.μf D.τ n) = fun _ => (0 : ℝ) := by
+    funext n
+    have : D.μf true = D.μ true := by rw [h.hμfT, h.hqTf, ← h.hμT]
+    simp only [mpos, this]; ring
+  unfold SignedData.phConst
+  rw [e1, e2]
+  simp [ip]
 
 /-- With the certificate's tilt `t = mneg μ`: `fld τ t = dilPot qF (τ²(-x))`. -/
 theorem fld_t (h : F.Spec D) {x : ℝ} (hx : |x| ≤ 1) (hx0 : x ≠ 0) :
@@ -2918,12 +2934,12 @@ theorem dilPot_sub_le_neg {qs : List Piece} (hqs : ∀ q ∈ qs, PieceOK q) {C :
   linarith
 
 /-- The limit form of the near-type fixed node field with spike cost (arcsine block dropped by
-sign; `phL = lim phConst`). -/
-def fNearMSLim (F : TrialForm) (RnL : ℝ → ℝ) (α β σ : ℝ) (bL : ℕ → ℝ) (KL : ℕ) (csL θL phL : ℝ)
+sign; the cross constant `phConst` vanishes, `phConst_eq_zero`). -/
+def fNearMSLim (F : TrialForm) (RnL : ℝ → ℝ) (α β σ : ℝ) (bL : ℕ → ℝ) (KL : ℕ) (csL θL : ℝ)
     (x : ℝ) : ℝ :=
   RnL x + 2 * F.a.Sform (-x) - σ * denPoly bL KL x +
     (geoLim F.R x - (dilPot F.qFf (-x) + dilPot F.qF (-x)) / 2) + (α / 2) * Real.log (1 + x) +
-    (β / 4) * (-Real.log (1 - x ^ 2)) + phL + csL * (if 1 - θL < x then 1 else 0)
+    (β / 4) * (-Real.log (1 - x ^ 2)) + csL * (if 1 - θL < x then 1 else 0)
 
 theorem tendsto_log_inv_sq {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) :
     Tendsto (fun N => Real.log (1 / (D N).τ ^ 2)) atTop (𝓝 0) := by
@@ -2939,14 +2955,13 @@ explicit perturbation `(1/(2ν)) (-log(1-x²))` of the `rS`-coefficient (the arc
 by sign, `β ≥ 0`). -/
 theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {Rn : ℕ → ℝ → ℝ}
     {RnL : ℝ → ℝ} {ω : ℝ} (hωR : ∀ wr ∈ F.R, ‖wr.1‖ ≤ ω)
-    (hω1 : ω < 1) {σ csL θL phL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
+    (hω1 : ω < 1) {σ csL θL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
     (hbL : ∀ N, (D N).b = bL) (hKL : ∀ N, (D N).K = KL) (hθL : ∀ N, (D N).θ = θL)
     (hσ : Tendsto (fun N => ((D N).sp : ℝ) / (D N).ν) atTop (𝓝 σ))
     (hcs : Tendsto (fun N => (D N).cs) atTop (𝓝 csL))
-    (hph : Tendsto (fun N => (D N).phConst) atTop (𝓝 phL))
     (hRn : ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, Rn N x - RnL x ≤ ε) :
     ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo (0 : ℝ) 1,
-      (D N).fNearMS (Rn N) α β x ≤ fNearMSLim F RnL α β σ bL KL csL θL phL x +
+      (D N).fNearMS (Rn N) α β x ≤ fNearMSLim F RnL α β σ bL KL csL θL x +
         (1 / (2 * (D N).ν)) * (-Real.log (1 - x ^ 2)) + ε := by
   intro ε hε
   set S : ℝ := ∑' k, |tseq F.a.f F.a.tail k| with hS
@@ -2955,7 +2970,7 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
   set M : ℝ := polyMass F.qFf with hM
   set M2 : ℝ := polyMass F.qF with hM2
   set Bf : ℕ → ℝ := fun N => Real.log (1 / (1 - (D N).τ ^ 2)) / (2 * (D N).ν) +
-      Real.log (1 / (D N).τ ^ 2) + |(D N).phConst - phL| + 2 * (S * (1 - (D N).τ)) +
+      Real.log (1 / (D N).τ ^ 2) + 2 * (S * (1 - (D N).τ)) +
       CR * ((1 - (D N).τ) / (1 - ω)) +
       (M * (1 - (D N).τ ^ 2) + M2 * (1 - (D N).τ ^ 2)) / 2 +
       Db * |((D N).sp : ℝ) / (D N).ν - σ| + |(D N).cs - csL| with hBf
@@ -2969,8 +2984,6 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
           (𝓝 ((1 / 2 : ℝ) * 0)) := (hf.hℓ.const_mul (1 / 2 : ℝ)).congr (fun N => by ring)
       simpa only [mul_zero] using this
     have a2 := tendsto_log_inv_sq hf
-    have a3 : Tendsto (fun N => |(D N).phConst - phL|) atTop (𝓝 0) := by
-      simpa using (hph.sub_const phL).abs
     have a4 : Tendsto (fun N => 2 * (S * (1 - (D N).τ))) atTop (𝓝 0) := by
       simpa using (h1.const_mul S).const_mul 2
     have a5 : Tendsto (fun N => CR * ((1 - (D N).τ) / (1 - ω))) atTop (𝓝 0) := by
@@ -2983,7 +2996,7 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
       simpa using ((hσ.sub_const σ).abs).const_mul Db
     have a8 : Tendsto (fun N => |(D N).cs - csL|) atTop (𝓝 0) := by
       simpa using (hcs.sub_const csL).abs
-    simpa [hBf] using ((((((a1.add a2).add a3).add a4).add a5).add a6).add a7).add a8
+    simpa [hBf] using (((((a1.add a2).add a4).add a5).add a6).add a7).add a8
   have hB : ∀ᶠ N in atTop, Bf N ≤ ε / 2 := hBt.eventually (ge_mem_nhds (by linarith))
   filter_upwards [hRn (ε / 2) (by linarith), hB, hf.hν.eventually_gt_atTop 0] with N hRnN hBN hνN
     α β hβ x hxI
@@ -3041,8 +3054,7 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
   have u5' := abs_le.mp eDil2
   have u6 := abs_le.mp eDen
   have u7 := abs_le.mp eCs
-  have uph := le_abs_self ((D N).phConst - phL)
-  have uph' := neg_abs_le ((D N).phConst - phL)
+  have hz : (D N).phConst = 0 := TrialForm.phConst_eq_zero hs
   have hBN' := hBN
   simp only [hBf] at hBN'
   unfold fNearMSLim
@@ -3052,29 +3064,28 @@ theorem fNearMS_le_lim {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F
       (β / 4) * (-Real.log (1 - x ^ 2)) + (1 / (2 * (D N).ν)) * (-Real.log (1 - x ^ 2)) := by
     ring
   linarith [hnoarc, e1, e2, u1, u3.1, u3.2, u4.1, u4.2, u5.1, u5.2, u5'.1, u5'.2, u6.1, u6.2,
-    u7.1, u7.2, uph, uph']
+    u7.1, u7.2, hz]
 
 /-- **Cell `(lo, hi)`, `0 ≤ lo`, `hi < 1`, of the near-type fixed nodes** (SigmaCap's
 `[g*, x_c)`), uniform in `α` and `β ≥ 0`: a limit bound `T α β` gives
 `fNearMS (D N) ≤ T α β + ε`. -/
 theorem fNearMS_cell {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {Rn : ℕ → ℝ → ℝ}
     {RnL : ℝ → ℝ} {ω : ℝ} (hωR : ∀ wr ∈ F.R, ‖wr.1‖ ≤ ω)
-    (hω1 : ω < 1) {σ csL θL phL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
+    (hω1 : ω < 1) {σ csL θL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
     (hbL : ∀ N, (D N).b = bL) (hKL : ∀ N, (D N).K = KL) (hθL : ∀ N, (D N).θ = θL)
     (hσ : Tendsto (fun N => ((D N).sp : ℝ) / (D N).ν) atTop (𝓝 σ))
     (hcs : Tendsto (fun N => (D N).cs) atTop (𝓝 csL))
-    (hph : Tendsto (fun N => (D N).phConst) atTop (𝓝 phL))
     (hRn : ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, Rn N x - RnL x ≤ ε)
     {lo hi : ℝ} (hlo : 0 ≤ lo) (hhi : hi < 1) {T : ℝ → ℝ → ℝ}
     (hlim : ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo lo hi,
-      fNearMSLim F RnL α β σ bL KL csL θL phL x ≤ T α β) :
+      fNearMSLim F RnL α β σ bL KL csL θL x ≤ T α β) :
     ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo lo hi,
       (D N).fNearMS (Rn N) α β x ≤ T α β + ε := by
   intro ε hε
   have h2 : ∀ᶠ N in atTop, (-Real.log (1 - hi ^ 2)) / (2 * (D N).ν) ≤ ε / 2 :=
     (tendsto_const_nhds.div_atTop
       (hf.hν.const_mul_atTop (by norm_num : (0 : ℝ) < 2))).eventually (ge_mem_nhds (by linarith))
-  filter_upwards [fNearMS_le_lim hf hωR hω1 hbL hKL hθL hσ hcs hph hRn (ε / 2) (by linarith),
+  filter_upwards [fNearMS_le_lim hf hωR hω1 hbL hKL hθL hσ hcs hRn (ε / 2) (by linarith),
     h2, hf.hν.eventually_gt_atTop 0] with N hN hν2 hνpos α β hβ x hx
   have hxI : x ∈ Ioo (0 : ℝ) 1 := ⟨lt_of_le_of_lt hlo hx.1, hx.2.trans hhi⟩
   have hhi0 : 0 < hi := hxI.1.trans hx.2
@@ -3094,21 +3105,20 @@ theorem fNearMS_cell {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) 
 `lim x ≤ gS + r0 (-log(1-x²))` and `r0 + δ ≤ rS` (uniform gap `δ > 0`) to
 `fNearMS (D N) ≤ gS + ε + rS (-log(1-x²))`. -/
 theorem fNearMS_cell_top {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F)
-    {Rn : ℕ → ℝ → ℝ} {RnL : ℝ → ℝ} {ω : ℝ} (hωR : ∀ wr ∈ F.R, ‖wr.1‖ ≤ ω) (hω1 : ω < 1) {σ csL θL phL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
+    {Rn : ℕ → ℝ → ℝ} {RnL : ℝ → ℝ} {ω : ℝ} (hωR : ∀ wr ∈ F.R, ‖wr.1‖ ≤ ω) (hω1 : ω < 1) {σ csL θL : ℝ} {bL : ℕ → ℝ} {KL : ℕ}
     (hbL : ∀ N, (D N).b = bL) (hKL : ∀ N, (D N).K = KL) (hθL : ∀ N, (D N).θ = θL)
     (hσ : Tendsto (fun N => ((D N).sp : ℝ) / (D N).ν) atTop (𝓝 σ))
     (hcs : Tendsto (fun N => (D N).cs) atTop (𝓝 csL))
-    (hph : Tendsto (fun N => (D N).phConst) atTop (𝓝 phL))
     (hRn : ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, Rn N x - RnL x ≤ ε)
     {xc : ℝ} (hxc : 0 ≤ xc) {gS r0 rS : ℝ → ℝ → ℝ} {δ : ℝ} (hδ : 0 < δ)
     (hr : ∀ α β : ℝ, 0 ≤ β → r0 α β + δ ≤ rS α β)
     (hsing : ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo xc 1,
-      fNearMSLim F RnL α β σ bL KL csL θL phL x ≤ gS α β + r0 α β * (-Real.log (1 - x ^ 2))) :
+      fNearMSLim F RnL α β σ bL KL csL θL x ≤ gS α β + r0 α β * (-Real.log (1 - x ^ 2))) :
     ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo xc 1,
       (D N).fNearMS (Rn N) α β x ≤ gS α β + ε + rS α β * (-Real.log (1 - x ^ 2)) := by
   intro ε hε
   have h1 : ∀ᶠ N in atTop, 1 / (2 * δ) ≤ (D N).ν := hf.hν.eventually_ge_atTop (1 / (2 * δ))
-  filter_upwards [fNearMS_le_lim hf hωR hω1 hbL hKL hθL hσ hcs hph hRn ε hε, h1,
+  filter_upwards [fNearMS_le_lim hf hωR hω1 hbL hKL hθL hσ hcs hRn ε hε, h1,
     hf.hν.eventually_gt_atTop 0] with N hN h1N hνpos α β hβ x hx
   have hxI : x ∈ Ioo (0 : ℝ) 1 := ⟨lt_of_le_of_lt hxc hx.1, hx.2⟩
   have hL : 0 ≤ -Real.log (1 - x ^ 2) :=
@@ -3344,6 +3354,196 @@ theorem refRowForm_eq_fieldTower (qT qF : List PieceQ) (x : ℝ) :
     fieldTower_reflect _ (piecesFieldQ_poles qF), logPot_eq_fieldTower, logPot_eq_fieldTower]
   ring
 
+/-! ### R. The dilated blocks as Laurent fields (decidable `hid` for `dilPot`)
+
+`dilPot qs x = -(log|x| m + V(1/x))`, with `V(w) = Σ_pieces [A(w) + Qh(w)(hi − w) log|hi − w| +
+Ql(w)(w − lo) log|w − lo|]`.  With `w = 1/x`: `log|w − e| = log|e x − 1| − log|x|`, so the block is a
+list of Laurent terms (`Σ_s a_s x^{-s}` times `log|α x − β|`, TaylorCell section 14) with the
+*rational* data below; the identity holds for every `x ≠ 0` (at `e x = 1` both sides carry the
+vanishing factor `e − w`). -/
+
+theorem inv_log_key (a x : ℝ) (hx : x ≠ 0) :
+    (a - x⁻¹) * Real.log |x⁻¹ - a| = (a - x⁻¹) * (Real.log |a * x - 1| - Real.log |x|) := by
+  by_cases h : a - x⁻¹ = 0
+  · rw [h]; simp
+  · have hne : a * x - 1 ≠ 0 := by
+      intro h0
+      apply h
+      have h1 : a * x = 1 := by linarith
+      exact sub_eq_zero.mpr (eq_inv_of_mul_eq_one_left h1)
+    have e : x⁻¹ - a = -(a * x - 1) / x := by field_simp; ring
+    rw [e, abs_div, abs_neg, Real.log_div (abs_ne_zero.mpr hne) (abs_ne_zero.mpr hx)]
+
+/-- Scalar multiple of a list of Laurent terms. -/
+def scaleL (r : ℚ) (ts : List LTerm) : List LTerm :=
+  ts.map (fun t => (t.1.map (fun s => r * s), t.2))
+
+/-- Reflection `x ↦ -x` of a list of Laurent terms. -/
+def reflL (ts : List LTerm) : List LTerm :=
+  ts.map (fun t => (negX t.1, t.2.map (fun ab => (ab.1, -ab.2))))
+
+theorem lfieldTower_cons (t : LTerm) (ts : List LTerm) (j : ℕ) (x : ℝ) :
+    lfieldTower (t :: ts) j x = mulTower (zTow t.1) (lfTower t.2) j x + lfieldTower ts j x := by
+  simp [lfieldTower]
+
+theorem lfieldTower_append (A B : List LTerm) (j : ℕ) (x : ℝ) :
+    lfieldTower (A ++ B) j x = lfieldTower A j x + lfieldTower B j x := by
+  simp [lfieldTower, List.map_append, List.sum_append]
+
+theorem lfieldTower_nil (j : ℕ) (x : ℝ) : lfieldTower [] j x = 0 := by simp [lfieldTower]
+
+theorem lfieldTower_zero_cons (t : LTerm) (ts : List LTerm) (x : ℝ) :
+    lfieldTower (t :: ts) 0 x = polyTow t.1 0 x⁻¹ * lfTower t.2 0 x + lfieldTower ts 0 x := by
+  rw [lfieldTower_cons, mulTower_zero, zTow_zero]
+
+theorem lfieldTower_scaleL_zero (r : ℚ) (ts : List LTerm) (x : ℝ) :
+    lfieldTower (scaleL r ts) 0 x = (r : ℝ) * lfieldTower ts 0 x := by
+  induction ts with
+  | nil => simp [scaleL, lfieldTower_nil]
+  | cons t ts ih =>
+    have e : scaleL r (t :: ts) = (t.1.map (fun s => r * s), t.2) :: scaleL r ts := by
+      simp [scaleL]
+    rw [e, lfieldTower_zero_cons, ih, lfieldTower_zero_cons, polyTow_zero_map_mul]
+    ring
+
+theorem lfTower_refl_zero (o : Option (ℚ × ℚ)) (x : ℝ) :
+    lfTower (o.map (fun ab => (ab.1, -ab.2))) 0 x = lfTower o 0 (-x) := by
+  cases o with
+  | none => simp [lfTower, oneTower]
+  | some ab =>
+    simp only [Option.map_some, lfTower, linLogTower]
+    congr 1
+    rw [← abs_neg]
+    congr 1
+    push_cast
+    ring
+
+theorem lfieldTower_reflL_zero (ts : List LTerm) (x : ℝ) :
+    lfieldTower (reflL ts) 0 x = lfieldTower ts 0 (-x) := by
+  induction ts with
+  | nil => simp [reflL, lfieldTower_nil]
+  | cons t ts ih =>
+    have e : reflL (t :: ts) = (negX t.1, t.2.map (fun ab => (ab.1, -ab.2))) :: reflL ts := by
+      simp [reflL]
+    rw [e, lfieldTower_zero_cons, ih, lfieldTower_zero_cons, polyTow_zero_negX,
+      lfTower_refl_zero, inv_neg]
+
+/-- The mass of a rational piece. -/
+def PieceQ.massQ (q : PieceQ) : ℚ :=
+  ∑ m ∈ Finset.range q.p.length, q.p.getD m 0 / ((m : ℚ) + 1) * (q.hi ^ (m + 1) - q.lo ^ (m + 1))
+
+theorem PieceQ.massQ_cast (q : PieceQ) : ((q.massQ : ℚ) : ℝ) = q.toPiece.mass := by
+  unfold PieceQ.massQ Piece.mass potG PieceQ.toPiece
+  push_cast
+  rw [← Finset.sum_sub_distrib]
+  exact Finset.sum_congr rfl (fun m _ => by ring)
+
+/-- The Laurent terms of the potential `Piece.pot (1/x)` of a rational piece. -/
+def PieceQ.dilTerms (q : PieceQ) : List LTerm :=
+  [(mulLinQ q.hi (-1) q.qh, some (q.hi, 1)),
+   ((mulLinQ q.hi (-1) q.qh).map (fun s => -1 * s), some (1, 0)),
+   (mulLinQ (-q.lo) 1 q.ql, some (q.lo, 1)),
+   ((mulLinQ (-q.lo) 1 q.ql).map (fun s => -1 * s), some (1, 0)),
+   (q.apoly, none)]
+
+theorem PieceQ.pot_dil (q : PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    q.toPiece.pot x⁻¹ = lfieldTower q.dilTerms 0 x := by
+  rw [PieceQ.pot_eq_fieldTower]
+  have k1 := inv_log_key (q.hi : ℝ) x hx
+  have k2 := inv_log_key (q.lo : ℝ) x hx
+  simp only [fieldTower, PieceQ.fieldQ, plogSumTower, poleTower_zero, List.map_cons, List.map_nil,
+    List.sum_cons, List.sum_nil, mulTower_zero, logTower, PieceQ.dilTerms, lfieldTower_zero_cons,
+    lfieldTower_nil, lfTower, linLogTower, oneTower, polyTow_zero_map_mul, polyTow_zero_mulLinQ,
+    Rat.cast_one, Rat.cast_zero, one_mul, sub_zero, Rat.cast_neg]
+  linear_combination (polyTow q.qh 0 x⁻¹) * k1 + (-(polyTow q.ql 0 x⁻¹)) * k2
+
+/-- The Laurent terms of `dilPot qs x`. -/
+def dilTermsQ (qs : List PieceQ) : List LTerm :=
+  ([-(qs.map PieceQ.massQ).sum], some (1, 0)) :: scaleL (-1) (qs.flatMap PieceQ.dilTerms)
+
+theorem polyMass_cast (qs : List PieceQ) :
+    polyMass (qs.map PieceQ.toPiece) = (((qs.map PieceQ.massQ).sum : ℚ) : ℝ) := by
+  induction qs with
+  | nil => simp [polyMass]
+  | cons q qs ih =>
+    simp only [polyMass, List.map_cons, List.sum_cons] at ih ⊢
+    rw [ih, ← PieceQ.massQ_cast]
+    push_cast; rfl
+
+/-- **`hid` for a dilated block**: `dilPot qs x` is the Laurent tower of the rational data
+`dilTermsQ qs` (so the data module's identification is `rfl`/`decide` on those lists). -/
+theorem dilPot_eq_lfieldTower (qs : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    dilPot (qs.map PieceQ.toPiece) x = lfieldTower (dilTermsQ qs) 0 x := by
+  have hlog : ∀ qs : List PieceQ, logPot (qs.map PieceQ.toPiece) x⁻¹ =
+      lfieldTower (qs.flatMap PieceQ.dilTerms) 0 x := by
+    intro qs
+    induction qs with
+    | nil => simp [logPot, lfieldTower_nil]
+    | cons q qs ih =>
+      simp only [logPot, List.map_cons, List.sum_cons] at ih ⊢
+      rw [List.flatMap_cons, lfieldTower_append, ← ih, PieceQ.pot_dil q x hx]
+  unfold dilPot
+  rw [dilTermsQ, lfieldTower_zero_cons, lfieldTower_scaleL_zero, ← hlog, polyMass_cast]
+  simp only [polyTow, lfTower, linLogTower, Rat.cast_one, Rat.cast_zero, one_mul, sub_zero,
+    Rat.cast_neg, Rat.cast_sum, mul_zero, add_zero]
+  push_cast
+  ring
+
+theorem dilPot_neg_eq_lfieldTower (qs : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    dilPot (qs.map PieceQ.toPiece) (-x) = lfieldTower (reflL (dilTermsQ qs)) 0 x := by
+  rw [lfieldTower_reflL_zero]
+  exact dilPot_eq_lfieldTower qs (-x) (neg_ne_zero.mpr hx)
+
+/-- Laurent terms of the near-type dilated block `-(dilPot qFf (-x) + dilPot qF (-x))/2`. -/
+def nearDilTerms (qFf qF : List PieceQ) : List LTerm :=
+  scaleL (-1 / 2) (reflL (dilTermsQ qFf) ++ reflL (dilTermsQ qF))
+
+theorem nearDil_eq (qFf qF : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    -(dilPot (qFf.map PieceQ.toPiece) (-x) + dilPot (qF.map PieceQ.toPiece) (-x)) / 2 =
+      lfieldTower (nearDilTerms qFf qF) 0 x := by
+  rw [nearDilTerms, lfieldTower_scaleL_zero, lfieldTower_append, ← dilPot_neg_eq_lfieldTower _ x hx,
+    ← dilPot_neg_eq_lfieldTower _ x hx]
+  push_cast
+  ring
+
+/-- The two reference rows of the positive/near fields, `-V_T(x) - V_F(-x)` for the true and the
+fixed measure, as one `FieldQ` (poles empty). -/
+def refRowsNegFieldQ (qT qF qTf qFf : List PieceQ) : FieldQ :=
+  fqNeg (fqAdd (refRowFieldQ qT qF) (refRowFieldQ qTf qFf))
+
+theorem refRowsNeg_eq (qT qF qTf qFf : List PieceQ) (x : ℝ) :
+    -refRowForm (qT.map PieceQ.toPiece) (qF.map PieceQ.toPiece) x -
+        refRowForm (qTf.map PieceQ.toPiece) (qFf.map PieceQ.toPiece) x =
+      fieldTower (refRowsNegFieldQ qT qF qTf qFf) (fun _ => 0) 0 x := by
+  have hp : (fqAdd (refRowFieldQ qT qF) (refRowFieldQ qTf qFf)).poles = [] := by
+    simp [fqAdd, refRowFieldQ, fqNeg]
+  unfold refRowsNegFieldQ
+  rw [fieldTower_neg _ hp]
+  have := fieldTower_add (refRowFieldQ qT qF) (refRowFieldQ qTf qFf) (fun _ => 0) (fun _ => 0) x
+  simp only [add_zero] at this
+  rw [this, ← refRowForm_eq_fieldTower, ← refRowForm_eq_fieldTower]
+  ring
+
+/-- **`hid` for the dilated and reference blocks of the positive-row closed form**:
+`-refRow(T) - refRow(Tf) + dilPot qT x = fieldTower (refRows) + lfieldTower (dilTermsQ qT)`. -/
+theorem posBlock_eq (qT qF qTf qFf : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    -refRowForm (qT.map PieceQ.toPiece) (qF.map PieceQ.toPiece) x -
+        refRowForm (qTf.map PieceQ.toPiece) (qFf.map PieceQ.toPiece) x +
+        dilPot (qT.map PieceQ.toPiece) x =
+      fieldTower (refRowsNegFieldQ qT qF qTf qFf) (fun _ => 0) 0 x +
+        lfieldTower (dilTermsQ qT) 0 x := by
+  rw [refRowsNeg_eq, dilPot_eq_lfieldTower qT x hx]
+
+/-- The same for the near-type block. -/
+theorem nearBlock_eq (qT qF qTf qFf : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    -refRowForm (qT.map PieceQ.toPiece) (qF.map PieceQ.toPiece) x -
+        refRowForm (qTf.map PieceQ.toPiece) (qFf.map PieceQ.toPiece) x +
+        (-(dilPot (qFf.map PieceQ.toPiece) (-x) + dilPot (qF.map PieceQ.toPiece) (-x)) / 2) =
+      fieldTower (refRowsNegFieldQ qT qF qTf qFf) (fun _ => 0) 0 x +
+        lfieldTower (nearDilTerms qFf qF) 0 x := by
+  rw [refRowsNeg_eq, nearDil_eq qFf qF x hx]
+
+
 end Hid
 
 end
@@ -3400,3 +3600,10 @@ end CatalanMeasure.Signed.FieldForm
 #print axioms CatalanMeasure.Signed.FieldForm.PieceQ.pot_eq_fieldTower
 #print axioms CatalanMeasure.Signed.FieldForm.logPot_eq_fieldTower
 #print axioms CatalanMeasure.Signed.FieldForm.refRowForm_eq_fieldTower
+#print axioms CatalanMeasure.Signed.FieldForm.TrialForm.phConst_eq_zero
+#print axioms CatalanMeasure.Signed.FieldForm.fNearMS_le_lim
+#print axioms CatalanMeasure.Signed.FieldForm.dilPot_eq_lfieldTower
+#print axioms CatalanMeasure.Signed.FieldForm.dilPot_neg_eq_lfieldTower
+#print axioms CatalanMeasure.Signed.FieldForm.posBlock_eq
+#print axioms CatalanMeasure.Signed.FieldForm.nearBlock_eq
+#print axioms CatalanMeasure.Signed.FieldForm.PieceQ.pot_dil
