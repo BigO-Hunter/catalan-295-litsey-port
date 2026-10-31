@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Signed.Interp
 public import CatalanMeasure.GenD.Signed.SigmaCap
+public import CatalanMeasure.GenD.Signed.SpikeEnds
 public import CatalanMeasure.GenD.Signed.SheetNear
 
 /-!
@@ -18,7 +19,7 @@ curvature, the dual chord `zb`, the cap constants (`CapEnd`) and the two budget 
 * `fixedSum_ends` (below), the endpoint form of `fixedSumAt_of_cap` (Theorem S with the top cap):
   the fixed-row fields are exactly affine in the interpolation weight (`fNegM_interp`, ...), so
   endpoint suprema suffice; `ZB := zbCap` of the chord cap data;
-* `spikeFix` (explicit slot, exactly the consumer's type, to be supplied by the spike lane).
+* `spikeFix_of_ends` (Theorem SE) for `spikeFix`.
 
 `Phase2Data.signedSecondSheetNear` is the end-to-end corollary: `SignedSecondSheetCore` for the
 sheet, given the identification of the data with the sheet's problem data.
@@ -280,16 +281,18 @@ structure Phase2Data (I : ℕ) where
   epsSplit_le : ∀ i, epsSplit i ≤ 1
   Clsf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → Prop
   LRf : ∀ (_ k q m1 m2 : ℕ), (Fin k → ℝ) → (Fin q → ℝ) → (Fin m1 → ℝ) → (Fin m2 → ℝ) → ℝ
-  FixAdm : ∀ (_ m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop
   cp : Fin I → ℕ → ℝ → ℝ
   cp_pos : ∀ i N α, 0 < cp i N α
   cp_le : ∀ i N α, cp i N α ≤ 1
   err_small : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
     (DA i N).errJ3 (cp i N α) (ncount N) ≤ ε
-  -- the spike slot (spike lane): exactly the consumer's type
-  spikeFix : ∀ i N α k q m1 m2,
-    SpikeCompareFixed (interpFamily (αA i) (αB i) (DA i) (DB i) constant N α) (cp i N α)
-      (Clsf N k q m1 m2) (LRf N k q m1 m2)
+  -- the spike data (Theorem SE): margin below theta, LRf is the log-ratio, and the class gives
+  -- a witness pair at the two endpoint trials (same configuration, same margin cp i N alpha)
+  cp_theta : ∀ i N α, cp i N α ≤ (DA i N).θ
+  hLR : ∀ i N k q m1 m2 xn gp yn yp, LRf N k q m1 m2 xn gp yn yp =
+    logRatioZ (DA i N).sp (Fin.append xn yn) (Fin.append gp yp)
+  hCls : ∀ i N α k q m1 m2 xn gp yn yp, Clsf N k q m1 m2 xn gp yn yp →
+    ∃ bcap, Nonempty (PairCls (DA i N) (DB i N) (cp i N α) bcap xn gp yn yp)
   -- the σ cap (Theorem S): endpoint data and side conditions
   capE : Fin I → CapEnd
   hxc0 : ∀ i, 0 ≤ (capE i).xc
@@ -300,9 +303,9 @@ structure Phase2Data (I : ℕ) where
   hrP : ∀ i, ∀ α ∈ Icc (lo i) (hi i), remC (epsSplit i) * α ≤ (capE i).rP α
   hrSA : ∀ i, ∀ α ∈ Icc (lo i) (hi i), ∀ β ∈ Icc 0 α, 0 ≤ (capE i).rSA α β
   hrSB : ∀ i, ∀ α ∈ Icc (lo i) (hi i), ∀ β ∈ Icc 0 α, 0 ≤ (capE i).rSB α β
-  umin : Fin I → ℕ → ℝ
-  hum0 : ∀ i N, 0 < umin i N
-  hum1 : ∀ i N, umin i N ≤ 1
+  umin : ℕ → ℝ
+  hum0 : ∀ N, 0 < umin N
+  hum1 : ∀ N, umin N ≤ 1
   Bd : Fin I → ℝ
   Rbd : Fin I → ℝ
   hBdPA : ∀ i, ∀ α ∈ Icc (lo i) (hi i), (capE i).gPA α - (capE i).lamPA α ≤ Bd i
@@ -315,10 +318,14 @@ structure Phase2Data (I : ℕ) where
   hRSA : ∀ i, ∀ α ∈ Icc (lo i) (hi i), ∀ β ∈ Icc 0 α, (capE i).rSA α β ≤ Rbd i
   hRSB : ∀ i, ∀ α ∈ Icc (lo i) (hi i), ∀ β ∈ Icc 0 α, (capE i).rSB α β ≤ Rbd i
   hn_top : Tendsto (fun N => (ncount N : ℝ)) atTop atTop
-  hlogu : ∀ i, Tendsto (fun N => -Real.log (umin i N) / (ncount N : ℝ)) atTop (nhds 0)
-  hFix : ∀ i N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
-    FixAdm N m1 m2 s yn yp zp →
-      FixAdmCap (capE i).gs (capE i).xc (capE i).C1 (ncount N : ℝ) (umin i N) yn yp zp
+  hlogu : Tendsto (fun N => -Real.log (umin N) / (ncount N : ℝ)) atTop (nhds 0)
+  -- the common (geometric) cap parameters of the admissibility predicate `FixAdmCap gs xc C1 n umin`
+  gs : ℝ
+  xc : ℝ
+  C1 : ℝ
+  hgs : ∀ i, (capE i).gs ≤ gs
+  hxc : ∀ i, xc ≤ (capE i).xc
+  hC1le : ∀ i, C1 ≤ (capE i).C1
   -- endpoint bounds of the fixed-row fields
   hnegA : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
     ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(capE i).gs → (DA i N).fNegM (Rm N) x ≤ (capE i).lamNA + ε
@@ -366,6 +373,79 @@ structure Phase2Data (I : ℕ) where
 theorem remC_nonneg {ε : ℝ} (h : 0 < ε) : 0 ≤ remC ε := by
   unfold remC; positivity
 
+/-- `FixAdmCap` is monotone in the geometry: a larger node threshold, a smaller top-cell start and
+a smaller cap density give a stronger predicate. -/
+theorem FixAdmCap_mono {gs gs' xc xc' C1 C1' n umin : ℝ} {m1 m2 s : ℕ} {yn : Fin m1 → ℝ}
+    {yp : Fin m2 → ℝ} {zp : Fin s → ℝ} (hgs : gs' ≤ gs) (hxc : xc ≤ xc') (hC : C1 ≤ C1')
+    (hn : 0 ≤ n) (hu : 0 ≤ umin) (h : FixAdmCap gs xc C1 n umin yn yp zp) :
+    FixAdmCap gs' xc' C1' n umin yn yp zp := by
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h
+  have key : ∀ y : ℝ, y ≤ 1 - umin → C1 * n * (1 - y) + 1 ≤ C1' * n * (1 - y) + 1 := by
+    intro y hy
+    have : 0 ≤ n * (1 - y) := mul_nonneg hn (by linarith)
+    nlinarith [mul_le_mul_of_nonneg_right hC this]
+  refine ⟨fun j => (h1 j).trans (by linarith), fun j => hgs.trans (h2 j),
+    fun j => hgs.trans (h3 j), h4, h5, fun j hj => (h6 j (hxc.trans hj)).trans (key _ (h4 j)),
+    fun j hj => (h7 j (hxc.trans hj)).trans (key _ (h5 j))⟩
+
+/-- The single admissibility predicate of the Phase 2 contract (common geometry). -/
+def Phase2Data.FixAdm {I : ℕ} (D : Phase2Data I) (N m1 m2 s : ℕ) (yn : Fin m1 → ℝ)
+    (yp : Fin m2 → ℝ) (zp : Fin s → ℝ) : Prop :=
+  FixAdmCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) yn yp zp
+
+/-- It implies the cap predicate of every interval. -/
+theorem Phase2Data.hFix {I : ℕ} (D : Phase2Data I) (i : Fin I) :
+    ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
+      D.FixAdm N m1 m2 s yn yp zp →
+        FixAdmCap (D.capE i).gs (D.capE i).xc (D.capE i).C1 (D.ncount N : ℝ) (D.umin N)
+          yn yp zp :=
+  fun N _ _ _ _ _ _ h => FixAdmCap_mono (D.hgs i) (D.hxc i) (D.hC1le i) (Nat.cast_nonneg _)
+    (D.hum0 N).le h
+
+/-! ### Admissibility of the actual marked nodes -/
+
+/-- **What `hlink` needs about the actual marked nodes `y`** (all marked rows, both signs): every
+node has `|y| ≥ gs` (this is a property of each node: take it into `G`), every node is at
+distance `≥ umin` from `1`, and the top count `#{i : y_j ≤ y_i} ≤ C1 n (1 - y_j) + 1` for
+`y_j ≥ xc`. -/
+def MarkedCap (gs xc C1 n umin : ℝ) {m : ℕ} (y : Fin m → ℝ) : Prop :=
+  (∀ j, gs ≤ |y j|) ∧ (∀ j, y j ≤ 1 - umin) ∧
+    ∀ j, xc ≤ y j → ((Finset.univ.filter (fun i => y j ≤ y i)).card : ℝ) ≤ C1 * n * (1 - y j) + 1
+
+theorem count_sub_le {m a : ℕ} (y : Fin m → ℝ) (f : Fin a → Fin m) (hf : Function.Injective f)
+    (j : Fin a) :
+    (Finset.univ.filter (fun i => y (f j) ≤ y (f i))).card ≤
+      (Finset.univ.filter (fun i => y (f j) ≤ y i)).card := by
+  apply Finset.card_le_card_of_injOn f
+  · intro i hi
+    simpa using hi
+  · exact hf.injOn
+
+/-- **`FixAdm` for every splitting** (the clause of `SignedNearClassLink`): from `MarkedCap` of the
+marked rows `y`, the sign split `σy` and any splitting `τ` of the positives into first-kind and
+near rows, the three lists satisfy `FixAdmCap`.  The top count of a sub-family is at most the
+count of all marked rows. -/
+theorem fixAdmCap_of_marked {gs xc C1 n umin : ℝ} (hxc : 0 ≤ xc) {m m1 m2 r s' : ℕ}
+    {y : Fin m → ℝ} (hM : MarkedCap gs xc C1 n umin y) (σy : Fin m1 ⊕ Fin m2 ≃ Fin m)
+    (hyneg : ∀ b, y (σy (Sum.inl b)) < 0) (hypos : ∀ b, 0 < y (σy (Sum.inr b)))
+    (τ : Fin r ⊕ Fin s' ≃ Fin m2) :
+    FixAdmCap gs xc C1 n umin (fun b => y (σy (Sum.inl b)))
+      (fun j => y (σy (Sum.inr (τ (Sum.inl j))))) (fun j => y (σy (Sum.inr (τ (Sum.inr j))))) := by
+  obtain ⟨h1, h2, h3⟩ := hM
+  refine ⟨fun j => ?_, fun j => ?_, fun j => ?_, fun j => h2 _, fun j => h2 _, fun j hj => ?_,
+    fun j hj => ?_⟩
+  · have := h1 (σy (Sum.inl j)); rw [abs_of_neg (hyneg j)] at this; linarith
+  · have := h1 (σy (Sum.inr (τ (Sum.inl j)))); rwa [abs_of_pos (hypos _)] at this
+  · have := h1 (σy (Sum.inr (τ (Sum.inr j)))); rwa [abs_of_pos (hypos _)] at this
+  · have hinj : Function.Injective
+        (fun i : Fin r => σy (Sum.inr (τ (Sum.inl i)))) :=
+      fun a b hab => Sum.inl_injective (τ.injective (Sum.inr_injective (σy.injective hab)))
+    exact (Nat.cast_le.2 (count_sub_le y _ hinj j)).trans (h3 _ hj)
+  · have hinj : Function.Injective
+        (fun i : Fin s' => σy (Sum.inr (τ (Sum.inr i)))) :=
+      fun a b hab => Sum.inr_injective (τ.injective (Sum.inr_injective (σy.injective hab)))
+    exact (Nat.cast_le.2 (count_sub_le y _ hinj j)).trans (h3 _ hj)
+
 /-- The complete contract `SignedNearBounds I` from the Phase 2 data. -/
 def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
   SignedNearBounds.ofEnds D.ncount D.ncount_pos D.B D.cost D.α1 D.α1_nonneg D.lo D.hi D.cover
@@ -373,12 +453,14 @@ def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
     D.SnA D.SnB D.SpA D.SpB D.SyA D.SyB D.hSnA D.hSnB D.hSpA D.hSpB D.hSyA D.hSyB
     D.cP D.rA D.rB D.κc D.hP D.hrA D.hrB D.hκ D.κlo D.κhi D.epsSplit D.epsSplit_pos
     D.epsSplit_le (fun i => zbCap ((D.capE i).toS (D.αA i) (D.αB i))) D.zb D.Clsf D.LRf D.FixAdm
-    D.cp D.cp_pos D.cp_le D.err_small D.spikeFix
+    D.cp D.cp_pos D.cp_le D.err_small
+    (spikeFix_of_ends D.αA D.αB D.DA D.DB D.constant D.cp D.cp_pos D.cp_le D.cp_theta D.Clsf
+      D.LRf D.hLR D.hCls)
     (fun i ε hε => fixedSum_ends (D.hends i) (D.capE i) D.constant (D.hxc0 i) (D.hxc1 i)
       (D.hC1 i) (remC_nonneg (D.epsSplit_pos i)) (D.hlo0 i) (D.hhi1 i) D.ncount_pos (D.hν i)
-      (D.hrP i) (D.hrSA i) (D.hrSB i) (D.umin i) (D.hum0 i) (D.hum1 i) (D.Bd i) (D.Rbd i)
+      (D.hrP i) (D.hrSA i) (D.hrSB i) D.umin D.hum0 D.hum1 (D.Bd i) (D.Rbd i)
       (D.hBdPA i) (D.hBdPB i) (D.hBdSA i) (D.hBdSB i) (D.hRP i) (D.hRSA i) (D.hRSB i)
-      D.hn_top (D.hlogu i) (D.hFix i) (D.hnegA i) (D.hnegB i) (D.hposA i) (D.hposB i)
+      D.hn_top D.hlogu (D.hFix i) (D.hnegA i) (D.hnegB i) (D.hposA i) (D.hposB i)
       (D.hposTopA i) (D.hposTopB i) (D.hnearA i) (D.hnearB i) (D.hnearTopA i) (D.hnearTopB i)
       ε hε)
     D.hZB D.hbudLo D.hbudHi
@@ -436,3 +518,6 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.fixedSum_ends
 #print axioms CatalanMeasure.Signed.Phase2Data.toBounds
 #print axioms CatalanMeasure.Signed.Phase2Data.toBounds_ZB
+#print axioms CatalanMeasure.Signed.FixAdmCap_mono
+#print axioms CatalanMeasure.Signed.Phase2Data.hFix
+#print axioms CatalanMeasure.Signed.fixAdmCap_of_marked
