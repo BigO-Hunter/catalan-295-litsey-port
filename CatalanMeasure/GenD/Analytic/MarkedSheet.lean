@@ -89,6 +89,25 @@ def markedSheetProduct (P : Parameters) (N : ℕ) {p m : ℕ}
     (∏ j, paramRowNodeWeight P N (y j)) * paramPinPrincipal P N x s /
       ∏ j, |(rowCommonFactor P N).eval (realCoordinateInv (y j))|
 
+/-- The sheet product **without** the factor `(∏ (1 + s_i))^m` (PROOF-RHO §2.5, §5): the Vandermonde
+part is paid column by column on the weight side (`genVandermonde_abs_le_binom`). -/
+def markedSheetFree (P : Parameters) (N : ℕ) {p m : ℕ}
+    (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ) : ℝ :=
+  let z : Fin (P.n N) → ℝ := fun i => Fin.append x y (Fin.cast hpm.symm i)
+  let marked : Fin (P.n N) → Bool := fun i =>
+    Fin.addCases (fun _ => false) (fun _ => true) (Fin.cast hpm.symm i)
+  |(markedLaurentMatrix (P.g N) z marked).det| *
+    (∏ j, paramRowNodeWeight P N (y j)) * paramPinPrincipal P N x s /
+      ∏ j, |(rowCommonFactor P N).eval (realCoordinateInv (y j))|
+
+/-- `markedSheetProduct` is the removed factor times `markedSheetFree`. -/
+theorem markedSheetProduct_eq_pow_mul_free (P : Parameters) (N : ℕ) {p m : ℕ}
+    (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ) :
+    markedSheetProduct P N hpm x y s = (∏ i, (1 + s i)) ^ m * markedSheetFree P N hpm x y s := by
+  unfold markedSheetProduct markedSheetFree
+  simp only
+  ring
+
 theorem marked_sheet_product_first_le {P : Parameters} (hP : Admissible P)
     {N p m : ℕ} (hN : 0 < N) (hpm : p + m = P.n N)
     (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ)

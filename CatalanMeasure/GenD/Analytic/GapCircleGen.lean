@@ -229,7 +229,183 @@ theorem gapCircleBound_of_cover (P : Parameters) {d m : ℕ} (hd : P.n0 - P.g0 =
       _ = _ := by rw [hexp, mul_pow]
   exact le_of_pow_le_pow_left₀ two_ne_zero (by positivity) hmain
 
+open Finset
+
+/-! ### Separated radii (any `r > 0`): keyhole weight bounds (S1)
+
+The radius-`> 1` estimates of `GapWeights` carry the separation `r - 1` from the nodes.  For the
+keyhole contour of PROOF-RHO Lemma KH the circle has radius `r ≤ 1`; the separation is then a
+hypothesis `δ ≤ |p_i - r|` on the moduli `p_i` of the roots of `T_K(arg)`. -/
+
+/-- `norm_cardinal_le_of_nodal` with the distance to the node as a hypothesis (any radius). -/
+theorem norm_cardinal_le_of_nodal_sep {J : ℕ} {τ : Fin J → ℝ}
+    (hτ : Function.Injective τ) (i : Fin J) {P : ℝ[X]} {c d δ : ℝ}
+    (hP : P = C c * ∏ j : Fin J, (X - C (τ j)))
+    (hd : 0 < d) (hder : d ≤ |(derivative P).eval (τ i)|)
+    (hδ : 0 < δ) (z : ℂ) (hz : δ ≤ ‖z - (τ i : ℂ)‖) :
+    ‖((quadBasis τ i).map (algebraMap ℝ ℂ)).eval z‖ ≤
+      ‖(P.map (algebraMap ℝ ℂ)).eval z‖ / (d * δ) := by
+  have he := congrArg (fun Q : ℝ[X] => (Q.map (algebraMap ℝ ℂ)).eval z)
+    (quad_basis_mul_derivative_eq hτ i hP)
+  simp only [Polynomial.map_mul, Polynomial.map_C, Polynomial.map_sub, Polynomial.map_X,
+    eval_mul, eval_C, eval_sub, eval_X, Complex.coe_algebraMap] at he
+  have hn := congrArg norm he
+  rw [norm_mul, norm_mul, Complex.norm_real, Real.norm_eq_abs] at hn
+  apply (le_div_iff₀ (mul_pos hd hδ)).mpr
+  calc
+    _ ≤ ‖((quadBasis τ i).map (algebraMap ℝ ℂ)).eval z‖ *
+        |(derivative P).eval (τ i)| * ‖z - (τ i : ℂ)‖ := by
+      simpa only [mul_assoc] using mul_le_mul_of_nonneg_left
+        (mul_le_mul hder hz hδ.le (abs_nonneg _)) (norm_nonneg _)
+    _ = _ := hn
+
+/-- The modulus of every node is one of the positive roots `posNode`. -/
+theorem gap_node_abs_eq_posNode (a : ℝ) (J : ℕ) (j : Fin J) :
+    ∃ i : Fin ((J + 1) / 2), |gapNodesGen a J j| = posNode a ((J + 1) / 2) i := by
+  unfold gapNodesGen
+  generalize Fin.cast (show J = (J + 1) / 2 + J / 2 by omega) j = jj
+  induction jj using Fin.addCases with
+  | left i =>
+    exact ⟨i, by rw [gapNodesKL_left]; exact abs_of_nonneg (Real.sqrt_nonneg _)⟩
+  | right i =>
+    exact ⟨Fin.castLE (show J / 2 ≤ (J + 1) / 2 by omega) i, by
+      rw [gapNodesKL_right, abs_neg]; exact abs_of_nonneg (Real.sqrt_nonneg _)⟩
+
+/-- Lower bound of the dropped factor on `|z| = r` from the separation of `r` from the moduli. -/
+theorem gapExtra_norm_ge_of_sep {a : ℝ} (ha0 : 0 < a) (ha1 : a < 1) (J : ℕ) {r δ : ℝ}
+    (hδ0 : 0 < δ) (hδ1 : δ ≤ 1)
+    (hsep : ∀ i : Fin ((J + 1) / 2), δ ≤ |posNode a ((J + 1) / 2) i - r|)
+    (z : ℂ) (hz : ‖z‖ = r) :
+    δ ≤ ‖((gapExtra a J).map (algebraMap ℝ ℂ)).eval z‖ := by
+  unfold gapExtra
+  rw [Polynomial.map_prod, eval_prod, norm_prod]
+  have hf : ∀ i ∈ univ.filter (fun i : Fin ((J + 1) / 2) => J / 2 ≤ i.val),
+      δ ≤ ‖(((X + C (posNode a ((J + 1) / 2) i) : ℝ[X]).map (algebraMap ℝ ℂ)).eval z)‖ := by
+    intro i _
+    have hp := pos_node_bounds ha0 ha1 ((J + 1) / 2) i
+    simp only [Polynomial.map_add, Polynomial.map_X, Polynomial.map_C, eval_add, eval_X, eval_C,
+      Complex.coe_algebraMap]
+    have hh3 := abs_norm_sub_norm_le (-(posNode a ((J + 1) / 2) i : ℂ)) z
+    rw [norm_neg, Complex.norm_real, Real.norm_eq_abs, hz,
+      abs_of_pos (show 0 < posNode a ((J + 1) / 2) i by linarith only [ha0, hp.1])] at hh3
+    have hh4 : ‖-(posNode a ((J + 1) / 2) i : ℂ) - z‖ = ‖z + (posNode a ((J + 1) / 2) i : ℂ)‖ := by
+      rw [← norm_neg]; congr 1; ring
+    rw [hh4] at hh3
+    exact (hsep i).trans hh3
+  have hc : ∏ i ∈ univ.filter (fun i : Fin ((J + 1) / 2) => J / 2 ≤ i.val), δ ≤
+      ∏ i ∈ univ.filter (fun i : Fin ((J + 1) / 2) => J / 2 ≤ i.val),
+        ‖(((X + C (posNode a ((J + 1) / 2) i) : ℝ[X]).map (algebraMap ℝ ℂ)).eval z)‖ :=
+    Finset.prod_le_prod₀ (fun _ _ => hδ0.le) hf
+  rw [prod_const] at hc
+  have hcard := gapExtra_card_le a J
+  have hle : δ ^ 1 ≤ δ ^ (univ.filter (fun i : Fin ((J + 1) / 2) => J / 2 ≤ i.val)).card :=
+    pow_le_pow_of_le_one hδ0.le hδ1 hcard
+  simpa using hle.trans hc
+
+/-- **Cardinal polynomial of the gap nodes on `|z| = r`, any `r > 0` separated from the moduli of
+the roots by `δ`.**  Generalises `gap_cardinal_norm_le` (where `δ = r - 1`). -/
+theorem gap_cardinal_norm_le_of_sep {a : ℝ} (ha0 : 0 < a) (ha1 : a < 1) {J : ℕ} (hJ : 0 < J)
+    (hD : 1 ≤ 4 * (((J + 1) / 2 : ℕ) : ℝ) * a / (1 - a ^ 2))
+    {r δ : ℝ} (hδ0 : 0 < δ) (hδ1 : δ ≤ 1)
+    (hsep : ∀ i : Fin ((J + 1) / 2), δ ≤ |posNode a ((J + 1) / 2) i - r|)
+    (i : Fin J) (z : ℂ) (hz : ‖z‖ = r) :
+    ‖((quadBasis (gapNodesGen a J) i).map (algebraMap ℝ ℂ)).eval z‖ ≤
+      2 * ‖((gapPolyK a ((J + 1) / 2)).map (algebraMap ℝ ℂ)).eval z‖ / δ ^ 2 := by
+  set lead := gapLead a ((J + 1) / 2) with hlead
+  have hl : 0 < lead := gapLead_pos ha0 ha1 _
+  have hQ : gapNodal a J = C 1 * ∏ j : Fin J, (X - C (gapNodesGen a J j)) := by
+    simp [gapNodal]
+  have hτ := gap_nodes_injective ha0 ha1 J
+  have hmem : ∀ j, gapNodesGen a J j ∈ Set.Ioo (-1 : ℝ) 1 :=
+    fun j => (gap_nodes_bounds ha0 ha1 J j).1
+  have hE2 := gapExtra_eval_abs_le ha0 ha1 J (t := gapNodesGen a J i)
+    (abs_le.mpr ⟨by linarith only [(hmem i).1], by linarith only [(hmem i).2]⟩)
+  have hPd := gapPolyK_derivative_ge ha0 ha1 J i
+  have hPn := gapPolyK_derivative_node ha0 ha1 hJ i
+  have hder : 1 / (2 * lead) ≤ |(derivative (gapNodal a J)).eval (gapNodesGen a J i)| := by
+    rw [hPn, abs_mul, abs_mul, abs_of_pos hl] at hPd
+    have h1 : 1 ≤ lead * (|(derivative (gapNodal a J)).eval (gapNodesGen a J i)| *
+        |(gapExtra a J).eval (gapNodesGen a J i)|) := hD.trans hPd
+    have h2 : lead * (|(derivative (gapNodal a J)).eval (gapNodesGen a J i)| *
+        |(gapExtra a J).eval (gapNodesGen a J i)|) ≤
+        lead * (|(derivative (gapNodal a J)).eval (gapNodesGen a J i)| * 2) :=
+      mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left hE2 (abs_nonneg _)) hl.le
+    rw [div_le_iff₀ (by positivity)]
+    nlinarith only [h1, h2]
+  have hdist : δ ≤ ‖z - (gapNodesGen a J i : ℂ)‖ := by
+    obtain ⟨i', hi'⟩ := gap_node_abs_eq_posNode a J i
+    have hh := abs_norm_sub_norm_le z (gapNodesGen a J i : ℂ)
+    rw [hz, Complex.norm_real, Real.norm_eq_abs, hi'] at hh
+    have hs := hsep i'
+    rw [abs_sub_comm] at hh
+    exact hs.trans hh
+  have hcard := norm_cardinal_le_of_nodal_sep hτ i hQ (by positivity) hder hδ0 z hdist
+  have hP := congrArg (fun Q : ℝ[X] => ‖(Q.map (algebraMap ℝ ℂ)).eval z‖)
+    (gapPolyK_eq_nodal ha0 ha1 hJ)
+  simp only [Polynomial.map_mul, Polynomial.map_C, eval_mul, eval_C, norm_mul,
+    Complex.coe_algebraMap, Complex.norm_real, Real.norm_eq_abs, abs_of_pos hl] at hP
+  have hE := gapExtra_norm_ge_of_sep ha0 ha1 J hδ0 hδ1 hsep z hz
+  set A := ‖((gapPolyK a ((J + 1) / 2)).map (algebraMap ℝ ℂ)).eval z‖ with hA
+  set q := ‖((gapNodal a J).map (algebraMap ℝ ℂ)).eval z‖ with hq
+  set e := ‖((gapExtra a J).map (algebraMap ℝ ℂ)).eval z‖ with he
+  have hq0 : 0 ≤ q := norm_nonneg _
+  have hlq : lead * q * δ ≤ A := by
+    have := mul_le_mul_of_nonneg_left hE (mul_nonneg hl.le hq0)
+    have hP' : A = lead * (q * e) := by rw [hP, abs_of_pos hl]
+    nlinarith only [this, hP']
+  have hstep : q / (1 / (2 * lead) * δ) ≤ 2 * A / δ ^ 2 := by
+    rw [show q / (1 / (2 * lead) * δ) = 2 * (lead * q) / δ by field_simp]
+    rw [div_le_div_iff₀ hδ0 (by positivity)]
+    nlinarith only [mul_le_mul_of_nonneg_left hlq (by positivity : (0 : ℝ) ≤ 2 * δ)]
+  exact hcard.trans hstep
+
+/-- **Keyhole form of the gap-node weight** (PROOF-RHO 2.2 with the node estimates): the circle
+`|z| = r` (`0 < r ≤ 1`) is separated from the moduli of the roots by `δ`, the circle estimate
+`GapCircleBound` holds, and the cardinal function is bounded by `B₀` against `|1-x|^(h+q)` on the
+real segments `r ≤ |x| ≤ 1`.  Then every column weight satisfies
+`|common(τ_j)| |weight_k(τ_j)| ≤ 4 (1 + (k - 2g)) max(1, r^A/r^(b+k+q)) max(2 C e^{wc N}/δ², B₀)`. -/
+theorem gap_weight_joint_keyhole_le (P : Parameters) (hg : P.g0 ≤ P.n0) {a r C wc δ B₀ : ℝ}
+    (ha0 : 0 < a) (ha1 : a < 1) (ha4 : 1 - a ^ 2 ≤ 4 * a)
+    (hr0 : 0 < r) (hr1 : r ≤ 1) (hδ0 : 0 < δ) (hδ1 : δ ≤ 1)
+    (hcirc : GapCircleBound P a r C wc) (N k : ℕ) (j : Fin ((P.n0 - P.g0) * N))
+    (hsep : ∀ i : Fin (((P.n0 - P.g0) * N + 1) / 2),
+      δ ≤ |posNode a (((P.n0 - P.g0) * N + 1) / 2) i - r|)
+    (hseg : ∀ x : ℝ, r ≤ |x| → |x| ≤ 1 →
+      |(quadBasis (gapNodesD P a N) j).eval x| * |1 - x| ^ (P.h N + P.q N) ≤ B₀) :
+    |(rowCommonFactor P N).eval (gapNodesD P a N j)| *
+      |restrictedWeight P N k (gapNodesD P a N) j| ≤
+      4 * (1 + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ)) *
+        (max 1 (r ^ P.A N / r ^ (P.b N + k + P.q N)) *
+          max (2 * (C * Real.exp (wc * N)) / δ ^ 2) B₀) := by
+  have hJ : 0 < (P.n0 - P.g0) * N := lt_of_le_of_lt (Nat.zero_le _) j.isLt
+  have hN : 0 < N := Nat.pos_of_ne_zero (by rintro rfl; simp at hJ)
+  have hd := gapSq_pos ha0 ha1
+  have hD : 1 ≤ 4 * ((((P.n0 - P.g0) * N + 1) / 2 : ℕ) : ℝ) * a / (1 - a ^ 2) := by
+    rw [le_div_iff₀ hd]
+    have : (1 : ℝ) ≤ ((((P.n0 - P.g0) * N + 1) / 2 : ℕ) : ℝ) := by
+      exact_mod_cast (show 1 ≤ ((P.n0 - P.g0) * N + 1) / 2 by omega)
+    nlinarith only [this, ha4, ha0]
+  have hn := rowCommonFactor_eval_ne_zero_of P N (gap_nodes_ne_zero ha0 ha1 _ j)
+    (gap_nodes_ne_one ha0 ha1 _ j)
+  apply restrictedWeight_joint_le_of_keyhole P N k j hn
+    (gap_common_basis_coeff_zero P hg N ha0 ha1 j) hr0 hr1 _ hseg
+  intro z hz
+  have hc := gap_cardinal_norm_le_of_sep ha0 ha1 hJ hD hδ0 hδ1 hsep j z hz
+  have hb := hcirc N z hN hz
+  calc _ ≤ (2 * ‖((gapPolyK a (((P.n0 - P.g0) * N + 1) / 2)).map (algebraMap ℝ ℂ)).eval z‖ /
+        δ ^ 2) * ‖(1 : ℂ) - z‖ ^ (P.h N + P.q N) :=
+        mul_le_mul_of_nonneg_right hc (by positivity)
+    _ = 2 / δ ^ 2 * (‖((gapPolyK a (((P.n0 - P.g0) * N + 1) / 2)).map
+          (algebraMap ℝ ℂ)).eval z‖ * ‖(1 : ℂ) - z‖ ^ (P.h N + P.q N)) := by ring
+    _ ≤ 2 / δ ^ 2 * (C * Real.exp (wc * N)) :=
+        mul_le_mul_of_nonneg_left hb (by positivity)
+    _ = _ := by ring
+
 end
 
 end Analytic
 end CatalanMeasure.GenD
+
+#print axioms CatalanMeasure.GenD.Analytic.gap_cardinal_norm_le_of_sep
+
+#print axioms CatalanMeasure.GenD.Analytic.gap_weight_joint_keyhole_le

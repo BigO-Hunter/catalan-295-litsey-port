@@ -1,6 +1,7 @@
 module
 public import CatalanMeasure.Parametric.PolynomialFunctional
 public import CatalanMeasure.Parametric.RadiusQuadrature
+public import CatalanMeasure.GenD.Signed.Keyhole
 @[expose] public section
 namespace CatalanMeasure.Parametric
 open Polynomial Finset
@@ -73,6 +74,109 @@ theorem proposed_restrictedWeight_joint_le (N k : ℕ) (a : Fin (89*N)) :
   rw [restrictedWeight,abs_div,mul_comm,div_mul_cancel₀ _ (abs_ne_zero.mpr hn)]
   exact proposed_restricted_functional_le N k a
 
+theorem pow_le_max_one_mul_pow {r x : ℝ} (hr : 0 < r) (hx : r ≤ |x|) (hx1 : |x| ≤ 1) (A I : ℕ) :
+    |x| ^ A ≤ max 1 (r ^ A / r ^ I) * |x| ^ I := by
+  have hx0 : 0 < |x| := lt_of_lt_of_le hr hx
+  rcases le_total I A with h | h
+  · calc |x| ^ A = |x| ^ I * |x| ^ (A - I) := by rw [← pow_add]; congr 1; omega
+      _ ≤ |x| ^ I * 1 := by
+        gcongr
+        exact pow_le_one₀ hx0.le hx1
+      _ ≤ _ := by
+        rw [mul_one]
+        exact le_mul_of_one_le_left (pow_nonneg hx0.le I) (le_max_left _ _)
+  · have h1 : r ^ (I - A) ≤ |x| ^ (I - A) := pow_le_pow_left₀ hr.le hx (I - A)
+    have hI : |x| ^ I = |x| ^ A * |x| ^ (I - A) := by rw [← pow_add]; congr 1; omega
+    have hrI : r ^ I = r ^ A * r ^ (I - A) := by rw [← pow_add]; congr 1; omega
+    have hrA : 0 < r ^ A := by positivity
+    have hrB : 0 < r ^ (I - A) := by positivity
+    have : r ^ A / r ^ I * |x| ^ I = |x| ^ A * (|x| ^ (I - A) / r ^ (I - A)) := by
+      rw [hI, hrI]; field_simp
+    calc |x| ^ A ≤ |x| ^ A * (|x| ^ (I - A) / r ^ (I - A)) :=
+          le_mul_of_one_le_right (by positivity) ((one_le_div hrB).mpr h1)
+      _ = r ^ A / r ^ I * |x| ^ I := this.symm
+      _ ≤ _ := mul_le_mul_of_nonneg_right (le_max_right _ _) (by positivity)
+
+/-- **Keyhole form of the joint node weight** (PROOF-RHO Lemma KH, `k`-uniform).  If the cardinal
+function `R` satisfies `‖R(z)‖ ‖1-z‖^(h+q) ≤ M₀` on `‖z‖ = r` and
+`|R(x)| |1-x|^(h+q) ≤ B₀` on the real segments `r ≤ |x| ≤ 1` (`0 < r ≤ 1`), then for every column
+`k` the joint weight satisfies
+`|common(τ_a)| |weight_k(τ_a)| ≤ 4 (1 + (k - 2g)) max(1, r^A / r^(b+k+q)) max(M₀, B₀)`. -/
+theorem restrictedWeight_joint_le_of_keyhole (P : Parameters) (N k : ℕ) {J : ℕ}
+    {τ : Fin J → ℝ} (a : Fin J)
+    (hc : (rowCommonFactor P N).eval (τ a) ≠ 0)
+    (hdeg : ∀ i, P.H N ≤ i →
+      (rowCommonFactor P N * OAI.InternalCatalan.quadBasis τ a).coeff i = 0)
+    {r M₀ B₀ : ℝ} (hr0 : 0 < r) (hr1 : r ≤ 1)
+    (hcirc : ∀ z : ℂ, ‖z‖ = r →
+      ‖((OAI.InternalCatalan.quadBasis τ a).map (algebraMap ℝ ℂ)).eval z‖ *
+        ‖(1 : ℂ) - z‖ ^ (P.h N + P.q N) ≤ M₀)
+    (hseg : ∀ x : ℝ, r ≤ |x| → |x| ≤ 1 →
+      |(OAI.InternalCatalan.quadBasis τ a).eval x| * |1 - x| ^ (P.h N + P.q N) ≤ B₀) :
+    |(rowCommonFactor P N).eval (τ a)| * |restrictedWeight P N k τ a| ≤
+      4 * (1 + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ)) *
+        (max 1 (r ^ P.A N / r ^ (P.b N + k + P.q N)) * max M₀ B₀) := by
+  set R := OAI.InternalCatalan.quadBasis τ a with hR
+  set I := P.b N + k + P.q N with hI
+  set κ : ℝ := max 1 (r ^ P.A N / r ^ I) with hκ
+  have hκ1 : 1 ≤ κ := le_max_left _ _
+  have hS : ∀ x : ℂ, ‖(((rowCommonFactor P N * R) * (X - 1) ^ (P.q N)).map
+      (algebraMap ℝ ℂ)).eval x‖ =
+      ‖x‖ ^ P.A N * (‖((R).map (algebraMap ℝ ℂ)).eval x‖ *
+        ‖(1 : ℂ) - x‖ ^ (P.h N + P.q N)) := by
+    intro x
+    simp only [rowCommonFactor, Polynomial.map_mul, Polynomial.map_pow, Polynomial.map_sub,
+      Polynomial.map_one, Polynomial.map_X, eval_mul, eval_pow, eval_sub, eval_one, eval_X,
+      norm_mul, norm_pow]
+    rw [norm_sub_rev x 1, pow_add]
+    ring
+  have hSr : ∀ x : ℝ, |((rowCommonFactor P N * R) * (X - 1) ^ (P.q N)).eval x| =
+      |x| ^ P.A N * (|R.eval x| * |1 - x| ^ (P.h N + P.q N)) := by
+    intro x
+    simp only [rowCommonFactor, eval_mul, eval_pow, eval_sub, eval_one, eval_X, abs_mul, abs_pow]
+    rw [abs_sub_comm x 1, pow_add]
+    ring
+  have hM0 : 0 ≤ M₀ := by
+    have := hcirc (r : ℂ) (by simp [abs_of_pos hr0])
+    exact le_trans (by positivity) this
+  have hB0 : 0 ≤ B₀ := by
+    have := hseg r (by rw [abs_of_pos hr0]) (by rw [abs_of_pos hr0]; exact hr1)
+    exact le_trans (by positivity) this
+  have hrI : 0 < r ^ I := by positivity
+  have hkey := CatalanMeasure.GenD.Signed.Keyhole.polynomialFunctional_keyhole_le P N k R hdeg (r := r)
+    (M := M₀ * (r ^ P.A N / r ^ I)) (B := B₀ * κ) hr0 hr1
+    (by
+      intro z hz
+      rw [hS, hz]
+      calc r ^ P.A N * (‖(R.map (algebraMap ℝ ℂ)).eval z‖ * ‖(1 : ℂ) - z‖ ^ (P.h N + P.q N))
+          ≤ r ^ P.A N * M₀ := by gcongr; exact hcirc z hz
+        _ = M₀ * (r ^ P.A N / r ^ I) * r ^ I := by field_simp)
+    (by
+      intro x hx hx1
+      rw [hSr]
+      calc |x| ^ P.A N * (|R.eval x| * |1 - x| ^ (P.h N + P.q N))
+          ≤ |x| ^ P.A N * B₀ := by gcongr; exact hseg x hx hx1
+        _ ≤ (κ * |x| ^ I) * B₀ := by
+            gcongr; exact pow_le_max_one_mul_pow hr0 hx hx1 _ _
+        _ = B₀ * κ * |x| ^ I := by ring)
+  have hmax : max (M₀ * (r ^ P.A N / r ^ I)) (B₀ * κ) ≤ κ * max M₀ B₀ := by
+    apply max_le
+    · calc M₀ * (r ^ P.A N / r ^ I) ≤ M₀ * κ := by
+            gcongr; exact le_max_right _ _
+        _ ≤ κ * max M₀ B₀ := by
+            nlinarith [le_max_left M₀ B₀, mul_le_mul_of_nonneg_left (le_max_left M₀ B₀)
+              (by linarith : (0 : ℝ) ≤ κ)]
+    · calc B₀ * κ = κ * B₀ := mul_comm _ _
+        _ ≤ κ * max M₀ B₀ := by gcongr; exact le_max_right _ _
+  have hJ : (0 : ℝ) ≤ 4 * (1 + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ)) := by positivity
+  have hc' := abs_ne_zero.mpr hc
+  rw [restrictedWeight, abs_div]
+  rw [show |(rowCommonFactor P N).eval (τ a)| *
+      (|polynomialFunctional P N k (rowCommonFactor P N * R)| /
+        |(rowCommonFactor P N).eval (τ a)|) =
+      |polynomialFunctional P N k (rowCommonFactor P N * R)| by field_simp]
+  exact hkey.trans (mul_le_mul_of_nonneg_left hmax hJ)
+
 /-- The reduced quadrature formula uses actual row values, with the shared factor
 in the denominator of each weight. This is the form required in determinants. -/
 theorem filteredCatalanCoeff_restricted_weights {P : Parameters} (hP : Admissible P)
@@ -95,3 +199,5 @@ theorem filteredCatalanCoeff_restricted_weights {P : Parameters} (hP : Admissibl
 
 end
 end CatalanMeasure.Parametric
+
+#print axioms CatalanMeasure.Parametric.restrictedWeight_joint_le_of_keyhole

@@ -104,6 +104,216 @@ theorem weighted_atom_point_of_sheet {target r w : ℝ} (P : Parameters) (hP : A
       ring
     _ = _ := by rw [hc, he]
 
+/-- Factor-free sheet bound (S1): the same shape as `MarkedSheetBound`, for the sheet product
+`markedSheetFree` taken **without** the factor `(∏ (1 + s_i))^m`.  The cost `r` is the
+`58 c₂''` of PROOF-RHO 2.3. -/
+def MarkedSheetFreeBound (P : Parameters) (G : ℝ → Prop) (target r : ℝ) : Prop :=
+  ∀ ε : ℝ, 0 < ε →
+    ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (hpm : p + m = P.n N)
+      (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ),
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective (Fin.append x y) → Function.Injective s →
+      markedSheetFree P N hpm x y s ≤
+        (5 : ℝ) ^ m * sheetPrefactor P N *
+          Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+            r * N * m)
+
+/-- `WeightedAtomPoint` for the column indices `k_j` that enumerate (injectively) columns of
+`{0, …, n-1}` not selected by `E` -- exactly the columns the atom determinant leaves free
+(`weighted_atom_det`). -/
+def WeightedAtomPointBinom (P : Parameters)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop) (target ρ : ℝ) : Prop :=
+  ∀ ε : ℝ, 0 < ε →
+    ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (_hpm : p + m = P.n N)
+      (E : Fin p → ℕ), Function.Injective E → (∀ i, E i < P.n N) →
+      ∀ (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ)
+        (k : Fin m → ℕ) (a : Fin m → Fin ((P.n0 - P.g0) * N)),
+      Function.Injective k → (∀ j, k j < P.n N) → (∀ j i, k j ≠ E i) →
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective (Fin.append x y) → Function.Injective s →
+      (∀ j, realCoordinateInv (y j) = τ N (a j)) →
+      |CatalanMeasure.mixedDoubleWithAtoms (paramPinRowFun P N) (originalPolyAtoms P N y)
+        (paramPinColFun P N E) paramPinKernel (realCoordinateInv ∘ x) s| *
+        (∏ j, |restrictedWeight P N (k j) (τ N) (a j)|) ≤
+      sheetPrefactor P N * (540000 * (N : ℝ)) ^ m *
+        Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+          ρ * N * m)
+
+/-- **S1, weight-side assembly.**  The factor-free sheet bound and the combined per-column weight
+bound `|common(τ_a)| |weight_k(τ_a)| β_{p,m}(k) ≤ 108000 N exp(Ψ N)`, uniform in `m`, give the
+weighted atom point with cost `r + Ψ`. -/
+theorem weighted_atom_point_of_sheet_binom {target r w : ℝ} (P : Parameters) (hP : Admissible P)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
+    (hsheet : MarkedSheetFreeBound P G target r)
+    (hweights : ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ), p + m = P.n N →
+      ∀ (k : ℕ), k < P.n N → ∀ (a : Fin ((P.n0 - P.g0) * N)),
+      |(rowCommonFactor P N).eval (τ N a)| * |restrictedWeight P N k (τ N) a| *
+        (CatalanMeasure.binomBeta p m k : ℝ) ≤ 108000 * (N : ℝ) * Real.exp (w * N)) :
+    WeightedAtomPointBinom P τ G target (r + w) := by
+  intro ε hε
+  filter_upwards [hsheet ε hε, hweights, eventually_gt_atTop (0 : ℕ)]
+    with N hsheet_N hw hN p m hpm E hEi hEn x y s k a hki hkn hkE hx hx0 hy hy0 hGy hs hzi hsi
+      hcoord
+  let β := fun j => restrictedWeight P N (k j) (τ N) (a j)
+  let Q : ℝ := 108000 * N * Real.exp (w * N)
+  have hweight (j : Fin m) :
+      |(rowCommonFactor P N).eval (realCoordinateInv (y j))| * |β j| *
+        (CatalanMeasure.binomBeta p m (k j) : ℝ) ≤ Q := by
+    rw [hcoord j]
+    exact hw p m hpm (k j) (hkn j) (a j)
+  have hbase := original_poly_atoms_mixedDouble_binom_mul_weight_le hP hN hpm
+    E hEi hEn x y s β k hki hkn hkE hx hx0 hy hy0 hs hweight
+  have hp := hsheet_N p m hpm x y s hx hx0 hy hy0 hGy hs hzi hsi
+  have hQ : 0 ≤ Q ^ m := by dsimp [Q]; positivity
+  have hc : (5 : ℝ) ^ m * (108000 * (N : ℝ)) ^ m = (540000 * (N : ℝ)) ^ m := by
+    rw [← mul_pow]
+    congr 1
+    ring
+  have he : Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 *
+      (-target + Real.log 2 / 2 + ε) + r * N * m) *
+      Real.exp (w * (N : ℝ)) ^ m =
+      Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 *
+        (-target + Real.log 2 / 2 + ε) + (r+w) * N * m) := by
+    rw [← Real.exp_nat_mul, ← Real.exp_add]
+    congr 1
+    ring
+  calc
+    _ ≤ markedSheetFree P N hpm x y s * Q ^ m := hbase
+    _ ≤ ((5 : ℝ) ^ m * sheetPrefactor P N *
+        Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+          r * N * m)) * Q ^ m := mul_le_mul_of_nonneg_right hp hQ
+    _ = sheetPrefactor P N * ((5 : ℝ) ^ m * (108000 * (N : ℝ)) ^ m) *
+        (Real.exp (((P.n0 : ℝ) * (N : ℝ)) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+          r * N * m) * Real.exp (w * (N : ℝ)) ^ m) := by
+      dsimp [Q]
+      rw [mul_pow]
+      ring
+    _ = _ := by rw [hc, he]
+
+/-- The exponent rate `H~(κ)` of the binomial factor `β(k)` at `κ = k/n`: the binary entropy of
+`κ` for `κ ≥ 1/2` and `log 2` for `κ < 1/2` (PROOF-RHO 2.1). -/
+def binomRate (κ : ℝ) : ℝ := if 1 ≤ 2 * κ then Real.binEntropy κ else Real.log 2
+
+/-- Lemma V rate, uniform in `m`: `β_{p,m}(k) ≤ n exp(n H~(k/n))` for every split `p + m = n`. -/
+theorem binomBeta_le_mul_exp {p m n k : ℕ} (hpm : p + m = n) (hk : k < n) :
+    (CatalanMeasure.binomBeta p m k : ℝ) ≤ n * Real.exp (n * binomRate ((k : ℝ) / n)) := by
+  have hn1 : (1 : ℝ) ≤ n := by exact_mod_cast (show 1 ≤ n by omega)
+  rcases Nat.eq_zero_or_pos m with hm | hm
+  · subst hm
+    simp only [CatalanMeasure.binomBeta, Finset.range_zero, Finset.sum_empty, Nat.cast_zero]
+    positivity
+  · have hnR : (0 : ℝ) < n := by linarith
+    have hiff : 1 ≤ 2 * ((k : ℝ) / n) ↔ n ≤ 2 * k := by
+      rw [← mul_div_assoc, one_le_div hnR]
+      constructor <;> intro h <;> exact_mod_cast h
+    unfold binomRate
+    split_ifs with h'
+    · have h := hiff.mp h'
+      have hlog := CatalanMeasure.log_binomBeta_le_entropy p m n k hpm hm hk h
+      rcases Nat.eq_zero_or_pos (CatalanMeasure.binomBeta p m k) with h0 | hpos
+      · rw [h0]; simp only [Nat.cast_zero]; positivity
+      · have hbpos : (0 : ℝ) < CatalanMeasure.binomBeta p m k := by exact_mod_cast hpos
+        have hmR : (m : ℝ) ≤ n := by exact_mod_cast (show m ≤ n by omega)
+        have hm0 : (0 : ℝ) < m := by exact_mod_cast hm
+        calc (CatalanMeasure.binomBeta p m k : ℝ)
+            = Real.exp (Real.log (CatalanMeasure.binomBeta p m k)) :=
+              (Real.exp_log hbpos).symm
+          _ ≤ Real.exp (Real.log m + n * Real.binEntropy ((k : ℝ) / n)) := Real.exp_le_exp.mpr hlog
+          _ = m * Real.exp (n * Real.binEntropy ((k : ℝ) / n)) := by
+              rw [Real.exp_add, Real.exp_log hm0]
+          _ ≤ _ := by gcongr
+    · have h2 := CatalanMeasure.binomBeta_le_two_pow p m k
+      have h2R : (CatalanMeasure.binomBeta p m k : ℝ) ≤ 2 ^ p := by exact_mod_cast h2
+      have hpn : (2 : ℝ) ^ p ≤ 2 ^ n := pow_le_pow_right₀ (by norm_num) (by omega)
+      have he : Real.exp (n * Real.log 2) = 2 ^ n := by
+        rw [Real.exp_nat_mul, Real.exp_log (by norm_num)]
+      calc (CatalanMeasure.binomBeta p m k : ℝ) ≤ 2 ^ n := h2R.trans hpn
+        _ = Real.exp (n * Real.log 2) := he.symm
+        _ ≤ n * Real.exp (n * Real.log 2) := le_mul_of_one_le_left (Real.exp_pos _).le hn1
+
+/-- Polynomial factors are eventually absorbed by any exponential rate. -/
+theorem eventually_mul_pow_le_exp (C : ℝ) (d : ℕ) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ N : ℕ in atTop, C * (N : ℝ) ^ d ≤ Real.exp (ε * N) := by
+  have hδ : 0 < ε ^ d / (|C| + 1) := by positivity
+  have ht := (Real.tendsto_pow_mul_exp_neg_atTop_nhds_zero d).comp
+    (tendsto_natCast_atTop_atTop.const_mul_atTop hε)
+  filter_upwards [ht.eventually (gt_mem_nhds hδ)] with N hN
+  simp only [Function.comp_apply] at hN
+  have he := Real.exp_pos (ε * N)
+  have hN' : (ε * N) ^ d < ε ^ d / (|C| + 1) * Real.exp (ε * N) := by
+    rw [Real.exp_neg] at hN
+    have := (mul_inv_lt_iff₀ he).mp (by simpa [div_eq_mul_inv] using hN)
+    simpa [div_eq_mul_inv, mul_comm, mul_left_comm, mul_assoc] using this
+  have hεd : 0 < ε ^ d := by positivity
+  have hC1 : 0 < |C| + 1 := by positivity
+  have hNd : (N : ℝ) ^ d * ε ^ d < ε ^ d / (|C| + 1) * Real.exp (ε * N) := by
+    rw [← mul_pow, mul_comm]; exact hN'
+  have h2 : (N : ℝ) ^ d < Real.exp (ε * N) / (|C| + 1) := by
+    have : (N : ℝ) ^ d * ε ^ d < ε ^ d * (Real.exp (ε * N) / (|C| + 1)) := by
+      calc _ < _ := hNd
+        _ = _ := by ring
+    rw [mul_comm ((N : ℝ) ^ d)] at this
+    exact lt_of_mul_lt_mul_left this hεd.le
+  calc C * (N : ℝ) ^ d ≤ |C| * (N : ℝ) ^ d := by gcongr; exact le_abs_self C
+    _ ≤ (|C| + 1) * (N : ℝ) ^ d := by gcongr; linarith
+    _ ≤ (|C| + 1) * (Real.exp (ε * N) / (|C| + 1)) := by gcongr
+    _ = _ := by field_simp
+
+/-- **Weight side of S1, glue.**  A per-column bound
+`|common(τ_a)| |weight_k(τ_a)| ≤ C₀ N^d exp(n ω(k/n))` together with
+`ω(κ) + H~(κ) ≤ Ψ` on `[0,1]` gives, for every `w > n₀ Ψ`, the combined bound
+`|common| |weight_k| β_{p,m}(k) ≤ 108000 N exp(w N)` for all splits `p + m = n`, eventually in `N`
+(the hypothesis `hweights` of `weighted_atom_point_of_sheet_binom`). -/
+theorem binom_hweights_of_column_bound (P : Parameters)
+    (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) {C₀ Ψ w : ℝ} (d : ℕ) (ω : ℝ → ℝ)
+    (hC₀ : 0 ≤ C₀)
+    (hW : ∀ᶠ N : ℕ in atTop, ∀ k : ℕ, k < P.n N → ∀ a : Fin ((P.n0 - P.g0) * N),
+      |(rowCommonFactor P N).eval (τ N a)| * |restrictedWeight P N k (τ N) a| ≤
+        C₀ * (N : ℝ) ^ d * Real.exp ((P.n N : ℝ) * ω ((k : ℝ) / P.n N)))
+    (hΨ : ∀ κ ∈ Icc (0 : ℝ) 1, ω κ + binomRate κ ≤ Ψ) (hw : (P.n0 : ℝ) * Ψ < w) :
+    ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ), p + m = P.n N →
+      ∀ (k : ℕ), k < P.n N → ∀ (a : Fin ((P.n0 - P.g0) * N)),
+      |(rowCommonFactor P N).eval (τ N a)| * |restrictedWeight P N k (τ N) a| *
+        (CatalanMeasure.binomBeta p m k : ℝ) ≤ 108000 * (N : ℝ) * Real.exp (w * N) := by
+  have hε : 0 < w - (P.n0 : ℝ) * Ψ := by linarith
+  filter_upwards [hW, eventually_mul_pow_le_exp (C₀ * (P.n0 : ℝ) / 108000) d hε,
+    eventually_gt_atTop (0 : ℕ)] with N hWN hgrow hN p m hpm k hk a
+  have hn : (P.n N : ℝ) = (P.n0 : ℝ) * N := n_cast P N
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hn0 : (0 : ℝ) ≤ (P.n0 : ℝ) := Nat.cast_nonneg _
+  have hnR : (0 : ℝ) ≤ (P.n N : ℝ) := Nat.cast_nonneg _
+  have hκ : (k : ℝ) / P.n N ∈ Icc (0 : ℝ) 1 := by
+    have hnpos : (0 : ℝ) < P.n N := by exact_mod_cast (show 0 < P.n N by omega)
+    exact ⟨by positivity, (div_le_one hnpos).mpr (by exact_mod_cast hk.le)⟩
+  have hb := binomBeta_le_mul_exp hpm hk
+  have hΨk := hΨ _ hκ
+  have hW0 := hWN k hk a
+  have hWnn : 0 ≤ |(rowCommonFactor P N).eval (τ N a)| * |restrictedWeight P N k (τ N) a| :=
+    mul_nonneg (abs_nonneg _) (abs_nonneg _)
+  calc _ ≤ (C₀ * (N : ℝ) ^ d * Real.exp ((P.n N : ℝ) * ω ((k : ℝ) / P.n N))) *
+        ((P.n N : ℝ) * Real.exp ((P.n N : ℝ) * binomRate ((k : ℝ) / P.n N))) :=
+        mul_le_mul hW0 hb (Nat.cast_nonneg _) (by positivity)
+    _ = C₀ * (N : ℝ) ^ d * (P.n N : ℝ) *
+        Real.exp ((P.n N : ℝ) * (ω ((k : ℝ) / P.n N) + binomRate ((k : ℝ) / P.n N))) := by
+        rw [mul_add, Real.exp_add]; ring
+    _ ≤ C₀ * (N : ℝ) ^ d * (P.n N : ℝ) * Real.exp ((P.n N : ℝ) * Ψ) := by
+        gcongr
+    _ = (C₀ * (P.n0 : ℝ) * (N : ℝ) ^ d) * N * Real.exp ((P.n0 : ℝ) * Ψ * N) := by
+        rw [hn]; ring_nf
+    _ ≤ (108000 * Real.exp ((w - (P.n0 : ℝ) * Ψ) * N)) * N * Real.exp ((P.n0 : ℝ) * Ψ * N) := by
+        have h1 : C₀ * (P.n0 : ℝ) * (N : ℝ) ^ d ≤ 108000 * Real.exp ((w - (P.n0 : ℝ) * Ψ) * N) := by
+          have := mul_le_mul_of_nonneg_left hgrow (by norm_num : (0 : ℝ) ≤ 108000)
+          calc C₀ * (P.n0 : ℝ) * (N : ℝ) ^ d
+              = 108000 * (C₀ * (P.n0 : ℝ) / 108000 * (N : ℝ) ^ d) := by ring
+            _ ≤ _ := this
+        gcongr
+    _ = _ := by
+        rw [show w * (N : ℝ) = (w - (P.n0 : ℝ) * Ψ) * N + (P.n0 : ℝ) * Ψ * N by ring,
+          Real.exp_add]
+        ring
+
 /-- Generic `weighted_atom_det_on`: the atom determinants are bounded by the weighted atom point. -/
 theorem weighted_atom_det (P : Parameters)
     (τ : (N : ℕ) → Fin ((P.n0 - P.g0) * N) → ℝ) (G : ℝ → Prop)
@@ -286,3 +496,11 @@ end
 
 end Analytic
 end CatalanMeasure.GenD
+
+#print axioms CatalanMeasure.GenD.Analytic.weighted_atom_point_of_sheet_binom
+
+#print axioms CatalanMeasure.GenD.Analytic.binom_hweights_of_column_bound
+
+#print axioms CatalanMeasure.GenD.Analytic.binomBeta_le_mul_exp
+
+#print axioms CatalanMeasure.GenD.Analytic.eventually_mul_pow_le_exp
