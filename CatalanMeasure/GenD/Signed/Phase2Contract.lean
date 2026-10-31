@@ -7,6 +7,7 @@ public import CatalanMeasure.GenD.Signed.SheetNear
 public import CatalanMeasure.GenD.Signed.MarkedCap
 public import CatalanMeasure.GenD.Signed.Brackets
 public import CatalanMeasure.GenD.Signed.LemmaT
+public import CatalanMeasure.GenD.Analytic.MarkedSecond
 
 /-!
 # Phase 2 contract: the complete `SignedNearBounds` from endpoint data
@@ -504,11 +505,15 @@ theorem Phase2Data.signedSecondSheetNear {I : ℕ} (D : Phase2Data I) {P : Param
   _root_.CatalanMeasure.Signed.signedSecondSheetNear hP G target0 c2 Cls D.toBounds hn hconst hRf hRm hRn hCf hLRf hB hcost
     hnon hlink
 
-/-- **The near-optimal class (the dichotomy of PROOF-A 17.9(a), Lemma 4).**  A free configuration
-`z` is in the class when SOME marked selection `(x, y)` and column configuration `s` violate the
-old-route (grouped-product) bound at `target`, with no `ε`.  Off the class the old route holds by
-definition, so the non-class branch `hnon` is automatic (`hnon_nearOpt`); all the content is in the
-class branch (`hlink`: Lemma K containment, spike witnesses).  See `SPIKE-CLASS.md` §1. -/
+/-- **The near-optimal class (the dichotomy of PROOF-A 17.9(a), Lemma 4), factor-free form.**  A
+free configuration `z` is in the class when SOME marked selection `(x, y)` and column configuration
+`s` violate the FACTOR-FREE old-route bound at `(target, cost)`: the grouped product exceeds
+`(∏ (1 + s_i))^(a+b) · exp(n0² N² (-target + log 2/2) + cost N (a+b))`, with no `ε`.  The class is
+measured against the factor-free product because the statement (`SignedSecondSheetCore`, S1,
+PROOF-RHO §2.5) is about `markedSheetCore`, which has no factor `(∏ (1 + s))^m`; Lemma K
+(`free_facts`) then compares it with the factor-free old route (`SecondTrialBoundsEnd`), and the
+class excess is `(t0 - target) + (cost - c2/n0) α + δ`, constant in `α` at `c2 = n0 · cost`.  Off
+the class the factor-free old route holds by definition (`hnon_nearOpt`, `hnonC_nearOpt`). -/
 def nearOptCls (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
     ∀ (N r : ℕ), (Fin r → ℝ) → Prop :=
   fun N r z => ∃ (a b : ℕ) (_ : r + a + b = P.n N) (x : Fin a → ℝ) (y : Fin b → ℝ)
@@ -517,12 +522,13 @@ def nearOptCls (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
     (∀ i, G (x i)) ∧ (∀ i, y i ∈ Ioo (0 : ℝ) 1) ∧ (∀ i, s i ∈ Ioo (0 : ℝ) 1) ∧
     Function.Injective z ∧ Function.Injective (Fin.append z x) ∧ Function.Injective y ∧
     Function.Injective s ∧
-    Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2) + cost * N * (a + b)) <
+    (∏ i, (1 + s i)) ^ (a + b) *
+        Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2) + cost * N * (a + b)) <
       groupedProduct P N z x y s
 
-/-- The non-class branch for the near-optimal class: no hypothesis. -/
+/-- The non-class branch for the near-optimal class (factor-free grouped product): no hypothesis. -/
 theorem hnon_nearOpt (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
-    GroupedMarkedProductCostOnRestr P target cost G
+    GroupedFreeProductCostOnRestr P target cost G
       (fun N r _ _ z _ _ _ => ¬ nearOptCls P target cost G N r z) := by
   intro ε hε
   refine Filter.Eventually.of_forall fun N r a b hrab z x y s hz hz0 hx hxG hy hs hzi hzxi hyi hsi
@@ -532,6 +538,9 @@ theorem hnon_nearOpt (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
   apply hQ
   refine ⟨a, b, hrab, x, y, s, hz, hz0, hx, hxG, hy, hs, hzi, hzxi, hyi, hsi,
     lt_of_le_of_lt ?_ h⟩
+  have hf : 0 ≤ (∏ i, (1 + s i)) ^ (a + b) :=
+    pow_nonneg (Finset.prod_nonneg fun i _ => by linarith [(hs i).1]) _
+  refine mul_le_mul_of_nonneg_left ?_ hf
   apply Real.exp_le_exp.mpr
   have h0 : 0 ≤ ((P.n0 : ℝ) * N) ^ 2 * ε := by positivity
   have e : ((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) =
@@ -539,27 +548,27 @@ theorem hnon_nearOpt (P : Parameters) (target cost : ℝ) (G : ℝ → Prop) :
   rw [e]
   linarith
 
-/-- **End-to-end with the near-optimal class:** `hnon` discharged; what remains is the data `D`,
-the identification and the class link for `nearOptCls`. -/
-theorem Phase2Data.signedSecondSheetNear_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters}
-    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
-    (hn : ∀ N, D.ncount N = P.n N)
-    (hconst : ∀ N r a b, r + a + b = P.n N →
-      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
-    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
-    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
-    (hRn : ∀ N, D.Rn N = groupedNearField P N)
-    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
-    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
-      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
-    (hB : D.B = -target0 + Real.log 2 / 2)
-    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
-    (hlink : SignedNearClassLink P D.toBounds (nearOptCls P target0 c2 G) G) :
-    SignedSecondSheetCore P G target0 c2 D.α1 :=
-  D.signedSecondSheetNear hP G target0 c2 _ hn hconst hRf hRm hRn hCf hLRf hB hcost
-    (hnon_nearOpt P target0 c2 G) hlink
+/-- The non-class branch at the level of the factor-free core (`hnonC` of
+`signedSecondSheetNearNd_core`) for the near-optimal class. -/
+theorem hnonC_nearOpt {P : Parameters} (hP : Admissible P) (target cost : ℝ) (G : ℝ → Prop) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
+      ∀ (p m : ℕ) (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ),
+      (∀ i, x i ∈ Set.Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Set.Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) →
+      (∀ i, s i ∈ Set.Ioo (0 : ℝ) 1) →
+      Function.Injective (Fin.append x y) → Function.Injective s →
+      (∑ i : Fin (p + m), paramCaseField P N (Fin.append x y i)) ≤ -1 →
+      ¬ nearOptCls P target cost G N p x →
+      markedSheetCore P N hpm x y s ≤
+        5 ^ m * (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
+          Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) + cost * N * m) := by
+  intro ε hε
+  filter_upwards [second_marked_sheet_free_on_restr hP target cost G _ (hnon_nearOpt P target cost G)
+    hε] with N h p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase hc
+  exact h p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase (fun _ _ _ _ => hc)
 
-/-- **Node-set form** (`Nd`, SheetNear `signedSecondSheetNearNd`) with the near-optimal class. -/
+/-- **Node-set form** (`Nd`, SheetNear `signedSecondSheetNearNd_core`) with the near-optimal class:
+`hnon` discharged; what remains is the data `D`, the identification and the class link. -/
 theorem Phase2Data.signedSecondSheetNearNd_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters}
     (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
     (hn : ∀ N, D.ncount N = P.n N)
@@ -576,8 +585,30 @@ theorem Phase2Data.signedSecondSheetNearNd_nearOpt {I : ℕ} (D : Phase2Data I) 
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
     (hlink : SignedNearClassLinkNd P D.toBounds (nearOptCls P target0 c2 G) G Nd) :
     SignedSecondSheetCoreNd P G Nd target0 c2 D.α1 :=
-  _root_.CatalanMeasure.Signed.signedSecondSheetNearNd hP G target0 c2 _ D.toBounds hn hconst
-    hRf hRm hRn hCf hLRf hB hcost (hnon_nearOpt P target0 c2 G) Nd hlink
+  _root_.CatalanMeasure.Signed.signedSecondSheetNearNd_core hP G target0 c2 _ D.toBounds hn
+    hconst hRf hRm hRn hCf hLRf hB hcost (hnonC_nearOpt hP target0 c2 G) Nd hlink
+
+/-- **End-to-end with the near-optimal class** (unrestricted marked rows). -/
+theorem Phase2Data.signedSecondSheetNear_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters}
+    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (hlink : SignedNearClassLink P D.toBounds (nearOptCls P target0 c2 G) G) :
+    SignedSecondSheetCore P G target0 c2 D.α1 := by
+  intro ε hε
+  filter_upwards [D.signedSecondSheetNearNd_nearOpt hP G target0 c2 hn hconst hRf hRm hRn hCf
+    hLRf hB hcost (fun _ _ _ => True) hlink ε hε] with N h p m hpm x y s hmle hx hx0 hy hy0 hyG
+    hs hzi hsi hcase
+  exact h p m hpm x y s hmle hx hx0 hy hy0 hyG trivial hs hzi hsi hcase
 
 /-- **The `FixAdm` clause of `hlink` from the node set** (NOTES-MC wiring): for marked rows that
 are node images (`NodeSub τ`) of a node set with `NodeCap` at the common cap data of `D`, every
@@ -795,7 +826,7 @@ theorem hCls_of_cert {I : ℕ} {DA DB : Fin I → ℕ → SignedData} (cp : Fin 
 /-! ### 6. The class link `hlink` for `nearOptCls`: counting, free facts, statistics
 
 Everything here is about the free rows `z` of a configuration in `nearOptCls` (the old-route
-violation) and the marked rows `y`.  The old (532) trial `D0 : SecondTrialBounds` is the reference:
+violation) and the marked rows `y`.  The factor-free old (532) trial `D0 : SecondTrialBoundsEnd P 0` is the reference:
 near-optimality gives the field bracket and the cosine square of the free rows at most
 `excess ..` (`free_facts`), hence counts of free rows in any region where the free field is below
 its cap (`card_region_le`) and one-sided linear statistics (`stat_poly_ge`).  -/
@@ -894,14 +925,115 @@ theorem groupedSquares_ge_free {ν e : ℝ} (hν : 0 < ν) (he : e ∈ Ioo (0 : 
   unfold groupedSquares freeSquares
   linarith only [h1, h3]
 
+/-- The factor-free (endpoint column field) old-route trial from an old-route trial and an endpoint
+budget without `a (1 - a) log 2` (for K590: `K590.second_budget'_log2`, cost `secondCost'`). -/
+def SecondTrialBounds.toEnd {P : Parameters} {target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBounds P target residual nearCap cost G) (cost' : ℝ)
+    (hbud : ∀ {a t : ℝ}, 0 ≤ a → 0 ≤ t →
+      (-gC0 P + gC1 P * a - a ^ 2 + t - t ^ 2) * Real.log 2 +
+        D.normCap + (1 - a) * D.fieldCap + (a - t) * residual + t * nearCap ≤
+          -target + Real.log 2 / 2 + cost' * a) :
+    SecondTrialBoundsEnd P 0 target residual nearCap cost' G where
+  p := D.p
+  v := D.v
+  MX := D.MX
+  MY := D.MY
+  normCap := D.normCap
+  fieldCap := D.fieldCap
+  p_summable := D.p_summable
+  v_summable := D.v_summable
+  norm_le := D.norm_le
+  field_sum := D.field_sum
+  row := D.row
+  column := D.column
+  marked := D.marked
+  near := D.near
+  budget := fun _ ha ht => hbud ha ht
+
 set_option maxHeartbeats 1600000 in
-/-- **Free facts of the near-optimal class (Lemma K).**  For `z` in `nearOptCls` (free rows of a
-configuration with `m = n - p` marked rows violating the old route at `(t0, c2)`), eventually in
-`N`: every free row has field at most the cap `MX + δ/4`, the field bracket and the cosine square
-`Σ (p_k - A_k(z))²/k` are at most `excess .. (m/n)`. -/
+/-- **`second_energy_end` keeping the dropped squares and field brackets** (the endpoint column
+field, no `α log (1 + s)` term; the column bracket has cap `MY + δ/4`). -/
+theorem second_energy_sq_end {P : Parameters} (hP : Admissible P)
+    {α1 target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D : SecondTrialBoundsEnd P α1 target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
+    (he : e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hec : e * (4 * (∑' j, |D.p j|) + 4 * (∑' j, |D.v j|) + |D.p 1| + 20) < δ / 2) :
+    ∀ᶠ N : ℕ in atTop, ∀ (r a b : ℕ), r + a + b = P.n N →
+      ∀ (z : Fin r → ℝ) (x : Fin a → ℝ) (y : Fin b → ℝ) (s : Fin r → ℝ),
+      (∀ i, z i ∈ Ioo (-1 : ℝ) 1) → (∀ i, z i ≠ 0) →
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, G (x i)) → (∀ i, y i ∈ Ioo (0 : ℝ) 1) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective z →
+      Function.Injective (Fin.append z x) → Function.Injective y → Function.Injective s →
+      α1 * (P.n N : ℝ) ≤ ((a + b : ℕ) : ℝ) →
+      groupedValueWithFields (P.n N : ℝ) (groupedConstant P N r a b)
+        (populationPhysicalFreeField P N) (groupedMarkedField P N)
+        (groupedNearField P N) (populationEndpointColumnField P N 0)
+        z x y s +
+      groupedSlack (P.n N : ℝ) e D.p D.p D.v (populationPhysicalFreeField P N)
+        (groupedMarkedField P N) (groupedNearField P N)
+        (populationEndpointColumnField P N 0)
+        (D.MX + δ / 4) (residual + δ / 4) (nearCap + δ / 4) (D.MY + δ / 4) z x y s ≤
+        -target + Real.log 2 / 2 + cost * (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) + δ := by
+  have hε : 0 < δ / 4 := by linarith only [hδ]
+  have herr : ∀ᶠ N : ℕ in atTop,
+      groupedPopulationError ((P.n0 : ℝ) * N) e D.p D.p D.v ≤ δ / 2 :=
+    ((tendsto_order.mp (grouped_error_tendsto hP e D.p D.v)).2 (δ / 2) hec).mono
+      (fun _ h => h.le)
+  filter_upwards [log_reciprocal_eventually hP hε, herr, eventually_gt_atTop (0 : ℕ)]
+    with N hsmall herror hN r a b hcount z x y s hz hz0 hx hxG hy hs hzi hxi hyi hsi hα1
+  have hν : 0 < (P.n N : ℝ) := by exact_mod_cast n_pos hP hN
+  have hα : 0 ≤ ((a + b : ℕ) : ℝ) / (P.n N : ℝ) := div_nonneg (Nat.cast_nonneg _) hν.le
+  have hβ : 0 ≤ (b : ℝ) / (P.n N : ℝ) := div_nonneg (Nat.cast_nonneg _) hν.le
+  have hα1' : α1 ≤ ((a + b : ℕ) : ℝ) / (P.n N : ℝ) := by
+    rw [le_div_iff₀ hν]; exact hα1
+  have hfree : (r : ℝ) / (P.n N : ℝ) = 1 - ((a + b : ℕ) : ℝ) / (P.n N : ℝ) := by
+    have hf := population_fractions hP hN (show r + (a + b) = P.n N by omega)
+    linarith only [hf]
+  have hmarked : (a : ℝ) / (P.n N : ℝ) =
+      ((a + b : ℕ) : ℝ) / (P.n N : ℝ) - (b : ℝ) / (P.n N : ℝ) := by
+    rw [Nat.cast_add, add_div]
+    ring
+  have hy' : ∀ i, y i ∈ Ioo (-1 : ℝ) 1 := fun i => ⟨by linarith [(hy i).1], (hy i).2⟩
+  have hb := grouped_field_caps_bound_sq (constant := groupedConstant P N r a b) hν he
+    (by exact_mod_cast (show r + a ≤ P.n N by omega))
+    (by exact_mod_cast (show b ≤ P.n N by omega)) z x y s hz hx hy' hs hzi hxi hyi hsi
+    D.p D.p D.v D.p_summable D.p_summable D.v_summable
+    (populationPhysicalFreeField P N) (groupedMarkedField P N)
+    (groupedNearField P N) (populationEndpointColumnField P N 0)
+    (D.MX + δ / 4) (residual + δ / 4) (nearCap + δ / 4) (D.MY + δ / 4)
+  have hconst := grouped_constant_le hP hN hcount
+  have hbudget := D.budget hα1' hα hβ
+  have hnorm := D.norm_le
+  have hfields := congrArg (fun t : ℝ => (1 - ((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * t) D.field_sum
+  have hεα := mul_nonneg hε.le hα
+  rw [← n_cast] at herror
+  rw [hfree, hmarked] at hb
+  rw [hfree] at hconst
+  ring_nf at hb hconst hbudget hfields hnorm herror hεα ⊢
+  nlinarith only [hb, hconst, hbudget, hfields, hnorm, herror, hεα, hsmall]
+
+/-- The physical column field is the endpoint column field plus `α log (1 + s)`
+(`Analytic.grouped_value_physical_eq`, restated here). -/
+theorem grouped_value_phys_end {P : Parameters} {N r a b : ℕ}
+    (z : Fin r → ℝ) (x : Fin a → ℝ) (y : Fin b → ℝ) (s : Fin r → ℝ) :
+    groupedValueWithFields (P.n N : ℝ) (groupedConstant P N r a b)
+        (populationPhysicalFreeField P N) (groupedMarkedField P N)
+        (groupedNearField P N) (populationPhysicalColumnField P N (a + b)) z x y s =
+      groupedValueWithFields (P.n N : ℝ) (groupedConstant P N r a b)
+        (populationPhysicalFreeField P N) (groupedMarkedField P N)
+        (groupedNearField P N) (populationEndpointColumnField P N 0) z x y s +
+      ((((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * ∑ i, Real.log (1 + s i)) / (P.n N : ℝ) :=
+  CatalanMeasure.GenD.Analytic.grouped_value_physical_eq z x y s
+
+set_option maxHeartbeats 1600000 in
+/-- **Free facts of the near-optimal class (Lemma K), factor-free.**  For `z` in `nearOptCls`
+(free rows of a configuration with `m = n - p` marked rows violating the factor-free old route at
+`(t0, c2)`), measured against the factor-free old-route trial `D` (`SecondTrialBoundsEnd P 0`),
+eventually in `N`: every free row has field at most the cap `MX + δ/4`, the field bracket and the
+cosine square `Σ (p_k - A_k(z))²/k` are at most `excess .. (m/n)`. -/
 theorem free_facts {P : Parameters} (hP : Admissible P)
     {target residual nearCap cost : ℝ} {G : ℝ → Prop}
-    (D : SecondTrialBounds P target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
+    (D : SecondTrialBoundsEnd P 0 target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
     (he : e ∈ Ioo (0 : ℝ) (1 / 8))
     (hec : e * (4 * (∑' j, |D.p j|) + 4 * (∑' j, |D.v j|) + |D.p 1| + 20) < δ / 2)
     (t0 c2 : ℝ) :
@@ -913,23 +1045,38 @@ theorem free_facts {P : Parameters} (hP : Admissible P)
       sqTail D.p (pinCosineMoment (P.n N : ℝ) e z) ≤
         excess target cost t0 c2 δ (P.n0 : ℝ) ((m : ℝ) / (P.n N : ℝ)) := by
   have hε : 0 < δ / 4 := by linarith
-  filter_upwards [second_energy_sq hP D hδ he hec, D.row hε, D.column hε,
+  filter_upwards [second_energy_sq_end hP D hδ he hec, D.row hε, D.column hε,
     log_reciprocal_eventually hP hε, eventually_gt_atTop (0 : ℕ)]
     with N hE hrow hcol hl2 hN p m hpm z hcls
   obtain ⟨a, b, hcount, x, y, s, hz, hz0, hx, hxG, hy, hs, hzi, hzxi, hyi, hsi, hv⟩ := hcls
   have hν : 0 < (P.n N : ℝ) := by exact_mod_cast n_pos hP hN
   have hy' : ∀ i, y i ∈ Ioo (-1 : ℝ) 1 := fun i => ⟨by linarith [(hy i).1], (hy i).2⟩
   have hE1 := hE p a b hcount z x y s hz hz0 hx hxG hy hs hzi hzxi hyi hsi
-  have hpos : 0 < groupedProduct P N z x y s := lt_trans (Real.exp_pos _) hv
+    (by rw [zero_mul]; exact Nat.cast_nonneg _)
+  have hfac : 0 < (∏ i, (1 + s i)) ^ (a + b) :=
+    pow_pos (Finset.prod_pos fun i _ => by linarith [(hs i).1]) _
+  have hlhs : 0 < (∏ i, (1 + s i)) ^ (a + b) *
+      Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-t0 + Real.log 2 / 2) + c2 * N * (a + b)) :=
+    mul_pos hfac (Real.exp_pos _)
   have hlog := log_groupedProduct hP hN z x y s hz hx hy' hs hz0 (fun i => (hy i).1.ne')
     hzi hzxi hyi hsi
+  have hphys := grouped_value_phys_end (P := P) (N := N) z x y s
   set V := groupedValueWithFields (P.n N : ℝ) (groupedConstant P N p a b)
     (populationPhysicalFreeField P N) (groupedMarkedField P N) (groupedNearField P N)
-    (populationPhysicalColumnField P N (a + b)) z x y s with hV
+    (populationEndpointColumnField P N 0) z x y s with hV
+  have hfaclog : Real.log ((∏ i, (1 + s i)) ^ (a + b)) =
+      ((a + b : ℕ) : ℝ) * ∑ i, Real.log (1 + s i) := by
+    rw [Real.log_pow, Real.log_prod (fun i _ => (show 0 < 1 + s i by linarith [(hs i).1]).ne')]
   have hV0 : ((P.n0 : ℝ) * N) ^ 2 * (-t0 + Real.log 2 / 2) + c2 * N * (a + b) <
       (P.n N : ℝ) ^ 2 * V := by
-    rw [← hlog]
-    exact (Real.lt_log_iff_exp_lt hpos).mpr hv
+    have h1 := Real.log_lt_log hlhs hv
+    rw [Real.log_mul hfac.ne' (Real.exp_pos _).ne', Real.log_exp, hfaclog, hlog, hphys] at h1
+    have hk : (P.n N : ℝ) ^ 2 * (V + ((((a + b : ℕ) : ℝ) / (P.n N : ℝ)) *
+        ∑ i, Real.log (1 + s i)) / (P.n N : ℝ)) =
+        (P.n N : ℝ) ^ 2 * V + ((a + b : ℕ) : ℝ) * ∑ i, Real.log (1 + s i) := by
+      field_simp
+    rw [hk] at h1
+    linarith
   have hab : (a : ℝ) + b = m := by
     have : a + b = m := by omega
     exact_mod_cast this
@@ -964,23 +1111,8 @@ theorem free_facts {P : Parameters} (hP : Admissible P)
     fun i => (D.marked hN ⟨(hx i).1.le, (hx i).2.le⟩ (hxG i)).trans (by linarith)
   have hL : ∀ i, groupedNearField P N (y i) - D.p 1 * y i ≤ nearCap + δ / 4 :=
     fun i => (D.near hN (hy i)).trans (by linarith)
-  have hC : ∀ i, populationPhysicalColumnField P N (a + b) (s i) + 2 * barrierTrialT D.v (s i) -
-      Real.log (1 - s i) / (P.n N : ℝ) ≤
-        D.MY + δ / 4 + (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * Real.log 2 := by
-    intro i
-    have h1 := hcol (s i) (hs i)
-    have hl : Real.log (1 + s i) ≤ Real.log 2 :=
-      Real.log_le_log (by linarith [(hs i).1]) (by linarith [(hs i).2])
-    have hα : 0 ≤ (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) := by positivity
-    have hm := mul_le_mul_of_nonneg_left hl hα
-    have e1 : populationPhysicalColumnField P N (a + b) (s i) =
-        populationEndpointColumnField P N 0 (s i) +
-          (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) * Real.log (1 + s i) := by
-      unfold populationPhysicalColumnField populationEndpointColumnField
-      push_cast
-      ring
-    rw [e1]
-    linarith
+  have hC : ∀ i, populationEndpointColumnField P N 0 (s i) + 2 * barrierTrialT D.v (s i) -
+      Real.log (1 - s i) / (P.n N : ℝ) ≤ D.MY + δ / 4 := fun i => hcol (s i) (hs i)
   have hb2 := bracketSlack_nonneg hν hM
   have hb3 := bracketSlack_nonneg hν hL
   have hb4 := bracketSlack_nonneg hν hC
@@ -1473,9 +1605,9 @@ or a pointwise inequality of one variable on `[-1, 1]` / a rational inequality i
   (Lemma T slope);
 * `θ0, dsp, Mmax` (spike count) and `Kn, Tn`;
 * the sup certificates `hsup` (free field below its cap by `dsp` on `(1-θ0, 1)`) and `hgap` (by
-  `dgap` on `(-a0, a0) \ {0}`) of the OLD trial. -/
+  `dgap` on `(-a0, a0) \ {0}`) of the factor-free OLD trial (same fields as the 532 trial). -/
 structure LinkCert {I : ℕ} (D : Phase2Data I) (P : Parameters) (target residual nearCap cost : ℝ)
-    (G : ℝ → Prop) (D0 : SecondTrialBounds P target residual nearCap cost G) (δ e t0 c2 : ℝ) where
+    (G : ℝ → Prop) (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G) (δ e t0 c2 : ℝ) where
   Dcap : Fin I → ℝ
   hDcap : ∀ i, ∀ α ∈ Icc (D.lo i) (D.hi i), excess target cost t0 c2 δ (P.n0 : ℝ) α ≤ Dcap i
   Dtop : ℝ
@@ -1562,7 +1694,7 @@ Everything is derived from the old-route violation `nearOptCls` (`free_facts`) a
 (`LinkCert`); the marked rows enter only through `MarkedCap` (the node set `Nd`). -/
 theorem Phase2Data.hlink_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters} (hP : Admissible P)
     {target residual nearCap cost : ℝ} {G : ℝ → Prop}
-    (D0 : SecondTrialBounds P target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
+    (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
     (he : e ∈ Ioo (0 : ℝ) (1 / 8))
     (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
     (t0 c2 : ℝ) (hn : ∀ N, D.ncount N = P.n N)
@@ -1719,7 +1851,7 @@ theorem Phase2Data.signedSecondSheetNearNd_nearOpt_of_cert {I : ℕ} (D : Phase2
     (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
     (hNd : ∀ N m y, Nd N m y → MarkedCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
-    {target residual nearCap cost : ℝ} (D0 : SecondTrialBounds P target residual nearCap cost G)
+    {target residual nearCap cost : ℝ} (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G)
     {δ e : ℝ} (hδ : 0 < δ) (he : e ∈ Ioo (0 : ℝ) (1 / 8))
     (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
     (L : LinkCert D P target residual nearCap cost G D0 δ e target0 c2) :

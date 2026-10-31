@@ -591,6 +591,158 @@ theorem second_marked_sheet_free_on {P : Parameters} (hP : Admissible P)
     _ ≤ M * 5 ^ m := hbound
     _ = _ := by dsimp [M]; ring
 
+/-- `GroupedFreeProductCostOn` restricted to the configurations satisfying `Q` (instead of
+`α1 n ≤ a + b`): the grouped product with the factor `(∏ (1 + s_i))^(a+b)` kept on the right. -/
+def GroupedFreeProductCostOnRestr (P : Parameters) (target cost : ℝ) (G : ℝ → Prop)
+    (Q : ∀ (N r a b : ℕ), (Fin r → ℝ) → (Fin a → ℝ) → (Fin b → ℝ) → (Fin r → ℝ) → Prop) :
+    Prop :=
+  ∀ ε : ℝ, 0<ε →
+    ∀ᶠ N : ℕ in atTop, ∀ (r a b : ℕ), r + a + b = P.n N →
+      ∀ (z : Fin r → ℝ) (x : Fin a → ℝ) (y : Fin b → ℝ) (s : Fin r → ℝ),
+      (∀ i, z i ∈ Ioo (-1 : ℝ) 1) → (∀ i, z i ≠ 0) →
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, G (x i)) → (∀ i, y i ∈ Ioo (0 : ℝ) 1) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective z →
+      Function.Injective (Fin.append z x) → Function.Injective y → Function.Injective s →
+      Q N r a b z x y s →
+      groupedProduct P N z x y s ≤ (∏ i, (1 + s i)) ^ (a + b) *
+        Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+          cost * N * (a + b))
+
+/-- **Restricted factor-free second-case sheet bound** (`second_marked_sheet_free_on` with the
+restriction `Q` on every marked selection in place of `m ≥ α1 n`). -/
+theorem second_marked_sheet_free_on_restr {P : Parameters} (hP : Admissible P)
+    (target cost : ℝ) (G : ℝ → Prop)
+    (Q : ∀ (N r a b : ℕ), (Fin r → ℝ) → (Fin a → ℝ) → (Fin b → ℝ) → (Fin r → ℝ) → Prop)
+    (hgrouped : GroupedFreeProductCostOnRestr P target cost G Q) {ε : ℝ} (hε : 0 < ε) :
+    ∀ᶠ N : ℕ in atTop, ∀ (p m : ℕ) (hpm : p + m = P.n N)
+      (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ),
+      (∀ i, x i ∈ Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) →
+      (∀ i, s i ∈ Ioo (0 : ℝ) 1) → Function.Injective (Fin.append x y) →
+      Function.Injective s →
+      ((∑ i : Fin (p + m), paramCaseField P N (Fin.append x y i)) ≤ -1) →
+      (∀ (a b : ℕ) (_ : a + b = m) (e : Fin a ⊕ Fin b ≃ Fin m),
+        Q N p a b x (fun i => y (e (Sum.inl i))) (fun i => y (e (Sum.inr i))) s) →
+      markedSheetFree P N hpm x y s ≤
+        5 ^ m * (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
+          Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) +
+            cost * N * m) := by
+  classical
+  filter_upwards [hgrouped ε hε,
+    eventually_ge_atTop (48 : ℕ)] with N he hN3 p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase hQ
+  have hN : 0 < N := by omega
+  have hn1 : 1 * N ≤ P.n0 * N := Nat.mul_le_mul_right N hP.1
+  have hn2 : (2 * P.g0 + 1) * N ≤ P.n0 * N :=
+    Nat.mul_le_mul_right N (Nat.succ_le_of_lt hP.2.2.2.2)
+  have hn3 : (2 * P.g0 + 1) * N = 2 * (P.g0 * N) + N := by ring
+  have hn48 : 48 ≤ P.n N := by simp only [Parameters.n]; omega
+  have hng : 2 * P.g N + 1 < P.n N := by
+    simp only [Parameters.n, Parameters.g]; omega
+  have hxi : Function.Injective x := by
+    intro i j hij
+    have hh := hzi (show Fin.append x y (Fin.castAdd m i) =
+      Fin.append x y (Fin.castAdd m j) by simpa using hij)
+    simpa using hh
+  let z : Fin (P.n N) → ℝ := fun i => Fin.append x y (Fin.cast hpm.symm i)
+  have hcaseN : (∑ i, paramCaseField P N (z i)) ≤ -1 := by
+    change (∑ i, paramCaseField P N (Fin.append x y (Fin.cast hpm.symm i))) ≤ -1
+    rw [sum_fin_cast hpm (fun i => paramCaseField P N (Fin.append x y i))]
+    exact hcase
+  have hweight := paramCaseField_second_case hP hN z hcaseN
+  change (∑ i, blaschkeWeight (Fin.append x y (Fin.cast hpm.symm i))) ≤ _ at hweight
+  rw [sum_fin_cast hpm (fun i => blaschkeWeight (Fin.append x y i))] at hweight
+  let w : ℝ := (∏ j, paramRowNodeWeight P N (y j)) * paramPinPrincipal P N x s /
+      ∏ j, |(rowCommonFactor P N).eval (realCoordinateInv (y j))|
+  have hSpos : 0 < (∏ i, (1 + s i)) ^ m :=
+    pow_pos (prod_pos fun i _ => by linarith [(hs i).1]) _
+  have hsc : marked_sheet_scalar P N x y s = (∏ i, (1 + s i)) ^ m * w := by
+    unfold marked_sheet_scalar; dsimp only [w]; ring
+  let marked : Fin (p + m) → Bool := Fin.addCases (fun _ => false) (fun _ => true)
+  let M := (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
+    Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target + Real.log 2 / 2 + ε) + cost * N * m)
+  have hw : 0 ≤ w := by
+    dsimp only [w]
+    exact div_nonneg (mul_nonneg
+      (prod_nonneg fun i _ => paramRowNodeWeight_nonneg P N (hy i))
+      (paramPinPrincipal_nonneg P N x s hx hs))
+      (prod_nonneg fun i _ => abs_nonneg _)
+  have hM : 0 ≤ M := by dsimp [M]; positivity
+  have hV : ∀ t : Fin (p + m) → Bool,
+      w * |(Matrix.of fun i r : Fin (p + m) =>
+        if t i && marked i && decide (0 ≤ Fin.append x y i) then
+          Fin.append x y i ^ ((r : ℤ) - P.g N)
+        else actualLaurentEntry (P.g N) r (Fin.append x y i)).det| ≤ M := by
+    intro t
+    let ty : Fin m → Bool := fun j => t (Fin.natAdd p j) && decide (0 ≤ y j)
+    obtain ⟨a, b, hab, e, hleft, hright⟩ := exists_bool_partition ty
+    let ya : Fin a → ℝ := fun i => y (e (Sum.inl i))
+    let yb : Fin b → ℝ := fun i => y (e (Sum.inr i))
+    have hcount : p + a + b = P.n N := by omega
+    have hya : ∀ i, ya i ∈ Ioo (-1 : ℝ) 1 := fun i => hy _
+    have hyb : ∀ i, yb i ∈ Ioo (0 : ℝ) 1 := by
+      intro i
+      have hn : 0 ≤ yb i := by
+        by_contra hh
+        have ht := hright i
+        simp [ty, yb, hh] at ht
+      exact ⟨lt_of_le_of_ne hn (Ne.symm (hy0 _)), (hy _).2⟩
+    have hai : Function.Injective (Fin.append x ya) := by
+      have hh := hzi.comp ((marked_selection_equiv (p := p) e).injective.comp
+        Sum.inl_injective)
+      change Function.Injective
+        (fun i : Fin (p + a) => Fin.append x y (marked_selection_equiv e (Sum.inl i))) at hh
+      rw [marked_selection_actual_nodes] at hh
+      exact hh
+    have hbi : Function.Injective yb := by
+      have hh := hzi.comp ((marked_selection_equiv (p := p) e).injective.comp
+        Sum.inr_injective)
+      change Function.Injective
+        (fun i : Fin b => Fin.append x y (marked_selection_equiv (p := p) e (Sum.inr i))) at hh
+      rw [marked_selection_near_nodes] at hh
+      exact hh
+    have habR : (a : ℝ) + b = m := by exact_mod_cast hab
+    have henergy := he p a b hcount x ya yb s hx hx0 hya (fun i => hyG _) hyb hs hxi hai hbi hsi
+      (hQ a b hab e)
+    rw [hab, habR] at henergy
+    have hsel := marked_selected_sheet_le_grouped hP hN hpm hab e ty
+      hleft hright x y s hx hx0 hy hy0 hs hzi hn48 hng hweight
+    have hmat : (Matrix.of fun i r : Fin (p + m) =>
+        if t i && marked i && decide (0 ≤ Fin.append x y i) then
+          Fin.append x y i ^ ((r : ℤ) - P.g N)
+        else actualLaurentEntry (P.g N) r (Fin.append x y i)) =
+      Matrix.of (fun i r : Fin (p + m) =>
+        if (Fin.addCases (fun _ => false) ty i : Bool) then
+          Fin.append x y i ^ ((r : ℤ) - P.g N)
+        else actualLaurentEntry (P.g N) r (Fin.append x y i)) := by
+      ext i r
+      refine Fin.addCases (fun j => ?_) (fun j => ?_) i <;>
+        simp [marked, ty]
+    rw [hmat]
+    have h1 := hsel.trans (mul_le_mul_of_nonneg_left henergy (by positivity))
+    rw [hsc] at h1
+    have h2 : (∏ i, (1 + s i)) ^ m * (w * |(Matrix.of fun i r : Fin (p + m) =>
+        if (Fin.addCases (fun _ => false) ty i : Bool) then
+          Fin.append x y i ^ ((r : ℤ) - P.g N)
+        else actualLaurentEntry (P.g N) r (Fin.append x y i)).det|) ≤
+        (∏ i, (1 + s i)) ^ m * M := by
+      dsimp only [M]
+      nlinarith only [h1]
+    exact le_of_mul_le_mul_left h2 hSpos
+  have hbound := marked_weighted_laurent_expansion (Fin.append x y) marked hw hM hV
+  have hcost : (∏ i : Fin (p + m), if marked i then (5 : ℝ) else 1) = 5 ^ m := by
+    simp [marked, Fin.prod_univ_add]
+  rw [hcost] at hbound
+  have hfree : markedSheetFree P N hpm x y s =
+      w * |(markedLaurentMatrix (P.g N) (Fin.append x y) marked).det| := by
+    apply mul_left_cancel₀ hSpos.ne'
+    rw [← markedSheetProduct_eq_pow_mul_free, marked_sheet_product_uncast]
+    dsimp only [w]
+    ring
+  rw [hfree]
+  calc
+    _ ≤ M * 5 ^ m := hbound
+    _ = _ := by dsimp [M]; ring
+
 
 /-- The physical column field differs from the endpoint column field by `α log (1 + s)`. -/
 theorem grouped_value_physical_eq {P : Parameters} {N r a b : ℕ}

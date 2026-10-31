@@ -834,8 +834,13 @@ open CatalanMeasure.GenD CatalanMeasure.GenD.Analytic OAI.InternalCatalan Filter
   splitting, and the EXACT row weights (`log_markedSheetWeight`, no row inequality: the fields
   `Rm = groupedMarkedField`, `Rn = groupedNearField` and the grouped constant at the actual
   counts), the cost being in `budgetFix` (`T.cost * n0 ≤ c2`);
-* the identification of `T` with the sheet's data and the class link `hlink`. -/
-theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
+* the identification of `T` with the sheet's data and the class link `hlink`.
+
+This is the form with the non-class branch given directly for the factor-free core (`hnonC`):
+the class `Cls` may then be defined by the factor-free product (S1, PROOF-RHO §2.5), so that
+Lemma K is measured against the factor-free old route.  `signedSecondSheetNearNd` below is the
+corollary with `hnon` for the grouped product with the factor. -/
+theorem signedSecondSheetNearNd_core {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
     (target0 c2 : ℝ) (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) {I : ℕ}
     (T : SignedNearBounds I)
     (hn : ∀ N, T.ncount N = P.n N)
@@ -849,13 +854,22 @@ theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ �
       logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
     (hB : T.B = -target0 + Real.log 2 / 2)
     (hcost : T.cost * (P.n0 : ℝ) ≤ c2)
-    (hnon : GroupedMarkedProductCostOnRestr P target0 c2 G
-      (fun N r _ _ z _ _ _ => ¬ Cls N r z))
+    (hnonC : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
+      ∀ (p m : ℕ) (hpm : p + m = P.n N) (x : Fin p → ℝ) (y : Fin m → ℝ) (s : Fin p → ℝ),
+      (∀ i, x i ∈ Set.Ioo (-1 : ℝ) 1) → (∀ i, x i ≠ 0) →
+      (∀ j, y j ∈ Set.Ioo (-1 : ℝ) 1) → (∀ j, y j ≠ 0) → (∀ j, G (y j)) →
+      (∀ i, s i ∈ Set.Ioo (0 : ℝ) 1) →
+      Function.Injective (Fin.append x y) → Function.Injective s →
+      (∑ i : Fin (p + m), paramCaseField P N (Fin.append x y i)) ≤ -1 →
+      ¬ Cls N p x →
+      markedSheetCore P N hpm x y s ≤
+        5 ^ m * (1 + 10 * Real.exp 12 * (P.n N : ℝ)) ^ P.n N *
+          Real.exp (((P.n0 : ℝ) * N) ^ 2 * (-target0 + Real.log 2 / 2 + ε) + c2 * N * m))
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
     (hlink : SignedNearClassLinkNd P T Cls G Nd) :
     SignedSecondSheetCoreNd P G Nd target0 c2 T.α1 := by
   intro ε hε
-  filter_upwards [second_marked_sheet_product_on_restr hP target0 c2 G _ hnon hε,
+  filter_upwards [hnonC ε hε,
     signed_second_energy_near_nodes T hε, hlink, eventually_gt_atTop (0 : ℕ)]
     with N hnonN hE hl hN0 p m hpm x y s hmle hx hx0 hy hy0 hyG hNd hs hzi hsi hcase
   by_cases hc : Cls N p x
@@ -946,7 +960,35 @@ theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ �
           rw [mul_assoc (5 ^ m : ℝ)]
           exact le_mul_of_one_le_left (mul_nonneg (by positivity) (Real.exp_pos _).le) h5
   · -- non-class branch
-    have hb := hnonN p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase
+    exact hnonN p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase hc
+
+/-- `signedSecondSheetNearNd_core` with the non-class branch from the old energy route for the
+grouped product WITH the factor `(∏ (1 + s_i))^m` (`hnon`), the factor being dropped (`≥ 1`). -/
+theorem signedSecondSheetNearNd {P : Parameters} (hP : Admissible P) (G : ℝ → Prop)
+    (target0 c2 : ℝ) (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop) {I : ℕ}
+    (T : SignedNearBounds I)
+    (hn : ∀ N, T.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      T.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, T.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, T.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, T.Rn N = groupedNearField P N)
+    (hCf : ∀ N, T.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', T.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : T.B = -target0 + Real.log 2 / 2)
+    (hcost : T.cost * (P.n0 : ℝ) ≤ c2)
+    (hnon : GroupedMarkedProductCostOnRestr P target0 c2 G
+      (fun N r _ _ z _ _ _ => ¬ Cls N r z))
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hlink : SignedNearClassLinkNd P T Cls G Nd) :
+    SignedSecondSheetCoreNd P G Nd target0 c2 T.α1 := by
+  refine signedSecondSheetNearNd_core hP G target0 c2 Cls T hn hconst hRf hRm hRn hCf hLRf hB
+    hcost ?_ Nd hlink
+  intro ε hε
+  filter_upwards [second_marked_sheet_product_on_restr hP target0 c2 G _ hnon hε]
+    with N hnonN p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase hc
+  · have hb := hnonN p m hpm x y s hx hx0 hy hy0 hyG hs hzi hsi hcase
       (fun _ _ _ _ => hc)
     rw [markedSheetProduct_eq_factor_mul_core] at hb
     have hf : (1 : ℝ) ≤ (∏ i, (1 + s i)) ^ m := by
