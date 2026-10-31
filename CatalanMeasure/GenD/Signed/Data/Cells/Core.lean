@@ -1504,6 +1504,12 @@ theorem floorDiv_spec (X d : ℤ) (hd : 0 < d) :
   · rw [le_div_iff₀ hdq]; linarith
   · rw [div_lt_iff₀ hdq]; nlinarith
 
+/-- `2^Q` as an integer through the natural-number power: the kernel computes `Nat.pow` in one step,
+while the integer power `(2 : ℤ) ^ Q` unfolds `Q` times, at every evaluation of the term. -/
+def pw2 (Q : ℕ) : ℤ := ((2 ^ Q : ℕ) : ℤ)
+
+theorem pw2_eq (Q : ℕ) : pw2 Q = (2 : ℤ) ^ Q := by unfold pw2; push_cast; rfl
+
 /-- `⌊2^Q x⌋` -/
 def fpRound (Q : ℕ) (x : ℚ) : ℤ := x.num * 2 ^ Q / (x.den : ℤ)
 
@@ -2388,15 +2394,702 @@ theorem coefTestR_spec (l1 u1 A2 : ℚ) (Bl cs es : List ℚ)
   · show absLeEL rest erest Bl = true
     exact absLeEL_of_Q _ _ _ h4
 
+/-! ### The anchor in integers
+
+The pole part `Σ_q Re[ρ_q log (c - p_q)]` of the field value at the centre, from the integer front end of
+`WLog` (`expPQ`, `findOctI`, `octRotI`): the series values of `lnQP` and `atanPosI` are evaluated as
+exact integer fractions (`lnQP_eq`, `atanPosI_eq`: equal to the rational values), floored to the grid
+`2^-Pg`, with an explicit error in units of the grid (`poleTermI_spec`).  The polynomial and
+logarithmic parts of the anchor are the entry `0` of the coefficient vector, read from the Taylor
+shifts that the coefficient test computes anyway. -/
+
+section IntegerAnchor
+open CatalanMeasure.WLog (LNTAB ATTAB expPQ expPQ_spec lnQP lnQP_spec serH atanPosI atanPosI_spec atanI argI argI_spec findOctI findOctI_spec octRotI octOKI)
+open OAI.InternalCatalan
+
+/-- slot `j` of the node table of `log (1 + j/256)` (scale `2^96`) -/
+def tabN (j : ℕ) : ℕ := (LNTAB >>> (100 * j)) % 2 ^ 100
+
+theorem lnTab_eq (j : ℕ) : CatalanMeasure.WLog.lnTab j = (tabN j : ℚ) / 2 ^ 96 := rfl
+
+def lnJ (P Q : ℕ) : ℕ := (P - Q) * 256 / Q
+def lnNN (P Q : ℕ) : ℤ := 256 * (P : ℤ) - (256 + (lnJ P Q : ℤ)) * Q
+def lnDD (P Q : ℕ) : ℤ := 256 * (P : ℤ) + (256 + (lnJ P Q : ℤ)) * Q
+
+/-- numerator and denominator of the value of `lnQP 3 m P Q` -/
+def lnNum (m : ℤ) (P Q : ℕ) : ℤ :=
+  let N := lnNN P Q
+  let D := lnDD P Q
+  let D2 := D * D
+  let N2 := N * N
+  let D4 := D2 * D2
+  (m * (tabN 256 : ℤ) + (tabN (lnJ P Q) : ℤ)) * (15 * D4 * D) +
+    pw2 97 * N * (15 * D4 + 5 * N2 * D2 + 3 * N2 * N2)
+
+def lnDen (P Q : ℕ) : ℤ :=
+  let D := lnDD P Q
+  let D2 := D * D
+  pw2 96 * 15 * (D2 * D2 * D)
+
+def lnE (m : ℤ) : ℚ :=
+  ((CatalanMeasure.Cert.qabs (m : ℚ)) + 1) * (1 / 2 ^ 95) + 2 * (1 / 512) ^ (2 * 3 + 1) / (1 - (1 / 512) ^ 2)
+
+theorem lnGuard (P Q : ℕ) (hQ : 0 < Q) (hPQ : Q ≤ P) (hP2 : P ≤ 2 * Q) :
+    lnJ P Q ≤ 256 ∧ 0 ≤ lnNN P Q ∧ 0 < lnDD P Q ∧ 512 * lnNN P Q ≤ lnDD P Q := by
+  obtain ⟨d, rfl⟩ : ∃ d, P = Q + d := ⟨P - Q, by omega⟩
+  have hd : Q + d - Q = d := by omega
+  have hdQ : d ≤ Q := by omega
+  unfold lnNN lnDD lnJ
+  rw [hd]
+  have hdm := Nat.div_add_mod (d * 256) Q
+  have hr : d * 256 % Q < Q := Nat.mod_lt _ hQ
+  set j := d * 256 / Q with hj
+  set r := d * 256 % Q with hr'
+  have hj256 : j ≤ 256 := by
+    rw [hj, Nat.div_le_iff_le_mul_add_pred hQ]
+    nlinarith
+  have hz : (Q : ℤ) * j + r = d * 256 := by exact_mod_cast hdm
+  have hQz : (0 : ℤ) < Q := by exact_mod_cast hQ
+  have hrz : (r : ℤ) < Q := by exact_mod_cast hr
+  have hr0 : (0 : ℤ) ≤ r := Int.natCast_nonneg _
+  have hjz : (0 : ℤ) ≤ j := Int.natCast_nonneg _
+  have hdz : (0 : ℤ) ≤ d := Int.natCast_nonneg _
+  have hN : 256 * ((Q + d : ℕ) : ℤ) - (256 + (j : ℤ)) * Q = r := by push_cast; linarith
+  refine ⟨hj256, ?_, ?_, ?_⟩
+  · rw [hN]; exact hr0
+  · push_cast; nlinarith
+  · rw [hN]; push_cast; nlinarith
+
+theorem lnVal_alg (m Tm Tj N D : ℚ) (hD : D ≠ 0) :
+    m * (Tm / 2 ^ 96) + Tj / 2 ^ 96 + 2 * (N / D) * serH ((N / D) ^ 2) 3 1 =
+      ((m * Tm + Tj) * (15 * (D * D * (D * D)) * D) +
+        2 ^ 97 * N * (15 * (D * D * (D * D)) + 5 * (N * N) * (D * D) + 3 * (N * N) * (N * N))) /
+      (2 ^ 96 * 15 * (D * D * (D * D) * D)) := by
+  simp only [serH]
+  field_simp
+  push_cast
+  ring
+
+theorem lnQP_eq (m : ℤ) (P Q : ℕ) (hQ : 0 < Q) (hPQ : Q ≤ P) (hP2 : P ≤ 2 * Q) :
+    lnQP 3 m P Q = some ((lnNum m P Q : ℚ) / (lnDen P Q : ℚ), lnE m) := by
+  have hg := lnGuard P Q hQ hPQ hP2
+  have hD : (0 : ℚ) < (lnDD P Q : ℚ) := by exact_mod_cast hg.2.2.1
+  show (if lnJ P Q ≤ 256 ∧ 0 ≤ lnNN P Q ∧ 0 < lnDD P Q ∧ 512 * lnNN P Q ≤ lnDD P Q then
+      some ((m : ℚ) * CatalanMeasure.WLog.lnTab 256 + CatalanMeasure.WLog.lnTab (lnJ P Q) +
+          2 * Rat.divInt (lnNN P Q) (lnDD P Q) * serH (Rat.divInt (lnNN P Q) (lnDD P Q) ^ 2) 3 1, lnE m)
+      else none) = _
+  rw [if_pos hg]
+  congr 2
+  rw [Rat.divInt_eq_div]
+  simp only [CatalanMeasure.WLog.lnTab]
+  have := lnVal_alg (m : ℚ) ((tabN 256 : ℕ) : ℚ) ((tabN (lnJ P Q) : ℕ) : ℚ) (lnNN P Q : ℚ) (lnDD P Q : ℚ) hD.ne'
+  rw [show (((LNTAB >>> (100 * 256)) % 2 ^ 100 : ℕ) : ℚ) = ((tabN 256 : ℕ) : ℚ) from rfl,
+    show (((LNTAB >>> (100 * lnJ P Q)) % 2 ^ 100 : ℕ) : ℚ) = ((tabN (lnJ P Q) : ℕ) : ℚ) from rfl]
+  rw [this]
+  unfold lnNum lnDen
+  simp only [pw2_eq]
+  push_cast
+  ring
+
+theorem qabs_le_natAbs (m : ℤ) : CatalanMeasure.Cert.qabs (m : ℚ) ≤ (m.natAbs : ℚ) := by
+  rw [CatalanMeasure.Cert.qabs_eq]
+  have : |(m : ℚ)| = (m.natAbs : ℚ) := by
+    rw [← Int.cast_abs, Int.abs_eq_natAbs]; simp
+  rw [this]
+
+theorem lnE_le (m : ℤ) (hm : m.natAbs ≤ 2 ^ 20) : lnE m ≤ 1 / 2 ^ 56 := by
+  unfold lnE
+  have h1 := qabs_le_natAbs m
+  have h2 : (m.natAbs : ℚ) ≤ 2 ^ 20 := by exact_mod_cast hm
+  have h3 : CatalanMeasure.Cert.qabs (m : ℚ) + 1 ≤ 2 ^ 20 + 1 := by linarith
+  have h4 : (CatalanMeasure.Cert.qabs (m : ℚ) + 1) * (1 / 2 ^ 95) ≤ (2 ^ 20 + 1) * (1 / 2 ^ 95) := by
+    apply mul_le_mul_of_nonneg_right h3; positivity
+  have h5 : ((2 ^ 20 + 1 : ℚ)) * (1 / 2 ^ 95) + 2 * (1 / 512 : ℚ) ^ (2 * 3 + 1) / (1 - (1 / 512) ^ 2) ≤ 1 / 2 ^ 56 := by
+    norm_num
+  linarith
+
+def lnVI (Pg : ℕ) (m : ℤ) (P Q : ℕ) : ℤ := lnNum m P Q * pw2 Pg / lnDen P Q
+
+theorem lnDen_pos (P Q : ℕ) (hQ : 0 < Q) (hPQ : Q ≤ P) (hP2 : P ≤ 2 * Q) : 0 < lnDen P Q := by
+  have hg := lnGuard P Q hQ hPQ hP2
+  have hD := hg.2.2.1
+  unfold lnDen
+  rw [pw2_eq]
+  set D := lnDD P Q
+  have : 0 < D * D * (D * D) * D := by positivity
+  positivity
+
+/-- flooring a value `X/d` known to `e ≤ 2^-Pg` to the grid `2^-Pg` costs one more unit -/
+theorem floor_enc (Pg : ℕ) (X d : ℤ) (hd : 0 < d) (x : ℝ) (e : ℝ) (hx : |x - (X : ℝ) / (d : ℝ)| ≤ e)
+    (he : e ≤ 1 / 2 ^ Pg) :
+    |x - ((X * 2 ^ Pg / d : ℤ) : ℝ) / 2 ^ Pg| ≤ 2 / 2 ^ Pg := by
+  have hfl := floorDiv_spec (X * 2 ^ Pg) d hd
+  have hdq : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+  have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+  obtain ⟨f1, f2⟩ := hfl
+  have g1 : ((X * 2 ^ Pg / d : ℤ) : ℝ) ≤ (X : ℝ) * 2 ^ Pg / (d : ℝ) := by
+    have := (Rat.cast_le (K := ℝ)).mpr f1
+    push_cast at this; exact this
+  have g2 : (X : ℝ) * 2 ^ Pg / (d : ℝ) < ((X * 2 ^ Pg / d : ℤ) : ℝ) + 1 := by
+    have := (Rat.cast_lt (K := ℝ)).mpr f2
+    push_cast at this; exact this
+  set v : ℝ := (X : ℝ) / (d : ℝ) with hvdef
+  have e1 : (X : ℝ) * 2 ^ Pg / (d : ℝ) = v * 2 ^ Pg := by rw [hvdef]; ring
+  rw [e1] at g1 g2
+  have k1 : ((X * 2 ^ Pg / d : ℤ) : ℝ) / 2 ^ Pg ≤ v := by
+    rw [div_le_iff₀ hP2g]; exact g1
+  have k2 : v < (((X * 2 ^ Pg / d : ℤ) : ℝ) + 1) / 2 ^ Pg := by
+    rw [lt_div_iff₀ hP2g]; exact g2
+  have k3 : (((X * 2 ^ Pg / d : ℤ) : ℝ) + 1) / 2 ^ Pg = ((X * 2 ^ Pg / d : ℤ) : ℝ) / 2 ^ Pg + 1 / 2 ^ Pg := by ring
+  rw [abs_le] at hx ⊢
+  have : (2 : ℝ) / 2 ^ Pg = 1 / 2 ^ Pg + 1 / 2 ^ Pg := by ring
+  rw [this]
+  constructor <;> linarith [hx.1, hx.2]
+
+theorem lnVI_spec (Pg : ℕ) (hPg : Pg ≤ 56) (m : ℤ) (hm : m.natAbs ≤ 2 ^ 20) (P Q : ℕ)
+    (hQ : 0 < Q) (hPQ : Q ≤ P) (hP2 : P ≤ 2 * Q) :
+    |Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ))) - ((lnVI Pg m P Q : ℤ) : ℝ) / 2 ^ Pg| ≤ 2 / 2 ^ Pg := by
+  have h := lnQP_spec hQ hPQ hP2 (lnQP_eq m P Q hQ hPQ hP2)
+  have hden := lnDen_pos P Q hQ hPQ hP2
+  have hE := lnE_le m hm
+  have hE' : ((lnE m : ℚ) : ℝ) ≤ 1 / 2 ^ 56 := by
+    have := (Rat.cast_le (K := ℝ)).mpr hE
+    push_cast at this; exact this
+  have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+  have h56 : (1 : ℝ) / 2 ^ 56 ≤ 1 / 2 ^ Pg := by
+    apply one_div_le_one_div_of_le hP2g
+    exact pow_le_pow_right₀ (by norm_num) hPg
+  have hv : (((lnNum m P Q : ℚ) / (lnDen P Q : ℚ) : ℚ) : ℝ) = ((lnNum m P Q : ℤ) : ℝ) / ((lnDen P Q : ℤ) : ℝ) := by
+    push_cast; rfl
+  rw [hv] at h
+  have hVe : lnVI Pg m P Q = lnNum m P Q * 2 ^ Pg / lnDen P Q := by unfold lnVI; rw [pw2_eq]
+  rw [hVe]
+  exact floor_enc Pg _ _ hden _ _ h (hE'.trans h56)
+
+/-! ### the arctangent node evaluation in integers -/
+
+def tabA (j : ℕ) : ℕ := (ATTAB >>> (100 * j)) % 2 ^ 100
+
+def atJ (S R : ℕ) : ℕ := S * 128 / R
+def atNN (S R : ℕ) : ℤ := 128 * (S : ℤ) - (atJ S R : ℤ) * R
+def atDD (S R : ℕ) : ℤ := 128 * (R : ℤ) + (atJ S R : ℤ) * S
+
+def atNum (S R : ℕ) : ℤ :=
+  let N := atNN S R
+  let D := atDD S R
+  let D2 := D * D
+  let D4 := D2 * D2
+  let D6 := D4 * D2
+  let N2 := N * N
+  let N4 := N2 * N2
+  (tabA (atJ S R) : ℤ) * (105 * (D6 * D)) + pw2 96 * N * (105 * D6 - 35 * N2 * D4 + 21 * N4 * D2 - 15 * (N4 * N2))
+
+def atDen (S R : ℕ) : ℤ :=
+  let D := atDD S R
+  let D2 := D * D
+  let D4 := D2 * D2
+  pw2 96 * 105 * (D4 * D2 * D)
+
+def atE : ℚ := 1 / 2 ^ 95 + (1 / 128) ^ (2 * 4 + 1) / (1 - (1 / 128) ^ 2)
+
+theorem atGuard (S R : ℕ) (hR : 0 < R) (h2 : 2 * S ≤ R) :
+    atJ S R ≤ 64 ∧ 0 ≤ atNN S R ∧ 0 < atDD S R ∧ 128 * atNN S R ≤ atDD S R := by
+  unfold atNN atDD atJ
+  have hdm := Nat.div_add_mod (S * 128) R
+  have hr : S * 128 % R < R := Nat.mod_lt _ hR
+  set j := S * 128 / R with hj
+  set r := S * 128 % R with hr'
+  have hj64 : j ≤ 64 := by
+    rw [hj, Nat.div_le_iff_le_mul_add_pred hR]
+    nlinarith
+  have hz : (R : ℤ) * j + r = S * 128 := by exact_mod_cast hdm
+  have hRz : (0 : ℤ) < R := by exact_mod_cast hR
+  have hrz : (r : ℤ) < R := by exact_mod_cast hr
+  have hr0 : (0 : ℤ) ≤ r := Int.natCast_nonneg _
+  have hjz : (0 : ℤ) ≤ j := Int.natCast_nonneg _
+  have hSz : (0 : ℤ) ≤ S := Int.natCast_nonneg _
+  have hN : 128 * (S : ℤ) - (j : ℤ) * R = r := by linarith
+  refine ⟨hj64, ?_, ?_, ?_⟩
+  · rw [hN]; exact hr0
+  · nlinarith
+  · rw [hN]; nlinarith
+
+theorem atVal_alg (Ta N D : ℚ) (hD : D ≠ 0) :
+    Ta / 2 ^ 96 + (N / D) * serH (-((N / D) ^ 2)) 4 1 =
+      (Ta * (105 * (D * D * (D * D) * (D * D) * D)) +
+        2 ^ 96 * N * (105 * (D * D * (D * D) * (D * D)) - 35 * (N * N) * (D * D * (D * D)) +
+          21 * (N * N * (N * N)) * (D * D) - 15 * (N * N * (N * N) * (N * N)))) /
+      (2 ^ 96 * 105 * (D * D * (D * D) * (D * D) * D)) := by
+  simp only [serH]
+  field_simp
+  push_cast
+  ring
+
+theorem atanPosI_eq (S R : ℕ) (hR : 0 < R) (h2 : 2 * S ≤ R) :
+    atanPosI 4 S R = some ((atNum S R : ℚ) / (atDen S R : ℚ), atE) := by
+  have hg := atGuard S R hR h2
+  have hD : (0 : ℚ) < (atDD S R : ℚ) := by exact_mod_cast hg.2.2.1
+  show (if atJ S R ≤ 64 ∧ 0 ≤ atNN S R ∧ 0 < atDD S R ∧ 128 * atNN S R ≤ atDD S R then
+      some (CatalanMeasure.WLog.atTab (atJ S R) + Rat.divInt (atNN S R) (atDD S R) *
+          serH (-(Rat.divInt (atNN S R) (atDD S R) ^ 2)) 4 1, atE)
+      else none) = _
+  rw [if_pos hg]
+  congr 2
+  rw [Rat.divInt_eq_div]
+  simp only [CatalanMeasure.WLog.atTab]
+  have := atVal_alg ((tabA (atJ S R) : ℕ) : ℚ) (atNN S R : ℚ) (atDD S R : ℚ) hD.ne'
+  rw [show (((ATTAB >>> (100 * atJ S R)) % 2 ^ 100 : ℕ) : ℚ) = ((tabA (atJ S R) : ℕ) : ℚ) from rfl]
+  rw [this]
+  unfold atNum atDen
+  simp only [pw2_eq]
+  push_cast
+  ring
+
+def pi4n : ℤ := 3141592653589793238465
+def pi4d : ℤ := 4000000000000000000000
+
+theorem PI4_eq : CatalanMeasure.WLog.PI4 = (pi4n : ℚ) / (pi4d : ℚ) := by
+  unfold CatalanMeasure.WLog.PI4 pi4n pi4d; norm_num
+
+def argVI (Pg : ℕ) (A B : ℤ) : Option ℤ :=
+  match findOctI (A, B) with
+  | none => none
+  | some k =>
+    let p := octRotI k (A, B)
+    let S := p.2.natAbs
+    let R := p.1.toNat
+    let sg : ℤ := if p.2 < 0 then -1 else 1
+    some ((k * pi4n * atDen S R + sg * atNum S R * pi4d) * pw2 Pg / (pi4d * atDen S R))
+
+theorem atDen_pos (S R : ℕ) (hR : 0 < R) (h2 : 2 * S ≤ R) : 0 < atDen S R := by
+  have hg := atGuard S R hR h2
+  have hD := hg.2.2.1
+  unfold atDen
+  rw [pw2_eq]
+  set D := atDD S R
+  have : 0 < D * D * (D * D) * (D * D) * D := by positivity
+  positivity
+
+theorem octFacts {A B : ℤ} {k : ℤ} (hk : findOctI (A, B) = some k) :
+    0 < (octRotI k (A, B)).1 ∧ 2 * (octRotI k (A, B)).2.natAbs ≤ (octRotI k (A, B)).1.toNat ∧ |k| ≤ 4 := by
+  obtain ⟨hok, hkabs⟩ := findOctI_spec hk
+  unfold octOKI at hok
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hok
+  refine ⟨hok.1.1.1, ?_, hkabs⟩
+  have h1 := hok.1.1.2
+  have h0 := hok.1.1.1
+  omega
+
+theorem argI_eq (A B : ℤ) (k : ℤ) (hk : findOctI (A, B) = some k) :
+    argI 4 A B = some (((k * pi4n * atDen (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat +
+        (if (octRotI k (A, B)).2 < 0 then -1 else 1) * atNum (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat * pi4d : ℤ) : ℚ) /
+      ((pi4d * atDen (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat : ℤ) : ℚ),
+      CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E + atE) := by
+  obtain ⟨h0, h2, _⟩ := octFacts hk
+  set p := octRotI k (A, B) with hp
+  have hR : 0 < p.1.toNat := by omega
+  have hat := atanPosI_eq p.2.natAbs p.1.toNat hR h2
+  have hden : (0 : ℚ) < (atDen p.2.natAbs p.1.toNat : ℚ) := by exact_mod_cast atDen_pos _ _ hR h2
+  have hpi : (pi4d : ℚ) ≠ 0 := by unfold pi4d; norm_num
+  unfold argI
+  rw [hk]
+  show (match atanI 4 p.2 p.1 with
+    | none => none
+    | some (v, e) => some ((k : ℚ) * CatalanMeasure.WLog.PI4 + v, CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E + e)) = _
+  unfold atanI
+  rw [hat]
+  simp only []
+  rw [PI4_eq]
+  by_cases hs : p.2 < 0
+  · simp only [hs, if_true]
+    congr 2
+    push_cast
+    field_simp
+  · simp only [hs, if_false]
+    congr 2
+    push_cast
+    field_simp
+
+theorem argE_le (k : ℤ) (hk : |k| ≤ 4) : CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E + atE ≤ 1 / 2 ^ 56 := by
+  have h1 : CatalanMeasure.Cert.qabs (k : ℚ) ≤ 4 := by
+    rw [CatalanMeasure.Cert.qabs_eq]
+    have : |(k : ℚ)| = ((|k| : ℤ) : ℚ) := by push_cast; rfl
+    rw [this]
+    exact_mod_cast hk
+  have h2 : CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E ≤ 4 * CatalanMeasure.WLog.PI4E := by
+    apply mul_le_mul_of_nonneg_right h1; unfold CatalanMeasure.WLog.PI4E; norm_num
+  have h3 : 4 * CatalanMeasure.WLog.PI4E + atE ≤ 1 / 2 ^ 56 := by
+    unfold CatalanMeasure.WLog.PI4E atE; norm_num
+  linarith
+
+theorem argVI_spec (Pg : ℕ) (hPg : Pg ≤ 56) (A B : ℤ) (L : ℕ) (hL : 0 < L) (V : ℤ)
+    (h : argVI Pg A B = some V) :
+    |Complex.arg ⟨(A : ℝ) / (L : ℝ), (B : ℝ) / (L : ℝ)⟩ - (V : ℝ) / 2 ^ Pg| ≤ 2 / 2 ^ Pg := by
+  unfold argVI at h
+  split at h
+  · simp at h
+  · rename_i k hk
+    simp only [Option.some.injEq] at h
+    obtain ⟨h0, h2, hkabs⟩ := octFacts hk
+    have heq := argI_eq A B k hk
+    have hs := argI_spec hL heq
+    have hR : 0 < (octRotI k (A, B)).1.toNat := by omega
+    have hden := atDen_pos _ _ hR h2
+    have hpd : 0 < pi4d := by unfold pi4d; norm_num
+    have hd : 0 < pi4d * atDen (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat := by positivity
+    have hE := argE_le k hkabs
+    have hE' : (((CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E + atE : ℚ)) : ℝ) ≤ 1 / 2 ^ 56 := by
+      have := (Rat.cast_le (K := ℝ)).mpr hE
+      push_cast at this ⊢; exact this
+    have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+    have h56 : (1 : ℝ) / 2 ^ 56 ≤ 1 / 2 ^ Pg := by
+      apply one_div_le_one_div_of_le hP2g
+      exact pow_le_pow_right₀ (by norm_num) hPg
+    rw [← h]
+    simp only [pw2_eq]
+    have hs2 : |Complex.arg ⟨(A : ℝ) / (L : ℝ), (B : ℝ) / (L : ℝ)⟩ -
+        ((k * pi4n * atDen (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat +
+          (if (octRotI k (A, B)).2 < 0 then -1 else 1) * atNum (octRotI k (A, B)).2.natAbs
+            (octRotI k (A, B)).1.toNat * pi4d : ℤ) : ℝ) /
+          ((pi4d * atDen (octRotI k (A, B)).2.natAbs (octRotI k (A, B)).1.toNat : ℤ) : ℝ)| ≤
+        (((CatalanMeasure.Cert.qabs (k : ℚ) * CatalanMeasure.WLog.PI4E + atE : ℚ)) : ℝ) := by
+      have := hs
+      by_cases hn : (octRotI k (A, B)).2 < 0
+      · simp only [hn, if_true] at this ⊢
+        push_cast at this ⊢
+        exact this
+      · simp only [hn, if_false] at this ⊢
+        push_cast at this ⊢
+        exact this
+    exact floor_enc Pg _ _ hd _ _ hs2 (hE'.trans h56)
+
+/-! ### the pole terms -/
+
+def zA (c : ℚ) (q : PoleR) : ℤ := (c.num * (q.pr.den : ℤ) - q.pr.num * (c.den : ℤ)) * (q.pi.den : ℤ)
+def zB (c : ℚ) (q : PoleR) : ℤ := -(q.pi.num) * ((c.den * q.pr.den : ℕ) : ℤ)
+def zL (c : ℚ) (q : PoleR) : ℕ := c.den * q.pr.den * q.pi.den
+
+theorem zL_pos (c : ℚ) (q : PoleR) : 0 < zL c q := by
+  unfold zL
+  have := c.den_pos; have := q.pr.den_pos; have := q.pi.den_pos
+  positivity
+
+theorem zA_spec (c : ℚ) (q : PoleR) : (c : ℝ) - (q.pr : ℝ) = (zA c q : ℝ) / (zL c q : ℝ) := by
+  have h1 : (c.den : ℝ) ≠ 0 := by exact_mod_cast c.den_nz
+  have h2 : (q.pr.den : ℝ) ≠ 0 := by exact_mod_cast q.pr.den_nz
+  have h3 : (q.pi.den : ℝ) ≠ 0 := by exact_mod_cast q.pi.den_nz
+  unfold zA zL
+  rw [Rat.cast_def c, Rat.cast_def q.pr]
+  push_cast
+  field_simp
+
+theorem zB_spec (c : ℚ) (q : PoleR) : -(q.pi : ℝ) = (zB c q : ℝ) / (zL c q : ℝ) := by
+  have h1 : (c.den : ℝ) ≠ 0 := by exact_mod_cast c.den_nz
+  have h2 : (q.pr.den : ℝ) ≠ 0 := by exact_mod_cast q.pr.den_nz
+  have h3 : (q.pi.den : ℝ) ≠ 0 := by exact_mod_cast q.pi.den_nz
+  unfold zB zL
+  rw [Rat.cast_def q.pi]
+  push_cast
+  field_simp
+
+/-- the integer value `W` (in units `2^-Pg`) and the error `E` (same units) of the pole term -/
+def poleTermI (Pg : ℕ) (q : PoleR) (c : ℚ) : Option (ℤ × ℕ) :=
+  match expPQ (zA c q * zA c q + zB c q * zB c q).toNat (zL c q * zL c q) with
+  | none => none
+  | some (m, P, Q) =>
+    if m.natAbs ≤ 2 ^ 20 then
+      if q.ri = 0 then
+        some (q.rr.num * lnVI Pg m P Q / (2 * (q.rr.den : ℤ)), q.rr.num.natAbs / q.rr.den + 2)
+      else
+        match argVI Pg (zA c q) (zB c q) with
+        | none => none
+        | some Va =>
+          some (q.rr.num * lnVI Pg m P Q / (2 * (q.rr.den : ℤ)) - q.ri.num * Va / (q.ri.den : ℤ),
+            (q.rr.num.natAbs / q.rr.den + 2) + (2 * (q.ri.num.natAbs / q.ri.den + 1) + 1))
+    else none
+
+theorem abs_cast_le_div (r : ℚ) : |(r : ℝ)| ≤ ((r.num.natAbs / r.den : ℕ) : ℝ) + 1 := by
+  have hd : (0 : ℝ) < r.den := by exact_mod_cast r.den_pos
+  have h1 := Nat.lt_mul_div_succ r.num.natAbs r.den_pos
+  have h1' : (r.num.natAbs : ℝ) < (r.den : ℝ) * (((r.num.natAbs / r.den : ℕ) : ℝ) + 1) := by
+    exact_mod_cast h1
+  have e : |(r : ℝ)| = (r.num.natAbs : ℝ) / (r.den : ℝ) := by
+    rw [Rat.cast_def, abs_div, abs_of_pos hd]
+    congr 1
+    rw [← Int.cast_abs, Int.abs_eq_natAbs]; simp
+  rw [e, div_le_iff₀ hd]
+  nlinarith
+
+/-- a weight `a/d` times a value `ℓ` known to `δ`, floored to the grid -/
+theorem scaled_floor (Pg : ℕ) (a : ℤ) (d : ℕ) (hd : 0 < d) (V : ℤ) (ℓ δ : ℝ)
+    (hℓ : |ℓ - (V : ℝ) / 2 ^ Pg| ≤ δ) :
+    |((a : ℝ) / (d : ℝ)) * ℓ - ((a * V / (d : ℤ) : ℤ) : ℝ) / 2 ^ Pg| ≤
+      |(a : ℝ) / (d : ℝ)| * δ + 1 / 2 ^ Pg := by
+  have hdz : (0 : ℤ) < (d : ℤ) := by exact_mod_cast hd
+  obtain ⟨f1, f2⟩ := floorDiv_spec (a * V) (d : ℤ) hdz
+  have hdr : (0 : ℝ) < (d : ℝ) := by exact_mod_cast hd
+  have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+  have g1 : ((a * V / (d : ℤ) : ℤ) : ℝ) ≤ (a : ℝ) * V / (d : ℝ) := by
+    have := (Rat.cast_le (K := ℝ)).mpr f1
+    push_cast at this; exact this
+  have g2 : (a : ℝ) * V / (d : ℝ) < ((a * V / (d : ℤ) : ℤ) : ℝ) + 1 := by
+    have := (Rat.cast_lt (K := ℝ)).mpr f2
+    push_cast at this; exact this
+  set W : ℝ := ((a * V / (d : ℤ) : ℤ) : ℝ) with hW
+  have key : ((a : ℝ) / (d : ℝ)) * ℓ - W / 2 ^ Pg =
+      ((a : ℝ) / (d : ℝ)) * (ℓ - (V : ℝ) / 2 ^ Pg) + ((a : ℝ) * V / (d : ℝ) - W) / 2 ^ Pg := by
+    field_simp
+    ring
+  rw [key]
+  refine (abs_add_le _ _).trans ?_
+  rw [abs_mul]
+  have t1 : |(a : ℝ) / (d : ℝ)| * |ℓ - (V : ℝ) / 2 ^ Pg| ≤ |(a : ℝ) / (d : ℝ)| * δ :=
+    mul_le_mul_of_nonneg_left hℓ (abs_nonneg _)
+  have t2 : |((a : ℝ) * V / (d : ℝ) - W) / 2 ^ Pg| ≤ 1 / 2 ^ Pg := by
+    rw [abs_div, abs_of_pos hP2g]
+    apply div_le_div_of_nonneg_right _ hP2g.le
+    rw [abs_le]; constructor <;> linarith
+  linarith
+
+theorem poleTermI_spec (Pg : ℕ) (hPg : Pg ≤ 56) (q : PoleR) (c : ℚ) (w : ℤ) (e : ℕ)
+    (h : poleTermI Pg q c = some (w, e)) :
+    |(q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re - (w : ℝ) / 2 ^ Pg| ≤ (e : ℝ) / 2 ^ Pg := by
+  have hL := zL_pos c q
+  have hLR : (0 : ℝ) < (zL c q : ℝ) := by exact_mod_cast hL
+  have hz : (((c : ℝ) : ℂ) - q.pc) = ⟨(zA c q : ℝ) / (zL c q : ℝ), (zB c q : ℝ) / (zL c q : ℝ)⟩ := by
+    apply Complex.ext
+    · simp only [Complex.sub_re, Complex.ofReal_re, PoleR.pc]; exact zA_spec c q
+    · simp only [Complex.sub_im, Complex.ofReal_im, PoleR.pc]; rw [zero_sub]; exact zB_spec c q
+  have hval : (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re =
+      (q.rr : ℝ) * (Real.log (((zA c q : ℝ) / (zL c q : ℝ)) ^ 2 + ((zB c q : ℝ) / (zL c q : ℝ)) ^ 2) / 2) -
+        (q.ri : ℝ) * Complex.arg ⟨(zA c q : ℝ) / (zL c q : ℝ), (zB c q : ℝ) / (zL c q : ℝ)⟩ := by
+    rw [hz, barrierComplexLog_weighted_re]
+    rfl
+  rw [hval]
+  unfold poleTermI at h
+  split at h
+  · simp at h
+  · rename_i m P Q hexp
+    obtain ⟨hQ, hPQ, hP2, hN⟩ := expPQ_spec hexp
+    have hnn : 0 ≤ zA c q * zA c q + zB c q * zB c q := by nlinarith [sq_nonneg (zA c q), sq_nonneg (zB c q)]
+    have hcast : (((zA c q * zA c q + zB c q * zB c q).toNat : ℕ) : ℝ) =
+        (zA c q : ℝ) * zA c q + (zB c q : ℝ) * zB c q := by
+      have : (((zA c q * zA c q + zB c q * zB c q).toNat : ℕ) : ℤ) = zA c q * zA c q + zB c q * zB c q :=
+        Int.toNat_of_nonneg hnn
+      have h2 : (((zA c q * zA c q + zB c q * zB c q).toNat : ℕ) : ℝ) =
+          ((zA c q * zA c q + zB c q * zB c q : ℤ) : ℝ) := by exact_mod_cast this
+      rw [h2]; push_cast; ring
+    have hlogarg : ((zA c q : ℝ) / (zL c q : ℝ)) ^ 2 + ((zB c q : ℝ) / (zL c q : ℝ)) ^ 2 =
+        (2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ)) := by
+      rw [← hN, hcast]
+      push_cast
+      field_simp
+    rw [hlogarg]
+    split_ifs at h with hm hri
+    · simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have hl := lnVI_spec Pg hPg m hm P Q hQ hPQ hP2
+      have hd : 0 < 2 * q.rr.den := by have := q.rr.den_pos; omega
+      have hs := scaled_floor Pg q.rr.num (2 * q.rr.den) hd (lnVI Pg m P Q)
+        (Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ)))) (2 / 2 ^ Pg) hl
+      have hri0 : (q.ri : ℝ) = 0 := by exact_mod_cast hri
+      have hrr : ((q.rr.num : ℝ) / ((2 * q.rr.den : ℕ) : ℝ)) = (q.rr : ℝ) / 2 := by
+        rw [Rat.cast_def q.rr]; push_cast; field_simp
+      rw [hrr] at hs
+      push_cast at hs
+      rw [hri0, zero_mul, sub_zero]
+      have hb := abs_cast_le_div q.rr
+      have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+      have e1 : (q.rr : ℝ) * (Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ))) / 2) =
+          (q.rr : ℝ) / 2 * Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ))) := by ring
+      rw [e1]
+      refine hs.trans ?_
+      have : |(q.rr : ℝ) / 2| * (2 / 2 ^ Pg) + 1 / 2 ^ Pg ≤ (((q.rr.num.natAbs / q.rr.den + 2 : ℕ)) : ℝ) / 2 ^ Pg := by
+        rw [abs_div, abs_of_pos (by norm_num : (0:ℝ) < 2)]
+        push_cast
+        rw [← sub_nonneg]
+        have : (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 2) / 2 ^ Pg -
+            (|(q.rr : ℝ)| / 2 * (2 / 2 ^ Pg) + 1 / 2 ^ Pg) =
+            (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 1 - |(q.rr : ℝ)|) / 2 ^ Pg := by
+          field_simp; ring
+        rw [this]
+        apply div_nonneg _ hP2g.le
+        linarith
+      exact this
+    · -- complex pole
+      split at h
+      · simp at h
+      · rename_i Va hVa
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have hl := lnVI_spec Pg hPg m hm P Q hQ hPQ hP2
+        have hA := argVI_spec Pg hPg (zA c q) (zB c q) (zL c q) hL Va hVa
+        have hd : 0 < 2 * q.rr.den := by have := q.rr.den_pos; omega
+        have hs1 := scaled_floor Pg q.rr.num (2 * q.rr.den) hd (lnVI Pg m P Q)
+          (Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ)))) (2 / 2 ^ Pg) hl
+        have hs2 := scaled_floor Pg q.ri.num q.ri.den q.ri.den_pos Va
+          (Complex.arg ⟨(zA c q : ℝ) / (zL c q : ℝ), (zB c q : ℝ) / (zL c q : ℝ)⟩) (2 / 2 ^ Pg) hA
+        have hrr : ((q.rr.num : ℝ) / ((2 * q.rr.den : ℕ) : ℝ)) = (q.rr : ℝ) / 2 := by
+          rw [Rat.cast_def q.rr]; push_cast; field_simp
+        have hri' : ((q.ri.num : ℝ) / (q.ri.den : ℝ)) = (q.ri : ℝ) := by
+          rw [Rat.cast_def q.ri]
+        rw [hrr] at hs1
+        rw [hri'] at hs2
+        push_cast at hs1 hs2 ⊢
+        have hb1 := abs_cast_le_div q.rr
+        have hb2 := abs_cast_le_div q.ri
+        have hP2g : (0 : ℝ) < 2 ^ Pg := by positivity
+        set ℓ := Real.log ((2 : ℝ) ^ m * ((P : ℝ) / (Q : ℝ))) with hℓ
+        set ar := Complex.arg ⟨(zA c q : ℝ) / (zL c q : ℝ), (zB c q : ℝ) / (zL c q : ℝ)⟩ with har
+        set W1 : ℝ := ((q.rr.num * lnVI Pg m P Q / (2 * (q.rr.den : ℤ)) : ℤ) : ℝ) with hW1
+        set W2 : ℝ := ((q.ri.num * Va / (q.ri.den : ℤ) : ℤ) : ℝ) with hW2
+        have key : (q.rr : ℝ) * (ℓ / 2) - (q.ri : ℝ) * ar - (W1 - W2) / 2 ^ Pg =
+            ((q.rr : ℝ) / 2 * ℓ - W1 / 2 ^ Pg) - ((q.ri : ℝ) * ar - W2 / 2 ^ Pg) := by ring
+        rw [key]
+        refine (abs_sub _ _).trans ?_
+        have c1 : |(q.rr : ℝ) / 2| * (2 / 2 ^ Pg) + 1 / 2 ^ Pg ≤ (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 2) / 2 ^ Pg := by
+          rw [abs_div, abs_of_pos (by norm_num : (0:ℝ) < 2)]
+          rw [← sub_nonneg]
+          have : (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 2) / 2 ^ Pg -
+              (|(q.rr : ℝ)| / 2 * (2 / 2 ^ Pg) + 1 / 2 ^ Pg) =
+              (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 1 - |(q.rr : ℝ)|) / 2 ^ Pg := by
+            field_simp; ring
+          rw [this]
+          apply div_nonneg _ hP2g.le
+          linarith
+        have c2 : |(q.ri : ℝ)| * (2 / 2 ^ Pg) + 1 / 2 ^ Pg ≤
+            (2 * (((q.ri.num.natAbs / q.ri.den : ℕ) : ℝ) + 1) + 1) / 2 ^ Pg := by
+          rw [← sub_nonneg]
+          have : (2 * (((q.ri.num.natAbs / q.ri.den : ℕ) : ℝ) + 1) + 1) / 2 ^ Pg -
+              (|(q.ri : ℝ)| * (2 / 2 ^ Pg) + 1 / 2 ^ Pg) =
+              2 * ((((q.ri.num.natAbs / q.ri.den : ℕ) : ℝ) + 1) - |(q.ri : ℝ)|) / 2 ^ Pg := by
+            field_simp; ring
+          rw [this]
+          apply div_nonneg _ hP2g.le
+          linarith
+        have c3 : ((((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 2) + (2 * (((q.ri.num.natAbs / q.ri.den : ℕ) : ℝ) + 1) + 1)) / 2 ^ Pg =
+            (((q.rr.num.natAbs / q.rr.den : ℕ) : ℝ) + 2) / 2 ^ Pg + (2 * (((q.ri.num.natAbs / q.ri.den : ℕ) : ℝ) + 1) + 1) / 2 ^ Pg := by ring
+        rw [c3]
+        have t1 := hs1.trans c1
+        have t2 := hs2.trans c2
+        linarith [t1, t2]
+
+def poleSumI (Pg : ℕ) (c : ℚ) : List PoleR → Option (ℤ × ℕ)
+  | [] => some (0, 0)
+  | q :: qs =>
+    match poleTermI Pg q c, poleSumI Pg c qs with
+    | some (w, e), some (s, t) => some (w + s, e + t)
+    | _, _ => none
+
+theorem poleSumI_spec (Pg : ℕ) (hPg : Pg ≤ 56) (c : ℚ) : ∀ (poles : List PoleR) (S : ℤ) (E : ℕ),
+    poleSumI Pg c poles = some (S, E) →
+    |(poles.map (fun q => (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re)).sum - (S : ℝ) / 2 ^ Pg| ≤
+      (E : ℝ) / 2 ^ Pg := by
+  intro poles
+  induction poles with
+  | nil => intro S E h; simp [poleSumI] at h; obtain ⟨rfl, rfl⟩ := h; simp
+  | cons q qs ih =>
+    intro S E h
+    simp only [poleSumI] at h
+    split at h
+    · rename_i w e s t h1 h2
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have a1 := poleTermI_spec Pg hPg q c w e h1
+      have a2 := ih s t h2
+      simp only [List.map_cons, List.sum_cons]
+      rw [Int.cast_add, Nat.cast_add]
+      have : (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re + (qs.map (fun q => (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re)).sum - ((w : ℝ) + s) / 2 ^ Pg =
+        ((q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re - (w : ℝ) / 2 ^ Pg) + ((qs.map (fun q => (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re)).sum - (s : ℝ) / 2 ^ Pg) := by ring
+      rw [this]
+      have := (abs_add_le _ _).trans (add_le_add a1 a2)
+      refine this.trans (le_of_eq ?_)
+      ring
+    · simp at h
+
+
+theorem poleVecT_zero (Q K0 MiF WiF : ℕ) (poles : List PoleR) (c : ℚ) (M : ℕ) :
+    (poleVecT Q K0 MiF WiF poles c M).getD 0 0 = 0 := by
+  unfold poleVecT
+  rw [getD_map_zero _ _ 0 (by simp)]
+  have : (poleVecZT Q K0 MiF WiF poles c M).getD 0 0 = 0 := by
+    unfold poleVecZT
+    rw [vecSumZ_getD, List.map_map]
+    apply List.sum_eq_zero
+    intro x hx
+    simp only [List.mem_map] at hx
+    obtain ⟨q, _, rfl⟩ := hx
+    simp [fpPole]
+  rw [this]; simp
+
+theorem coefs0_approx (fq : FieldQ) (Ls εs : List ℚ) (c : ℚ) (M Q K0 MiF WiF : ℕ)
+    (hL : LogVals c fq.plogs Ls εs) (hne : ∀ t ∈ fq.plogs, c - t.2 ≠ 0) :
+    |polyTow fq.poly 0 (c : ℝ) + plogSumTower fq.plogs 0 (c : ℝ) -
+        (((fieldCoefsT fq Ls c M Q K0 MiF WiF).getD 0 0 : ℚ) : ℝ)| ≤
+      (((plogErrSum c M fq.plogs εs).getD 0 0 : ℚ) : ℝ) := by
+  have h1 := shiftL_spec c M fq.poly 0 (Nat.zero_le _)
+  have h2 := plogSumVec_approx c M fq.plogs Ls εs hL hne 0 (Nat.zero_le _)
+  unfold fieldCoefsT
+  rw [shiftLK_eq', plogSumVecI_eq, vecAdd_getD, vecAdd_getD, poleVecT_zero, add_zero]
+  simp only [Nat.factorial_zero, Nat.cast_one, div_one] at h1 h2
+  push_cast
+  rw [h1]
+  have e : polyTow fq.poly 0 (c : ℝ) + plogSumTower fq.plogs 0 (c : ℝ) -
+      (polyTow fq.poly 0 (c : ℝ) + (((plogSumVec c M fq.plogs Ls).getD 0 0 : ℚ) : ℝ)) =
+      plogSumTower fq.plogs 0 (c : ℝ) - (((plogSumVec c M fq.plogs Ls).getD 0 0 : ℚ) : ℝ) := by ring
+  rw [e]
+  exact h2
+
+theorem errVecT0_ge (c : ℚ) (N : ℕ) (plogs : List (List ℚ × ℚ)) (εs : List ℚ)
+    (Q Mi Wi K0 MiF WiF nN nF : ℕ) :
+    (plogErrSum c N plogs εs).getD 0 0 ≤
+      (errVecT c N plogs εs Q Mi Wi K0 MiF WiF nN nF).getD 0 0 := by
+  rw [errVecT_getD _ _ _ _ _ _ _ _ _ _ _ _ _ (Nat.zero_le _)]
+  have h1 : 0 ≤ (nN : ℚ) * crudeErr Q Mi Wi 0 := by unfold crudeErr; positivity
+  have h2 : 0 ≤ (nF : ℚ) * (if 0 ≤ K0 then crudeErr Q MiF WiF 0 else tailErr Q MiF WiF 0) := by
+    split_ifs
+    · unfold crudeErr; positivity
+    · unfold tailErr; positivity
+  linarith
+
+theorem anchorI_sound (fq : FieldQ) (Ls εs : List ℚ) (c : ℚ) (M Q Mi Wi K0 MiF WiF nN nF Pg : ℕ)
+    (hPg : Pg ≤ 56) (hL : LogVals c fq.plogs Ls εs) (hne : ∀ t ∈ fq.plogs, c - t.2 ≠ 0)
+    (S : ℤ) (E : ℕ) (hS : poleSumI Pg c fq.poles = some (S, E)) (A0 : ℚ)
+    (hcheck : (fieldCoefsT fq Ls c M Q K0 MiF WiF).getD 0 0 +
+        (errVecT c M fq.plogs εs Q Mi Wi K0 MiF WiF nN nF).getD 0 0 + ((S + E : ℤ) : ℚ) / 2 ^ Pg ≤ A0) :
+    fieldTower fq (poleF fq.poles) 0 (c : ℝ) ≤ (A0 : ℝ) := by
+  have h1 := coefs0_approx fq Ls εs c M Q K0 MiF WiF hL hne
+  have h2 := errVecT0_ge c M fq.plogs εs Q Mi Wi K0 MiF WiF nN nF
+  have h2' : (((plogErrSum c M fq.plogs εs).getD 0 0 : ℚ) : ℝ) ≤
+      (((errVecT c M fq.plogs εs Q Mi Wi K0 MiF WiF nN nF).getD 0 0 : ℚ) : ℝ) := by exact_mod_cast h2
+  have h3 := poleSumI_spec Pg hPg c fq.poles S E hS
+  have hc : (((fieldCoefsT fq Ls c M Q K0 MiF WiF).getD 0 0 +
+        (errVecT c M fq.plogs εs Q Mi Wi K0 MiF WiF nN nF).getD 0 0 + ((S + E : ℤ) : ℚ) / 2 ^ Pg : ℚ) : ℝ) ≤ (A0 : ℝ) := by
+    exact_mod_cast hcheck
+  push_cast at hc
+  have e : fieldTower fq (poleF fq.poles) 0 (c : ℝ) =
+      polyTow fq.poly 0 (c : ℝ) + plogSumTower fq.plogs 0 (c : ℝ) +
+        (fq.poles.map (fun q => (q.rho * Complex.log (((c : ℝ) : ℂ) - q.pc)).re)).sum := rfl
+  rw [e]
+  rw [abs_le] at h1 h3
+  have hP : (0 : ℝ) < 2 ^ Pg := by positivity
+  have : ((S : ℝ) + E) / 2 ^ Pg = (S : ℝ) / 2 ^ Pg + (E : ℝ) / 2 ^ Pg := by ring
+  linarith [h1.1, h1.2, h3.1, h3.2]
+
+end IntegerAnchor
+
 /-- One cell with all heavy literals precomputed: centre `cc`, logarithm values `Ls ± εs`.  The pole
 part of the coefficients is evaluated in fixed point with grid `2^-Q` (`fieldCoefsT`): the poles
 passing `fpPoleOK Q MiF WiF` (the far class) only to order `K0` (their dropped terms are
 bounded by `tailErr`), the others (bounds `Mi`, `Wi`) to the full order. -/
-def cellW (fq : FieldQ) (nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi lo hi : ℚ)
+def cellW (fq : FieldQ) (nLc Pg Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi lo hi : ℚ)
     (Ls εs : List ℚ) (A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ) : Bool :=
-  decide (cc = (lo + hi) / 2) && logsCheck nLc cc fq.plogs Ls εs &&
-  (match anchorUB2 nLc Pc nLp nAp Pp fq cc with
-   | some v => decide (v ≤ A0)
+  decide (cc = (lo + hi) / 2) && decide (Pg ≤ 56) && logsCheck nLc cc fq.plogs Ls εs &&
+  (match poleSumI Pg cc fq.poles with
+   | some (S, E) => decide ((fieldCoefsT fq Ls cc (Bl.length + 2) Q K0 MiF WiF).getD 0 0 +
+        (errVecT cc (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF
+          (fq.poles.length - fq.poles.countP (isFar Q MiF WiF cc)) (fq.poles.countP (isFar Q MiF WiF cc))).getD 0 0 +
+        ((S + E : ℤ) : ℚ) / 2 ^ Pg ≤ A0)
    | none => false) &&
   decide (blo ≤ lo) && decide (hi ≤ bhi) &&
   fq.poles.all (fun q => isFar Q MiF WiF cc q || fpPoleOK Q Mi Wi q cc) &&
@@ -2406,14 +3099,14 @@ def cellW (fq : FieldQ) (nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi
       (fq.poles.length - fq.poles.countP (isFar Q MiF WiF cc)) (fq.poles.countP (isFar Q MiF WiF cc))) &&
   decide (tmUBQ A0 l1 u1 A2 ((hi - lo) / 2) Bl BM ≤ T)
 
-theorem cellW_sound (fq : FieldQ) (nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi lo hi : ℚ)
+theorem cellW_sound (fq : FieldQ) (nLc Pg Q Mi Wi K0 MiF WiF : ℕ) (cc blo bhi lo hi : ℚ)
     (Ls εs : List ℚ) (A0 l1 u1 A2 : ℚ) (Bl : List ℚ) (BM T : ℚ)
-    (hchk : cellW fq nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF cc blo bhi lo hi Ls εs A0 l1 u1 A2 Bl BM T = true)
+    (hchk : cellW fq nLc Pg Q Mi Wi K0 MiF WiF cc blo bhi lo hi Ls εs A0 l1 u1 A2 Bl BM T = true)
     (hB : BlockFacts fq blo bhi (Bl.length + 3) BM) :
     ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
   unfold cellW at hchk
   simp only [Bool.and_eq_true, decide_eq_true_eq] at hchk
-  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨hcc, hlc⟩, hanch⟩, hb1⟩, hb2⟩, hpok⟩, hMi⟩, hMiF⟩, htest⟩, hT⟩ := hchk
+  obtain ⟨⟨⟨⟨⟨⟨⟨⟨⟨⟨hcc, hPg⟩, hlc⟩, hanch⟩, hb1⟩, hb2⟩, hpok⟩, hMi⟩, hMiF⟩, htest⟩, hT⟩ := hchk
   subst hcc
   have hnear : ∀ q ∈ fq.poles, isFar Q MiF WiF ((lo + hi) / 2) q = false →
       fpPoleOK Q Mi Wi q ((lo + hi) / 2) = true := by
@@ -2426,11 +3119,15 @@ theorem cellW_sound (fq : FieldQ) (nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF : ℕ) (
   set c : ℚ := (lo + hi) / 2 with hc
   set r : ℚ := (hi - lo) / 2 with hr
   have hLs := logsCheck_spec nLc c fq.plogs Ls εs hlc
-  obtain ⟨v, hv, hvA⟩ : ∃ v, anchorUB2 nLc Pc nLp nAp Pp fq c = some v ∧ v ≤ A0 := by
+  obtain ⟨S, E, hSE, hanch2⟩ : ∃ S E, poleSumI Pg c fq.poles = some (S, E) ∧
+      (fieldCoefsT fq Ls c (Bl.length + 2) Q K0 MiF WiF).getD 0 0 +
+        (errVecT c (Bl.length + 2) fq.plogs εs Q Mi Wi K0 MiF WiF
+          (fq.poles.length - fq.poles.countP (isFar Q MiF WiF c)) (fq.poles.countP (isFar Q MiF WiF c))).getD 0 0 +
+        ((S + E : ℤ) : ℚ) / 2 ^ Pg ≤ A0 := by
     revert hanch
-    cases hh : anchorUB2 nLc Pc nLp nAp Pp fq c with
+    cases hh : poleSumI Pg c fq.poles with
     | none => simp
-    | some v => intro h; exact ⟨v, rfl, by simpa using h⟩
+    | some p => intro h; exact ⟨p.1, p.2, rfl, by simpa using h⟩
   have e1 : (c : ℝ) - (r : ℝ) = (lo : ℝ) := by simp only [hc, hr]; push_cast; ring
   have e2 : (c : ℝ) + (r : ℝ) = (hi : ℝ) := by simp only [hc, hr]; push_cast; ring
   have hcell : Icc ((c : ℝ) - (r : ℝ)) ((c : ℝ) + (r : ℝ)) = Icc (lo : ℝ) (hi : ℝ) := by
@@ -2464,7 +3161,7 @@ theorem cellW_sound (fq : FieldQ) (nLc Pc nLp nAp Pp Q Mi Wi K0 MiF WiF : ℕ) (
     exact fieldCoefsT_approx fq (poleF fq.poles) Ls εs c (Bl.length + 2) Q Mi Wi K0 MiF WiF hLs hnec
       hMi hMiF hnear k hk1 hk
   have h0 : fieldTower fq (poleF fq.poles) 0 (c : ℝ) ≤ (A0 : ℝ) :=
-    (anchorUB2_spec nLc Pc nLp nAp Pp fq c v hv).trans (by exact_mod_cast hvA)
+    anchorI_sound fq Ls εs c (Bl.length + 2) Q Mi Wi K0 MiF WiF _ _ Pg (by simpa using hPg) hLs hnec S E hSE A0 hanch2
   exact cellCore lo hi A0 l1 u1 A2 Bl BM T _ _ hT0 hspec hl1 hu1 hA2
     (absLeAllE_of_L Bl _ _ hL) hT h0 blo bhi hb1 hb2 hB.tail x hx
 
