@@ -51,12 +51,12 @@ theorem thirdsBc_decay : ThirdsDecay thirdsBc (depth0 thirdsBc) :=
 
 /-- **`μ(L(2,χ₋₃) + π²/9) ≤ 9.5133`.** -/
 theorem thirds_plus_measure :
-    Measure.MeasureLBAt (chi3L2 + Real.pi ^ 2 / 9) ((95019 / 10000 : ℚ) : ℝ) :=
+    Measure.MeasureLBAt (chi3L2 + Real.pi ^ 2 / 9) ((47499 / 5000 : ℚ) : ℝ) :=
   Level3Measure.thirds_measure_plus thirdsAc_decay
 
 /-- **`μ(L(2,χ₋₃) − π²/9) ≤ 9.5133`.** -/
 theorem thirds_minus_measure :
-    Measure.MeasureLBAt (chi3L2 - Real.pi ^ 2 / 9) ((95019 / 10000 : ℚ) : ℝ) :=
+    Measure.MeasureLBAt (chi3L2 - Real.pi ^ 2 / 9) ((47499 / 5000 : ℚ) : ℝ) :=
   Level3Measure.thirds_measure_minus thirdsBc_decay
 
 end CatalanCore.Uniform.Bank.ThirdsContent.Level3Bound

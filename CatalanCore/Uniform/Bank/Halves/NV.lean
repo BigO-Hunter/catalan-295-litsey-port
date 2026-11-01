@@ -1,5 +1,9 @@
-import CatalanCore.Uniform.Bank.Halves.Geom
-import CatalanCore.Uniform.Frame.NVAdapter
+module
+
+public import CatalanCore.Uniform.Bank.Halves.Geom
+public import CatalanCore.Uniform.Frame.NVAdapter
+
+@[expose] public section
 set_option Elab.async false
 
 /-! Nonvanishing of the halves block family (lane B, B5): `HasNV0` from the generic selector, for

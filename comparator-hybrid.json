@@ -16,7 +16,8 @@
     "TrigammaDifferences.sevenths3_measure",
     "TrigammaDifferences.sevenths4_measure",
     "TrigammaDifferences.sevenths5_measure",
-    "TrigammaDifferences.sevenths6_measure"
+    "TrigammaDifferences.sevenths6_measure",
+    "TrigammaDifferences.pi2_measure"
   ],
   "definition_names": [],
   "permitted_axioms": [

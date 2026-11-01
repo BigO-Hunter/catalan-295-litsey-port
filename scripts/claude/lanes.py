@@ -172,6 +172,32 @@ def stale_count(target):
     return sum(1 for line in r.stdout.splitlines() if 'Building ' in line or 'needs to be rebuilt' in line and False)
 
 
+_IMPS = {}
+
+
+def imports_of(target):
+    """Direct imports of a module target (cached by source mtime); empty for `run` jobs and unknown files."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from closure_check import path_of, IMPORT
+    f = path_of(target) if not target.startswith('job.') else None
+    if not f:
+        return set()
+    mt = os.path.getmtime(f)
+    if target not in _IMPS or _IMPS[target][0] != mt:
+        with open(f, encoding='utf-8') as fh:
+            _IMPS[target] = (mt, set(IMPORT.findall(fh.read(20000).split('\nnamespace', 1)[0])))
+    return _IMPS[target][1]
+
+
+def maxlanes():
+    """Lane cap, read live from LANES/maxlanes.txt (default MAXLANES); memory admission still applies.
+    31 Oct: a fixed 6 left 16 of 22 cores idle while hybrid modules queued (Sean: minimise wall clock)."""
+    try:
+        return max(1, int((LANES / 'maxlanes.txt').read_text(encoding='utf-8').split()[0]))
+    except (OSError, ValueError, IndexError):
+        return MAXLANES
+
+
 def log(msg):
     with open(LANES / 'driver.log', 'a', encoding='utf-8') as f:
         f.write(time.strftime('%Y-%m-%d %H:%M:%S ') + msg + '\n')
@@ -239,16 +265,31 @@ def drive():
                     return (i, mt)
             return (len(prio) + (1 if t.startswith('job.') else 0), mt)
         queued = sorted(Q.glob('*.json'), key=_key)
-        for qf in queued[:12]:
+        # A queue is a queue (Sean, 31 Oct): submit everything at once.  A build whose direct import is
+        # still queued or running waits in the queue (no waves, no refusal); it is neither preflighted
+        # nor admitted until that import's job has finished.
+        specs = {}
+        for qf in queued:
             try:
-                t = json.loads(qf.read_text(encoding='utf-8'))
+                specs[qf] = json.loads(qf.read_text(encoding='utf-8'))
             except (json.JSONDecodeError, OSError):
+                pass
+        pend = {t['target'] for t in specs.values()} | {s['target'] for _, s in running.values()}
+        def blocked(t):
+            return not t.get('cmd') and bool(imports_of(t['target']) & pend)
+        npre = 0
+        for qf in queued:
+            t = specs.get(qf)
+            if t is None or blocked(t):
                 continue
+            npre += 1
+            if npre > 12:
+                break
             if not t.get('cmd') and (t['target'] not in pre or time.time() - pre[t['target']][1] > 600):
                 pre[t['target']] = (pool.submit(stale_count, t['target']), time.time())
         busy = {s['target'] for _, s in running.values()}
         pick = None
-        if (queued and not (LANES / 'PAUSE').exists() and len(running) < MAXLANES
+        if (queued and not (LANES / 'PAUSE').exists() and len(running) < maxlanes()
                 and time.time() - last >= RAMP):
             phys, commit = mem()
             # manage-compute-campaigns envelope: free + own live workers - floor - margin must
@@ -267,7 +308,7 @@ def drive():
                     s = json.loads(qf.read_text(encoding='utf-8'))
                 except (json.JSONDecodeError, OSError):
                     continue   # being written by a submitter (28 Oct 11:51 crash), or just taken
-                if s['target'] in busy:
+                if s['target'] in busy or blocked(s):
                     continue
                 # A lower-priority job may jump a higher one only if that one does not fit; a
                 # build still in preflight might fit, so lower ranks wait for it (31 Oct: `run`

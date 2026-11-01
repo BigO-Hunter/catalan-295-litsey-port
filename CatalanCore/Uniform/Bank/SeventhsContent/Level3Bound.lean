@@ -59,9 +59,9 @@ theorem sevenths_decay (a : Fin 6) :
       (D7 : ℝ) (c7 : ℝ) :=
   decay_of_frame (frames_contour a) (frames_hAR a) (frames_norm a) rfl (frames_m0 a) _
 
-/-- **`μ(seventhsTarget (a + 1)) ≤ 11419789 / 5000`** for each of the six members. -/
+/-- **`μ(seventhsTarget (a + 1)) ≤ 22078697 / 10000`** for each of the six members. -/
 theorem sevenths_measure (a : Fin 6) :
-    Measure.MeasureLBAt (seventhsTarget (seventhNumerator a)) ((11419789 / 5000 : ℚ) : ℝ) :=
+    Measure.MeasureLBAt (seventhsTarget (seventhNumerator a)) ((22078697 / 10000 : ℚ) : ℝ) :=
   sevenths_measure_auto a (sevenths_decay a)
 
 end CatalanCore.Uniform.Bank.SeventhsContent.Level3Bound

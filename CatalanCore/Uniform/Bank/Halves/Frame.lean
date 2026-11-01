@@ -1,7 +1,11 @@
-import CatalanFrames.Thirds.Frame
-import CatalanFrames.P6.Const
-import Mathlib.NumberTheory.ZetaValues
-import CatalanCore.Uniform.Content.BankShared.Inst.TwoTerm
+module
+
+public import CatalanFrames.Thirds.Frame
+public import CatalanFrames.P6.Const
+public import Mathlib.NumberTheory.ZetaValues
+public import CatalanCore.Uniform.Content.BankShared.Inst.TwoTerm
+
+@[expose] public section
 set_option Elab.async false
 
 namespace CatalanCore.Uniform.Bank.Halves

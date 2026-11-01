@@ -21,7 +21,7 @@ The content of `seventhsFrameAt a` (members `a + 1 = 1 … 6`, offsets `o = 7 - 
   `p ≤ r/1000`, `α0 = 13/6`);
 * `sevenths_content_auto a`: `HasScaledContent ((F7.family (seventhsFrameAt a) depth).restrictAdm even) F7.scale
   Λ_fin`, `Λ_fin = bankData.Λ` (`bankData_Λ`), every depth `≤ 64`;
-* `sevenths_mu_le : c7 / (D7 - Λ_fin) ≤ 11419789 / 5000` ( `D7`, `c7` of `Bank/Sevenths/Final`), exact. -/
+* `sevenths_mu_le : c7 / (D7 - Λ_fin) ≤ 22078697 / 10000` ( `D7`, `c7` of `Bank/Sevenths/Final`), exact. -/
 
 namespace CatalanCore.Uniform.Bank.SeventhsContent.Level3Auto
 open CatalanCore CatalanCore.Uniform CatalanCore.Uniform.Content.Shape CatalanCore.Uniform.Content.BankShared
@@ -44,11 +44,13 @@ theorem sevenths_catValid (a : Fin 6) (depth : ℕ) :
   by
   rw [bankData_cat]
   apply catValid_append
-  · exact catValid_bankUFwP (seventhsInst a) (seventhsInst_L a) (seventhsInst_levels a) (1 / 6) one_sixth_pos
-      (by norm_num) (sevenths_twoTerm a) (nm := 7 * 7) (seventhsInst_norm a) depth 13 12 91
-      (by norm_num) (by norm_num) (by norm_num) le_rfl (seventhsInst_hP a (by omega))
-      (seventhsInst_hkq a (by omega)) bankWins bankPres
-  · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 6) one_sixth_pos (sevenths_twoTerm a) (nm := 7 * 7) (seventhsInst_norm a) depth 13 _ (fun p hp h => ⟨(seventhsInst_hP a (by omega) p hp h).1, (seventhsInst_hP a (by omega) p hp h).2.2.2.2.1⟩)
+  · apply catValid_append
+    · exact catValid_bankUFwP (seventhsInst a) (seventhsInst_L a) (seventhsInst_levels a) (1 / 6) one_sixth_pos
+        (by norm_num) (sevenths_twoTerm a) (nm := 7 * 7) (seventhsInst_norm a) depth 13 12 91
+        (by norm_num) (by norm_num) (by norm_num) le_rfl (seventhsInst_hP a (by omega))
+        (seventhsInst_hkq a (by omega)) bankWins bankPres
+    · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 6) one_sixth_pos (sevenths_twoTerm a) (nm := 7 * 7) (seventhsInst_norm a) depth 13 _ (fun p hp h => ⟨(seventhsInst_hP a (by omega) p hp h).1, (seventhsInst_hP a (by omega) p hp h).2.2.2.2.1⟩)
+  · exact CatalanCore.Uniform.Content.UFSimple.catValid_prefixBranches (1 / 6) one_sixth_pos (sevenths_twoTerm a) (nm := 7 * 7) (seventhsInst_norm a) depth 13 _ 24 (fun p hp h => ⟨(seventhsInst_hP a (by omega) p hp h).1, (seventhsInst_hP a (by omega) p hp h).2.2.2.2.1⟩)
 
 /-- The prefix bound of every sevenths frame (`pre_gle_any`), for `p ≤ r/1000`, `α0 = 13/6`. -/
 theorem sevenths_preValid (a : Fin 6) (depth : ℕ) :
@@ -87,11 +89,11 @@ theorem sevenths_content_auto (a : Fin 6) (depth : ℕ) (hd : depth ≤ 64) :
     (seventhsFrameAt a) depth hd (cFr_sevenths a) (seventhNumerator a) (sevenths_mem a) _ _
     (sevenths_catValid a depth) (sevenths_preValid a depth)
 
-/-- **The sevenths μ target**, exactly: `c7 / (D7 - Λ_fin) ≤ 11419789 / 5000` with the finite UF constant
+/-- **The sevenths μ target**, exactly: `c7 / (D7 - Λ_fin) ≤ 22078697 / 10000` with the finite UF constant
 `Λ_fin = bankData.Λ`. -/
-theorem sevenths_mu_le : (c7 : ℝ) / ((D7 : ℝ) - (bankData.Λ : ℝ)) ≤ ((11419789 / 5000 : ℚ) : ℝ) := by
+theorem sevenths_mu_le : (c7 : ℝ) / ((D7 : ℝ) - (bankData.Λ : ℝ)) ≤ ((22078697 / 10000 : ℚ) : ℝ) := by
   have h1 : bankData.Λ < D7 := by rw [bankData_Λ]; unfold D7; norm_num
-  have h2 : c7 ≤ 11419789 / 5000 * (D7 - bankData.Λ) := by rw [bankData_Λ]; unfold c7 D7; norm_num
+  have h2 : c7 ≤ 22078697 / 10000 * (D7 - bankData.Λ) := by rw [bankData_Λ]; unfold c7 D7; norm_num
   have hpos : (0 : ℝ) < (D7 : ℝ) - (bankData.Λ : ℝ) := by
     have := (Rat.cast_lt (K := ℝ)).2 h1; linarith
   rw [div_le_iff₀ hpos]

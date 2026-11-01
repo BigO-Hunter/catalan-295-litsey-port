@@ -1,6 +1,7 @@
 module
 
 public import CatalanCore.Uniform.Content.UFSimple.WrapCheck
+public import CatalanCore.Uniform.Content.UFSimple.PrefixBranches
 
 public import CatalanCore.Uniform.Content.BankShared.Check.Split
 public import CatalanCore.Uniform.Content.BankShared.Check.Prefix
@@ -30,7 +31,7 @@ def bankPres : List (ℕ × ℕ × ℕ) := [(1, 0, 0), (1, 0, 1), (1, 0, 2), (1,
 /-- LP1, LP2w, the rank branch, the UF branch (indices 6, 7, 8, 9), the M3D windows, then the prefix branches. -/
 def bankExtra : List Branch :=
   ([brLP1, brLP2w, brRank, brS] ++ bankWins.map (fun w => brWin w.1 w.2)) ++
-    (bankPres.map (fun x => brPre x.1 x.2.1 x.2.2)) ++ [CatalanCore.Uniform.Content.UFSimple.WrapCheck.brWrap]
+    (bankPres.map (fun x => brPre x.1 x.2.1 x.2.2)) ++ [CatalanCore.Uniform.Content.UFSimple.WrapCheck.brWrap] ++ CatalanCore.Uniform.Content.UFSimple.prefixBranches 24
 
 /-- The lambda bank parameters, without templates. -/
 def bankHead : BankData where

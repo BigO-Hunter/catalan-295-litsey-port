@@ -1,9 +1,13 @@
-import CatalanCore.Uniform.Bank.HalvesContent.AutoData
-import CatalanCore.Uniform.Bank.Halves.Frame
-import CatalanCore.Uniform.Bank.Halves.Final
-import CatalanCore.Uniform.Content.BankShared.Inst.TwoTerm
-import CatalanCore.Uniform.Content.BankShared.TwoTerm.Trop
-import CatalanCore.Arith.Hybrid.PieceTools
+module
+
+public import CatalanCore.Uniform.Bank.HalvesContent.AutoData
+public import CatalanCore.Uniform.Bank.Halves.Frame
+public import CatalanCore.Uniform.Bank.Halves.Final
+public import CatalanCore.Uniform.Content.BankShared.Inst.TwoTerm
+public import CatalanCore.Uniform.Content.BankShared.TwoTerm.Trop
+public import CatalanCore.Arith.Hybrid.PieceTools
+
+@[expose] public section
 set_option Elab.async false
 
 namespace CatalanCore.Uniform.Bank.HalvesContent.Auto

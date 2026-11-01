@@ -1,5 +1,9 @@
-import CatalanCore.Uniform.Bank.Common.Data.Halves.Segs
-import CatalanCore.Uniform.Bank.Common.Data.Halves.Cells
+module
+
+public import CatalanCore.Uniform.Bank.Common.Data.Halves.Segs
+public import CatalanCore.Uniform.Bank.Common.Data.Halves.Cells
+
+@[expose] public section
 
 namespace CatalanCore.Uniform.Bank.Common.Data.Halves
 open CatalanCore.Uniform.Bank.Common CatalanCore.Uniform.Decay.Cert

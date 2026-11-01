@@ -1,6 +1,10 @@
-import CatalanCore.Uniform.Bank.HalvesContent.Auto
-import CatalanCore.Uniform.Bank.Halves.Final
-import CatalanCore.Uniform.Bank.Halves.Frame
+module
+
+public import CatalanCore.Uniform.Bank.HalvesContent.Auto
+public import CatalanCore.Uniform.Bank.Halves.Final
+public import CatalanCore.Uniform.Bank.Halves.Frame
+
+@[expose] public section
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.HalvesContent.AutoMeasure
 open CatalanCore CatalanCore.Uniform CatalanCore.Uniform.Content.Shape CatalanCore.Uniform.Bank.Halves

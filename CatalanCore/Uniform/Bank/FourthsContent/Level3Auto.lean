@@ -63,22 +63,24 @@ theorem lamMinus_catValid (depth : ℕ) :
       (max (NFr (1 / lamFrame.norm) (-1 / lamFrame.norm) 4 10) 44) bankData.cat := by
   rw [bankData_cat]
   apply catValid_append
-  · exact catValid_bankUFwP lamInst (arith_of_bad lam_badInfo).L_eq lam_tropFacts.toLevelFacts (1 / 5) one_fifth_pos
-      (by norm_num) lam_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 10 44
-      (by norm_num) (by norm_num) (by norm_num) le_rfl
-      (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega, by omega,
-        not_bad_of_levels lam_tropFacts.toLevelFacts hp (show 5 ≤ p by omega), (show 5 ≤ p by omega),
-        by omega⟩)
-      (fun p hp h j k hk hj0 hjq _ _ => by
-        have hb := (lam_odd_good hp (by omega)).2
-        obtain ⟨h1, -⟩ := kq_eq_poleIndex lamCD (fun _ => rfl) (by norm_num) (by norm_num) hp (by omega) hb
-          (lam_kq_att p hp.isPrimePow hb)
-        have hk' : 4 * k = j * p + (4 - (4 - 1)) := hk
-        have h2 := (rootClass_unique hp (by norm_num) (by norm_num) (by omega) hjq hk').2
-        show lamCD.kq p = k
-        rw [h1, h2])
-      bankWins bankPres
-  · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 5) one_fifth_pos lam_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
+  · apply catValid_append
+    · exact catValid_bankUFwP lamInst (arith_of_bad lam_badInfo).L_eq lam_tropFacts.toLevelFacts (1 / 5) one_fifth_pos
+        (by norm_num) lam_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 10 44
+        (by norm_num) (by norm_num) (by norm_num) le_rfl
+        (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega, by omega,
+          not_bad_of_levels lam_tropFacts.toLevelFacts hp (show 5 ≤ p by omega), (show 5 ≤ p by omega),
+          by omega⟩)
+        (fun p hp h j k hk hj0 hjq _ _ => by
+          have hb := (lam_odd_good hp (by omega)).2
+          obtain ⟨h1, -⟩ := kq_eq_poleIndex lamCD (fun _ => rfl) (by norm_num) (by norm_num) hp (by omega) hb
+            (lam_kq_att p hp.isPrimePow hb)
+          have hk' : 4 * k = j * p + (4 - (4 - 1)) := hk
+          have h2 := (rootClass_unique hp (by norm_num) (by norm_num) (by omega) hjq hk').2
+          show lamCD.kq p = k
+          rw [h1, h2])
+        bankWins bankPres
+    · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 5) one_fifth_pos lam_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
+  · exact CatalanCore.Uniform.Content.UFSimple.catValid_prefixBranches (1 / 5) one_fifth_pos lam_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ 24 (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
 
 /-- The prefix bound of `lamFrame` (`pre_gle_any`), for `p ≤ r/1000`, `α0 = 11/5`. -/
 theorem lamMinus_preValid (depth : ℕ) :
@@ -123,21 +125,23 @@ theorem mirN_catValid (depth : ℕ) :
       (max (NFr (1 / mirNFrame.norm) (-1 / mirNFrame.norm) 4 10) 44) bankData.cat := by
   rw [bankData_cat]
   apply catValid_append
-  · exact catValid_bankUFwP mirNInst (arith_of_bad mirBad).L_eq mirN_tropFacts.toLevelFacts (1 / 5) one_fifth_pos
-      (by norm_num) mirN_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 10 44
-      (by norm_num) (by norm_num) (by norm_num) le_rfl
-      (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega, by omega,
-        not_bad_of_levels mirN_tropFacts.toLevelFacts hp (show 5 ≤ p by omega), (show 5 ≤ p by omega),
-        by omega⟩)
-      (fun p hp h j k hk hj0 hjq _ _ => by
-        have hb := (mirN_tropFacts.good p hp (show 5 ≤ p by omega)).2
-        obtain ⟨h1, -⟩ := kq_eq_poleIndex mirNInst.cd (fun _ => rfl) (by norm_num) (by norm_num) hp (by omega)
-          hb (mir_kq_att p hp.isPrimePow hb)
-        have hk' : 4 * k = j * p + (4 - (4 - 3)) := hk
-        have h2 := (rootClass_unique hp (by norm_num) (by norm_num) (by omega) hjq hk').2
-        rw [h1, h2])
-      bankWins bankPres
-  · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 5) one_fifth_pos mirN_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
+  · apply catValid_append
+    · exact catValid_bankUFwP mirNInst (arith_of_bad mirBad).L_eq mirN_tropFacts.toLevelFacts (1 / 5) one_fifth_pos
+        (by norm_num) mirN_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 10 44
+        (by norm_num) (by norm_num) (by norm_num) le_rfl
+        (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega, by omega,
+          not_bad_of_levels mirN_tropFacts.toLevelFacts hp (show 5 ≤ p by omega), (show 5 ≤ p by omega),
+          by omega⟩)
+        (fun p hp h j k hk hj0 hjq _ _ => by
+          have hb := (mirN_tropFacts.good p hp (show 5 ≤ p by omega)).2
+          obtain ⟨h1, -⟩ := kq_eq_poleIndex mirNInst.cd (fun _ => rfl) (by norm_num) (by norm_num) hp (by omega)
+            hb (mir_kq_att p hp.isPrimePow hb)
+          have hk' : 4 * k = j * p + (4 - (4 - 3)) := hk
+          have h2 := (rootClass_unique hp (by norm_num) (by norm_num) (by omega) hjq hk').2
+          rw [h1, h2])
+        bankWins bankPres
+    · exact CatalanCore.Uniform.Content.UFSimple.WrapCheck.catValid_wrap (1 / 5) one_fifth_pos mirN_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
+  · exact CatalanCore.Uniform.Content.UFSimple.catValid_prefixBranches (1 / 5) one_fifth_pos mirN_twoTerm (nm := 4 * 4) (by show (16 : ℚ) = ((4 * 4 : ℕ) : ℚ); norm_num) depth 28 _ 24 (fun p hp h => ⟨not_dvd_sq_of_lt hp (by norm_num) (by omega), by omega⟩)
 
 /-- The prefix bound of `mirNFrame` (`pre_gle_any`), for `p ≤ r/1000`, `α0 = 11/5`. -/
 theorem mirN_preValid (depth : ℕ) :
