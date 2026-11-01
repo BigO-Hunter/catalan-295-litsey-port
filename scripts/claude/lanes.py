@@ -221,10 +221,24 @@ def drive():
                 log(f"shed {spec['target']} phys={phys0:.1f} commit={commit0:.1f} tries={tries}")
                 del running[jid]
                 last = time.time() + 30
-        def _mt(p):
-            try: return p.stat().st_mtime
-            except OSError: return float('inf')
-        queued = sorted(Q.glob('*.json'), key=_mt)
+        # Priority (Sean, 31 Oct: "410 jobs get priority"): `priority.txt` lists target prefixes,
+        # highest first; then other builds; then `run` jobs (job.*). Within a rank, oldest first.
+        try:
+            prio = [l.split('#')[0].strip() for l in (LANES / 'priority.txt').read_text(encoding='utf-8').splitlines()]
+            prio = [p for p in prio if p]
+        except OSError:
+            prio = []
+        def _key(p):
+            try:
+                mt = p.stat().st_mtime
+                t = json.loads(p.read_text(encoding='utf-8')).get('target', '')
+            except (OSError, ValueError):
+                return (len(prio) + 2, float('inf'))
+            for i, pre_ in enumerate(prio):
+                if t == pre_ or t.startswith(pre_ + '.') or t.startswith(pre_):
+                    return (i, mt)
+            return (len(prio) + (1 if t.startswith('job.') else 0), mt)
+        queued = sorted(Q.glob('*.json'), key=_key)
         for qf in queued[:12]:
             try:
                 t = json.loads(qf.read_text(encoding='utf-8'))
@@ -247,12 +261,18 @@ def drive():
             env_c = commit + own_c - FLOOR - MARGIN
             # Backfill: the first queued job (priority order) that fits starts, so light
             # modules run beside a heavy one instead of waiting behind it.
+            pending_rank = None   # rank of a higher-priority build still in preflight
             for qf in queued[:200]:
                 try:
                     s = json.loads(qf.read_text(encoding='utf-8'))
                 except (json.JSONDecodeError, OSError):
                     continue   # being written by a submitter (28 Oct 11:51 crash), or just taken
                 if s['target'] in busy:
+                    continue
+                # A lower-priority job may jump a higher one only if that one does not fit; a
+                # build still in preflight might fit, so lower ranks wait for it (31 Oct: `run`
+                # jobs otherwise took every lane right after a driver restart).
+                if pending_rank is not None and _key(qf)[0] > pending_rank:
                     continue
                 # Generator cap (replaces defer-generators.sh): while MAXGEN capped `run` jobs are
                 # running, a queued capped `run` job waits so a freed lane goes to a module build.
@@ -261,6 +281,8 @@ def drive():
                 if not s.get('cmd'):
                     f = pre.get(s['target'])
                     if f is None or not f[0].done():
+                        if pending_rank is None:
+                            pending_rank = _key(qf)[0]
                         continue   # preflight still running in the background
                 ec, ew = est(s['target'])
                 bb = float(s.get('budget', 3))
@@ -269,14 +291,9 @@ def drive():
                 if need_w + ew <= env_w and need_c + ec <= env_c:
                     pick, spec = qf, s
                     break
-                # Starvation guard (skill: reserve headroom for a ready large or critical job):
-                # if this job has waited > STARVE seconds, nothing behind it may backfill --
-                # but only if it would fit once our own running jobs finish. A job that does not
-                # fit even then (memory held outside the lanes) must not block the queue: on
-                # 31 Oct a 8.6 GB forecast vs 8.5 GB envelope deadlocked 11 jobs for 20+ minutes.
-                if (time.time() - float(s.get('submitted', time.time())) > STARVE
-                        and ew <= env_w and ec <= env_c):
-                    break
+                # No starvation hold (Sean, 31 Oct): "We must always be using all available space
+                # that is safe. Small jobs can jump the queue if they fit now." Priority order
+                # (priority.txt) gives critical jobs the first fit; anything else that fits runs.
         if pick:
             why = hold_refusal(spec['target'])
             if why:
