@@ -45,19 +45,5 @@ theorem block_content (phi : R →+* K) (pi : R) (hpi : Prime pi)
   rw [he,hx,pow_add]
   ring
 
-/-- The same endpoint consumes the existing joint-block rank certificate
-in the generic ring and returns divisibility of the complete determinant. -/
-theorem jblock_content (phi : R →+* K) (pi : R) (hpi : Prime pi)
-    (hker : ∀ x,phi x=0 ↔ pi∣x)
-    (hlift : ∀ z : K,∃ r d : R,phi d≠0 ∧ phi r=phi d*z)
-    (Q : Matrix ι ι R) (B : Matrix ι κ R) (C : Matrix κ ι R) (D W : Matrix κ κ R)
-    (hQ : IsUnit Q.det) (hSch : D-C*Q⁻¹*B=pi • W)
-    (Jr Jc : Finset κ) (H : Matrix κ κ R)
-    (hJ : ∀ z∈Jr,∀ y∈Jc,W z y=pi*H z y) (b : ℕ)
-    (hb : ((H.map phi).submatrix (Subtype.val:Jr→κ) (Subtype.val:Jc→κ)).rank≤b) :
-    pi^(Fintype.card κ+WrapCount.gain (Jr.card+Jc.card-Fintype.card κ) b)∣
-      (Matrix.fromBlocks Q B C D).det := by
-  obtain ⟨T⟩ := exists_twoLevelData_of_jblock phi hker hlift W Jr Jc H hJ b hb
-  exact block_content phi pi hpi hker hlift Q B C D W hQ hSch _ b T
 
 end CatalanCore.Uniform.Content.UFSimple.WrapIntegral

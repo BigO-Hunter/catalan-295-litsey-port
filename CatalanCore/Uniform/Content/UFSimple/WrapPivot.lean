@@ -51,42 +51,5 @@ theorem mixed_det_ne_zero (A : Matrix ι ι K) (B : Matrix ι κ K)
     Polynomial.leadingCoeff_det_X_one_add_C _
   exact hm.ne_zero
 
-/-- The complete-period two-term increment cannot cancel when its
-numerator is nonzero. -/
-theorem reciprocal_step_ne_zero (a b q : K) (ha : a ≠ 0) (hb : b ≠ 0)
-    (hnum : b - q * a ≠ 0) : a⁻¹ - q * b⁻¹ ≠ 0 := by
-  intro hz
-  apply hnum
-  calc
-    b - q * a = (a⁻¹ - q * b⁻¹) * (a * b) := by
-      field_simp [ha, hb]
-    _ = 0 := by rw [hz, zero_mul]
-
-/-- The balanced-pair period increment is nonzero in every two-term frame.
-The denominator nonvanishing hypotheses are precisely the single-level pole
-conditions; the numerator uses only `1 ≤ j < q < p`. -/
-theorem twoTerm_period_ne_zero {p q j h : ℕ} [Fact p.Prime]
-    (hj : 1 ≤ j) (hjq : j < q) (hqp : q < p) (bit : Bool)
-    (ha : ((h + 1 : ℕ) : ZMod p) ≠ 0)
-    (hb : ((q * h + j + q * (if bit then 1 else 0) : ℕ) : ZMod p) ≠ 0) :
-    (((h + 1 : ℕ) : ZMod p)⁻¹ - (q : ZMod p) *
-      ((q * h + j + q * (if bit then 1 else 0) : ℕ) : ZMod p)⁻¹) ≠ 0 := by
-  have hjp : j < p := lt_trans hjq hqp
-  have hj0 : (j : ZMod p) ≠ 0 := by
-    intro hz
-    have hz' : (j : ZMod p) = ((0 : ℕ) : ZMod p) := by simpa using hz
-    have he := (ZMod.natCast_eq_natCast_iff' j 0 p).mp hz'
-    rw [Nat.mod_eq_of_lt hjp, Nat.zero_mod] at he
-    omega
-  have hne : (j : ZMod p) ≠ (q : ZMod p) := by
-    intro hz
-    have he := (ZMod.natCast_eq_natCast_iff' j q p).mp hz
-    rw [Nat.mod_eq_of_lt hjp, Nat.mod_eq_of_lt hqp] at he
-    omega
-  apply reciprocal_step_ne_zero _ _ _ ha hb
-  cases bit <;> simp only [Bool.false_eq_true, ↓reduceIte, Nat.mul_zero,
-    Nat.add_zero, Nat.mul_one, Nat.cast_add, Nat.cast_mul, Nat.cast_one]
-  · convert sub_ne_zero.mpr hne using 1 <;> ring
-  · convert hj0 using 1 <;> ring
 
 end CatalanCore.Uniform.Content.UFSimple.WrapPivot

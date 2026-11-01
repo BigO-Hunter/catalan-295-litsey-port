@@ -32,13 +32,6 @@ noncomputable def equiv (c : ι → ℕ) (xs : β → ℕ) (gamma : ZMod p) :
   (Equiv.sumCongr (Equiv.refl _) (balancedEquiv p xs gamma)).trans
     (Equiv.subtypeSum (p:=fun a => colour p c xs a=gamma)).symm
 
-theorem equiv_common (c : ι → ℕ) (xs : β → ℕ) (gamma : ZMod p) (i : Common p c gamma) :
-    equiv p c xs gamma (Sum.inl i)=⟨Sum.inl i.1,i.2⟩ := rfl
-
-theorem equiv_balanced (c : ι → ℕ) (xs : β → ℕ) (gamma : ZMod p)
-    (i : Fin (Fintype.card (Balanced p xs gamma))) :
-    equiv p c xs gamma (Sum.inr i)=
-      ⟨Sum.inr (balancedEquiv p xs gamma i).1,(balancedEquiv p xs gamma i).2⟩ := rfl
 
 /-- Recover each original node, including its actual quotient index. -/
 theorem node_eq (a : ℕ) (gamma : ZMod p) (ha : (a:ZMod p)=gamma) :

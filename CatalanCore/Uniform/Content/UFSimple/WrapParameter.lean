@@ -99,15 +99,5 @@ theorem descend (phi : R →+* K) (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a) (hp
   intro s hs hd
   exact (mem_compl phi s).mp hs ((poly_zero_iff phi pi hker s).mpr hd)
 
-/-- Specialize only after descent. The ORIGINAL clearing denominator is
-the sole unit required at the original parameter value. -/
-theorem specialize_zero (phi : R →+* K) (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a) (hpi : Prime pi)
-    (D f : R[X]) (k : ℕ) (x : Extension phi)
-    (h : algebraMap R[X] (Extension phi) (D*f)=uniformizer phi pi^k*x)
-    (hD : IsUnit (D.eval 0)) : pi^k∣f.eval 0 := by
-  have hd := descend phi pi hker hpi (D*f) k x h
-  have hh := WrapAlgebra.specialize_cleared (Polynomial.evalRingHom (0:R))
-    (Polynomial.C pi^k) D f hd hD
-  simpa only [Polynomial.coe_evalRingHom,Polynomial.eval_pow,Polynomial.eval_C] using hh
 
 end CatalanCore.Uniform.Content.UFSimple.WrapParameter

@@ -18,55 +18,6 @@ namespace CatalanCore.Uniform.Content.UFSimple.WrapDisplacement
 variable {R ι κ ρ : Type*} [CommRing R]
   [Fintype ι] [DecidableEq ι] [Fintype κ] [Fintype ρ]
 
-/-- Inverse displacement with independent left and right coordinate matrices. -/
-theorem inverse_displacement (Q Di Dj : Matrix ι ι R)
-    (G : Matrix ι ρ R) (H : Matrix ρ ι R)
-    (hQ : IsUnit Q.det) (h : Di * Q - Q * Dj = G * H) :
-    Dj * Q⁻¹ - Q⁻¹ * Di = -(Q⁻¹ * G * H * Q⁻¹) := by
-  have hleft : Q⁻¹ * (Di * Q) * Q⁻¹ = Q⁻¹ * Di := by
-    rw [Matrix.mul_assoc, Matrix.mul_assoc, Matrix.mul_nonsing_inv Q hQ,
-      Matrix.mul_one]
-  have hright : Q⁻¹ * (Q * Dj) * Q⁻¹ = Dj * Q⁻¹ := by
-    rw [← Matrix.mul_assoc Q⁻¹ Q Dj, Matrix.nonsing_inv_mul Q hQ,
-      Matrix.one_mul]
-  have hh := congrArg (fun M => Q⁻¹ * M * Q⁻¹) h
-  rw [mul_sub, sub_mul, hleft, hright] at hh
-  calc
-    Dj * Q⁻¹ - Q⁻¹ * Di = -(Q⁻¹ * Di - Dj * Q⁻¹) := by abel
-    _ = -(Q⁻¹ * G * H * Q⁻¹) := by simp only [hh, Matrix.mul_assoc]
-
-/-- Schur elimination preserves a factored displacement, without identifying
-core row coordinates with core column coordinates. -/
-theorem schur_displacement (Q Di Dj : Matrix ι ι R)
-    (B : Matrix ι κ R) (C : Matrix κ ι R) (D Dz Dy : Matrix κ κ R)
-    (G : Matrix ι ρ R) (H : Matrix ρ ι R)
-    (Gz : Matrix κ ρ R) (Hy : Matrix ρ κ R)
-    (hQ : IsUnit Q.det)
-    (hA : Di * Q - Q * Dj = G * H)
-    (hB : Di * B - B * Dy = G * Hy)
-    (hC : Dz * C - C * Dj = Gz * H)
-    (hD : Dz * D - D * Dy = Gz * Hy) :
-    Dz * (D - C * Q⁻¹ * B) - (D - C * Q⁻¹ * B) * Dy =
-      (Gz - C * Q⁻¹ * G) * (Hy - H * Q⁻¹ * B) := by
-  have hI := inverse_displacement Q Di Dj G H hQ hA
-  have hcross : Dz * (C * Q⁻¹ * B) - (C * Q⁻¹ * B) * Dy =
-      (Dz * C - C * Dj) * Q⁻¹ * B +
-      C * (Dj * Q⁻¹ - Q⁻¹ * Di) * B +
-      C * Q⁻¹ * (Di * B - B * Dy) := by
-    simp only [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_assoc]
-    abel
-  calc
-    Dz * (D - C * Q⁻¹ * B) - (D - C * Q⁻¹ * B) * Dy =
-        (Dz * D - D * Dy) -
-          (Dz * (C * Q⁻¹ * B) - (C * Q⁻¹ * B) * Dy) := by
-      simp only [mul_sub, sub_mul]
-      abel
-    _ = Gz * Hy - ((Gz * H) * Q⁻¹ * B +
-        C * (-(Q⁻¹ * G * H * Q⁻¹)) * B + C * Q⁻¹ * (G * Hy)) := by
-      rw [hcross, hD, hC, hI, hB]
-    _ = (Gz - C * Q⁻¹ * G) * (Hy - H * Q⁻¹ * B) := by
-      simp only [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_neg, Matrix.neg_mul, Matrix.mul_assoc]
-      abel
 
 section Cleared
 

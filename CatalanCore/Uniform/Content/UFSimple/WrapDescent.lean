@@ -36,15 +36,5 @@ theorem dvd_of_local (S : Submonoid R) [IsLocalization S A]
   have h2 := hinj h
   exact hpi.pow_dvd_of_dvd_mul_right k (hS s s.2) ⟨b, h2⟩
 
-/-- Endpoint for a deformed member: descend its ORIGINAL cleared numerator,
-then specialize. No determinant or basis of the generic elimination is
-required to remain a unit after specialization. -/
-theorem specialize_cleared_local [CommRing B] (S : Submonoid R) [IsLocalization S A]
-    (pi : R) (hpi : Prime pi) (hS : ∀ s ∈ S, ¬ pi ∣ s)
-    (phi : R →+* B) (D f : R) (k : ℕ) (x : A)
-    (h : algebraMap R A (D*f) = algebraMap R A pi ^ k * x)
-    (hD : IsUnit (phi D)) : phi pi ^ k ∣ phi f := by
-  have hd := dvd_of_local S pi hpi hS (D*f) k x h
-  simpa only [map_pow] using WrapAlgebra.specialize_cleared phi (pi^k) D f hd hD
 
 end CatalanCore.Uniform.Content.UFSimple.WrapDescent

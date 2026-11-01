@@ -106,25 +106,6 @@ theorem col_node (p r gamma a : ℕ) (hp : 0<p) (hodd : p%2=1) (hg : gamma<p)
     have hb0 : bit p r gamma=0 := by omega
     rw [he,hb0,Nat.sub_zero,one_mul]
 
-theorem row_quotient (p r gamma a : ℕ) (hp : 0<p) (hodd : p%2=1) (hg : gamma<p)
-    (ha0 : r≤a) (ha1 : a<r+2*p) (hc : a%p=gamma) (hrow : (a-r)%2=0) :
-    a/p=count p r gamma+bit p r gamma := by
-  rw [row_node p r gamma a hp hodd hg ha0 ha1 hc hrow]
-  have he : lower p r gamma+bit p r gamma*p=gamma+(count p r gamma+bit p r gamma)*p := by
-    unfold lower
-    ring
-  rw [he,Nat.add_mul_div_right _ _ hp,Nat.div_eq_of_lt hg,zero_add]
-
-theorem col_quotient (p r gamma a : ℕ) (hp : 0<p) (hodd : p%2=1) (hg : gamma<p)
-    (ha0 : r≤a) (ha1 : a<r+2*p) (hc : a%p=gamma) (hcol : (a-r)%2=1) :
-    a/p=count p r gamma+1-bit p r gamma := by
-  rw [col_node p r gamma a hp hodd hg ha0 ha1 hc hcol]
-  have he : lower p r gamma+(1-bit p r gamma)*p=gamma+(count p r gamma+(1-bit p r gamma))*p := by
-    unfold lower
-    ring
-  rw [he,Nat.add_mul_div_right _ _ hp,Nat.div_eq_of_lt hg,zero_add]
-  have := bit_lt p r gamma
-  omega
 
 /-- Inside a fixed common-count cell, odd residue displacement exchanges
 the two original quotient profiles and even displacement preserves them. -/

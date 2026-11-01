@@ -55,21 +55,5 @@ theorem candidate_debit_zero (n k d sigma retained t1 t2 e sigma' retained' : �
     hbudget hsigma hretained
   omega
 
-/-- A credited arc whose length plus the complementary half-border is at
-most `p` contributes no strictly depth-three factor. -/
-theorem no_extra_of_short_arc (p d selected window overlap : ℕ)
-    (hselected : selected ≤ overlap) (hoverlap : overlap ≤ 2 * d)
-    (hwindow : window + d ≤ p) :
-    (selected - d) - (p - (window + (2 * d - overlap))) = 0 := by
-  omega
-
-/-- Half-period arcs give no extra factor. This covers the pole-arc size
-condition used for halves, P6 and both G frames, including odd-prime rounding. -/
-theorem no_extra_of_half_arc (p d selected window overlap : ℕ)
-    (hselected : selected ≤ overlap) (hoverlap : overlap ≤ 2 * d)
-    (hd : 2 * d ≤ p) (hwindow : 2 * window ≤ p + 1) :
-    (selected - d) - (p - (window + (2 * d - overlap))) = 0 := by
-  apply no_extra_of_short_arc p d selected window overlap hselected hoverlap
-  omega
 
 end CatalanCore.Uniform.Content.UFSimple.WrapCount

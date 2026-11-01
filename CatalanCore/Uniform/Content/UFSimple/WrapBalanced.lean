@@ -279,23 +279,6 @@ theorem commonLift_eq_core {κ : Type} [Fintype κ] [DecidableEq κ]
   rw [sLift_core_entry D hN c xs ys hc hx hy]
   by_cases hab : a=b <;> simp [commonLift,Matrix.one_apply,hab]
 
-/-- The raw mixed-fibre lift equals the original matrix entries in the
-scaled gauge, including precisely the original common spectral indices. -/
-theorem mixedLift_eq_actual (D : PoleData Fr p N) (hN : N<p*p)
-    (c : ι → ℕ) (lo hi : ℕ) (hc : ∀ a, c a<N) (hlo : lo<N) (hhi : hi<N) :
-    mixedLift (p:=p) (Fr:=Fr) c lo hi=
-      sLift c (fun _:Unit => lo) (fun _:Unit => hi)
-        (hint_of_poleData D hN hc (fun _ => hlo) (fun _ => hhi)) := by
-  have he : (sConst c (fun _:Unit => lo) (fun _:Unit => hi)
-      (hint_of_poleData D hN hc (fun _ => hlo) (fun _ => hhi))).map Polynomial.C =
-      Matrix.of (fun i j => Polynomial.C (Hybrid.liftQ p ((p:ℚ)^2*
-        Fr.Mn (extendNodes c lo i) (extendNodes c hi j)))) := by
-    apply Matrix.ext
-    intro i j
-    exact congrArg Polynomial.C (sConst_eq_liftQ D hN c (fun _:Unit => lo) (fun _:Unit => hi)
-      hc (fun _ => hlo) (fun _ => hhi) i j)
-  unfold mixedLift sLift
-  rw [he]
 
 /-- Vanishing of the reduced own moment identifies the intrinsic
 own direction modulo p; exact equality of directions is unnecessary. -/

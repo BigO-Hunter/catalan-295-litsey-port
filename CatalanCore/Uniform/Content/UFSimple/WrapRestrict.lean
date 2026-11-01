@@ -126,9 +126,6 @@ theorem colCoords_comp (c : ι → ℕ) (f : τ → ι) (r s l : ℕ)
   rw [← hd]
   cases WrapGeometry.colFullEquiv τ s l hl hls i <;> rfl
 
-/-- Colour-block extraction commutes with arbitrary restriction. -/
-theorem Dmat_submatrix (c : ι → ℕ) (Q : Matrix ι ι (LocRing p)[X]) (f : τ → ι) :
-    Dmat (c ∘ f) (Q.submatrix f f)=(Dmat c Q).submatrix f f := rfl
 
 /-- Untouched mixed-core fibres include all balanced coordinates and
 exactly the undeleted original common coordinates. -/

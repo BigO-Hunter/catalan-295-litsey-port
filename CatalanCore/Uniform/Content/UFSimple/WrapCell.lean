@@ -106,12 +106,6 @@ theorem rows_add_cols (a d t0 tv : ℕ) (ht0 : a≤t0) :
     card_fin_filter d (fun i => t0≤a+2*i ∧ a+2*i≤tv),Nat.add_comm]
   exact card_win_sum a d t0 tv ht0
 
-/-- The actual wrapped support gives exactly the sigma used by the
-complementary closed expression. -/
-theorem sigma_eq (a d t0 tv : ℕ) (ht0 : a≤t0) :
-    (rows a d t0 tv).card+(cols a d t0 tv).card-d=
-      (min (tv+1) (a+2*d)-t0)-d := by
-  rw [rows_add_cols a d t0 tv ht0]
 
 /-- The residue-union count needs no evenness assumption on its start. -/
 theorem residue_union_count (a d w0 tv : ℕ) (hw : tv<w0+p) (hd : 2*d≤p)

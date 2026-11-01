@@ -1,7 +1,9 @@
 module
 
 public import CatalanCore.Uniform.Content.UFSimple.WrapOwnTest
-public import CatalanCore.Uniform.Content.UFSimple.WrapActualLoad
+public import CatalanCore.Uniform.Content.UFSimple.WrapPoleResidue
+public import CatalanCore.Uniform.Content.UFSimple.WrapPoleLoad
+public import CatalanCore.Uniform.Content.Smith.TwoTerm
 
 @[expose] public section
 

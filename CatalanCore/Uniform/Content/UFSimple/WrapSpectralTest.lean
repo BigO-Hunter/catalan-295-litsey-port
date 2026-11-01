@@ -1,6 +1,6 @@
 module
 
-public import CatalanCore.Uniform.Content.UFSimple.WrapArrow
+public import CatalanCore.Uniform.Content.UFSimple.WrapPivot
 public import Mathlib.FieldTheory.RatFunc.AsPolynomial
 
 @[expose] public section
@@ -40,13 +40,5 @@ theorem mixed_det_ne (A : Matrix ι ι K) (B : Matrix ι κ K)
   apply IsFractionRing.injective K[X] (RatFunc K)
   simpa only [map_zero] using hz
 
-/-- The cleared balanced reference makes the whole mixed spectral arrow
-nonzero, with arbitrary independent common-to-balanced couplings. -/
-theorem arrow_det_ne (A : Matrix ι ι K) (B : Matrix ι (κ ⊕ Unit) K)
-    (E : Matrix (κ ⊕ Unit) ι K) (D : Matrix κ κ K) (sigma : κ → K)
-    (hD : D.det≠0) (href : 1-sigma ⬝ᵥ (D⁻¹ *ᵥ 1)≠0) :
-    (Matrix.fromBlocks ((RatFunc.X:RatFunc K) • (1:Matrix ι ι (RatFunc K))+A.map RatFunc.C)
-      (B.map RatFunc.C) (E.map RatFunc.C) ((WrapArrow.arrow D sigma).map RatFunc.C)).det≠0 :=
-  mixed_det_ne A B E _ (WrapArrow.det_arrow_ne D hD sigma href)
 
 end CatalanCore.Uniform.Content.UFSimple.WrapSpectralTest

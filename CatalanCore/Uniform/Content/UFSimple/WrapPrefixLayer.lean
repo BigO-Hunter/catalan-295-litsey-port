@@ -27,27 +27,6 @@ section WindowOnly
 variable {p q o r n e b d shift N : ℕ} [Fact p.Prime]
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-/-- The explicit original prefix window price on any retained common
-minor, including the empty retained set. -/
-theorem window_commonMinor_gle {Fr : Frame} (T : TwoTermData Fr q o)
-    (D : CatalanCore.Arith.Hybrid.Periodic.PoleData Fr p N)
-    (hsq : ∀ t,1≤t → t<N → ¬p^2∣q*t-o)
-    (Jr Jc : Finset (Fin d))
-    (hinj : Function.Injective (Sum.elim
-      (fun z => (WrapPrefixMember.Schur.surplusRow H z:ZMod p))
-      (fun y => (WrapPrefixMember.Schur.surplusCol H y:ZMod p))))
-    (hJr : ∀ z∈Jr,WrapPrefixMember.Schur.surplusRow H z∈Icc H.t0 H.tv)
-    (hJc : ∀ y∈Jc,WrapPrefixMember.Schur.surplusCol H y∈Icc H.t0 H.tv)
-    (S : Finset (Fin r)) :
-    GLE p (2*(r+n*p+e)-(d+WrapCount.gain (Jr.card+Jc.card-d) (p-(H.tv+1-H.t0))))
-      (commonMinorPoly Fr r (n*p+e) S) := by
-  have hh := WrapPrefixClosed.window_price_gle H T D hsq Jr Jc hinj hJr hJc (univ\S)
-  have he := CatalanCore.Uniform.Content.Wire.det_fullN_reindex Fr
-    (fun a:S => (a.1:ℕ)) (WrapPrefixMember.common (univ\S))
-    (keepEquiv S) (fun _ => rfl)
-    (fun i:Fin (n*p+e) => r+2*(i:ℕ)) (fun i:Fin (n*p+e) => r+2*(i:ℕ)+1)
-  rw [he] at hh
-  exact hh
 
 end WindowOnly
 
@@ -74,8 +53,6 @@ def cr1 (_d _a _p w0 w1 : ℕ) : ℕ := w1+1-w0
 /-- The full credit of the existing checker: window plus outside border. -/
 def cr3 (d a p w0 w1 : ℕ) : ℕ := (w1+1-w0)+(2*d-beta3 d a p w0 w1)
 
-theorem closedBound_eq_pb (d a p t0 tv w0 : ℕ) :
-    closedBound d a p t0 tv w0=pb d a p t0 tv (cr3 d a p w0 tv) := rfl
 
 /-- One block-bit candidate in virtual coordinates (`B` the block start). -/
 def cand0 (cr : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ) (d a p B lo hi : ℕ) : ℕ :=

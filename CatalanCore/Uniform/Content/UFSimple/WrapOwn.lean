@@ -215,17 +215,6 @@ noncomputable def commonOwn (c : ι → ℕ) (t : ℕ) (d : GaussLoc p) : GaussL
     (((WrapBalanced.commonLift (p:=p) (Fr:=Fr) c).map (algebraMap _ (GaussLoc p)))⁻¹ *ᵥ
       fun i => ellL p Fr (c i)-d)
 
-/-- If a single edited selected colour changes its source moment, its
-member own moment is nonzero and supplies the first-order kill coupling. -/
-theorem changed_moment_coupling (D : PoleData Fr p N) (hN : N<p*p)
-    (c : ι ⊕ Unit → ℕ) (hc : ∀ i,c i<N) (t : ℕ) (ht : t<N)
-    (hcol : ∀ i,colOf (p:=p) c i=(t : ZMod p)) (hne : c (Sum.inr ())≠t)
-    (d : GaussLoc p) (hfull : res p (commonOwn (Fr:=Fr) c t d)=0)
-    (hchanged : res p (WrapBalanced.commonResponse (p:=p) (Fr:=Fr) c d)≠
-      res p (WrapBalanced.commonResponse (p:=p) (Fr:=Fr) (fun i => c (Sum.inl i)) d)) :
-    res p (commonOwn (Fr:=Fr) (fun i => c (Sum.inl i)) t d)≠0 := by
-  intro hh
-  exact hchanged (single_common_moment D hN c hc t ht hcol hne d hfull hh)
 
 /-- Put any deleted common coordinate last without changing the
 original node values or matrix entries. -/

@@ -1,7 +1,7 @@
 module
 
 public import CatalanLambda.Decay.CauchyDetFull
-public import CatalanCore.Uniform.Content.UFSimple.WrapReference
+public import CatalanCore.Uniform.Content.UFSimple.WrapDisplacement
 
 @[expose] public section
 

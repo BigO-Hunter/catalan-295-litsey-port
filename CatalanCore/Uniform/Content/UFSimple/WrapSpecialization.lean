@@ -65,14 +65,6 @@ theorem mul (hx : Rel phi x x0) (hy : Rel phi y y0) : Rel phi (x*y) (x0*y0) := b
   · simp only [Polynomial.eval_mul,hx0,hy0]
     ring
 
-/-- A cleared inverse of an elementary denominator specializes using
-that elementary denominator's original unit, independently of pivots. -/
-theorem inverse_polynomial (f : R[X]) (hf : IsUnit (f.eval 0))
-    (u : WrapParameter.Extension phi)
-    (hu : algebraMap R[X] (WrapParameter.Extension phi) f*u=1) :
-    Rel phi u (Ring.inverse (f.eval 0)) := by
-  refine ⟨1,f,hf,by simpa using hu,?_⟩
-  simp only [Polynomial.eval_one,Ring.mul_inverse_cancel _ hf]
 
 /-- Original scalar divisibility follows after descending the original
 cleared numerator. Only its original elementary denominator is canceled. -/

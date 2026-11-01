@@ -1,7 +1,7 @@
 module
 
+public import CatalanCore.Uniform.Content.UFSimple.WrapPivot
 public import CatalanCore.Uniform.Content.UFSimple.WrapBalancedTest
-public import CatalanCore.Uniform.Content.UFSimple.WrapArrow
 
 @[expose] public section
 

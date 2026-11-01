@@ -78,8 +78,6 @@ theorem weight_eq : M.weight=WrapResponse.mixedV Fr M.row M.col M.matrix.toBlock
 
 theorem rep_lower : r+2*l-1≤M.rep := by have := W.t0_lower; have := M.hrep; omega
 
-theorem rep_bound : M.rep<N := by
-  have := M.hrepp; have := W.hp; have := W.hl; have := W.hls; have := W.hsize; omega
 
 theorem row_bound (i : WrapKeep.Keep M.deleted ⊕ Fin (2*l-1)) : M.row i<N :=
   WrapCoupling.rowCoords_lt M.common r s l W.hl W.hls M.common_bound W.xs_bound W.ys_bound (Sum.inl i)

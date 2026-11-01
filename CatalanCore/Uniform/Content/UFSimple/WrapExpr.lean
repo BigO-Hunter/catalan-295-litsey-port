@@ -69,13 +69,5 @@ theorem evalN_tWrap (r p m k n : ℕ) :
     (tWrap n).evalN r p m k = price r p m k n := by
   simp only [tWrap, Expr.evalN, evalN_candidate, price]
 
-/-- Complementary dimension never exceeds the original border dimension. -/
-theorem dim_le (m p : ℕ) : dim m p ≤ m :=
-  (min_le_left _ _).trans (Nat.mod_le _ _)
-
-theorem virtual_add_dim (r m p : ℕ) : virtual r m p + dim m p = r+m := by
-  have := dim_le m p
-  unfold virtual
-  omega
 
 end CatalanCore.Uniform.Content.UFSimple.WrapExpr

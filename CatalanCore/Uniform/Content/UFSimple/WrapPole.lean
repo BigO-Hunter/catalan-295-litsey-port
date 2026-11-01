@@ -59,17 +59,6 @@ noncomputable def quotient (a : GaussLoc p) (ha : res p a=0) : GaussLoc p :=
 theorem quotient_spec (a : GaussLoc p) (ha : res p a=0) : a=piL p*quotient p a ha :=
   Classical.choose_spec ((res_eq_zero_iff p a).mp ha)
 
-theorem denominator_factor (a b : GaussLoc p) (ha : res p a=0) :
-    denominator p a b=WrapDeform.uniformizer p*affine p (quotient p a ha) b := by
-  have hf : Polynomial.C a+Polynomial.C (piL p)*Polynomial.C b*Polynomial.X=
-      Polynomial.C (piL p)*(Polynomial.C (quotient p a ha)+Polynomial.C b*Polynomial.X) := by
-    calc
-      _=Polynomial.C (piL p*quotient p a ha)+Polynomial.C (piL p)*Polynomial.C b*Polynomial.X :=
-        congrArg (fun z : GaussLoc p => Polynomial.C z+Polynomial.C (piL p)*Polynomial.C b*Polynomial.X)
-          (quotient_spec p a ha)
-      _=_ := by rw [map_mul]; ring
-  change WrapDeform.embed p _=WrapDeform.embed p (Polynomial.C (piL p))*WrapDeform.embed p _
-  rw [← (WrapDeform.embed p).map_mul,hf]
 
 open Classical in
 /-- pi divided by the deformed denominator, expressed integrally. -/
@@ -77,23 +66,6 @@ noncomputable def normalizedInverse (a b : GaussLoc p) : WrapDeform.Extension p 
   if ha : res p a=0 then Ring.inverse (affine p (quotient p a ha) b)
   else WrapDeform.uniformizer p*Ring.inverse (denominator p a b)
 
-/-- The normalized reciprocal identity uses only the original residue
-case and a nonzero slope, with no specialization of an inverse pivot. -/
-theorem denominator_mul_normalized (a b : GaussLoc p) (hb : res p b≠0) :
-    denominator p a b*normalizedInverse p a b=WrapDeform.uniformizer p := by
-  classical
-  by_cases ha : res p a=0
-  · rw [normalizedInverse,dif_pos ha,denominator_factor p a b ha,mul_assoc,
-      Ring.mul_inverse_cancel _ (affine_unit p _ b hb),mul_one]
-  · rw [normalizedInverse,dif_neg ha]
-    calc
-      _=WrapDeform.uniformizer p*(denominator p a b*Ring.inverse (denominator p a b)) := by ring
-      _=_ := by rw [Ring.mul_inverse_cancel _ (denominator_unit p a b ha),mul_one]
-
-/-- Squaring yields the integral normalization for the derivative load. -/
-theorem denominator_sq_mul_normalized_sq (a b : GaussLoc p) (hb : res p b≠0) :
-    denominator p a b^2*normalizedInverse p a b^2=WrapDeform.uniformizer p^2 := by
-  rw [← mul_pow,denominator_mul_normalized p a b hb]
 
 theorem normalized_nonpole_residue (a b : GaussLoc p) (ha : res p a≠0) :
     WrapDeform.residue p (normalizedInverse p a b)=0 := by

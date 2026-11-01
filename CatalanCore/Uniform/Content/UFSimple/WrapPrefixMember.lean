@@ -91,27 +91,8 @@ end Restriction
 section Single
 variable {K ι : Type*} [Field K] [Fintype ι] [DecidableEq ι]
 
-/-- The already-established mixed single-deletion identity gives zero
-new source weight whenever the remaining own coupling vanishes. -/
-theorem single_edit_weight (Q : Matrix (ι ⊕ Unit) (ι ⊕ Unit) K)
-    (hQ : IsUnit Q.det) (hminor : IsUnit Q.toBlocks₁₁.det)
-    (tR tC LR LC sigmaR : ι ⊕ Unit → K) (Lt direction weightFull weightMinor : K)
-    (hdisp : ∀ i j,(tC j-tR i)*Q i j=LC j-LR i)
-    (hsigma : ∀ i,tC i*sigmaR i=LC i-Lt)
-    (hfull : sigmaR ⬝ᵥ Q⁻¹ *ᵥ (fun i => LR i-direction)=Lt-direction)
-    (hminorSource : (fun i => sigmaR (Sum.inl i)) ⬝ᵥ
-      Q.toBlocks₁₁⁻¹ *ᵥ (fun i => LR (Sum.inl i)-direction)=Lt-direction)
-    (hB : 1-∑ j,(Qᵀ⁻¹ *ᵥ sigmaR) j≠0) (hzero : weightFull=0)
-    (hweight : weightMinor=weightFull+
-      (fun i => LC i-direction) ⬝ᵥ Q⁻¹ *ᵥ (fun i => LR i-direction)-
-      (fun i => LC (Sum.inl i)-direction) ⬝ᵥ
-        Q.toBlocks₁₁⁻¹ *ᵥ (fun i => LR (Sum.inl i)-direction)) : weightMinor=0 := by
-  have hm := WrapMixedDeletion.single_deletion_moment Q hQ hminor tR tC LR LC sigmaR Lt direction
-    hdisp hsigma hfull hminorSource hB
-  rw [hweight,hm,hzero,zero_add,sub_self]
 
 end Single
-
 
 
 /-- Rewrite the unshifted row moment as the independently shifted own
@@ -170,7 +151,6 @@ theorem coordinate_quotient (p a b : ℕ) (hmod : a%p=b%p) :
   linear_combination he
 
 end Quotients
-
 
 
 section SingleReindex
@@ -1779,19 +1759,6 @@ theorem single_retained_excluded (K : Finset (Fin r)) (s u : GaussLoc p)
       a ha.1 (ha.2.trans hyg.symm) (fun i hi hcol => honly i hi (hcol.trans hyg)) hcoupling
     exact hwr (by simpa only [hyg] using hw)
 
-/-- The actual retained source grows only at multiply edited selected
-colours and edited outside colours; both are paid by the deletion budget. -/
-theorem retained_count (K : Finset (Fin r)) (s u : GaussLoc p)
-    (hs : res p s=(RatFunc.X:RatFunc (ZMod p))) (hu : res p u≠0) (huc : WrapConstant.Has p u)
-    (Jr Jc : Finset (Fin d)) (hJr : ∀ z∈Jr,Schur.surplusRow H z∈Icc H.t0 H.tv)
-    (hJc : ∀ y∈Jc,Schur.surplusCol H y∈Icc H.t0 H.tv) :
-    (retained H K s u).card≤(fullRetained H s u).card+
-      (WrapDamage.multiple K (fun i:Fin r => (i:ZMod p)) (selectedPoints H Jr Jc)).card+
-      (WrapDamage.outside K (fun i:Fin r => (i:ZMod p)) (selectedPoints H Jr Jc)).card :=
-  WrapDamage.retained_count K (fun i:Fin r => (i:ZMod p)) (selectedPoints H Jr Jc)
-    (fullRetained H s u) (retained H K s u)
-    (retained_quiet H K s u hs hu huc)
-    (single_retained_excluded H K s u hs hu huc Jr Jc hJr hJc)
 
 end SingleSupport
 

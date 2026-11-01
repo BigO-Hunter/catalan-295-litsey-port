@@ -362,59 +362,6 @@ theorem append_core (q o r k n gamma : ℕ) (s u : GaussLoc p) :
     simp [appendEquiv,WrapPrefixType.core,WrapFibreCore.core,
       WrapPrefixType.rows,WrapPrefixType.cols,Matrix.fromBlocks]
 
-/-- At an own-source zero, adding the actual last balanced pair
-preserves the independently loaded fibre moment. -/
-theorem append_moment (q o r k n gamma : ℕ) (s u : GaussLoc p)
-    (direction : WrapDeform.Extension p)
-    (hQ : IsUnit (WrapPrefixType.core p q o r k n gamma s u).det)
-    (hM : IsUnit (WrapPrefixType.core p q o r k (n+1) gamma s u).det)
-    (hz : WrapPrefixWindow.rowOwn p q o r k n gamma
-      (WrapJointProfile.rowProfile p r gamma n) s u direction=0) :
-    WrapPrefixType.moment p q o r k (n+1) gamma s u direction=
-      WrapPrefixType.moment p q o r k n gamma s u direction := by
-  classical
-  let Q := WrapPrefixType.core p q o r k n gamma s u
-  let uR := fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-    (WrapPrefixType.rows p r k n gamma i)-direction
-  let uC := fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-    (WrapPrefixType.cols p r k n gamma i)-direction
-  let sx := fun j => WrapDeformedEntry.entry p q o u
-    (WrapJointProfile.rowProfile p r gamma n) (WrapPrefixType.cols p r k n gamma j)
-  let sy := fun i => WrapDeformedEntry.entry p q o u
-    (WrapPrefixType.rows p r k n gamma i) (WrapJointProfile.colProfile p r gamma n)
-  let zx := WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-    (WrapJointProfile.rowProfile p r gamma n)-direction
-  let zy := WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-    (WrapJointProfile.colProfile p r gamma n)-direction
-  have hsource : sx ⬝ᵥ Q⁻¹ *ᵥ uR=zx := by
-    exact (sub_eq_zero.mp hz).symm
-  have hb := append_core (p:=p) q o r k n gamma s u
-  have hunit : IsUnit ((WrapPrefixType.core p q o r k (n+1) gamma s u).submatrix
-      (appendEquiv k n) (appendEquiv k n)).det := by
-    rw [Matrix.det_submatrix_equiv_self]
-    exact hM
-  rw [hb] at hunit
-  have hm := WrapAlgebra.mixedBorder_response_mixed Q hQ uR uC sx sy
-    (WrapDeformedEntry.entry p q o u (WrapJointProfile.rowProfile p r gamma n)
-      (WrapJointProfile.colProfile p r gamma n)) zx zy hsource hunit
-  have he := WrapTransport.response_reindex
-    (WrapPrefixType.core p q o r k (n+1) gamma s u) (appendEquiv k n) (appendEquiv k n)
-    (fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-      (WrapPrefixType.rows p r k (n+1) gamma i)-direction)
-    (fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-      (WrapPrefixType.cols p r k (n+1) gamma i)-direction)
-  have hr : (fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-      (WrapPrefixType.rows p r k (n+1) gamma i)-direction) ∘ appendEquiv k n=
-      Sum.elim uR (fun _:Unit => zx) := by
-    funext i
-    rcases i with (i|i)|i <;> rfl
-  have hc : (fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o
-      (WrapPrefixType.cols p r k (n+1) gamma i)-direction) ∘ appendEquiv k n=
-      Sum.elim uC (fun _:Unit => zy) := by
-    funext i
-    rcases i with (i|i)|i <;> rfl
-  rw [hr,hc,hb] at he
-  exact congrArg (WrapDeform.residue p) (he.symm.trans hm)
 
 /-- Appending the actual pair only needs the transported own-source zero modulo p. -/
 theorem append_moment_mod (q o r k n gamma : ℕ) (s u : GaussLoc p)
@@ -834,27 +781,6 @@ theorem translated_own_source (q o t delta : ℕ) (u : GaussLoc p)
     WrapDeform.residue p ((fun i => WrapDeformedEntry.entry p q o u t (cols i)) ⬝ᵥ Q0⁻¹ *ᵥ
       (fun i => WrapOwnCore.constants p u*WrapEntryRelation.load p q o (rows i)-direction))) ht
 
-/-- The virtual own reference has the original nonzero residue. -/
-theorem translated_reference (q o t delta : ℕ) (u : GaussLoc p)
-    (rows cols : α → ℕ) (P : Matrix α α (WrapDeform.Extension p))
-    (hr : ∀ i,(rows i:ZMod p)=(t:ZMod p))
-    (hc : ∀ i,(cols i:ZMod p)=(t:ZMod p))
-    (hw : ∀ h∈Icc 1 delta,res p ((t+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (t+h))≠0)
-    (hQ : IsUnit (Matrix.of (fun i j => WrapDeformedEntry.entry p q o u (rows i) (cols j))+P).det) :
-    WrapDeform.residue p (1-
-      (fun i => WrapDeformedEntry.entry p q o u (t+delta) (cols i+delta)) ⬝ᵥ
-      (Matrix.of (fun i j => WrapDeformedEntry.entry p q o u (rows i+delta) (cols j+delta))+P)⁻¹ *ᵥ 1)=
-    WrapDeform.residue p (1-
-      (fun i => WrapDeformedEntry.entry p q o u t (cols i)) ⬝ᵥ
-      (Matrix.of (fun i j => WrapDeformedEntry.entry p q o u (rows i) (cols j))+P)⁻¹ *ᵥ 1) := by
-  let Q0 := Matrix.of (fun i j => WrapDeformedEntry.entry p q o u (rows i) (cols j))+P
-  let Q1 := Matrix.of (fun i j => WrapDeformedEntry.entry p q o u (rows i+delta) (cols j+delta))+P
-  have hm : Q1.map (WrapDeform.residue p)=Q0.map (WrapDeform.residue p) :=
-    translated_matrix_map q o t delta u rows cols P hr hc hw
-  exact WrapPrefixType.reference_map_congr (WrapDeform.residue p) Q1 Q0
-    (unit_of_same_reduction Q0 Q1 hQ hm) hQ _ _ hm
-    (fun i => WrapPrefixType.entry_residue_shift p q o t _ t delta u rfl (hc i) hw)
 
 end VirtualTranslation
 
@@ -1110,75 +1036,6 @@ theorem cut_response (q o gamma k n : ℕ) (s u : GaussLoc p)
   rw [hrow] at href
   exact hg.trans (congrArg (WrapDeform.residue p) href)
 
-/-- Lower-count row profile in the cut ordering. -/
-theorem lower_cut_rows (r k n gamma : ℕ)
-    (hk : WrapJointProfile.count p r gamma=k) (hb : WrapJointProfile.bit p r gamma=0) :
-    WrapPrefixType.rows p r k (n+1) gamma=Sum.elim
-      (fun i:Fin k => gamma+(i:ℕ)*p) (fun i:Fin (n+1) => gamma+(k+2*(i:ℕ))*p) := by
-  funext i
-  cases i with
-  | inl i => rfl
-  | inr i =>
-    simp only [WrapPrefixType.rows,Sum.elim_inr,WrapJointProfile.rowProfile,WrapJointProfile.lower,hk,hb]
-    ring
-
-/-- Lower-count column profile in the independent cut ordering. -/
-theorem lower_cut_cols (r k n gamma : ℕ)
-    (hk : WrapJointProfile.count p r gamma=k) (hb : WrapJointProfile.bit p r gamma=0) :
-    WrapPrefixType.cols p r k (n+1) gamma=Sum.elim
-      (fun i:Fin k => gamma+(i:ℕ)*p) (fun i:Fin (n+1) => gamma+(k+2*(i:ℕ)+1)*p) := by
-  funext i
-  cases i with
-  | inl i => rfl
-  | inr i =>
-    simp only [WrapPrefixType.cols,Sum.elim_inr,WrapJointProfile.colProfile,WrapJointProfile.lower,hk,hb]
-    ring
-
-/-- Upper-count reference rows after the common-count cut. -/
-theorem upper_cut_rows (r k n gamma : ℕ)
-    (hk : WrapJointProfile.count p r gamma=k+1) (hb : WrapJointProfile.bit p r gamma=1) :
-    WrapPrefixType.rows p r (k+1) n gamma=Sum.elim
-      (fun i:Fin (k+1) => gamma+(i:ℕ)*p) (fun i:Fin n => gamma+(k+2+2*(i:ℕ))*p) := by
-  funext i
-  cases i with
-  | inl i => rfl
-  | inr i =>
-    simp only [WrapPrefixType.rows,Sum.elim_inr,WrapJointProfile.rowProfile,WrapJointProfile.lower,hk,hb]
-    ring
-
-/-- Upper-count reference columns after the common-count cut. -/
-theorem upper_cut_cols (r k n gamma : ℕ)
-    (hk : WrapJointProfile.count p r gamma=k+1) (hb : WrapJointProfile.bit p r gamma=1) :
-    WrapPrefixType.cols p r (k+1) n gamma=Sum.elim
-      (fun i:Fin (k+1) => gamma+(i:ℕ)*p) (fun i:Fin n => gamma+(k+1+2*(i:ℕ))*p) := by
-  funext i
-  cases i with
-  | inl i => rfl
-  | inr i =>
-    simp only [WrapPrefixType.cols,Sum.elim_inr,WrapJointProfile.colProfile,WrapJointProfile.lower,hk,hb]
-    ring
-
-/-- The lower cut matrix is the original canonical mixed profile. -/
-theorem lower_cut_core (q o r k n gamma : ℕ) (s u : GaussLoc p)
-    (hk : WrapJointProfile.count p r gamma=k) (hb : WrapJointProfile.bit p r gamma=0) :
-    WrapPrefixType.core p q o r k (n+1) gamma s u=lowerCutCore (p:=p) q o gamma k n s u := by
-  ext i j
-  simp only [WrapPrefixType.core,lowerCutCore,WrapFibreCore.core,Matrix.add_apply,Matrix.of_apply]
-  congr 1
-  change WrapDeformedEntry.entry p q o u (WrapPrefixType.rows p r k (n+1) gamma i)
-      (WrapPrefixType.cols p r k (n+1) gamma j)=_
-  rw [lower_cut_rows (p:=p) r k n gamma hk hb,lower_cut_cols (p:=p) r k n gamma hk hb]
-
-/-- The upper cut matrix preserves the original common spectral nodes. -/
-theorem upper_cut_core (q o r k n gamma : ℕ) (s u : GaussLoc p)
-    (hk : WrapJointProfile.count p r gamma=k+1) (hb : WrapJointProfile.bit p r gamma=1) :
-    WrapPrefixType.core p q o r (k+1) n gamma s u=upperCutCore (p:=p) q o gamma k n s u := by
-  ext i j
-  simp only [WrapPrefixType.core,upperCutCore,WrapFibreCore.core,Matrix.add_apply,Matrix.of_apply]
-  congr 1
-  change WrapDeformedEntry.entry p q o u (WrapPrefixType.rows p r (k+1) n gamma i)
-      (WrapPrefixType.cols p r (k+1) n gamma j)=_
-  rw [upper_cut_rows (p:=p) r k n gamma hk hb,upper_cut_cols (p:=p) r k n gamma hk hb]
 
 /-- Lower-count reference before its top-extension pair. -/
 noncomputable def baseCutCore (q o gamma k n : ℕ) (s u : GaussLoc p) :=
@@ -1401,14 +1258,6 @@ theorem virtual_count (p r n b gamma : ℕ) (hp : 0<p) (hg : gamma<p) (hbp : b�
     count_add_residual p r gamma b hp hg hbp]
   omega
 
-/-- The two virtual common-count cases have exactly the four actual
-profile shapes used by the mixed-border and column-replacement steps. -/
-theorem profile_count_cases (old target n full targetFull bit : ℕ)
-    (hbit : bit≤1) (hanchor : full=old+n) (htarget : targetFull=target+n+bit)
-    (hcell : targetFull=full ∨ targetFull=full+1) :
-    (bit=0 ∧ target=old) ∨ (bit=1 ∧ target+1=old) ∨
-      (bit=0 ∧ target=old+1) ∨ (bit=1 ∧ target=old) := by
-  omega
 
 end ProfileArithmetic
 
@@ -1607,10 +1456,6 @@ end ActualProfiles
 
 section VirtualProfile
 
-theorem profile_entry (q o k n gamma bit : ℕ) (s u : GaussLoc p) (i j : Fin k ⊕ Fin n) :
-    profileCore (p:=p) q o k n gamma bit s u i j=
-      WrapDeformedEntry.entry p q o u (profileRows p k n gamma bit i) (profileCols p k n gamma bit j)+
-        WrapPrefixType.spectral p k n s i j := rfl
 
 theorem profile_as_entries (q o k n gamma bit : ℕ) (s u : GaussLoc p) :
     profileCore (p:=p) q o k n gamma bit s u=
@@ -1823,14 +1668,6 @@ theorem profile_row_prefix (q o r k n gamma bit : ℕ) (s u : GaussLoc p)
   rw [profile_core_eq q o r k n gamma bit s u hk hb,
     profile_rows_eq r k n gamma bit hk hb,profile_cols_eq r k n gamma bit hk hb]
 
-theorem profile_col_prefix (q o r k n gamma bit : ℕ) (s u : GaussLoc p)
-    (hk : WrapJointProfile.count p r gamma=k) (hb : WrapJointProfile.bit p r gamma=bit)
-    (direction : WrapDeform.Extension p) :
-    profileColOwn (p:=p) q o k n gamma bit s u direction=
-      WrapPrefixWindow.colOwn p q o r k n gamma (gamma+(k+2*n)*p) s u direction := by
-  unfold profileColOwn WrapPrefixWindow.colOwn
-  rw [profile_core_eq q o r k n gamma bit s u hk hb,
-    profile_rows_eq r k n gamma bit hk hb,profile_cols_eq r k n gamma bit hk hb]
 
 theorem profile_fake_count (k gamma : ℕ) (hg : gamma<p) :
     WrapJointProfile.count p (gamma+k*p) gamma=k :=
@@ -2445,38 +2282,6 @@ theorem cauchyWithOnes_det_ne (x : Fin n → K) (y : Fin (n+1) → K)
   have hu := Matrix.mulVec_injective_iff_isUnit.mp hinj
   exact ((Matrix.isUnit_iff_isUnit_det M).mp hu).ne_zero
 
-/-- A distinct zone appended to the row nodes supplies the square
-Cauchy factor in the central-threshold test. -/
-theorem cauchy_zone_nodes_injective (x : Fin n → K) (t : K)
-    (hx : Function.Injective x) (ht : ∀ i,x i≠t) :
-    Function.Injective (Fin.lastCases t x : Fin (n+1) → K) := by
-  intro i j he
-  rcases Fin.eq_castSucc_or_eq_last i with ⟨i0,rfl⟩|rfl <;>
-    rcases Fin.eq_castSucc_or_eq_last j with ⟨j0,rfl⟩|rfl
-  · exact congrArg Fin.castSucc (hx (by simpa using he))
-  · exact False.elim (ht i0 (by simpa using he))
-  · exact False.elim (ht j0 (by simpa using he.symm))
-  · rfl
-
-/-- Cleared own-source test matrix with n+1 central poles. Its two
-factors are the square Cauchy block and the normalized rectangular one. -/
-noncomputable def centralPotentialArrow (x y : Fin n → K) (z : Fin (n+1) → K) (t : K) :
-    Matrix (Fin (n+1)) (Fin (n+1)) K :=
-  -(WrapCauchy.matrix (Fin.lastCases t x) z)*((cauchyWithOnes y z)ᵀ)
-
-theorem centralPotentialArrow_det_ne (x y : Fin n → K) (z : Fin (n+1) → K) (t : K)
-    (hx : Function.Injective x) (hy : Function.Injective y) (hz : Function.Injective z)
-    (hxt : ∀ i,x i≠t) (hxz : ∀ i j,x i≠z j) (hyz : ∀ i j,y i≠z j) (htz : ∀ j,t≠z j) :
-    (centralPotentialArrow x y z t).det≠0 := by
-  have hA := WrapCauchy.det_ne (Fin.lastCases t x) z (cauchy_zone_nodes_injective x t hx hxt) hz (by
-    intro i j
-    refine Fin.lastCases ?_ (fun a => ?_) i
-    · simpa only [Fin.lastCases_last] using htz j
-    · simpa only [Fin.lastCases_castSucc] using hxz a j)
-  have hB := cauchyWithOnes_det_ne y z hy hz hyz
-  unfold centralPotentialArrow
-  rw [Matrix.det_mul,Matrix.det_neg,Matrix.det_transpose]
-  exact mul_ne_zero (mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) hA) hB
 
 /-- A rectangular Cauchy system with a constant column forces its
 constant unknown to equal the constant right-hand side. This is the
@@ -2563,49 +2368,6 @@ theorem one_div_reverse (a b : K) : 1/(b-a)=-(1/(a-b)) := by
   simpa only [one_div] using
     (congrArg (fun z:K => z⁻¹) (show b-a=-(a-b) by ring)).trans inv_neg
 
-/-- At a central threshold, independent low/high row and column
-partitions give exactly the two square Cauchy blocks from the handoff. -/
-theorem step_block_eq {l h : ℕ} (cut : ℕ)
-    (xL yH : Fin l → ℕ) (xH yL : Fin h → ℕ)
-    (hxL : ∀ i,xL i<cut) (hyH : ∀ i,cut≤yH i)
-    (hxH : ∀ i,cut≤xH i) (hyL : ∀ i,yL i<cut) :
-    (Matrix.of fun i j => stepEntry (K:=K) cut (Sum.elim xL xH i) (Sum.elim yH yL j))=
-      Matrix.fromBlocks
-        (-(WrapCauchy.matrix (fun i => (xL i:K)) (fun j => (yH j:K)))) 0 0
-        (WrapCauchy.matrix (fun i => (xH i:K)) (fun j => (yL j:K))) := by
-  classical
-  ext i j
-  rcases i with i|i <;> rcases j with j|j
-  · simp only [Matrix.of_apply,Sum.elim_inl,Matrix.fromBlocks_apply₁₁,Matrix.neg_apply,
-      WrapCauchy.matrix,stepEntry,stepValue,if_pos (hxL i),if_neg (not_lt_of_ge (hyH j)),
-      sub_zero]
-    exact one_div_reverse _ _
-  · simp only [Matrix.of_apply,Sum.elim_inl,Sum.elim_inr,Matrix.fromBlocks_apply₁₂,
-      Matrix.zero_apply,stepEntry,stepValue,if_pos (hxL i),if_pos (hyL j),sub_self,zero_div]
-  · simp only [Matrix.of_apply,Sum.elim_inl,Sum.elim_inr,Matrix.fromBlocks_apply₂₁,
-      Matrix.zero_apply,stepEntry,stepValue,if_neg (not_lt_of_ge (hxH i)),
-      if_neg (not_lt_of_ge (hyH j)),sub_self,zero_div]
-  · simp only [Matrix.of_apply,Sum.elim_inr,Matrix.fromBlocks_apply₂₂,WrapCauchy.matrix,
-      stepEntry,stepValue,if_neg (not_lt_of_ge (hxH i)),if_pos (hyL j),zero_sub,neg_div]
-    rw [one_div_reverse,neg_neg]
-
-/-- The original central-threshold step core is nonsingular whenever
-its actual quotient coordinates supply distinct Cauchy nodes. -/
-theorem step_block_det_ne {l h : ℕ} (cut : ℕ)
-    (xL yH : Fin l → ℕ) (xH yL : Fin h → ℕ)
-    (hxL : ∀ i,xL i<cut) (hyH : ∀ i,cut≤yH i)
-    (hxH : ∀ i,cut≤xH i) (hyL : ∀ i,yL i<cut)
-    (hxiL : Function.Injective (fun i => (xL i:K)))
-    (hyiH : Function.Injective (fun i => (yH i:K)))
-    (hxiH : Function.Injective (fun i => (xH i:K)))
-    (hyiL : Function.Injective (fun i => (yL i:K)))
-    (hxy0 : ∀ i j,(xL i:K)≠(yH j:K)) (hxy1 : ∀ i j,(xH i:K)≠(yL j:K)) :
-    (Matrix.of fun i j => stepEntry (K:=K) cut (Sum.elim xL xH i) (Sum.elim yH yL j)).det≠0 := by
-  rw [step_block_eq cut xL yH xH yL hxL hyH hxH hyL,
-    Matrix.det_fromBlocks_zero₂₁,Matrix.det_neg]
-  exact mul_ne_zero
-    (mul_ne_zero (pow_ne_zero _ (neg_ne_zero.mpr one_ne_zero)) (WrapCauchy.det_ne _ _ hxiL hyiH hxy0))
-    (WrapCauchy.det_ne _ _ hxiH hyiL hxy1)
 
 /-- Central step system when the HIGH rectangular block has one
 extra row. The final column carries the normalized direction. -/
@@ -2797,15 +2559,6 @@ end StepLoewner
 section SpectralOrder
 variable {K : Type*} [Field K]
 
-/-- Move the ORIGINAL spectral coordinate past the two pole coordinates
-inside cleared polynomials. Both swaps are the existing polynomial swaps. -/
-noncomputable def spectralLast : K[X][X][X] →+* K[X][X][X] :=
-  (Polynomial.Bivariate.swap (R:=K[X])).toRingHom.comp
-    (Polynomial.mapRingHom (Polynomial.Bivariate.swap (R:=K)).toRingHom)
-
-theorem spectralLast_injective : Function.Injective (spectralLast (K:=K)) :=
-  (Polynomial.Bivariate.swap (R:=K[X])).injective.comp
-    (Polynomial.map_injective _ (Polynomial.Bivariate.swap (R:=K)).injective)
 
 /-- The ORIGINAL cleared three-variable expression embeds faithfully in
 the actual nested residue field, without evaluating a generic pivot. -/
@@ -2813,1096 +2566,41 @@ noncomputable def embedThree : K[X][X][X] →+* RatFunc (RatFunc (RatFunc K)) :=
   (algebraMap (RatFunc (RatFunc K))[X] (RatFunc (RatFunc (RatFunc K)))).comp
     (Polynomial.mapRingHom (WrapBivariate.embed (K:=K)))
 
-theorem embedThree_injective : Function.Injective (embedThree (K:=K)) :=
-  (IsFractionRing.injective (RatFunc (RatFunc K))[X] (RatFunc (RatFunc (RatFunc K)))).comp
-    (Polynomial.map_injective _ WrapBivariate.embed_injective)
-
-/-- A nonzero spectral-leading polynomial proves nonvanishing of the
-ORIGINAL field expression after returning to its original variable order. -/
-theorem embedThree_ne_of_spectralLast (F : K[X][X][X])
-    (hF : spectralLast F≠0) : embedThree F≠0 := by
-  intro hz
-  have hzero : F=0 := embedThree_injective (by simpa only [map_zero] using hz)
-  exact hF (by rw [hzero,map_zero])
-
-theorem spectralLast_original_spectral :
-    spectralLast (K:=K) (Polynomial.C (Polynomial.C (Polynomial.X:K[X])))=
-      (Polynomial.X:K[X][X][X]) := by
-  simp [spectralLast,Polynomial.Bivariate.swap_C,Polynomial.Bivariate.swap_X,Polynomial.Bivariate.swap_Y]
-
-theorem spectralLast_integer_pole :
-    spectralLast (K:=K) (Polynomial.X:K[X][X][X])=
-      Polynomial.C (Polynomial.X:K[X][X]) := by
-  simp [spectralLast,Polynomial.Bivariate.swap_X,Polynomial.Bivariate.swap_Y]
-
-theorem spectralLast_fractional_pole :
-    spectralLast (K:=K) (Polynomial.C (Polynomial.X:K[X][X]))=
-      Polynomial.C (Polynomial.C (Polynomial.X:K[X])) := by
-  simp [spectralLast,Polynomial.Bivariate.swap_C,Polynomial.Bivariate.swap_X,Polynomial.Bivariate.swap_Y]
 
 end SpectralOrder
 
-noncomputable def twoHarmonicLoad {K : Type*} [Field K]
-    (integer fractional : K) (epsilon : Bool) (j : ℕ) : K :=
-  (∑ h∈range j,(1:K)/(1+integer+(h:K)))-
-    ∑ h∈range (j+if epsilon then 1 else 0),(1:K)/(fractional+(h:K))
-
-theorem twoHarmonicLoad_zero_integer {K : Type*} [Field K]
-    (fractional : K) (epsilon : Bool) (j : ℕ) :
-    twoHarmonicLoad (0:K) fractional epsilon j=WrapHarmonic.load fractional epsilon j := by
-  simp only [twoHarmonicLoad,WrapHarmonic.load,add_zero]
 
 theorem rational_div_eq_mul_inv {S : Type*} [CommRing S] [IsDomain S]
     (a b : RatFunc S) : a/b=a*b⁻¹ := div_eq_mul_inv a b
 
-theorem rational_one_div {S : Type*} [CommRing S] [IsDomain S]
-    (a : RatFunc S) : (1:RatFunc S)/a=a⁻¹ := one_div a
-
-theorem rational_div_one {S : Type*} [CommRing S] [IsDomain S]
-    (a : RatFunc S) : a/(1:RatFunc S)=a := div_one a
 
 section TwoParameterDescent
 variable {R K : Type*} [CommRing R] [IsDomain R] [Field K]
 variable (phi : R →+* K)
 
-local instance firstParameterDomain : IsDomain (WrapParameter.Extension phi) :=
-  WrapPrefixSchur.parameter_domain phi
-
-/-- Faithful original polynomial representation with two independent
-pole parameters. The original spectral variable stays in R. -/
-noncomputable def bivariateParameterEmbed : R[X][X] →+*
-    WrapParameter.Extension (WrapParameter.residue phi) :=
-  (algebraMap (WrapParameter.Extension phi)[X]
-    (WrapParameter.Extension (WrapParameter.residue phi))).comp
-      (Polynomial.mapRingHom (algebraMap R[X] (WrapParameter.Extension phi)))
-
-noncomputable def secondParameterUniformizer (pi : R) :=
-  WrapParameter.uniformizer (WrapParameter.residue phi) (WrapParameter.uniformizer phi pi)
-
-/-- An original specialization-unit polynomial is a generic unit.
-This does not assert that a generic pivot survives specialization. -/
-theorem original_denominator_unit (D : R[X]) (hD : IsUnit (D.eval 0)) :
-    IsUnit (algebraMap R[X] (WrapParameter.Extension phi) D) := by
-  apply WrapParameter.unit_of_poly_ne phi
-  intro hz
-  have hm : D.map phi=0 := by
-    apply IsFractionRing.injective K[X] (RatFunc K)
-    change algebraMap K[X] (RatFunc K) (D.map phi)=0 at hz
-    simpa only [map_zero] using hz
-  have hc := congrArg (fun f:K[X] => f.coeff 0) hm
-  simp only [Polynomial.coeff_map,Polynomial.coeff_zero] at hc
-  have hu : IsUnit (D.coeff 0) := by simpa only [←Polynomial.coeff_zero_eq_eval_zero] using hD
-  exact (hu.map phi).ne_zero hc
-
-/-- The ORIGINAL D(0,0) unit already makes its generic two-parameter
-image a unit; no elimination denominator is involved. -/
-theorem bivariate_original_denominator_unit (D : R[X][X])
-    (hD : IsUnit ((D.eval 0).eval 0)) : IsUnit (bivariateParameterEmbed phi D) := by
-  apply original_denominator_unit (WrapParameter.residue phi)
-  change IsUnit ((D.map (algebraMap R[X] (WrapParameter.Extension phi))).eval 0)
-  rw [Polynomial.eval_zero_map]
-  exact original_denominator_unit phi (D.eval 0) hD
-
-/-- The elementary denominator in Section 8.1, after removing the
-ORIGINAL simple-pole uniformizer power. -/
-noncomputable def originalShiftDenominator (pi d q : R) (epsilon : ℕ) : R[X] :=
-  Polynomial.C d+Polynomial.C (q*pi^(1-epsilon))*Polynomial.X
-
-theorem originalShiftDenominator_factor (pi d q : R) (epsilon : ℕ)
-    (he : epsilon≤1) :
-    Polynomial.C (pi^epsilon)*originalShiftDenominator pi d q epsilon=
-      Polynomial.C (pi^epsilon*d)+Polynomial.C (q*pi)*Polynomial.X := by
-  have hs : epsilon+(1-epsilon)=1 := by omega
-  have hp : pi^epsilon*pi^(1-epsilon)=pi := by rw [←pow_add,hs,pow_one]
-  have hq : pi^epsilon*(q*pi^(1-epsilon))=q*pi := by
-    calc
-      _=q*(pi^epsilon*pi^(1-epsilon)) := by ring
-      _=_ := by rw [hp]
-  simp only [originalShiftDenominator,mul_add,←mul_assoc,←map_mul,hq]
-
-theorem originalShiftDenominator_at_zero (pi d q : R) (epsilon : ℕ)
-    (hd : IsUnit d) : IsUnit ((originalShiftDenominator pi d q epsilon).eval 0) := by
-  simpa only [originalShiftDenominator,Polynomial.eval_add,Polynomial.eval_C,
-    Polynomial.eval_mul,Polynomial.eval_X,mul_zero,add_zero] using hd
-
-/-- The displayed entry exponents are genuine nonnegative exponents;
-Nat subtraction has not silently truncated a negative power. -/
-theorem original_entry_exponents (epsilon v : ℕ) (he : epsilon≤1) (hv : v≤1) :
-    epsilon+v+(2-epsilon-v)=2 ∧ 2*epsilon+(2-2*epsilon)=2 := by omega
-
-/-- The original normalized reciprocal in a generic pole family,
-using its original simple-pole exponent and original unit quotient. -/
-noncomputable def originalScaledPoleInverse (pi d q : R) (epsilon : ℕ) :
-    WrapParameter.Extension phi :=
-  algebraMap R[X] (WrapParameter.Extension phi) (Polynomial.C (pi^(1-epsilon)))*
-    Ring.inverse (algebraMap R[X] (WrapParameter.Extension phi)
-      (originalShiftDenominator pi d q epsilon))
-
-theorem originalScaledPoleInverse_specializes (pi d q : R) (epsilon : ℕ)
-    (hd : IsUnit d) :
-    WrapSpecialization.Rel phi (originalScaledPoleInverse phi pi d q epsilon)
-      (pi^(1-epsilon)*Ring.inverse d) := by
-  have hD0 := originalShiftDenominator_at_zero pi d q epsilon hd
-  have hD := original_denominator_unit phi _ hD0
-  have hI := WrapSpecialization.Rel.inverse_polynomial
-    (phi:=phi) (originalShiftDenominator pi d q epsilon) hD0
-    (Ring.inverse (algebraMap R[X] (WrapParameter.Extension phi)
-      (originalShiftDenominator pi d q epsilon))) (Ring.mul_inverse_cancel _ hD)
-  have hC := WrapSpecialization.Rel.constant (phi:=phi) (pi^(1-epsilon))
-  simpa only [originalScaledPoleInverse,originalShiftDenominator,
-    Polynomial.eval_add,Polynomial.eval_C,Polynomial.eval_mul,Polynomial.eval_X,
-    mul_zero,add_zero] using WrapSpecialization.Rel.mul hC hI
-
-theorem map_ring_inverse_of_unit {S : Type*} [CommRing S] (f : S →+* R)
-    (a : S) (ha : IsUnit a) : f (Ring.inverse a)=Ring.inverse (f a) := by
-  apply mul_left_cancel₀ (ha.map f).ne_zero
-  rw [←map_mul,Ring.mul_inverse_cancel _ ha,map_one,Ring.mul_inverse_cancel _ (ha.map f)]
-
-/-- The original coefficient lift commutes with a cleared elementary
-specialization because the ORIGINAL quotient is already a unit. -/
-theorem originalScaledPoleInverse_map_specializes {S : Type*} [CommRing S]
-    (f : S →+* R) (pi d q : S) (epsilon : ℕ) (hd : IsUnit d) :
-    WrapSpecialization.Rel phi
-      (originalScaledPoleInverse phi (f pi) (f d) (f q) epsilon)
-      (f (pi^(1-epsilon)*Ring.inverse d)) := by
-  simpa only [map_mul,map_pow,map_ring_inverse_of_unit f d hd] using
-    originalScaledPoleInverse_specializes phi (f pi) (f d) (f q) epsilon (hd.map f)
-
-/-- Multiplication by the ORIGINAL deformed denominator gives the
-uniformizer, before any residue or pivot operation. -/
-theorem originalScaledPoleInverse_identity (pi d q : R) (epsilon : ℕ)
-    (he : epsilon≤1) (hd : IsUnit d) :
-    algebraMap R[X] (WrapParameter.Extension phi)
-      (Polynomial.C (pi^epsilon*d)+Polynomial.C (q*pi)*Polynomial.X)*
-        originalScaledPoleInverse phi pi d q epsilon=WrapParameter.uniformizer phi pi := by
-  have hD := original_denominator_unit phi _ (originalShiftDenominator_at_zero pi d q epsilon hd)
-  have hs : epsilon+(1-epsilon)=1 := by omega
-  have hp : pi^epsilon*pi^(1-epsilon)=pi := by rw [←pow_add,hs,pow_one]
-  rw [←originalShiftDenominator_factor pi d q epsilon he,map_mul]
-  unfold originalScaledPoleInverse
-  calc
-    _=(algebraMap R[X] (WrapParameter.Extension phi) (Polynomial.C (pi^epsilon))*
-        algebraMap R[X] (WrapParameter.Extension phi) (Polynomial.C (pi^(1-epsilon))))*
-      (algebraMap R[X] (WrapParameter.Extension phi) (originalShiftDenominator pi d q epsilon)*
-        Ring.inverse (algebraMap R[X] (WrapParameter.Extension phi)
-          (originalShiftDenominator pi d q epsilon))) := by ring
-    _=_ := by rw [Ring.mul_inverse_cancel _ hD,mul_one,←map_mul,←map_mul,hp]; rfl
-
-/-- Descend the ORIGINAL bivariate numerator coefficient by coefficient,
-using the existing one-parameter descent twice. -/
-theorem bivariate_parameter_descend (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a)
-    (hpi : Prime pi) (F : R[X][X]) (k : ℕ)
-    (h : secondParameterUniformizer phi pi^k∣bivariateParameterEmbed phi F) :
-    Polynomial.C (Polynomial.C pi)^k∣F := by
-  obtain ⟨x,hx⟩ := h
-  have hd := WrapParameter.descend (WrapParameter.residue phi)
-    (WrapParameter.uniformizer phi pi) (WrapParameter.residue_zero_iff phi pi hker)
-    (WrapParameterLift.uniformizer_prime phi pi hker hpi)
-    (F.map (algebraMap R[X] (WrapParameter.Extension phi))) k x hx
-  rw [←map_pow,Polynomial.C_dvd_iff_dvd_coeff] at hd ⊢
-  intro i
-  obtain ⟨y,hy⟩ := hd i
-  simp only [Polynomial.coeff_map] at hy
-  exact WrapParameter.descend phi pi hker hpi (F.coeff i) k y hy
-
-/-- Original N/D descent at both zero parameters. Only the ORIGINAL
-D(0,0) is canceled; no elimination pivot is specialized. -/
-theorem bivariate_original_specialize (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a)
-    (hpi : Prime pi) (D N : R[X][X]) (k : ℕ)
-    (h : secondParameterUniformizer phi pi^k∣bivariateParameterEmbed phi (D*N))
-    (hD : IsUnit ((D.eval 0).eval 0)) : pi^k∣(N.eval 0).eval 0 := by
-  have hd := bivariate_parameter_descend phi pi hker hpi (D*N) k h
-  let ev : R[X][X] →+* R :=
-    (Polynomial.evalRingHom (0:R)).comp (Polynomial.evalRingHom (0:R[X]))
-  have he := WrapAlgebra.specialize_cleared ev
-    (Polynomial.C (Polynomial.C pi)^k) D N hd hD
-  simpa only [ev,RingHom.coe_comp,Function.comp_apply,Polynomial.coe_evalRingHom,
-    Polynomial.eval_pow,Polynomial.eval_C] using he
-
-/-- Finite original entry sums retain their original-unit clearing
-representations over either coefficient ring. -/
-theorem parameter_sum_specializes {α : Type*} (S : Finset α)
-    (f : α → WrapParameter.Extension phi) (f0 : α → R)
-    (h : ∀ i∈S,WrapSpecialization.Rel phi (f i) (f0 i)) :
-    WrapSpecialization.Rel phi (∑ i∈S,f i) (∑ i∈S,f0 i) := by
-  classical
-  revert h
-  induction S using Finset.induction_on with
-  | empty =>
-    intro h
-    simp only [Finset.sum_empty]
-    exact WrapSpecialization.Rel.zero
-  | @insert i S hi ih =>
-    intro h
-    rw [Finset.sum_insert hi,Finset.sum_insert hi]
-    exact WrapSpecialization.Rel.add (h i (mem_insert_self i S))
-      (ih (fun j hj => h j (mem_insert_of_mem hj)))
-
-/-- A unit in the original specialization proves a generic unit,
-using its original clearing representation rather than evaluating a pivot. -/
-theorem parameter_unit_of_specialization (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a)
-    (hpi : Prime pi) (x : WrapParameter.Extension phi) (x0 : R)
-    (hx : WrapSpecialization.Rel phi x x0) (hu : IsUnit x0) : IsUnit x := by
-  have he : WrapEvaluation.Rel phi 0 x x0 := hx
-  exact WrapUnits.of_residue_ne phi x
-    (WrapEvaluation.Rel.residue_ne pi hker hpi he (hu.map phi).ne_zero)
-
-theorem parameter_matrix_unit {α : Type*} [Fintype α] [DecidableEq α]
-    (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a) (hpi : Prime pi)
-    (Q : Matrix α α (WrapParameter.Extension phi)) (Q0 : Matrix α α R)
-    (hQ : ∀ i j,WrapSpecialization.Rel phi (Q i j) (Q0 i j))
-    (hu : IsUnit Q0.det) : IsUnit Q.det :=
-  parameter_unit_of_specialization phi pi hker hpi _ _
-    (WrapSpecialization.determinant phi Q Q0 hQ) hu
-
-theorem sum_vecMul_eq {α : Type*} [Fintype α] [DecidableEq α]
-    (v : α → R) (Q : Matrix α α R) : (∑ j,(v ᵥ* Q) j)=v ⬝ᵥ (Q *ᵥ 1) := by
-  simp only [Matrix.vecMul,Matrix.mulVec,dotProduct,Pi.one_apply,mul_one,Finset.mul_sum]
-  rw [Finset.sum_comm]
-
-/-- Cleared reference arrows inherit ORIGINAL entry specialization;
-no inverse matrix occurs in this relation. -/
-theorem parameter_arrow_specializes {α : Type*} [Fintype α] [DecidableEq α]
-    (Q : Matrix α α (WrapParameter.Extension phi)) (Q0 : Matrix α α R)
-    (sigma : α → WrapParameter.Extension phi) (sigma0 : α → R)
-    (hQ : ∀ i j,WrapSpecialization.Rel phi (Q i j) (Q0 i j))
-    (hs : ∀ i,WrapSpecialization.Rel phi (sigma i) (sigma0 i))
-    (i j : α ⊕ Unit) :
-    WrapSpecialization.Rel phi (WrapArrowCore.arrow Q sigma i j)
-      (WrapArrowCore.arrow Q0 sigma0 i j) := by
-  rcases i with i|⟨⟩ <;> rcases j with j|⟨⟩
-  · exact hQ i j
-  · exact WrapSpecialization.Rel.one
-  · exact hs j
-  · exact WrapSpecialization.Rel.one
-
-/-- Both generic pivot and reference are supplied by their original
-nonzero tests. Central tests need not preserve either individual pivot. -/
-theorem parameter_reference_unit {α : Type*} [Fintype α] [DecidableEq α]
-    (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a) (hpi : Prime pi)
-    (Q : Matrix α α (WrapParameter.Extension phi)) (Q0 : Matrix α α R)
-    (sigma : α → WrapParameter.Extension phi) (sigma0 : α → R)
-    (hQ : ∀ i j,WrapSpecialization.Rel phi (Q i j) (Q0 i j))
-    (hs : ∀ i,WrapSpecialization.Rel phi (sigma i) (sigma0 i))
-    (hu : IsUnit Q0.det) (hB : IsUnit (1-sigma0 ⬝ᵥ (Q0⁻¹ *ᵥ 1))) :
-    IsUnit Q.det ∧ IsUnit (1-sigma ⬝ᵥ (Q⁻¹ *ᵥ 1)) := by
-  have hnew := parameter_matrix_unit phi pi hker hpi Q Q0 hQ hu
-  have hA0 : IsUnit (WrapArrowCore.arrow Q0 sigma0).det := by
-    rw [WrapArrowCore.det_arrow Q0 hu sigma0]
-    exact hu.mul hB
-  have hA := parameter_matrix_unit phi pi hker hpi
-    (WrapArrowCore.arrow Q sigma) (WrapArrowCore.arrow Q0 sigma0)
-    (parameter_arrow_specializes phi Q Q0 sigma sigma0 hQ hs) hA0
-  rw [WrapArrowCore.det_arrow Q hnew sigma] at hA
-  exact ⟨hnew,isUnit_of_mul_isUnit_right hA⟩
-
-theorem parameter_constant_residue (a : R) :
-    WrapParameter.residue phi (algebraMap R[X] (WrapParameter.Extension phi) (Polynomial.C a))=
-      RatFunc.C (phi a) := by
-  rw [WrapParameter.residue_map]
-  change algebraMap K[X] (RatFunc K) ((Polynomial.C a).map phi)=_
-  rw [Polynomial.map_C,RatFunc.algebraMap_C]
-
-theorem parameter_inverse_residue (x : WrapParameter.Extension phi) (hx : IsUnit x) :
-    WrapParameter.residue phi (Ring.inverse x)=(WrapParameter.residue phi x)⁻¹ := by
-  have hh := congrArg (WrapParameter.residue phi) (Ring.mul_inverse_cancel x hx)
-  rw [map_mul,map_one] at hh
-  exact eq_inv_of_mul_eq_one_right hh
-
-/-- An original nonpole contributes zero after normalized reduction,
-even with the independent new pole parameter. -/
-theorem originalScaledPoleInverse_zero_residue (pi d q : R) (hp : phi pi=0) :
-    WrapParameter.residue phi (originalScaledPoleInverse phi pi d q 0)=0 := by
-  unfold originalScaledPoleInverse
-  rw [map_mul,parameter_constant_residue]
-  simp only [Nat.sub_zero,pow_one,hp,map_zero,zero_mul]
-
-/-- A simple original pole retains its actual quotient plus the new
-parameter, in the second residue field. -/
-theorem originalScaledPoleInverse_one_residue (pi d q : R) (hd : IsUnit d) :
-    WrapParameter.residue phi (originalScaledPoleInverse phi pi d q 1)=
-      (1:RatFunc K)/(RatFunc.C (phi d)+RatFunc.C (phi q)*(RatFunc.X:RatFunc K)) := by
-  have hD := original_denominator_unit phi _ (originalShiftDenominator_at_zero pi d q 1 hd)
-  have he : WrapParameter.residue phi
-      (algebraMap R[X] (WrapParameter.Extension phi) (originalShiftDenominator pi d q 1))=
-        RatFunc.C (phi d)+RatFunc.C (phi q)*(RatFunc.X:RatFunc K) := by
-    rw [WrapParameter.residue_map]
-    change algebraMap K[X] (RatFunc K) ((originalShiftDenominator pi d q 1).map phi)=_
-    simp only [originalShiftDenominator,Nat.sub_self,pow_zero,mul_one,
-      Polynomial.map_add,Polynomial.map_mul,Polynomial.map_C,Polynomial.map_X,
-      map_add,map_mul,RatFunc.algebraMap_C,RatFunc.algebraMap_X]
-  unfold originalScaledPoleInverse
-  rw [map_mul,parameter_constant_residue,parameter_inverse_residue phi _ hD,he]
-  simp only [Nat.sub_self,pow_zero,map_one,one_mul,one_div]
-
-/-- The standard inverse perturbation identity gives the required
-SECOND uniformizer power at an original nonpole. -/
-theorem normalized_inverse_difference (pi A B Ainv Dinv : R)
-    (hA : A*Ainv=1) (hD : (A+pi*B)*Dinv=1) : pi^2∣pi*Dinv-pi*Ainv := by
-  refine ⟨-B*Dinv*Ainv,?_⟩
-  linear_combination pi*Ainv*hD-pi*Dinv*hA
-
-/-- Regular normalized reciprocals retain the original first-order
-source under an independent pole deformation. -/
-theorem originalScaledPoleInverse_nonpole_congr (pi d q : R) (hd : IsUnit d) :
-    (WrapParameter.uniformizer phi pi)^2∣originalScaledPoleInverse phi pi d q 0-
-      algebraMap R[X] (WrapParameter.Extension phi) (Polynomial.C (pi*Ring.inverse d)) := by
-  let C : R →+* WrapParameter.Extension phi :=
-    (algebraMap R[X] (WrapParameter.Extension phi)).comp Polynomial.C
-  let Y := algebraMap R[X] (WrapParameter.Extension phi) Polynomial.X
-  let D := algebraMap R[X] (WrapParameter.Extension phi) (originalShiftDenominator pi d q 0)
-  have hA : C d*C (Ring.inverse d)=1 := by rw [←map_mul,Ring.mul_inverse_cancel _ hd,map_one]
-  have hDu := original_denominator_unit phi _ (originalShiftDenominator_at_zero pi d q 0 hd)
-  have he : D=C d+C pi*(C q*Y) := by
-    dsimp only [D,C,Y,originalShiftDenominator,RingHom.comp_apply]
-    simp only [Nat.sub_zero,pow_one,map_add,map_mul]
-    ring
-  have hD : (C d+C pi*(C q*Y))*Ring.inverse D=1 := by
-    rw [←he]
-    exact Ring.mul_inverse_cancel _ hDu
-  have hh := normalized_inverse_difference (C pi) (C d) (C q*Y)
-    (C (Ring.inverse d)) (Ring.inverse D) hA hD
-  simpa only [originalScaledPoleInverse,Nat.sub_zero,pow_one,map_mul,C,D,
-    WrapParameter.uniformizer,RingHom.comp_apply] using hh
-
-/-- The normalized bordered direction annihilates its own row response.
-This uses only the proved inverse identity for its reference scalar. -/
-theorem reference_direction_zero {α : Type*} [Fintype α] [DecidableEq α]
-    (Q : Matrix α α R) (sigma y : α → R) (Lt bInv : R)
-    (hB : (1-sigma ⬝ᵥ (Q⁻¹ *ᵥ 1))*bInv=1) :
-    let d := (Lt-sigma ⬝ᵥ (Q⁻¹ *ᵥ y))*bInv
-    (Lt-d)-sigma ⬝ᵥ (Q⁻¹ *ᵥ fun i => y i-d)=0 := by
-  dsimp only
-  let d := (Lt-sigma ⬝ᵥ (Q⁻¹ *ᵥ y))*bInv
-  have hd : d*(1-sigma ⬝ᵥ (Q⁻¹ *ᵥ 1))=Lt-sigma ⬝ᵥ (Q⁻¹ *ᵥ y) := by
-    dsimp only [d]
-    calc
-      _=(Lt-sigma ⬝ᵥ (Q⁻¹ *ᵥ y))*((1-sigma ⬝ᵥ (Q⁻¹ *ᵥ 1))*bInv) := by ring
-      _=_ := by rw [hB,mul_one]
-  change (Lt-d)-sigma ⬝ᵥ (Q⁻¹ *ᵥ fun i => y i-d)=0
-  have he : (fun i => y i-d)=y-d • (1:α → R) := by
-    funext i
-    simp only [Pi.sub_apply,Pi.smul_apply,Pi.one_apply,smul_eq_mul,mul_one]
-  rw [he,Matrix.mulVec_sub,Matrix.mulVec_smul,dotProduct_sub,dotProduct_smul]
-  simp only [smul_eq_mul]
-  linear_combination -hd
 
 end TwoParameterDescent
 
 namespace TwoTermDeformation
 variable (p : ℕ) [Fact p.Prime]
 
-noncomputable def coefficientDomain :=
-  WrapPrefixSchur.parameter_domain (R:=GaussLoc p) (K:=RatFunc (ZMod p)) (res p)
-attribute [local instance] coefficientDomain
-
-abbrev Ring := WrapParameter.Extension (WrapDeform.residue p)
-
-noncomputable def ringDomain :=
-  WrapPrefixSchur.parameter_domain (R:=WrapDeform.Extension p)
-    (K:=WrapPoleResidue.Residue p) (WrapDeform.residue p)
-attribute [local instance] ringDomain
-
-noncomputable def coefficient : WrapDeform.Extension p →+* Ring p :=
-  (algebraMap (WrapDeform.Extension p)[X] (Ring p)).comp
-    (Polynomial.C:WrapDeform.Extension p →+* (WrapDeform.Extension p)[X])
-
-noncomputable def integerPoleSpecialization :=
-  @originalScaledPoleInverse_map_specializes (WrapDeform.Extension p)
-    (WrapPoleResidue.Residue p) _ _ _ (WrapDeform.residue p)
-    (GaussLoc p) _ (WrapOwnCore.constants p)
-
-open Classical in
-/-- Deform the integer-pole family independently of the existing
-fractional-pole parameter; its original quotient determines the branch. -/
-noncomputable def integerNormalized (a : GaussLoc p) : Ring p :=
-  if ha : res p a=0 then
-    originalScaledPoleInverse (WrapDeform.residue p)
-      (WrapOwnCore.constants p (UFMoments.piL p))
-      (WrapOwnCore.constants p (WrapPole.quotient p a ha)) (WrapOwnCore.constants p 1) 1
-  else
-    originalScaledPoleInverse (WrapDeform.residue p)
-      (WrapOwnCore.constants p (UFMoments.piL p))
-      (WrapOwnCore.constants p a) (WrapOwnCore.constants p 1) 0
-
-/-- At zero integer deformation, recover the actual old generic
-fractional-parameter coefficient, using original elementary units only. -/
-theorem integer_specializes (a : GaussLoc p)
-    (hpole : ∀ ha : res p a=0,IsUnit (WrapPole.quotient p a ha))
-    (hnonpole : res p a≠0 → IsUnit a) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (integerNormalized p a)
-      (WrapOwnCore.constants p (WrapPole.originalNormalized p a)) := by
-  classical
-  by_cases ha : res p a=0
-  · rw [integerNormalized,dif_pos ha,WrapPole.originalNormalized,dif_pos ha]
-    simpa only [Nat.sub_self,pow_zero,one_mul] using
-      integerPoleSpecialization p
-        (UFMoments.piL p) (WrapPole.quotient p a ha) 1 1 (hpole ha)
-  · rw [integerNormalized,dif_neg ha,WrapPole.originalNormalized,dif_neg ha]
-    simpa only [Nat.sub_zero,pow_one] using
-      integerPoleSpecialization p
-        (UFMoments.piL p) a 1 0 (hnonpole ha)
-
-noncomputable def delta (q o t : ℕ) : Ring p :=
-  integerNormalized p (t:GaussLoc p)-
-    coefficient p (WrapOwnCore.constants p (q:GaussLoc p))*
-      coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p))
-
-noncomputable def dsq (q o t : ℕ) : Ring p :=
-  integerNormalized p (t:GaussLoc p)^2-
-    coefficient p (WrapOwnCore.constants p ((q:GaussLoc p)^2))*
-      coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p))^2
-
-theorem delta_specializes (q o t : ℕ) (ht : ¬p^2∣t) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (delta p q o t) (WrapIncrement.delta p q o t) := by
-  unfold delta WrapIncrement.delta
-  simp only [sub_eq_add_neg]
-  apply WrapSpecialization.Rel.add
-  · exact integer_specializes p (t:GaussLoc p)
-      (fun ha => WrapSimplePole.quotient_unit p t ht ha) (fun h => isUnit_of_res_ne _ h)
-  · apply WrapSpecialization.Rel.neg
-    exact WrapSpecialization.Rel.mul (WrapSpecialization.Rel.constant _)
-      (WrapSpecialization.Rel.constant _)
-
-theorem dsq_specializes (q o t : ℕ) (ht : ¬p^2∣t) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (dsq p q o t) (WrapIncrement.dsq p q o t) := by
-  have hp := integer_specializes p (t:GaussLoc p)
-    (fun ha => WrapSimplePole.quotient_unit p t ht ha) (fun h => isUnit_of_res_ne _ h)
-  have he : WrapIncrement.dsq p q o t=
-      (WrapOwnCore.constants p (WrapPole.originalNormalized p (t:GaussLoc p)))^2-
-      WrapOwnCore.constants p ((q:GaussLoc p)^2)*
-        (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p))^2 := by
-    unfold WrapIncrement.dsq WrapOwnCore.constants
-    simp only [RingHom.comp_apply,map_pow]
-  rw [he]
-  unfold dsq
-  simp only [sub_eq_add_neg,pow_two]
-  apply WrapSpecialization.Rel.add
-  · exact WrapSpecialization.Rel.mul hp hp
-  · apply WrapSpecialization.Rel.neg
-    exact WrapSpecialization.Rel.mul (WrapSpecialization.Rel.constant _)
-      (WrapSpecialization.Rel.mul (WrapSpecialization.Rel.constant _) (WrapSpecialization.Rel.constant _))
-
-/-- Actual two-parameter original-node matrix entry. The node-difference
-reciprocal stays ORIGINAL; both pole families are independently deformed. -/
-noncomputable def entry (q o : ℕ) (u : GaussLoc p) (a b : ℕ) : Ring p :=
-  if a=b then -(coefficient p (WrapOwnCore.constants p u)*∑ t∈Icc 1 a,dsq p q o t)
-  else coefficient p (WrapOwnCore.constants p u)*
-    coefficient p (WrapOwnCore.constants p
-      (WrapPole.originalNormalized p ((max a b-min a b:ℕ):GaussLoc p)))*
-      ∑ t∈Ioc (min a b) (max a b),delta p q o t
-
-theorem entry_specializes (q o N : ℕ) (hN : N<p*p)
-    (u : GaussLoc p) (a b : ℕ) (ha : a<N) (hb : b<N) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (entry p q o u a b)
-      (WrapDeformedEntry.entry p q o u a b) := by
-  classical
-  by_cases hab : a=b
-  · rw [entry,WrapDeformedEntry.entry,if_pos hab,if_pos hab]
-    apply WrapSpecialization.Rel.neg
-    apply WrapSpecialization.Rel.mul
-    · exact WrapSpecialization.Rel.constant _
-    · apply parameter_sum_specializes
-      intro t ht
-      have ht1 := (Finset.mem_Icc.mp ht).1
-      have htN := lt_of_le_of_lt (Finset.mem_Icc.mp ht).2 ha
-      exact dsq_specializes p q o t (Smith.not_sq_dvd_of_lt ht1 (lt_trans htN hN))
-  · rw [entry,WrapDeformedEntry.entry,if_neg hab,if_neg hab]
-    apply WrapSpecialization.Rel.mul
-    · exact WrapSpecialization.Rel.mul (WrapSpecialization.Rel.constant _) (WrapSpecialization.Rel.constant _)
-    · apply parameter_sum_specializes
-      intro t ht
-      have ht1 : 1≤t := by have := (Finset.mem_Ioc.mp ht).1; omega
-      have htN := lt_of_le_of_lt (Finset.mem_Ioc.mp ht).2 (max_lt ha hb)
-      exact delta_specializes p q o t (Smith.not_sq_dvd_of_lt ht1 (lt_trans htN hN))
 
 variable {ι κ : Type} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-noncomputable def matrix (Fr : Frame) (q o : ℕ) (c : ι → ℕ) (xs ys : κ → ℕ) :
-    Matrix (ι ⊕ κ) (ι ⊕ κ) (Ring p) :=
-  Matrix.of (fun i j => entry p q o (WrapOriginalEntry.normInv p Fr)
-    (UFMember.rowNode c xs i) (UFMember.colNode c ys j))+
-    (WrapDeformedFamily.spectral p).map ((coefficient p).comp (WrapDeformedFamily.coefficient p))
-
-theorem matrix_specializes (Fr : Frame) (q o N : ℕ) (hN : N<p*p)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (i j : ι ⊕ κ) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (matrix p Fr q o c xs ys i j)
-      (WrapDeformedFamily.matrix p Fr q o c xs ys i j) := by
-  unfold matrix WrapDeformedFamily.matrix
-  simp only [Matrix.add_apply,Matrix.map_apply,RingHom.comp_apply,Matrix.of_apply]
-  exact WrapSpecialization.Rel.add
-    (entry_specializes p q o N hN _ _ _ (UFMember.rowNode_lt hc hx i) (UFMember.colNode_lt hc hy j))
-    (WrapSpecialization.Rel.constant _)
-
-noncomputable def determinant_relation {τ : Type*} [Fintype τ] [DecidableEq τ] :=
-  WrapSpecialization.determinant (R:=WrapDeform.Extension p) (K:=WrapPoleResidue.Residue p)
-    (ι:=τ) (WrapDeform.residue p)
-noncomputable def descend_relation :=
-  @WrapSpecialization.Rel.descend (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p)
-noncomputable def coefficientPrime :=
-  WrapPrefixSchur.parameter_prime p
-noncomputable def uniformizer :=
-  WrapParameter.uniformizer (WrapDeform.residue p) (WrapDeform.uniformizer p)
-
-/-- Descend the actual two-parameter ORIGINAL family determinant to its
-existing one-parameter representation, before the original scalar bridge. -/
-theorem one_parameter_content (Fr : Frame) (q o N : ℕ) (hN : N<p*p)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (k : ℕ) (hcontent : uniformizer p^k∣(matrix p Fr q o c xs ys).det) :
-    WrapDeform.uniformizer p^k∣(WrapDeformedFamily.matrix p Fr q o c xs ys).det := by
-  obtain ⟨v,hv⟩ := hcontent
-  exact descend_relation p (WrapDeform.uniformizer p) (WrapDeform.residue_zero_iff p)
-    (coefficientPrime p)
-    (determinant_relation p _ _ (matrix_specializes p Fr q o N hN c xs ys hc hx hy)) k v hv
-
-/-- Every original common deletion uses its own ORIGINAL determinant.
-Only elementary original denominators are specialized in either stage. -/
-theorem original_gle {Fr : Frame} {q o N : ℕ} (T : Smith.TwoTermData Fr q o)
-    (D : PoleData Fr p N) (hqp : q<p) (hN : N<p*p)
-    (hsq : ∀ t,1≤t → t<N → ¬p^2∣q*t-o)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (k : ℕ) (hcontent : uniformizer p^k∣(matrix p Fr q o c xs ys).det) :
-    GLE p (2*Fintype.card (ι ⊕ κ)-k)
-      (CatalanCore.Rect.FullN Fr c xs ys (Polynomial.X:ℚ[X])).det := by
-  exact WrapDeformedFamily.original_gle p T D hqp hN hsq c xs ys hc hx hy k
-    (one_parameter_content p Fr q o N hN c xs ys hc hx hy k hcontent)
-
-/-- Actual mixed prefix core with the ORIGINAL common spectral
-coordinates; absorbed balanced pairs carry no extra spectral diagonal. -/
-noncomputable def mixedCore (q o : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : κ → ℕ) :
-    Matrix (ι ⊕ κ) (ι ⊕ κ) (Ring p) :=
-  Matrix.of (fun i j => entry p q o u (Sum.elim c xs i) (Sum.elim c ys j))+
-    (Matrix.fromBlocks (WrapOwnCore.constants p s • (1:Matrix ι ι (WrapDeform.Extension p)))
-      0 0 (0:Matrix κ κ (WrapDeform.Extension p))).map (coefficient p)
-
-theorem mixedCore_specializes (q o N : ℕ) (hN : N<p*p) (s u : GaussLoc p)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (i j : ι ⊕ κ) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (mixedCore p q o s u c xs ys i j)
-      (WrapFibreCore.core p q o s u c xs ys i j) := by
-  unfold mixedCore WrapFibreCore.core
-  simp only [Matrix.add_apply,Matrix.map_apply,Matrix.of_apply]
-  exact WrapSpecialization.Rel.add
-    (entry_specializes p q o N hN u _ _ (UFMember.rowNode_lt hc hx i) (UFMember.colNode_lt hc hy j))
-    (WrapSpecialization.Rel.constant _)
-
-noncomputable def matrix_unit_transfer {α : Type*} [Fintype α] [DecidableEq α] :=
-  @parameter_matrix_unit (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p) α _ _
-
-/-- The already built actual one-parameter pivot supplies a nonzero
-original test, so the independent integer deformation preserves generic
-invertibility. It need not preserve a later central test's pivots. -/
-theorem mixedCore_unit (q o N : ℕ) (hN : N<p*p) (s u : GaussLoc p)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (hQ : IsUnit (WrapFibreCore.core p q o s u c xs ys).det) :
-    IsUnit (mixedCore p q o s u c xs ys).det :=
-  matrix_unit_transfer p (WrapDeform.uniformizer p) (WrapDeform.residue_zero_iff p)
-    (coefficientPrime p) _ _ (mixedCore_specializes p q o N hN s u c xs ys hc hx hy) hQ
-
-noncomputable def own {α : Type*} (col : α → ZMod p) (Q : Matrix α α (Ring p)) : Matrix α α (Ring p) :=
-  Matrix.of fun i j => if col i=col j then Q i j else 0
-
-theorem own_specializes {α : Type*} (col : α → ZMod p)
-    (Q : Matrix α α (Ring p)) (Q0 : Matrix α α (WrapDeform.Extension p))
-    (hQ : ∀ i j,WrapSpecialization.Rel (WrapDeform.residue p) (Q i j) (Q0 i j)) (i j : α) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (own p col Q i j)
-      (WrapPrefixSource.own p col Q0 i j) := by
-  classical
-  by_cases h : col i=col j
-  · simpa only [own,WrapPrefixSource.own,Matrix.of_apply,if_pos h] using hQ i j
-  · simp only [own,WrapPrefixSource.own,Matrix.of_apply,if_neg h]
-    exact WrapSpecialization.Rel.zero
-
-noncomputable def constants : GaussLoc p →+* Ring p :=
-  (coefficient p).comp (WrapOwnCore.constants p)
-noncomputable def load (q o t : ℕ) : Ring p := ∑ k∈Icc 1 t,delta p q o k
-
-theorem load_specializes (q o N : ℕ) (hN : N<p*p) (t : ℕ) (ht : t<N) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (load p q o t) (WrapEntryRelation.load p q o t) := by
-  apply parameter_sum_specializes
-  intro k hk
-  exact delta_specializes p q o k
-    (Smith.not_sq_dvd_of_lt (mem_Icc.mp hk).1 (lt_trans (lt_of_le_of_lt (mem_Icc.mp hk).2 ht) hN))
-
-theorem uniformizer_cast : (p:Ring p)=uniformizer p := by
-  unfold uniformizer WrapParameter.uniformizer
-  rw [←WrapEntryRelation.uniformizer_cast p]
-  simp only [map_natCast]
-
-theorem difference_factor (w : ℕ) (hw : ¬p^2∣w) :
-    (w:Ring p)*constants p (WrapPole.originalNormalized p (w:GaussLoc p))=uniformizer p := by
-  have hh := congrArg (coefficient p) (WrapEntryRelation.factor p w hw)
-  simpa only [map_mul,map_natCast,constants,WrapEntryRelation.constants,WrapOwnCore.constants,
-    coefficient,uniformizer,WrapParameter.uniformizer,RingHom.comp_apply] using hh
-
-theorem prefix_sub (q o a b : ℕ) (hab : a≤b) :
-    load p q o b-load p q o a=∑ k∈Ioc a b,delta p q o k := by
-  have he (n : ℕ) : Icc 1 n=Ioc 0 n := by ext k; simp only [mem_Icc,mem_Ioc]; omega
-  unfold load
-  rw [he,he,← Finset.sum_Ioc_consecutive _ (Nat.zero_le a) hab]
-  ring
-
-theorem entry_symm (q o : ℕ) (u : GaussLoc p) (a b : ℕ) :
-    entry p q o u a b=entry p q o u b a := by
-  classical
-  by_cases hab : a=b
-  · subst b; rfl
-  · simp only [entry,hab,Ne.symm hab,↓reduceIte,min_comm a b,max_comm a b]
-
-theorem commutator_of_lt (q o N : ℕ) (u : GaussLoc p) (hN : N<p*p)
-    (a b : ℕ) (hab : a<b) (hb : b<N) :
-    ((b:Ring p)-(a:Ring p))*entry p q o u a b=
-      uniformizer p*(constants p u*(load p q o b-load p q o a)) := by
-  have hw2 : ¬p^2∣b-a := Smith.not_sq_dvd_of_lt (by omega) (by omega)
-  rw [entry,if_neg hab.ne,min_eq_left hab.le,max_eq_right hab.le,
-    ←prefix_sub p q o a b hab.le]
-  rw [←Nat.cast_sub hab.le]
-  change ((b-a:ℕ):Ring p)*(constants p u*
-    constants p (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p))*
-      (load p q o b-load p q o a))=_
-  calc
-    _=(((b-a:ℕ):Ring p)*constants p
-        (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p)))*
-      (constants p u*(load p q o b-load p q o a)) := by ring
-    _=_ := by rw [difference_factor p (b-a) hw2]
-
-/-- Exact displacement at original row/column nodes in the independent
-two-parameter deformation, before reduction or inverse elimination. -/
-theorem commutator (q o N : ℕ) (u : GaussLoc p) (hN : N<p*p)
-    (a b : ℕ) (ha : a<N) (hb : b<N) :
-    ((b:Ring p)-(a:Ring p))*entry p q o u a b=
-      uniformizer p*(constants p u*(load p q o b-load p q o a)) := by
-  rcases lt_trichotomy a b with hab|hab|hba
-  · exact commutator_of_lt p q o N u hN a b hab hb
-  · subst b; simp
-  · have hh := commutator_of_lt p q o N u hN b a hba ha
-    rw [entry_symm p q o u b a] at hh
-    calc
-      _=-(((a:Ring p)-(b:Ring p))*entry p q o u a b) := by ring
-      _=-(uniformizer p*(constants p u*(load p q o a-load p q o b))) := congrArg Neg.neg hh
-      _=_ := by ring
-
-noncomputable def parameterPrime :=
-  WrapParameterLift.uniformizer_prime (R:=WrapDeform.Extension p) (K:=WrapPoleResidue.Residue p)
-    (WrapDeform.residue p) (WrapDeform.uniformizer p)
-    (WrapDeform.residue_zero_iff p) (coefficientPrime p)
-
-/-- Cancel the original uniformizer on an actual own-colour entry.
-Both quotient coordinates are original independent row/column coordinates. -/
-theorem divided_commutator (q o N : ℕ) (u : GaussLoc p) (hN : N<p*p)
-    (a b : ℕ) (ha : a<N) (hb : b<N) (hcol : (a:ZMod p)=(b:ZMod p)) :
-    (((b/p:ℕ):Ring p)-((a/p:ℕ):Ring p))*entry p q o u a b=
-      constants p u*(load p q o b-load p q o a) := by
-  have hm := (ZMod.natCast_eq_natCast_iff' a b p).mp hcol
-  have hpa := Nat.mod_add_div a p
-  have hpb := Nat.mod_add_div b p
-  have hn : b+p*(a/p)=a+p*(b/p) := by omega
-  have hh := congrArg (fun n:ℕ => (n:Ring p)) hn
-  push_cast at hh
-  have hc : (b:Ring p)-(a:Ring p)=
-      uniformizer p*(((b/p:ℕ):Ring p)-((a/p:ℕ):Ring p)) := by
-    rw [←uniformizer_cast p]
-    calc
-      _=((b:Ring p)+(p:Ring p)*((a/p:ℕ):Ring p))-(a:Ring p)-
-          (p:Ring p)*((a/p:ℕ):Ring p) := by ring
-      _=((a:Ring p)+(p:Ring p)*((b/p:ℕ):Ring p))-(a:Ring p)-
-          (p:Ring p)*((a/p:ℕ):Ring p) := by rw [hh]
-      _=_ := by ring
-  apply mul_left_cancel₀ (parameterPrime p).ne_zero
-  have hr := commutator p q o N u hN a b ha hb
-  rw [hc] at hr
-  simp only [mul_assoc] at hr
-  exact hr
-
-/-- The original common spectral diagonal contributes zero to the
-actual mixed displacement. Absorbed pairs retain their actual coordinates. -/
-theorem mixedCore_commutator (q o N : ℕ) (hN : N<p*p) (s u : GaussLoc p)
-    (c : ι → ℕ) (xs ys : κ → ℕ) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (i j : ι ⊕ κ) :
-    (((Sum.elim c ys j : ℕ):Ring p)-((Sum.elim c xs i : ℕ):Ring p))*mixedCore p q o s u c xs ys i j=
-      uniformizer p*(constants p u*(load p q o (Sum.elim c ys j)-load p q o (Sum.elim c xs i))) := by
-  let S : Matrix (ι ⊕ κ) (ι ⊕ κ) (WrapDeform.Extension p) :=
-    Matrix.fromBlocks (WrapOwnCore.constants p s • (1:Matrix ι ι (WrapDeform.Extension p))) 0 0 0
-  have hz : (((Sum.elim c ys j : ℕ):Ring p)-((Sum.elim c xs i : ℕ):Ring p))*coefficient p (S i j)=0 := by
-    rcases i with i|i <;> rcases j with j|j
-    · by_cases hij : i=j
-      · subst j; simp only [Sum.elim_inl,sub_self,zero_mul]
-      · simp only [S,Matrix.fromBlocks_apply₁₁,Matrix.smul_apply,smul_eq_mul,
-          Matrix.one_apply,if_neg hij,mul_zero,map_zero]
-    · simp only [S,Matrix.fromBlocks_apply₁₂,Matrix.zero_apply,map_zero,mul_zero]
-    · simp only [S,Matrix.fromBlocks_apply₂₁,Matrix.zero_apply,map_zero,mul_zero]
-    · simp only [S,Matrix.fromBlocks_apply₂₂,Matrix.zero_apply,map_zero,mul_zero]
-  change (((Sum.elim c ys j : ℕ):Ring p)-((Sum.elim c xs i : ℕ):Ring p))*
-    (entry p q o u (Sum.elim c xs i) (Sum.elim c ys j)+coefficient p (S i j))=_
-  rw [mul_add,hz,add_zero]
-  exact commutator p q o N u hN _ _ (UFMember.rowNode_lt hc hx i) (UFMember.colNode_lt hc hy j)
 
 abbrev Residue := RatFunc (WrapPoleResidue.Residue p)
-noncomputable def residue := WrapParameter.residue (WrapDeform.residue p)
-noncomputable def poleOneResidue :=
-  @originalScaledPoleInverse_one_residue (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p)
-noncomputable def poleZeroResidue :=
-  @originalScaledPoleInverse_zero_residue (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p)
-noncomputable def constantResidue :=
-  @parameter_constant_residue (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p)
 
-theorem coefficient_residue (a : WrapDeform.Extension p) :
-    residue p (coefficient p a)=RatFunc.C (WrapDeform.residue p a) := by
-  simpa only [residue,coefficient,RingHom.comp_apply] using constantResidue p a
-
-theorem first_constant_residue (a : GaussLoc p) :
-    WrapDeform.residue p (WrapOwnCore.constants p a)=RatFunc.C (res p a) := by
-  simpa only [WrapOwnCore.constants,RingHom.comp_apply] using WrapPoleResidue.constant p a
-
-/-- The independently deformed integer family has exactly its ORIGINAL
-quotient-plus-parameter pole residue; original nonpoles vanish. -/
-theorem integer_residue (t : ℕ) (h2 : ¬p^2∣t) :
-    residue p (integerNormalized p (t:GaussLoc p))=
-      if p∣t then (1:Residue p)/(((t/p:ℕ):Residue p)+RatFunc.X) else 0 := by
-  classical
-  by_cases hd : p∣t
-  · have ha := (WrapSimplePole.res_nat_zero p t).mpr hd
-    rw [integerNormalized,dif_pos ha,if_pos hd]
-    have hu := (WrapSimplePole.quotient_unit p t h2 ha).map (WrapOwnCore.constants p)
-    have hh := poleOneResidue p (WrapOwnCore.constants p (UFMoments.piL p))
-      (WrapOwnCore.constants p (WrapPole.quotient p (t:GaussLoc p) ha))
-      (WrapOwnCore.constants p 1) hu
-    rw [WrapPoleResidue.quotient_nat p t ha] at hh ⊢
-    have hn (k : ℕ) : WrapDeform.residue p (WrapOwnCore.constants p (k:GaussLoc p))=
-        (k:WrapPoleResidue.Residue p) := by
-      simpa only [WrapOwnCore.constants,RingHom.comp_apply] using WrapPoleResidue.constant_nat p k
-    simpa only [residue,hn,map_one,map_natCast,one_mul] using hh
-  · have ha : res p (t:GaussLoc p)≠0 := fun h => hd ((WrapSimplePole.res_nat_zero p t).mp h)
-    rw [integerNormalized,dif_neg ha,if_neg hd]
-    have hp : WrapDeform.residue p (WrapOwnCore.constants p (UFMoments.piL p))=0 := by
-      rw [first_constant_residue,res_piL,map_zero]
-    exact poleZeroResidue p (WrapOwnCore.constants p (UFMoments.piL p))
-      (WrapOwnCore.constants p (t:GaussLoc p)) (WrapOwnCore.constants p 1) hp
-
-/-- Exact actual two-term residue with independent integer and fractional
-pole parameters. All masks are the ORIGINAL arithmetic pole masks. -/
-theorem delta_residue (q o t : ℕ) (hq0 : 0<q) (hqp : q<p)
-    (hle : o≤q*t) (h2 : ¬p^2∣t) :
-    residue p (delta p q o t)=
-      (if p∣t then (1:Residue p)/(((t/p:ℕ):Residue p)+RatFunc.X) else 0)-
-      (q:Residue p)*(if p∣q*t-o then
-        (1:Residue p)/((((q*t-o)/p:ℕ):Residue p)+(q:Residue p)*
-          RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) else 0) := by
-  rw [delta,map_sub,map_mul,integer_residue p t h2,coefficient_residue,coefficient_residue,
-    first_constant_residue,WrapSimplePole.res_nat]
-  simp only [map_natCast]
-  rw [WrapSimplePole.argument_nat p q o t hle,
-    WrapPoleResidue.normalized_nat p (q*t-o) q (WrapSimplePole.q_res_ne p q hq0 hqp)]
-  by_cases hi : p∣t <;> by_cases hf : p∣q*t-o <;>
-    simp only [hi,hf,↓reduceIte,map_zero,map_div₀,map_add,map_mul,map_one,map_natCast]
-
-/-- Exact harmonic identification of the ACTUAL independently deformed
-cumulative load, retaining all absorbed periods and both pole parameters. -/
-theorem load_residue (q o root j0 gamma j N : ℕ)
-    (hq0 : 0<q) (hqp : q<p) (hoq : o<q) (hk0 : 0<root) (hk : root≤p)
-    (hg : gamma<p) (hroot : q*root=j0*p+o) (hN : N<p*p) (hnode : gamma+j*p<N) :
-    residue p (load p q o (gamma+j*p))=
-      twoHarmonicLoad (RatFunc.X:Residue p)
-        ((j0:Residue p)/(q:Residue p)+RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p))
-        (decide (root≤gamma)) j := by
-  have hp := (Fact.out : p.Prime).pos
-  have hqb := WrapSimplePole.q_res_ne p q hq0 hqp
-  have hqf : (q:ZMod p)≠0 := by
-    intro hz
-    apply hqb
-    exact (WrapSimplePole.res_nat_zero p q).mpr ((ZMod.natCast_eq_zero_iff _ _).mp hz)
-  have hq1 := WrapActualLoad.q_ne p q hqb
-  have hq2 : (q:Residue p)≠0 := by
-    intro hz
-    apply hq1
-    apply (RatFunc.C:WrapPoleResidue.Residue p →+* Residue p).injective
-    simpa only [map_natCast,map_zero] using hz
-  have he : residue p (load p q o (gamma+j*p))=
-      WrapPoleLoad.fractional p 1 0 p (RatFunc.X:Residue p) (gamma+j*p)-
-      WrapPoleLoad.fractional p q o root
-        (RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) (gamma+j*p) := by
-    unfold load
-    rw [map_sum]
-    unfold WrapPoleLoad.fractional
-    rw [←Finset.sum_sub_distrib]
-    apply Finset.sum_congr rfl
-    intro t ht
-    have ht1 := (mem_Icc.mp ht).1
-    have htN := lt_of_le_of_lt (mem_Icc.mp ht).2 hnode
-    have h2 : ¬p^2∣t := Smith.not_sq_dvd_of_lt ht1 (lt_trans htN hN)
-    have hle : o≤q*t := by have := Nat.le_mul_of_pos_right q ht1; omega
-    rw [delta_residue p q o t hq0 hqp hle h2]
-    have hiff := WrapPoleLoad.fractional_pole_iff p q o root j0 t hoq ht1 hroot hqf
-    simp only [Nat.mod_self,Nat.one_mul,Nat.sub_zero,Nat.cast_one,one_mul]
-    simp only [←Nat.dvd_iff_mod_eq_zero,←hiff]
-    by_cases hi : p∣t <;> by_cases hf : p∣q*t-o <;>
-      simp only [hi,hf,↓reduceIte,mul_zero,rational_one_div,rational_div_eq_mul_inv,one_div,div_eq_mul_inv,one_mul]
-  rw [he,WrapPoleLoad.fractional_eq p 1 0 p 1 gamma j (RatFunc.X:Residue p)
-      hp hp le_rfl hg (by omega) (by simpa only [Nat.cast_one] using (one_ne_zero : (1:Residue p)≠0)),
-    WrapPoleLoad.fractional_eq p q o root j0 gamma j
-      (RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) hp hk0 hk hg hroot hq2]
-  simp only [twoHarmonicLoad,WrapPoleCount.count,if_neg (not_le.mpr hg),Nat.add_zero,
-    Nat.cast_one,div_one]
-  simp [rational_div_one]
 
 section ActualPrefix
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-noncomputable def prefixCore (s u : GaussLoc p) :=
-  mixedCore p q o s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-noncomputable def prefixOwn (s u : GaussLoc p) :=
-  own p H.colour (prefixCore p H s u)
-
-theorem prefixCore_unit (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) : IsUnit (prefixCore p H s u).det := by
-  have hN : N<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left N H.hq0) H.hN
-  exact mixedCore_unit p q o N hN s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-    H.common_bound H.row_bound H.col_bound (H.core_unit s u hs hu huc)
-
-theorem prefixOwn_unit (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) : IsUnit (prefixOwn p H s u).det := by
-  have hN : N<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left N H.hq0) H.hN
-  exact matrix_unit_transfer p (WrapDeform.uniformizer p) (WrapDeform.residue_zero_iff p)
-    (coefficientPrime p) _ _
-    (own_specializes p H.colour _ _
-      (mixedCore_specializes p q o N hN s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-        H.common_bound H.row_bound H.col_bound)) (H.own_unit s u hs hu huc)
-
-noncomputable def reference_unit_transfer {α : Type*} [Fintype α] [DecidableEq α] :=
-  @parameter_reference_unit (WrapDeform.Extension p) (WrapPoleResidue.Residue p)
-    _ _ _ (WrapDeform.residue p) α _ _
-
-noncomputable def prefixSigma (u : GaussLoc p) (t : ℕ)
-    (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :=
-  if H.colour i=(t:ZMod p) then
-    entry p q o u t (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i) else 0
-
-noncomputable def prefixReference (s u : GaussLoc p) (t : ℕ) :=
-  1-prefixSigma p H u t ⬝ᵥ ((prefixOwn p H s u)⁻¹ *ᵥ 1)
-
-theorem prefixSigma_specializes (u : GaussLoc p) (t : ℕ) (ht : t<N)
-    (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
-    WrapSpecialization.Rel (WrapDeform.residue p) (prefixSigma p H u t i) (H.ownSigma u t i) := by
-  have hN : N<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left N H.hq0) H.hN
-  by_cases h : H.colour i=(t:ZMod p)
-  · simpa only [prefixSigma,WrapPrefixWindow.Setup.ownSigma,WrapPrefixWindow.Setup.sigma,UFMember.colNode,if_pos h] using
-      entry_specializes p q o N hN u t _ ht (UFMember.colNode_lt H.common_bound H.col_bound i)
-  · simp only [prefixSigma,WrapPrefixWindow.Setup.ownSigma,if_neg h]
-    exact WrapSpecialization.Rel.zero
-
-theorem prefixReference_unit (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) : IsUnit (prefixReference p H s u H.t0) := by
-  have ht : H.t0∈Icc H.t0 H.tv := mem_Icc.mpr ⟨le_rfl,H.hle⟩
-  have htN := lt_of_le_of_lt H.hle H.htvN
-  have hN : N<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left N H.hq0) H.hN
-  obtain ⟨G,hG,hres,hB⟩ := H.own_source H.t0 ht s u hs hu huc
-  have hBunit := WrapBalancedTest.unit_ne p (H.ownReference s u H.t0) hB
-  have he : H.ownReference s u H.t0=
-      1-H.ownSigma u H.t0 ⬝ᵥ ((H.own s u)⁻¹ *ᵥ 1) := by
-    unfold WrapPrefixWindow.Setup.ownReference
-    rw [sum_vecMul_eq]
-  have hB0 : IsUnit (1-H.ownSigma u H.t0 ⬝ᵥ ((H.own s u)⁻¹ *ᵥ 1)) := by
-    rw [←he]
-    exact hBunit
-  exact (reference_unit_transfer p (WrapDeform.uniformizer p) (WrapDeform.residue_zero_iff p)
-    (coefficientPrime p) (prefixOwn p H s u) (H.own s u) (prefixSigma p H u H.t0) (H.ownSigma u H.t0)
-    (own_specializes p H.colour _ _
-      (mixedCore_specializes p q o N hN s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-        H.common_bound H.row_bound H.col_bound))
-    (prefixSigma_specializes p H u H.t0 htN) (H.own_unit s u hs hu huc) hB0).2
-
-noncomputable def prefixRowLoad (u : GaussLoc p)
-    (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :=
-  constants p u*load p q o (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i)
-noncomputable def prefixColLoad (u : GaussLoc p)
-    (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :=
-  constants p u*load p q o (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i)
-
-noncomputable def prefixAnchor (s u : GaussLoc p) :=
-  (constants p u*load p q o H.t0-
-    prefixSigma p H u H.t0 ⬝ᵥ ((prefixOwn p H s u)⁻¹ *ᵥ prefixRowLoad p H u))*
-      Ring.inverse (prefixReference p H s u H.t0)
-
-noncomputable def own_direction_zero {α : Type*} [Fintype α] [DecidableEq α] :=
-  @reference_direction_zero (Ring p) _ _ α _ _
-
-theorem prefixAnchor_zero (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) :
-    (constants p u*load p q o H.t0-prefixAnchor p H s u)-
-      prefixSigma p H u H.t0 ⬝ᵥ ((prefixOwn p H s u)⁻¹ *ᵥ
-        fun i => prefixRowLoad p H u i-prefixAnchor p H s u)=0 := by
-  have hB := Ring.mul_inverse_cancel (prefixReference p H s u H.t0)
-    (prefixReference_unit p H s u hs hu huc)
-  exact own_direction_zero p (prefixOwn p H s u) (prefixSigma p H u H.t0)
-    (prefixRowLoad p H u) (constants p u*load p q o H.t0)
-    (Ring.inverse (prefixReference p H s u H.t0)) hB
 
 end ActualPrefix
 
 end TwoTermDeformation
 
 section CentralPole
-
-theorem affine_central_factor {R : Type*} [CommRing R] (a b point : R)
-    (ha : a+b*point=0) :
-    Polynomial.C b*((Polynomial.X:R[X])+Polynomial.C (-point))=
-      Polynomial.C a+Polynomial.C b*Polynomial.X := by
-  have he : b*(-point)=a := by linear_combination -ha
-  rw [mul_add,←map_mul,he,add_comm]
-
-
-
-noncomputable def centralFactor (point : GaussLoc p) : WrapDeform.Extension p :=
-  WrapDeform.embed p (((Polynomial.X:(GaussLoc p)[X])+Polynomial.C (-point)):(GaussLoc p)[X])
-
-/-- A polynomial test needs no generic denominator or pivot unit. -/
-theorem polynomial_at (point : GaussLoc p) (f : (GaussLoc p)[X]) :
-    WrapPoleTest.At p point (WrapDeform.embed p f) (f.eval point) := by
-  unfold WrapPoleTest.At WrapEvaluation.Rel
-  refine ⟨f,1,by simp,?_,by simp⟩
-  simp only [map_one,one_mul]
-  rfl
-
-/-- Clear the single central pole before evaluating. The vanished
-linear factor cancels the original affine pole denominator exactly. -/
-theorem central_affine_at (a b point : GaussLoc p) (hb : res p b≠0)
-    (ha : a+b*point=0) :
-    WrapPoleTest.At p point (centralFactor (p:=p) point*Ring.inverse (WrapPole.affine p a b))
-      (Ring.inverse b) := by
-  have hbU : IsUnit b := isUnit_of_res_ne b hb
-  have hf := affine_central_factor a b point ha
-  have he : WrapDeform.embed p (Polynomial.C b)*centralFactor (p:=p) point=WrapPole.affine p a b := by
-    unfold centralFactor WrapPole.affine
-    rw [←map_mul,hf]
-  unfold WrapPoleTest.At WrapEvaluation.Rel
-  refine ⟨1,Polynomial.C b,by simpa only [Polynomial.eval_C] using hbU,?_,?_⟩
-  · rw [map_one]
-    change WrapDeform.embed p (Polynomial.C b)*(centralFactor (p:=p) point*
-      Ring.inverse (WrapPole.affine p a b))=1
-    rw [←mul_assoc,he]
-    exact Ring.mul_inverse_cancel _ (WrapPole.affine_unit p a b hb)
-  · simp only [Polynomial.eval_one,Polynomial.eval_C]
-    exact (Ring.mul_inverse_cancel b hbU).symm
-
-/-- Every other affine pole is regular at the central test, so clearing
-the central factor sends it to zero. -/
-theorem other_affine_at (a b point : GaussLoc p) (hb : res p b≠0)
-    (ha : IsUnit (a+b*point)) :
-    WrapPoleTest.At p point (centralFactor (p:=p) point*Ring.inverse (WrapPole.affine p a b)) 0 := by
-  unfold WrapPoleTest.At WrapEvaluation.Rel
-  refine ⟨(Polynomial.X:(GaussLoc p)[X])+Polynomial.C (-point),Polynomial.C a+Polynomial.C b*Polynomial.X,
-    by simpa only [Polynomial.eval_add,Polynomial.eval_C,Polynomial.eval_mul,Polynomial.eval_X] using ha,?_,?_⟩
-  · change WrapPole.affine p a b*(centralFactor (p:=p) point*Ring.inverse (WrapPole.affine p a b))=
-      centralFactor (p:=p) point
-    calc
-      _=centralFactor (p:=p) point*(WrapPole.affine p a b*Ring.inverse (WrapPole.affine p a b)) := by ring
-      _=_ := by rw [Ring.mul_inverse_cancel _ (WrapPole.affine_unit p a b hb),mul_one]
-  · simp only [Polynomial.eval_add,Polynomial.eval_X,Polynomial.eval_C,add_neg_cancel,mul_zero]
-
-/-- A normalized original nonpole contributes zero to the cleared
-central-pole test, directly in its original representation. -/
-theorem central_nonpole_at (a b point : GaussLoc p) (ha : res p a≠0) :
-    WrapPoleTest.At p point (centralFactor (p:=p) point*WrapPole.normalizedInverse p a b) 0 := by
-  classical
-  unfold WrapPole.normalizedInverse
-  rw [dif_neg ha]
-  unfold WrapPoleTest.At WrapEvaluation.Rel
-  refine ⟨Polynomial.C (UFMoments.piL p)*((Polynomial.X:(GaussLoc p)[X])+Polynomial.C (-point)),
-    Polynomial.C a+Polynomial.C (UFMoments.piL p)*Polynomial.C b*Polynomial.X,
-    by simpa only [Polynomial.eval_add,Polynomial.eval_C,Polynomial.eval_mul,Polynomial.eval_X] using
-      WrapPoleTest.nonpole_unit p a b point ha,?_,?_⟩
-  · change WrapPole.denominator p a b*(centralFactor (p:=p) point*
-        (WrapDeform.uniformizer p*Ring.inverse (WrapPole.denominator p a b)))=
-      WrapDeform.embed p (Polynomial.C (UFMoments.piL p)*((Polynomial.X:(GaussLoc p)[X])+Polynomial.C (-point)))
-    rw [map_mul]
-    change _=WrapDeform.uniformizer p*centralFactor (p:=p) point
-    calc
-      _=WrapDeform.uniformizer p*centralFactor (p:=p) point*
-        (WrapPole.denominator p a b*Ring.inverse (WrapPole.denominator p a b)) := by ring
-      _=_ := by rw [Ring.mul_inverse_cancel _ (WrapPole.denominator_unit p a b ha),mul_one]
-  · simp only [Polynomial.eval_mul,Polynomial.eval_add,Polynomial.eval_X,Polynomial.eval_C,
-      add_neg_cancel,mul_zero]
-
-theorem central_point_algebra {R : Type*} [CommRing R]
-    (a b x h h0 : R) (hi : b*x=1) :
-    (a+b*h)+b*(-a*x-h0)=b*(h-h0) := by
-  linear_combination -a*hi
-
-/-- Central-threshold pole location in the original coefficient ring. -/
-noncomputable def centralPoint (q j0 h0 : ℕ) : GaussLoc p :=
-  -(j0:GaussLoc p)*Ring.inverse (q:GaussLoc p)-(h0:GaussLoc p)
-
-theorem central_point_identity (q j0 h h0 : ℕ) (hq : res p (q:GaussLoc p)≠0) :
-    ((j0+q*h:ℕ):GaussLoc p)+(q:GaussLoc p)*centralPoint (p:=p) q j0 h0=
-      (q:GaussLoc p)*((h:GaussLoc p)-(h0:GaussLoc p)) := by
-  have hi := Ring.mul_inverse_cancel (q:GaussLoc p) (isUnit_of_res_ne (q:GaussLoc p) hq)
-  unfold centralPoint
-  push_cast
-  exact central_point_algebra (j0:GaussLoc p) (q:GaussLoc p) _ _ _ hi
-
-theorem central_other_unit (q j0 h h0 : ℕ) (hq : res p (q:GaussLoc p)≠0)
-    (hh : h<p) (hh0 : h0<p) (hne : h≠h0) :
-    IsUnit (((j0+q*h:ℕ):GaussLoc p)+(q:GaussLoc p)*centralPoint (p:=p) q j0 h0) := by
-  rw [central_point_identity q j0 h h0 hq]
-  apply (isUnit_of_res_ne (q:GaussLoc p) hq).mul
-  apply isUnit_of_res_ne ((h:GaussLoc p)-(h0:GaussLoc p))
-  intro hz
-  apply (sub_ne_zero.mpr (WrapHarmonicPivot.cast_ne p h h0 hh hh0 hne))
-  apply (RatFunc.C:ZMod p →+* RatFunc (ZMod p)).injective
-  simpa only [map_sub,map_natCast,map_zero] using hz
-
-/-- The cleared family has exactly one surviving pole term. -/
-theorem central_family_at (q j0 h h0 : ℕ) (hq : res p (q:GaussLoc p)≠0)
-    (hh : h<p) (hh0 : h0<p) :
-    WrapPoleTest.At p (centralPoint (p:=p) q j0 h0)
-      (centralFactor (p:=p) (centralPoint (p:=p) q j0 h0)*
-        Ring.inverse (WrapPole.affine p ((j0+q*h:ℕ):GaussLoc p) (q:GaussLoc p)))
-      (if h=h0 then Ring.inverse (q:GaussLoc p) else 0) := by
-  by_cases he : h=h0
-  · subst h
-    rw [if_pos rfl]
-    exact central_affine_at _ _ _ hq (by rw [central_point_identity q j0 h0 h0 hq,sub_self,mul_zero])
-  · rw [if_neg he]
-    exact other_affine_at _ _ _ hq (central_other_unit q j0 h h0 hq hh hh0 he)
-
-/-- Existing cleared specialization is closed under the finite sums
-appearing in original pole prefixes. -/
-theorem central_sum_at {α : Type*} (point : GaussLoc p) (S : Finset α)
-    (f : α → WrapDeform.Extension p) (v : α → GaussLoc p)
-    (hv : ∀ a∈S,WrapPoleTest.At p point (centralFactor (p:=p) point*f a) (v a)) :
-    WrapPoleTest.At p point (centralFactor (p:=p) point*∑ a∈S,f a) (∑ a∈S,v a) := by
-  classical
-  revert hv
-  induction S using Finset.induction_on with
-  | empty =>
-    intro hv
-    simp only [Finset.sum_empty,mul_zero]
-    exact WrapEvaluation.Rel.zero
-  | @insert a S ha ih =>
-    intro hv
-    have hA := hv a (mem_insert_self a S)
-    have hS := ih (fun b hb => hv b (mem_insert_of_mem hb))
-    rw [Finset.sum_insert ha,Finset.sum_insert ha,mul_add]
-    exact WrapEvaluation.Rel.add hA hS
-
-/-- Scalar multiplication preserves the already-cleared test. -/
-theorem central_scalar_at (point c : GaussLoc p) (f : WrapDeform.Extension p) (v : GaussLoc p)
-    (hf : WrapPoleTest.At p point (centralFactor (p:=p) point*f) v) :
-    WrapPoleTest.At p point
-      (centralFactor (p:=p) point*(WrapDeform.embed p (Polynomial.C c)*f)) (c*v) := by
-  have hc : WrapPoleTest.At p point (WrapDeform.embed p (Polynomial.C c)) c := by
-    simpa only [Polynomial.eval_C] using polynomial_at point (Polynomial.C c)
-  have he : centralFactor (p:=p) point*(WrapDeform.embed p (Polynomial.C c)*f)=
-      WrapDeform.embed p (Polynomial.C c)*(centralFactor (p:=p) point*f) := by ring
-  rw [he]
-  exact WrapEvaluation.Rel.mul hc hf
 
 
 end CentralPole
@@ -4128,7 +2826,6 @@ theorem spectral_top (c : F) (A : Matrix ι ι F) (B : Matrix ι κ F)
     exact h1
 
 end SpectralTop
-
 
 
 section StepFibre
@@ -4555,103 +3252,19 @@ noncomputable def spectralFirst : K[X][X][X] →+* K[X][X][X] :=
   Polynomial.eval₂RingHom (R:=K[X][X]) (S:=K[X][X][X]) (poleCoefficients (K:=K))
     (Polynomial.C (Polynomial.C (Polynomial.X:K[X])))
 
-theorem spectralLast_C3 (k : K) :
-    spectralLast (K:=K) (Polynomial.C (Polynomial.C (Polynomial.C k)))=
-      Polynomial.C (Polynomial.C (Polynomial.C k)) := by
-  simp [spectralLast,Polynomial.Bivariate.swap_C]
-
-theorem ringHom_ext3 {S : Type*} [Semiring S] {f g : K[X][X][X] →+* S}
-    (h0 : ∀ k : K,f (Polynomial.C (Polynomial.C (Polynomial.C k)))=g (Polynomial.C (Polynomial.C (Polynomial.C k))))
-    (h1 : f (Polynomial.C (Polynomial.C Polynomial.X))=g (Polynomial.C (Polynomial.C Polynomial.X)))
-    (h2 : f (Polynomial.C Polynomial.X)=g (Polynomial.C Polynomial.X)) (h3 : f Polynomial.X=g Polynomial.X) :
-    f=g := by
-  have hCC : (f.comp Polynomial.C).comp Polynomial.C=(g.comp Polynomial.C).comp Polynomial.C :=
-    Polynomial.ringHom_ext (fun k => h0 k) h1
-  have hC : f.comp Polynomial.C=g.comp Polynomial.C :=
-    Polynomial.ringHom_ext (fun a => RingHom.congr_fun hCC a) h2
-  exact Polynomial.ringHom_ext (fun b => RingHom.congr_fun hC b) h3
-
-theorem spectralLast_spectralFirst :
-    (spectralLast (K:=K)).comp (spectralFirst (K:=K))=RingHom.id _ := by
-  apply ringHom_ext3
-  · intro k
-    simp only [RingHom.comp_apply,spectralFirst,poleCoefficients,Polynomial.coe_eval₂RingHom,
-      Polynomial.eval₂_C,RingHom.id_apply,spectralLast_C3]
-  · simp only [RingHom.comp_apply,spectralFirst,poleCoefficients,Polynomial.coe_eval₂RingHom,
-      Polynomial.eval₂_C,Polynomial.eval₂_X,RingHom.id_apply,spectralLast_fractional_pole]
-  · simp only [RingHom.comp_apply,spectralFirst,poleCoefficients,Polynomial.coe_eval₂RingHom,
-      Polynomial.eval₂_C,Polynomial.eval₂_X,RingHom.id_apply,spectralLast_integer_pole]
-  · simp only [RingHom.comp_apply,spectralFirst,Polynomial.coe_eval₂RingHom,Polynomial.eval₂_X,
-      RingHom.id_apply,spectralLast_original_spectral]
-
-theorem spectralFirst_injective : Function.Injective (spectralFirst (K:=K)) := by
-  intro a b h
-  have := congrArg (spectralLast (K:=K)) h
-  simpa only [← RingHom.comp_apply,spectralLast_spectralFirst,RingHom.id_apply] using this
 
 /-- Faithful embedding of spectral-outer cleared polynomials in the actual
 two-parameter residue field: outer variable = original spectral `U`. -/
 noncomputable def embedU : K[X][X][X] →+* RatFunc (RatFunc (RatFunc K)) :=
   (embedThree (K:=K)).comp (spectralFirst (K:=K))
 
-theorem embedU_injective : Function.Injective (embedU (K:=K)) :=
-  embedThree_injective.comp spectralFirst_injective
-
-theorem embedThree_X : embedThree (K:=K) Polynomial.X=(RatFunc.X:RatFunc (RatFunc (RatFunc K))) := by
-  simp [embedThree,RatFunc.algebraMap_X]
-
-theorem embedThree_C (f : K[X][X]) :
-    embedThree (K:=K) (Polynomial.C f)=RatFunc.C (WrapBivariate.embed f) := by
-  simp [embedThree,RatFunc.algebraMap_C]
-
-theorem embed_X : WrapBivariate.embed (K:=K) Polynomial.X=(RatFunc.X:RatFunc (RatFunc K)) := by
-  simp [WrapBivariate.embed,RatFunc.algebraMap_X]
-
-theorem embed_C (f : K[X]) :
-    WrapBivariate.embed (K:=K) (Polynomial.C f)=RatFunc.C (algebraMap K[X] (RatFunc K) f) := by
-  simp [WrapBivariate.embed,RatFunc.algebraMap_C]
-
-theorem embedU_spectral :
-    embedU (K:=K) Polynomial.X=RatFunc.C (RatFunc.C (RatFunc.X:RatFunc K)) := by
-  simp [embedU,spectralFirst,embedThree_C,embed_C,RatFunc.algebraMap_X]
-
-theorem embedU_integer :
-    embedU (K:=K) (Polynomial.C Polynomial.X)=(RatFunc.X:RatFunc (RatFunc (RatFunc K))) := by
-  simp [embedU,spectralFirst,poleCoefficients,embedThree_X]
-
-theorem embedU_fractional :
-    embedU (K:=K) (Polynomial.C (Polynomial.C Polynomial.X))=
-      RatFunc.C (RatFunc.X:RatFunc (RatFunc K)) := by
-  simp [embedU,spectralFirst,poleCoefficients,embedThree_C,embed_X]
-
-theorem embedU_const (k : K) :
-    embedU (K:=K) (Polynomial.C (Polynomial.C (Polynomial.C k)))=
-      RatFunc.C (RatFunc.C (RatFunc.C k)) := by
-  simp [embedU,spectralFirst,poleCoefficients,embedThree_C,embed_C,RatFunc.algebraMap_C]
 
 end SpectralOuter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 section ClearedWorld
 variable (p : ℕ) [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 /-- The two ORIGINAL pole parameters and the constants, as cleared
 polynomials with the integer parameter outermost. -/
@@ -4662,22 +3275,6 @@ noncomputable def bFrac : (ZMod p)[X][X] := Polynomial.C Polynomial.X
 noncomputable def embedB : (ZMod p)[X][X] →+* TwoTermDeformation.Residue p :=
   (embedU (K:=ZMod p)).comp Polynomial.C
 
-theorem embedB_const (k : ZMod p) :
-    embedB p (bconst p k)=RatFunc.C (RatFunc.C (RatFunc.C k)) := by
-  simp only [embedB,bconst,RingHom.comp_apply]
-  exact embedU_const k
-
-theorem embedB_nat (k : ℕ) : embedB p (bconst p (k:ZMod p))=(k:TwoTermDeformation.Residue p) := by
-  rw [embedB_const]
-  simp only [map_natCast]
-
-theorem embedB_int : embedB p (bInt p)=(RatFunc.X:TwoTermDeformation.Residue p) := by
-  simp only [embedB,bInt,RingHom.comp_apply]
-  exact embedU_integer
-
-theorem embedB_frac : embedB p (bFrac p)=RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p) := by
-  simp only [embedB,bFrac,RingHom.comp_apply]
-  exact embedU_fractional
 
 variable (q o : ℕ)
 
@@ -4707,71 +3304,12 @@ theorem not_both (t : ℕ) (hq : q<p) (ho0 : 0<o) (hoq : o<q) (hle : o≤q*t) (h
   have := Nat.le_of_dvd ho0 h2
   omega
 
-theorem embedB_dfac (t : ℕ) :
-    embedB p (dfac p q o t)=
-      if p∣t then ((t/p:ℕ):TwoTermDeformation.Residue p)+RatFunc.X
-      else if p∣q*t-o then ((((q*t-o)/p:ℕ):TwoTermDeformation.Residue p)+
-        (q:TwoTermDeformation.Residue p)*RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) else 1 := by
-  unfold dfac
-  split_ifs <;> simp only [map_add,map_mul,map_one,embedB_nat,embedB_int,embedB_frac]
-
-theorem embedB_injective : Function.Injective (embedB p) :=
-  embedU_injective.comp Polynomial.C_injective
-
-theorem dfac_ne (hq : (q:ZMod p)≠0) (t : ℕ) : dfac p q o t≠0 := by
-  unfold dfac bconst bInt bFrac
-  split_ifs with h1 h2
-  · rw [add_comm]
-    exact Polynomial.X_add_C_ne_zero _
-  · rw [← Polynomial.C_mul,← Polynomial.C_add]
-    intro hz
-    have h0 := Polynomial.C_eq_zero.mp hz
-    have hc := congrArg (fun P : (ZMod p)[X] => P.coeff 1) h0
-    simp only [Polynomial.coeff_add,Polynomial.coeff_C,Polynomial.coeff_C_mul,Polynomial.coeff_X_one,
-      Polynomial.coeff_zero,mul_one,one_ne_zero,if_false,zero_add] at hc
-    exact hq hc
-  · exact one_ne_zero
-
-theorem embedB_dfac_ne (hq : (q:ZMod p)≠0) (t : ℕ) : embedB p (dfac p q o t)≠0 := by
-  intro hz
-  exact dfac_ne p q o hq t (embedB_injective p (by simpa only [map_zero] using hz))
 
 theorem cofactor_mul (M t : ℕ) (ht : t∈Icc 1 M) :
     cofactor p q o M t*dfac p q o t=clearing p q o M := by
   unfold cofactor clearing
   exact Finset.prod_erase_mul _ _ ht
 
-/-- Clearing an ORIGINAL two-parameter increment residue: only elementary
-original pole denominators are multiplied out. -/
-theorem embedB_clearedDelta (M t : ℕ) (ht : t∈Icc 1 M) (hq0 : 0<q) (hqp : q<p)
-    (ho0 : 0<o) (hoq : o<q) (hle : o≤q*t) (h2 : ¬p^2∣t) :
-    embedB p (clearedDelta p q o M t)=
-      embedB p (clearing p q o M)*TwoTermDeformation.residue p (TwoTermDeformation.delta p q o t) := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    omega
-  have hD := embedB_dfac_ne p q o hq t
-  have hc := congrArg (embedB p) (cofactor_mul p q o M t ht)
-  rw [map_mul] at hc
-  rw [TwoTermDeformation.delta_residue p q o t hq0 hqp hle h2,← hc]
-  unfold clearedDelta deltaWeight
-  have hdf := embedB_dfac p q o t
-  by_cases h1 : p∣t
-  · have h2' := not_both p q o t hqp ho0 hoq hle h1
-    have hdv : embedB p (dfac p q o t)=((t/p:ℕ):TwoTermDeformation.Residue p)+RatFunc.X := by
-      rw [hdf,if_pos h1]
-    rw [hdv] at hD ⊢
-    simp only [if_pos h1,if_neg h2',map_mul,map_one,mul_zero,sub_zero,one_mul]
-    field_simp
-  · by_cases h3 : p∣q*t-o
-    · have hdv : embedB p (dfac p q o t)=((((q*t-o)/p:ℕ):TwoTermDeformation.Residue p)+
-          (q:TwoTermDeformation.Residue p)*RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) := by
-        rw [hdf,if_neg h1,if_pos h3]
-      rw [hdv] at hD ⊢
-      simp only [if_neg h1,if_pos h3,map_mul,map_neg,embedB_nat,zero_sub]
-      field_simp
-    · simp only [if_neg h1,if_neg h3,map_mul,map_zero,zero_mul,mul_zero,sub_zero]
 
 theorem load_terms (M a : ℕ) (haM : a≤M) (hM : M<p*p) (hq0 : 0<q) (hoq : o<q) (t : ℕ)
     (ht : t∈Icc 1 a) : t∈Icc 1 M ∧ o≤q*t ∧ ¬p^2∣t := by
@@ -4780,187 +3318,11 @@ theorem load_terms (M a : ℕ) (haM : a≤M) (hM : M<p*p) (hq0 : 0<q) (hoq : o<q
   have := Nat.le_mul_of_pos_right q h.1
   omega
 
-theorem embedB_clearedLoad (M a : ℕ) (haM : a≤M) (hM : M<p*p) (hq0 : 0<q) (hqp : q<p)
-    (ho0 : 0<o) (hoq : o<q) :
-    embedB p (clearedLoad p q o M a)=
-      embedB p (clearing p q o M)*TwoTermDeformation.residue p (TwoTermDeformation.load p q o a) := by
-  unfold clearedLoad TwoTermDeformation.load
-  rw [map_sum,map_sum,Finset.mul_sum]
-  apply Finset.sum_congr rfl
-  intro t ht
-  obtain ⟨h1,h2,h3⟩ := load_terms p q o M a haM hM hq0 hoq t ht
-  exact embedB_clearedDelta p q o M t h1 hq0 hqp ho0 hoq h2 h3
-
-theorem dsq_residue (t : ℕ) (hq0 : 0<q) (hqp : q<p) (hle : o≤q*t) (h2 : ¬p^2∣t) :
-    TwoTermDeformation.residue p (TwoTermDeformation.dsq p q o t)=
-      (if p∣t then (1:TwoTermDeformation.Residue p)/(((t/p:ℕ):TwoTermDeformation.Residue p)+RatFunc.X)
-        else 0)^2-
-      (q:TwoTermDeformation.Residue p)^2*(if p∣q*t-o then
-        (1:TwoTermDeformation.Residue p)/((((q*t-o)/p:ℕ):TwoTermDeformation.Residue p)+
-          (q:TwoTermDeformation.Residue p)*RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) else 0)^2 := by
-  rw [TwoTermDeformation.dsq]
-  simp only [map_sub,map_mul,map_pow]
-  rw [TwoTermDeformation.integer_residue p t h2,
-    TwoTermDeformation.coefficient_residue,TwoTermDeformation.coefficient_residue,
-    TwoTermDeformation.first_constant_residue,WrapSimplePole.res_nat]
-  simp only [map_natCast,map_pow]
-  rw [WrapSimplePole.argument_nat p q o t hle,
-    WrapPoleResidue.normalized_nat p (q*t-o) q (WrapSimplePole.q_res_ne p q hq0 hqp)]
-  by_cases hi : p∣t <;> by_cases hf : p∣q*t-o <;>
-    simp only [hi,hf,↓reduceIte,map_zero,map_div₀,map_add,map_mul,map_one,map_natCast]
-
-theorem embedB_clearedSquare (M t : ℕ) (ht : t∈Icc 1 M) (hq0 : 0<q) (hqp : q<p)
-    (ho0 : 0<o) (hoq : o<q) (hle : o≤q*t) (h2 : ¬p^2∣t) :
-    embedB p (clearedSquare p q o M t)=
-      embedB p (clearing p q o M)^2*TwoTermDeformation.residue p (TwoTermDeformation.dsq p q o t) := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    omega
-  have hD := embedB_dfac_ne p q o hq t
-  have hc := congrArg (embedB p) (cofactor_mul p q o M t ht)
-  rw [map_mul] at hc
-  rw [dsq_residue p q o t hq0 hqp hle h2,← hc]
-  unfold clearedSquare squareWeight
-  have hdf := embedB_dfac p q o t
-  by_cases h1 : p∣t
-  · have h2' := not_both p q o t hqp ho0 hoq hle h1
-    have hdv : embedB p (dfac p q o t)=((t/p:ℕ):TwoTermDeformation.Residue p)+RatFunc.X := by
-      rw [hdf,if_pos h1]
-    rw [hdv] at hD ⊢
-    simp only [if_pos h1,if_neg h2',map_mul,map_one,map_pow,one_mul]
-    field_simp
-    ring
-  · by_cases h3 : p∣q*t-o
-    · have hdv : embedB p (dfac p q o t)=((((q*t-o)/p:ℕ):TwoTermDeformation.Residue p)+
-          (q:TwoTermDeformation.Residue p)*RatFunc.C (RatFunc.X:WrapPoleResidue.Residue p)) := by
-        rw [hdf,if_neg h1,if_pos h3]
-      rw [hdv] at hD ⊢
-      simp only [if_neg h1,if_pos h3,map_mul,map_neg,map_pow,embedB_const,zero_pow two_ne_zero,
-        zero_sub]
-      simp only [map_pow,map_natCast]
-      field_simp
-    · simp only [if_neg h1,if_neg h3,map_mul,map_zero,zero_mul,mul_zero,sub_zero,
-        zero_pow two_ne_zero]
-
-/-- Evaluation of the integer parameter at a central point; the fractional
-parameter stays generic. -/
-noncomputable def evOuter (c : ZMod p) : (ZMod p)[X][X] →+* RatFunc (ZMod p) :=
-  (algebraMap (ZMod p)[X] (RatFunc (ZMod p))).comp (Polynomial.evalRingHom (Polynomial.C c))
-
-/-- Evaluation of the fractional parameter at a central point; the integer
-parameter stays generic. -/
-noncomputable def evInner (c : ZMod p) : (ZMod p)[X][X] →+* RatFunc (ZMod p) :=
-  (algebraMap (ZMod p)[X] (RatFunc (ZMod p))).comp (Polynomial.mapRingHom (Polynomial.evalRingHom c))
-
-theorem alg_ne (P : (ZMod p)[X]) (hP : P≠0) : algebraMap (ZMod p)[X] (RatFunc (ZMod p)) P≠0 := by
-  intro hz
-  exact hP (RatFunc.algebraMap_injective (ZMod p) (by simpa only [map_zero] using hz))
-
-theorem evOuter_dfac (c : ZMod p) (t : ℕ) :
-    evOuter p c (dfac p q o t)=algebraMap (ZMod p)[X] (RatFunc (ZMod p))
-      (if p∣t then Polynomial.C (((t/p:ℕ):ZMod p)+c)
-       else if p∣q*t-o then Polynomial.C ((((q*t-o)/p:ℕ):ZMod p))+Polynomial.C (q:ZMod p)*Polynomial.X
-       else 1) := by
-  unfold dfac
-  split_ifs <;> simp [evOuter,bconst,bInt,bFrac]
-
-theorem evInner_dfac (c : ZMod p) (t : ℕ) :
-    evInner p c (dfac p q o t)=algebraMap (ZMod p)[X] (RatFunc (ZMod p))
-      (if p∣t then Polynomial.C ((t/p:ℕ):ZMod p)+Polynomial.X
-       else if p∣q*t-o then Polynomial.C ((((q*t-o)/p:ℕ):ZMod p)+(q:ZMod p)*c)
-       else 1) := by
-  unfold dfac
-  split_ifs <;> simp [evInner,bconst,bInt,bFrac]
 
 theorem nat_cast_eq_of_lt (a b : ℕ) (ha : a<p) (hb : b<p) (h : (a:ZMod p)=(b:ZMod p)) : a=b := by
   have := (ZMod.natCast_eq_natCast_iff' a b p).mp h
   rwa [Nat.mod_eq_of_lt ha,Nat.mod_eq_of_lt hb] at this
 
-/-- At the integer central point only the central original denominator vanishes. -/
-theorem evOuter_dfac_eq_zero (M ts : ℕ) (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p)
-    (hts : p∣ts) (htsM : ts∈Icc 1 M) (t : ℕ) (ht : t∈Icc 1 M) :
-    evOuter p (-(((ts/p:ℕ):ZMod p))) (dfac p q o t)=0 ↔ t=ts := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    omega
-  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M hq0) hM
-  have ht1 := mem_Icc.mp ht
-  have hts1 := mem_Icc.mp htsM
-  rw [evOuter_dfac]
-  constructor
-  · intro hz
-    split_ifs at hz with h1 h2
-    · have h0 := Polynomial.C_eq_zero.mp
-        ((RatFunc.algebraMap_injective (ZMod p)) (by simpa only [map_zero] using hz))
-      have he : ((t/p:ℕ):ZMod p)=((ts/p:ℕ):ZMod p) := by linear_combination h0
-      have hlt : t/p<p := (Nat.div_lt_iff_lt_mul (Fact.out:p.Prime).pos).mpr (by omega)
-      have hlts : ts/p<p := (Nat.div_lt_iff_lt_mul (Fact.out:p.Prime).pos).mpr (by omega)
-      have hq' := nat_cast_eq_of_lt p _ _ hlt hlts he
-      have := Nat.div_mul_cancel h1
-      have := Nat.div_mul_cancel hts
-      calc t=t/p*p := (Nat.div_mul_cancel h1).symm
-        _=ts/p*p := by rw [hq']
-        _=ts := Nat.div_mul_cancel hts
-    · exfalso
-      apply alg_ne p _ _ hz
-      intro hP
-      have hc := congrArg (fun P : (ZMod p)[X] => P.coeff 1) hP
-      simp only [Polynomial.coeff_add,Polynomial.coeff_C,Polynomial.coeff_C_mul,Polynomial.coeff_X_one,
-        Polynomial.coeff_zero,mul_one,one_ne_zero,if_false,zero_add] at hc
-      exact hq hc
-    · exact absurd hz (by simp)
-  · intro he
-    subst he
-    simp [if_pos hts]
-
-/-- At the fractional central point only the central original denominator vanishes. -/
-theorem evInner_dfac_eq_zero (M ts : ℕ) (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p)
-    (ho0 : 0<o) (hoq : o<q) (htsI : ¬p∣ts) (hts : p∣q*ts-o) (htsM : ts∈Icc 1 M)
-    (t : ℕ) (ht : t∈Icc 1 M) :
-    evInner p (-((((q*ts-o)/p:ℕ):ZMod p))/(q:ZMod p)) (dfac p q o t)=0 ↔ t=ts := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    omega
-  have ht1 := mem_Icc.mp ht
-  have hts1 := mem_Icc.mp htsM
-  rw [evInner_dfac]
-  constructor
-  · intro hz
-    split_ifs at hz with h1 h2
-    · exfalso
-      apply alg_ne p _ _ hz
-      rw [add_comm]
-      exact Polynomial.X_add_C_ne_zero _
-    · have h0 := Polynomial.C_eq_zero.mp
-        ((RatFunc.algebraMap_injective (ZMod p)) (by simpa only [map_zero] using hz))
-      have he : ((((q*t-o)/p:ℕ)):ZMod p)=((((q*ts-o)/p:ℕ)):ZMod p) := by
-        field_simp at h0
-        linear_combination h0
-      have hle1 : q*t≤q*M := Nat.mul_le_mul_left q ht1.2
-      have hle2 : q*ts≤q*M := Nat.mul_le_mul_left q hts1.2
-      have hlt : (q*t-o)/p<p := (Nat.div_lt_iff_lt_mul (Fact.out:p.Prime).pos).mpr (by omega)
-      have hlts : (q*ts-o)/p<p := (Nat.div_lt_iff_lt_mul (Fact.out:p.Prime).pos).mpr (by omega)
-      have hq' := nat_cast_eq_of_lt p _ _ hlt hlts he
-      have hx : q*t-o=q*ts-o := by
-        calc q*t-o=(q*t-o)/p*p := (Nat.div_mul_cancel h2).symm
-          _=(q*ts-o)/p*p := by rw [hq']
-          _=q*ts-o := Nat.div_mul_cancel hts
-      have h1' : o≤q*t := by have := Nat.le_mul_of_pos_right q ht1.1; omega
-      have h2' : o≤q*ts := by have := Nat.le_mul_of_pos_right q hts1.1; omega
-      have : q*t=q*ts := by omega
-      exact Nat.eq_of_mul_eq_mul_left hq0 this
-    · exact absurd hz (by simp)
-  · intro he
-    subst he
-    simp only [if_neg htsI,if_pos hts]
-    have : ((((q*t-o)/p:ℕ):ZMod p))+(q:ZMod p)*(-((((q*t-o)/p:ℕ):ZMod p))/(q:ZMod p))=0 := by
-      field_simp
-      ring
-    rw [this]
-    simp
 
 section Evaluated
 variable {L : Type*} [Field L] (ev : (ZMod p)[X][X] →+* L) (M ts : ℕ)
@@ -5055,61 +3417,10 @@ theorem ev_clearedLoadRow {L : Type*} [Field L] [Algebra (ZMod p) L] (ev : (ZMod
 theorem rational_inv_mul_cancel {S : Type*} [CommRing S] [IsDomain S] (a : RatFunc S) (ha : a≠0) :
     a⁻¹*a=1 := inv_mul_cancel₀ ha
 
-/-- Exact cleared residue of an actual two-parameter entry at two
-original nodes of one colour (divided original displacement). -/
-theorem embedB_clearedEntry (M : ℕ) (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p) (ho0 : 0<o) (hoq : o<q)
-    (u : GaussLoc p) (u0 : ZMod p)
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (a b : ℕ) (ha : a≤M) (hb : b≤M) (hcol : (a:ZMod p)=(b:ZMod p))
-    (hab : ((b/p:ℕ):ZMod p)≠((a/p:ℕ):ZMod p)) :
-    embedB p (clearedEntry p q o M u0 a b)=
-      embedB p (clearing p q o M)*TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u a b) := by
-  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M hq0) hM
-  have hd := congrArg (TwoTermDeformation.residue p)
-    (TwoTermDeformation.divided_commutator p q o (M+1) u (by nlinarith) a b (by omega) (by omega) hcol)
-  simp only [map_mul,map_sub,map_natCast,hu0] at hd
-  have hne : ((b/p:ℕ):TwoTermDeformation.Residue p)-((a/p:ℕ):TwoTermDeformation.Residue p)≠0 := by
-    intro hz
-    apply hab
-    have h := sub_eq_zero.mp hz
-    have hinj : Function.Injective (fun k : ZMod p =>
-        (RatFunc.C (RatFunc.C (RatFunc.C k)) : TwoTermDeformation.Residue p)) :=
-      RatFunc.C_injective.comp (RatFunc.C_injective.comp RatFunc.C_injective)
-    apply hinj
-    simpa only [map_natCast] using h
-  unfold clearedEntry
-  rw [map_mul,map_sub,embedB_clearedLoad p q o M b hb hMp hq0 hqp ho0 hoq,
-    embedB_clearedLoad p q o M a ha hMp hq0 hqp ho0 hoq,embedB_const]
-  simp only [map_div₀,map_sub,map_natCast]
-  have hE : TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u a b)=
-      (((b/p:ℕ):TwoTermDeformation.Residue p)-((a/p:ℕ):TwoTermDeformation.Residue p))⁻¹*
-        (RatFunc.C (RatFunc.C (RatFunc.C u0))*(TwoTermDeformation.residue p (TwoTermDeformation.load p q o b)-
-          TwoTermDeformation.residue p (TwoTermDeformation.load p q o a))) := by
-    rw [← hd,← mul_assoc,rational_inv_mul_cancel _ hne,one_mul]
-  rw [rational_div_eq_mul_inv,hE]
-  ring
 
 noncomputable def clearedDiag (M : ℕ) (u0 : ZMod p) (a : ℕ) : (ZMod p)[X][X] :=
   -(bconst p u0*∑ t∈Icc 1 a,clearedSquare p q o M t)
 
-theorem embedB_clearedDiag (M : ℕ) (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p) (ho0 : 0<o) (hoq : o<q)
-    (u : GaussLoc p) (u0 : ZMod p)
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (a : ℕ) (ha : a≤M) :
-    embedB p (clearedDiag p q o M u0 a)=
-      embedB p (clearing p q o M)^2*TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u a a) := by
-  have hMp : M<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left M hq0) hM
-  unfold clearedDiag TwoTermDeformation.entry
-  rw [if_pos rfl]
-  have hc : TwoTermDeformation.coefficient p (WrapOwnCore.constants p u)=TwoTermDeformation.constants p u := rfl
-  rw [hc]
-  simp only [map_neg,map_mul,map_sum,hu0,embedB_const,Finset.mul_sum,mul_neg]
-  congr 1
-  apply Finset.sum_congr rfl
-  intro t ht
-  obtain ⟨h1,h2,h3⟩ := load_terms p q o M a ha hMp hq0 hoq t ht
-  rw [embedB_clearedSquare p q o M t h1 hq0 hqp ho0 hoq h2 h3]
-  ring
 
 end ClearedWorld
 
@@ -5173,46 +3484,9 @@ theorem cross_ne_of_top (a b : ℕ) (Nv Dv N0 D0 : R[X])
 end SpectralDomain
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 section FibreSystem
 variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
-
-/-- The faithful spectral-outer embedding, built from the cleared
-coefficient embedding with the default polynomial structure. -/
-noncomputable def embedP : (ZMod p)[X][X][X] →+* TwoTermDeformation.Residue p :=
-  Polynomial.eval₂RingHom (embedB p) (RatFunc.C (RatFunc.C (RatFunc.X:RatFunc (ZMod p))))
-
-theorem embedP_eq (f : (ZMod p)[X][X][X]) : embedP p f=embedU (K:=ZMod p) f := by
-  induction f using Polynomial.induction_on' with
-  | add f g hf hg => rw [map_add,map_add,hf,hg]
-  | monomial m b =>
-    rw [← Polynomial.C_mul_X_pow_eq_monomial]
-    simp only [embedP,map_mul,map_pow,Polynomial.coe_eval₂RingHom,Polynomial.eval₂_C,
-      Polynomial.eval₂_X,embedB,RingHom.comp_apply,embedU_spectral]
-
-theorem embedP_injective : Function.Injective (embedP p) := by
-  intro a b h
-  apply embedU_injective (K:=ZMod p)
-  rw [← embedP_eq,← embedP_eq,h]
-
-theorem embedP_X : embedP p Polynomial.X=RatFunc.C (RatFunc.C (RatFunc.X:RatFunc (ZMod p))) := by
-  simp [embedP]
 
 /-- Determinants commute with evaluation of a cleared spectral polynomial
 system; stated generically so no concrete instance unfolding is needed. -/
@@ -5226,19 +3500,6 @@ variable {k n : ℕ} (cn : Fin k → ℕ) (xr yc : Fin n → ℕ) (z : ℕ)
 /-- Bordered row nodes of an actual fibre: balanced rows, then the zone. -/
 def bordRow (i : Fin (n+1)) : ℕ := if h : (i:ℕ)<n then xr ⟨i,h⟩ else z
 
-/-- The ORIGINAL two-parameter bordered fibre system: common block with
-the original spectral diagonal, balanced columns, and the direction
-column (`load` = the cleared moment numerator, otherwise the reference). -/
-noncomputable def ringSystem (s u : GaussLoc p) (load : Bool) :
-    Matrix (Fin k ⊕ Fin (n+1)) (Fin k ⊕ Fin (n+1)) (TwoTermDeformation.Ring p) :=
-  Matrix.fromBlocks
-    (Matrix.of fun i j => TwoTermDeformation.entry p q o u (cn i) (cn j)+
-      if i=j then TwoTermDeformation.coefficient p (WrapOwnCore.constants p s) else 0)
-    (Matrix.of fun i j => if h : (j:ℕ)<n then TwoTermDeformation.entry p q o u (cn i) (yc ⟨j,h⟩)
-      else if load then TwoTermDeformation.constants p u*TwoTermDeformation.load p q o (cn i) else 1)
-    (Matrix.of fun i j => TwoTermDeformation.entry p q o u (bordRow xr z i) (cn j))
-    (Matrix.of fun i j => if h : (j:ℕ)<n then TwoTermDeformation.entry p q o u (bordRow xr z i) (yc ⟨j,h⟩)
-      else if load then TwoTermDeformation.constants p u*TwoTermDeformation.load p q o (bordRow xr z i) else 1)
 
 noncomputable def clearedA (M : ℕ) (u0 : ZMod p) : Matrix (Fin k) (Fin k) (ZMod p)[X][X] :=
   Matrix.of fun i j => if i=j then clearedDiag p q o M u0 (cn i)
@@ -5290,86 +3551,6 @@ theorem FibreHyp.bord_colour {M : ℕ} (H : FibreHyp p q o cn xr yc z M) (i : Fi
     (bordRow xr z i:ZMod p)=H.colour := by
   unfold bordRow; split_ifs; exacts [H.cxr _,H.cz]
 
-/-- Row and column scalings relating the cleared system to the residues
-of the ORIGINAL bordered system. -/
-noncomputable def rowScale (Δ : TwoTermDeformation.Residue p) : Fin k ⊕ Fin (n+1) → TwoTermDeformation.Residue p :=
-  Sum.elim (fun _ => Δ^2) (fun _ => Δ)
-noncomputable def colScale (Δ : TwoTermDeformation.Residue p) (load : Bool) :
-    Fin k ⊕ Fin (n+1) → TwoTermDeformation.Residue p :=
-  Sum.elim (fun _ => 1) (fun j => if (j:ℕ)<n then 1 else if load then 1 else Δ⁻¹)
-
-theorem embedU_clearedSystem {M : ℕ} (H : FibreHyp p q o cn xr yc z M) (s u : GaussLoc p) (u0 : ZMod p)
-    (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (load : Bool) (i j : Fin k ⊕ Fin (n+1)) :
-    embedP p (clearedSystem p q o cn xr yc z M u0 load i j)=
-      rowScale (n:=n) (embedB p (clearing p q o M)) i*
-        TwoTermDeformation.residue p (ringSystem p q o cn xr yc z s u load i j)*
-        colScale (n:=n) (embedB p (clearing p q o M)) load j := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd H.hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    have := H.hqp
-    omega
-  have hcl : clearing p q o M≠0 :=
-    Finset.prod_ne_zero_iff.mpr (fun t _ => dfac_ne p q o hq t)
-  have hΔ : embedB p (clearing p q o M)≠0 := fun h0 =>
-    hcl (embedB_injective p (by simpa only [map_zero] using h0))
-  have hC (b : (ZMod p)[X][X]) : embedP p (Polynomial.C b)=embedB p b := by
-    simp only [embedP,Polynomial.coe_eval₂RingHom,Polynomial.eval₂_C]
-  have hU : TwoTermDeformation.residue p (TwoTermDeformation.coefficient p (WrapOwnCore.constants p s))=
-      embedP p Polynomial.X := by
-    rw [TwoTermDeformation.coefficient_residue,TwoTermDeformation.first_constant_residue,hs,embedP_X]
-  have hLoad (a : ℕ) (ha : a≤M) : embedB p (clearedLoadRow p q o M u0 a)=
-      embedB p (clearing p q o M)*TwoTermDeformation.residue p
-        (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o a) := by
-    unfold clearedLoadRow
-    rw [map_mul,embedB_const,embedB_clearedLoad p q o M a ha
-      (lt_of_le_of_lt (Nat.le_mul_of_pos_left M H.hq0) H.hM) H.hq0 H.hqp H.ho0 H.hoq,map_mul,hu0]
-    ring
-  have hEnt (a b : ℕ) (ha : a≤M) (hb : b≤M) (hcol : (a:ZMod p)=(b:ZMod p))
-      (hab : ((b/p:ℕ):ZMod p)≠((a/p:ℕ):ZMod p)) :
-      embedB p (clearedEntry p q o M u0 a b)=
-        embedB p (clearing p q o M)*TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u a b) :=
-    embedB_clearedEntry p q o M H.hM H.hq0 H.hqp H.ho0 H.hoq u u0 hu0 a b ha hb hcol hab
-  rcases i with i|i <;> rcases j with j|j
-  · simp only [clearedSystem,spectralSystem,ringSystem,Matrix.fromBlocks_apply₁₁,Matrix.add_apply,
-      Matrix.smul_apply,Matrix.map_apply,Matrix.of_apply,clearedA,rowScale,colScale,Sum.elim_inl,mul_one]
-    by_cases hij : i=j
-    · subst hij
-      simp only [Matrix.one_apply_eq,smul_eq_mul,mul_one,if_true,map_add,map_mul,map_pow,hC,hU]
-      rw [embedB_clearedDiag p q o M H.hM H.hq0 H.hqp H.ho0 H.hoq u u0 hu0 _ (H.hcn i)]
-      ring
-    · simp only [Matrix.one_apply_ne hij,smul_eq_mul,mul_zero,zero_add,if_neg hij,add_zero,map_mul,hC]
-      rw [hEnt _ _ (H.hcn i) (H.hcn j) ((H.ccn i).trans (H.ccn j).symm) (H.qcc i j hij)]
-      ring
-  · simp only [clearedSystem,spectralSystem,ringSystem,Matrix.fromBlocks_apply₁₂,
-      Matrix.map_apply,Matrix.of_apply,clearedB,rowScale,colScale,Sum.elim_inl,Sum.elim_inr]
-    by_cases hj : (j:ℕ)<n
-    · simp only [dif_pos hj,if_pos hj,mul_one,map_mul,hC]
-      rw [hEnt _ _ (H.hcn i) (H.hyc _) ((H.ccn i).trans (H.cyc _).symm) (H.qcb i _)]
-      ring
-    · simp only [dif_neg hj,if_neg hj]
-      cases load
-      · simp only [Bool.false_eq_true,↓reduceIte,map_one,mul_one,hC]
-        field_simp
-      · simp only [↓reduceIte,mul_one,map_mul,hC]
-        rw [hLoad _ (H.hcn i)]
-        rw [map_mul]; ring
-  · simp only [clearedSystem,spectralSystem,ringSystem,Matrix.fromBlocks_apply₂₁,
-      Matrix.map_apply,Matrix.of_apply,clearedE,rowScale,colScale,Sum.elim_inl,Sum.elim_inr,mul_one,hC]
-    rw [hEnt _ _ (H.bord_le i) (H.hcn j) ((H.bord_colour i).trans (H.ccn j).symm) (H.qbc i j)]
-  · simp only [clearedSystem,spectralSystem,ringSystem,Matrix.fromBlocks_apply₂₂,
-      Matrix.map_apply,Matrix.of_apply,clearedD,rowScale,colScale,Sum.elim_inr]
-    by_cases hj : (j:ℕ)<n
-    · simp only [dif_pos hj,if_pos hj,mul_one,hC]
-      rw [hEnt _ _ (H.bord_le i) (H.hyc _) ((H.bord_colour i).trans (H.cyc _).symm) (H.qbb i _)]
-    · simp only [dif_neg hj,if_neg hj]
-      cases load
-      · simp only [Bool.false_eq_true,↓reduceIte,map_one,mul_one,hC]
-        field_simp
-      · simp only [↓reduceIte,mul_one,hC]
-        rw [hLoad _ (H.bord_le i)]
 
 theorem det_scaled {R m : Type*} [CommRing R] [Fintype m] [DecidableEq m] (r c : m → R) (A : Matrix m m R) :
     (Matrix.of fun i j => r i*A i j*c j).det=(∏ i,r i)*(∏ j,c j)*A.det := by
@@ -5378,47 +3559,6 @@ theorem det_scaled {R m : Type*} [CommRing R] [Fintype m] [DecidableEq m] (r c :
   rw [h1,Matrix.det_mul_row,Matrix.det_mul_column]
   ring
 
-/-- The cleared determinant is the residue of the ORIGINAL bordered
-determinant times explicit powers of the original clearing factor. -/
-theorem embedU_clearedSystem_det {M : ℕ} (H : FibreHyp p q o cn xr yc z M) (s u : GaussLoc p) (u0 : ZMod p)
-    (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (load : Bool) :
-    embedP p (clearedSystem p q o cn xr yc z M u0 load).det=
-      embedB p (clearing p q o M)^(2*k+n)*(if load then embedB p (clearing p q o M) else 1)*
-        TwoTermDeformation.residue p (ringSystem p q o cn xr yc z s u load).det := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz
-    have := Nat.le_of_dvd H.hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz)
-    have := H.hqp
-    omega
-  have hcl : clearing p q o M≠0 :=
-    Finset.prod_ne_zero_iff.mpr (fun t _ => dfac_ne p q o hq t)
-  have hΔ : embedB p (clearing p q o M)≠0 := fun h0 =>
-    hcl (embedB_injective p (by simpa only [map_zero] using h0))
-  rw [RingHom.map_det (TwoTermDeformation.residue p)]
-  have h1 : embedP p (clearedSystem p q o cn xr yc z M u0 load).det=
-      ((embedP p).mapMatrix (clearedSystem p q o cn xr yc z M u0 load)).det :=
-    eval₂_det (embedB p) _ _
-  rw [h1]
-  have he : (embedP p).mapMatrix (clearedSystem p q o cn xr yc z M u0 load)=
-      Matrix.of fun i j => rowScale (n:=n) (embedB p (clearing p q o M)) i*
-        ((TwoTermDeformation.residue p).mapMatrix (ringSystem p q o cn xr yc z s u load)) i j*
-        colScale (n:=n) (embedB p (clearing p q o M)) load j := by
-    ext i j
-    exact embedU_clearedSystem H s u u0 hs hu0 load i j
-  rw [he,det_scaled]
-  congr 1
-  simp only [rowScale,colScale,Fintype.prod_sum_type,Sum.elim_inl,Sum.elim_inr,Finset.prod_const,
-    Finset.card_univ,Fintype.card_fin,Finset.prod_const_one,one_mul,Fin.prod_univ_castSucc,
-    Fin.coe_castSucc,Fin.is_lt,↓reduceIte,Fin.val_last,lt_irrefl]
-  cases load
-  · simp only [Bool.false_eq_true,↓reduceIte,mul_one]
-    simp only [one_pow,one_mul]
-    field_simp
-    ring
-  · simp only [↓reduceIte,mul_one,one_pow,one_mul]
-    ring
 
 /-- Central evaluation of the cleared bordered block is the actual
 central step system with one common nonzero factor. -/
@@ -5446,109 +3586,15 @@ theorem ev_clearedD {L : Type*} [Field L] [Algebra (ZMod p) L] (ev : (ZMod p)[X]
 end FibreSystem
 
 
-
-
-
-
-
-
 section ProfileSeparation
 variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 /-- The common nonzero central factor of the evaluated cleared systems. -/
 noncomputable def centralWeight (ev : (ZMod p)[X][X] →+* RatFunc (ZMod p)) (u0 : ZMod p) (M ts : ℕ) :
     RatFunc (ZMod p) :=
   algebraMap (ZMod p) (RatFunc (ZMod p)) u0*ev (deltaWeight p q o ts)*ev (cofactor p q o M ts)
 
-/-- Two cleared adjacent fibre systems whose central evaluations separate
-have distinct ORIGINAL residue directions (cross-multiplied, no pivot). -/
-theorem residue_cross_ne {M n k1 k2 : ℕ}
-    {cn1 : Fin k1 → ℕ} {xr1 yc1 : Fin n → ℕ} {z1 : ℕ}
-    {cn2 : Fin k2 → ℕ} {xr2 yc2 : Fin n → ℕ} {z2 : ℕ}
-    (H1 : FibreHyp p q o cn1 xr1 yc1 z1 M) (H2 : FibreHyp p q o cn2 xr2 yc2 z2 M)
-    (s u : GaussLoc p) (u0 : ZMod p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (ev : (ZMod p)[X][X] →+* RatFunc (ZMod p)) (ts : ℕ) (htsM : ts∈Icc 1 M)
-    (hz : ∀ t∈Icc 1 M,ev (dfac p q o t)=0 ↔ t=ts)
-    (hev : ∀ k,ev (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k) (cut1 cut2 : ℕ)
-    (hrow1 : ∀ i,ts≤bordRow xr1 z1 i ↔ cut1≤bordRow xr1 z1 i/p) (hcol1 : ∀ c,ts≤yc1 c ↔ cut1≤yc1 c/p)
-    (hq1 : ∀ i c,((yc1 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr1 z1 i/p:ℕ):RatFunc (ZMod p)))
-    (hrow2 : ∀ i,ts≤bordRow xr2 z2 i ↔ cut2≤bordRow xr2 z2 i/p) (hcol2 : ∀ c,ts≤yc2 c ↔ cut2≤yc2 c/p)
-    (hq2 : ∀ i c,((yc2 c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr2 z2 i/p:ℕ):RatFunc (ZMod p)))
-    (hne : (scaledStepLoad (centralWeight p q o ev u0 M ts) cut1 (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det*
-        (scaledStep (centralWeight p q o ev u0 M ts) cut2 (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det≠
-      (scaledStepLoad (centralWeight p q o ev u0 M ts) cut2 (fun i => bordRow xr2 z2 i/p) (fun c => yc2 c/p)).det*
-        (scaledStep (centralWeight p q o ev u0 M ts) cut1 (fun i => bordRow xr1 z1 i/p) (fun c => yc1 c/p)).det) :
-    TwoTermDeformation.residue p ((ringSystem p q o cn1 xr1 yc1 z1 s u true).det*
-      (ringSystem p q o cn2 xr2 yc2 z2 s u false).det-
-      (ringSystem p q o cn2 xr2 yc2 z2 s u true).det*(ringSystem p q o cn1 xr1 yc1 z1 s u false).det)≠0 := by
-  intro hres
-  have hq : (q:ZMod p)≠0 := by
-    intro hz0
-    have := Nat.le_of_dvd H1.hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz0)
-    have := H1.hqp
-    omega
-  have hcl : clearing p q o M≠0 :=
-    Finset.prod_ne_zero_iff.mpr (fun t _ => dfac_ne p q o hq t)
-  have hΔ : embedB p (clearing p q o M)≠0 := fun h0 =>
-    hcl (embedB_injective p (by simpa only [map_zero] using h0))
-  -- evaluated D-blocks
-  have hD (load : Bool) {kk : ℕ} {xr yc : Fin n → ℕ} {zz : ℕ} (cut : ℕ)
-      (hr : ∀ i,ts≤bordRow xr zz i ↔ cut≤bordRow xr zz i/p) (hc : ∀ c,ts≤yc c ↔ cut≤yc c/p)
-      (hqq : ∀ i c,((yc c/p:ℕ):RatFunc (ZMod p))≠((bordRow xr zz i/p:ℕ):RatFunc (ZMod p))) :
-      ev (clearedD p q o xr yc zz M u0 load).det=
-        ((if load then scaledStepLoad else scaledStep)
-          (centralWeight p q o ev u0 M ts) cut
-          (fun i => bordRow xr zz i/p) (fun c => yc c/p)).det := by
-    rw [RingHom.map_det]
-    exact congrArg Matrix.det (ev_clearedD (q:=q) (o:=o) ev M ts htsM hz hev u0 cut hr hc hqq load)
-  have hbr : (clearedD p q o xr1 yc1 z1 M u0 true).det*(clearedD p q o xr2 yc2 z2 M u0 false).det≠
-      (clearedD p q o xr2 yc2 z2 M u0 true).det*(clearedD p q o xr1 yc1 z1 M u0 false).det := by
-    intro h
-    apply hne
-    have h' := congrArg ev h
-    simp only [map_mul] at h'
-    rw [hD true (kk:=k1) cut1 hrow1 hcol1 hq1,hD false (kk:=k2) cut2 hrow2 hcol2 hq2,
-      hD true (kk:=k2) cut2 hrow2 hcol2 hq2,hD false (kk:=k1) cut1 hrow1 hcol1 hq1] at h'
-    simpa only [↓reduceIte,Bool.false_eq_true] using h'
-  obtain ⟨dAN,cAN⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn1 M u0)
-    (clearedB p q o cn1 yc1 M u0 true) (clearedE p q o cn1 xr1 z1 M u0) (clearedD p q o xr1 yc1 z1 M u0 true)
-  obtain ⟨dAD,cAD⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn1 M u0)
-    (clearedB p q o cn1 yc1 M u0 false) (clearedE p q o cn1 xr1 z1 M u0) (clearedD p q o xr1 yc1 z1 M u0 false)
-  obtain ⟨dBN,cBN⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn2 M u0)
-    (clearedB p q o cn2 yc2 M u0 true) (clearedE p q o cn2 xr2 z2 M u0) (clearedD p q o xr2 yc2 z2 M u0 true)
-  obtain ⟨dBD,cBD⟩ := spectral_top_domain (clearing p q o M^2) (clearedA p q o cn2 M u0)
-    (clearedB p q o cn2 yc2 M u0 false) (clearedE p q o cn2 xr2 z2 M u0) (clearedD p q o xr2 yc2 z2 M u0 false)
-  simp only [Fintype.card_fin] at dAN cAN dAD cAD dBN cBN dBD cBD
-  have hP := cross_ne_of_top k1 k2 _ _ _ _ dAN dAD dBN dBD (by
-    rw [cAN,cAD,cBN,cBD]
-    intro h
-    apply hbr
-    have hc2 : (clearing p q o M^2)^k1*(clearing p q o M^2)^k2≠0 :=
-      mul_ne_zero (pow_ne_zero _ (pow_ne_zero _ hcl)) (pow_ne_zero _ (pow_ne_zero _ hcl))
-    apply mul_left_cancel₀ hc2
-    linear_combination h)
-  apply hP
-  apply embedP_injective p
-  simp only [map_mul]
-  change embedP p (clearedSystem p q o cn1 xr1 yc1 z1 M u0 true).det*
-      embedP p (clearedSystem p q o cn2 xr2 yc2 z2 M u0 false).det=
-    embedP p (clearedSystem p q o cn2 xr2 yc2 z2 M u0 true).det*
-      embedP p (clearedSystem p q o cn1 xr1 yc1 z1 M u0 false).det
-  rw [embedU_clearedSystem_det H1 s u u0 hs hu0,embedU_clearedSystem_det H2 s u u0 hs hu0,
-    embedU_clearedSystem_det H2 s u u0 hs hu0,embedU_clearedSystem_det H1 s u u0 hs hu0]
-  simp only [↓reduceIte,Bool.false_eq_true,mul_one]
-  have h0 : TwoTermDeformation.residue p (ringSystem p q o cn1 xr1 yc1 z1 s u true).det*
-      TwoTermDeformation.residue p (ringSystem p q o cn2 xr2 yc2 z2 s u false).det=
-      TwoTermDeformation.residue p (ringSystem p q o cn2 xr2 yc2 z2 s u true).det*
-      TwoTermDeformation.residue p (ringSystem p q o cn1 xr1 yc1 z1 s u false).det := by
-    have h := hres
-    simp only [map_sub,map_mul] at h
-    exact sub_eq_zero.mp h
-  linear_combination (embedB p (clearing p q o M)^(2*k1+n)*embedB p (clearing p q o M)*
-    embedB p (clearing p q o M)^(2*k2+n))*h0
 
 /-- Actual fibre nodes of colour `γ`: `k` original common nodes, `n`
 balanced pairs with bit `η`, and the zone at quotient `k+2n`. -/
@@ -5650,116 +3696,6 @@ theorem rat_cast_inj (B : ℕ) (hB : B<p) (a b : ℕ) (ha : a≤B) (hb : b≤B)
   by_contra hab
   exact rat_cast_ne p a b (by omega) (by omega) hab h
 
-/-- Section 8.3 at the ORIGINAL two-parameter fibre level, for any central
-evaluation killing exactly the chosen original pole. -/
-theorem profile_separation_ev (γ1 k1 η1 γ2 k2 η2 n M ts cut1 cut2 : ℕ) (s u : GaussLoc p) (u0 : ZMod p)
-    (hγ1 : γ1<p) (hγ2 : γ2<p) (hη1 : η1≤1) (hη2 : η2≤1) (hn : 1≤n)
-    (hk1 : k1+2*n<p) (hk2 : k2+2*n<p) (hz1 : pz p γ1 k1 n≤M) (hz2 : pz p γ2 k2 n≤M)
-    (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p) (ho0 : 0<o) (hoq : o<q)
-    (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (hu00 : u0≠0)
-    (ev : (ZMod p)[X][X] →+* RatFunc (ZMod p)) (htsM : ts∈Icc 1 M)
-    (hz : ∀ t∈Icc 1 M,ev (dfac p q o t)=0 ↔ t=ts)
-    (hev : ∀ k,ev (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k)
-    (hwt : ev (deltaWeight p q o ts)≠0)
-    (hcase : (cut1=k1+n+1 ∧ cut2=k2+n) ∨ (cut1=k1+n ∧ cut2=k2+n+1))
-    (hw1 : γ1+(cut1-1)*p<ts ∧ ts≤γ1+cut1*p) (hw2 : γ2+(cut2-1)*p<ts ∧ ts≤γ2+cut2*p) :
-    TwoTermDeformation.residue p
-      ((ringSystem p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u true).det*
-        (ringSystem p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u false).det-
-      (ringSystem p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u true).det*
-        (ringSystem p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u false).det)≠0 := by
-  have H1 := profileHyp p q o γ1 k1 η1 n M hγ1 hη1 hk1 hz1 hM hq0 hqp ho0 hoq
-  have H2 := profileHyp p q o γ2 k2 η2 n M hγ2 hη2 hk2 hz2 hM hq0 hqp ho0 hoq
-  have hc1 : 1≤cut1 := by rcases hcase with h|h <;> omega
-  have hc2 : 1≤cut2 := by rcases hcase with h|h <;> omega
-  have hrow (γ k η cut : ℕ) (hγ : γ<p) (hc : 1≤cut) (hw : γ+(cut-1)*p<ts ∧ ts≤γ+cut*p)
-      (i : Fin (n+1)) :
-      ts≤bordRow (pxr p γ k η n) (pz p γ k n) i ↔ cut≤bordRow (pxr p γ k η n) (pz p γ k n) i/p := by
-    rw [bord_quot p _ _ _ _ hγ,bord_node]
-    exact central_cut p γ cut ts _ hc hw.1 hw.2
-  have hcol (γ k η cut : ℕ) (hγ : γ<p) (hc : 1≤cut) (hw : γ+(cut-1)*p<ts ∧ ts≤γ+cut*p) (c : Fin n) :
-      ts≤pyc p γ k η n c ↔ cut≤pyc p γ k η n c/p := by
-    rw [col_quot p _ _ _ _ hγ]
-    unfold pyc profileColQ
-    exact central_cut p γ cut ts _ hc hw.1 hw.2
-  have hq (γ k η : ℕ) (hγ : γ<p) (hη : η≤1) (hk : k+2*n<p) (i : Fin (n+1)) (c : Fin n) :
-      ((pyc p γ k η n c/p:ℕ):RatFunc (ZMod p))≠((bordRow (pxr p γ k η n) (pz p γ k n) i/p:ℕ):RatFunc (ZMod p)) := by
-    rw [col_quot p _ _ _ _ hγ,bord_quot p _ _ _ _ hγ]
-    unfold profileColQ profileRowQ
-    have := c.2; have := i.2
-    split_ifs <;> exact rat_cast_ne p _ _ (by omega) (by omega) (by omega)
-  apply residue_cross_ne p q o H1 H2 s u u0 hs hu0 ev ts htsM hz hev cut1 cut2
-    (hrow γ1 k1 η1 cut1 hγ1 hc1 hw1) (hcol γ1 k1 η1 cut1 hγ1 hc1 hw1) (hq γ1 k1 η1 hγ1 hη1 hk1)
-    (hrow γ2 k2 η2 cut2 hγ2 hc2 hw2) (hcol γ2 k2 η2 cut2 hγ2 hc2 hw2) (hq γ2 k2 η2 hγ2 hη2 hk2)
-  set g := centralWeight p q o ev u0 M ts with hgdef
-  have hg : g≠0 := by
-    rw [hgdef,centralWeight]
-    refine mul_ne_zero (mul_ne_zero ?_ hwt) (ev_cofactor_self p q o ev M ts htsM hz)
-    exact (_root_.map_ne_zero _).mpr hu00
-  have hr1 : (fun i => bordRow (pxr p γ1 k1 η1 n) (pz p γ1 k1 n) i/p)=profileRowQ k1 η1 n :=
-    funext (bord_quot p _ _ _ _ hγ1)
-  have hr2 : (fun i => bordRow (pxr p γ2 k2 η2 n) (pz p γ2 k2 n) i/p)=profileRowQ k2 η2 n :=
-    funext (bord_quot p _ _ _ _ hγ2)
-  have hcc1 : (fun c => pyc p γ1 k1 η1 n c/p)=profileColQ k1 η1 n := funext (col_quot p _ _ _ _ hγ1)
-  have hcc2 : (fun c => pyc p γ2 k2 η2 n c/p)=profileColQ k2 η2 n := funext (col_quot p _ _ _ _ hγ2)
-  rw [hr1,hr2,hcc1,hcc2]
-  have hK (k : ℕ) (hk : k+2*n<p) : ∀ a b : ℕ,a≤k+2*n → b≤k+2*n →
-      (a:RatFunc (ZMod p))=(b:RatFunc (ZMod p)) → a=b :=
-    fun a b ha hb h => rat_cast_inj p (k+2*n) hk a b ha hb h
-  rcases hcase with ⟨rfl,rfl⟩|⟨rfl,rfl⟩
-  · obtain ⟨hE1,hD1⟩ := profile_lower (K:=RatFunc (ZMod p)) k1 η1 n hη1 hn (hK k1 hk1)
-    obtain ⟨hE2,hD2⟩ := profile_upper (K:=RatFunc (ZMod p)) k2 η2 n hη2 hn (hK k2 hk2)
-    exact scaled_cross_ne g hg n _ _ _ _ _ _ 0 1 zero_ne_one hE1 hE2 hD1 hD2
-  · obtain ⟨hE1,hD1⟩ := profile_upper (K:=RatFunc (ZMod p)) k1 η1 n hη1 hn (hK k1 hk1)
-    obtain ⟨hE2,hD2⟩ := profile_lower (K:=RatFunc (ZMod p)) k2 η2 n hη2 hn (hK k2 hk2)
-    exact scaled_cross_ne g hg n _ _ _ _ _ _ 1 0 one_ne_zero hE1 hE2 hD1 hD2
-
-theorem evOuter_bconst (c k : ZMod p) :
-    evOuter p c (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k := by
-  rw [IsScalarTower.algebraMap_apply (ZMod p) (ZMod p)[X] (RatFunc (ZMod p)),Polynomial.algebraMap_eq]
-  simp [evOuter,bconst]
-
-theorem evInner_bconst (c k : ZMod p) :
-    evInner p c (bconst p k)=algebraMap (ZMod p) (RatFunc (ZMod p)) k := by
-  rw [IsScalarTower.algebraMap_apply (ZMod p) (ZMod p)[X] (RatFunc (ZMod p)),Polynomial.algebraMap_eq]
-  simp [evInner,bconst]
-
-/-- Section 8.3, ORIGINAL two-parameter fibre level: a separating original
-pole of EITHER family (each with its own parameter), shifted to the central
-threshold, gives distinct directions of two adjacent actual fibres. -/
-theorem profile_separation (γ1 k1 η1 γ2 k2 η2 n M ts cut1 cut2 : ℕ) (s u : GaussLoc p) (u0 : ZMod p)
-    (hγ1 : γ1<p) (hγ2 : γ2<p) (hη1 : η1≤1) (hη2 : η2≤1) (hn : 1≤n)
-    (hk1 : k1+2*n<p) (hk2 : k2+2*n<p) (hz1 : pz p γ1 k1 n≤M) (hz2 : pz p γ2 k2 n≤M)
-    (hM : q*M<p*p) (hq0 : 0<q) (hqp : q<p) (ho0 : 0<o) (hoq : o<q)
-    (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu0 : TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)))
-    (hu00 : u0≠0) (htsM : ts∈Icc 1 M) (hfam : p∣ts ∨ (¬p∣ts ∧ p∣q*ts-o))
-    (hcase : (cut1=k1+n+1 ∧ cut2=k2+n) ∨ (cut1=k1+n ∧ cut2=k2+n+1))
-    (hw1 : γ1+(cut1-1)*p<ts ∧ ts≤γ1+cut1*p) (hw2 : γ2+(cut2-1)*p<ts ∧ ts≤γ2+cut2*p) :
-    TwoTermDeformation.residue p
-      ((ringSystem p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u true).det*
-        (ringSystem p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u false).det-
-      (ringSystem p q o (pcn p γ2 k2) (pxr p γ2 k2 η2 n) (pyc p γ2 k2 η2 n) (pz p γ2 k2 n) s u true).det*
-        (ringSystem p q o (pcn p γ1 k1) (pxr p γ1 k1 η1 n) (pyc p γ1 k1 η1 n) (pz p γ1 k1 n) s u false).det)≠0 := by
-  have hq : (q:ZMod p)≠0 := by
-    intro hz0
-    have := Nat.le_of_dvd hq0 ((ZMod.natCast_eq_zero_iff q p).mp hz0)
-    omega
-  rcases hfam with hI|⟨hI,hF⟩
-  · exact profile_separation_ev p q o γ1 k1 η1 γ2 k2 η2 n M ts cut1 cut2 s u u0 hγ1 hγ2 hη1 hη2 hn
-      hk1 hk2 hz1 hz2 hM hq0 hqp ho0 hoq hs hu0 hu00 (evOuter p (-((ts/p:ℕ):ZMod p))) htsM
-      (fun t ht => evOuter_dfac_eq_zero p q o M ts hM hq0 hqp hI htsM t ht) (evOuter_bconst p _)
-      (by simp [deltaWeight,if_pos hI]) hcase hw1 hw2
-  · exact profile_separation_ev p q o γ1 k1 η1 γ2 k2 η2 n M ts cut1 cut2 s u u0 hγ1 hγ2 hη1 hη2 hn
-      hk1 hk2 hz1 hz2 hM hq0 hqp ho0 hoq hs hu0 hu00
-      (evInner p (-((((q*ts-o)/p:ℕ):ZMod p))/(q:ZMod p))) htsM
-      (fun t ht => evInner_dfac_eq_zero p q o M ts hM hq0 hqp ho0 hoq hI hF htsM t ht) (evInner_bconst p _)
-      (by
-        simp only [deltaWeight,if_neg hI,if_pos hF,map_neg,evInner_bconst,ne_eq,neg_eq_zero,
-          map_eq_zero_iff _ (algebraMap (ZMod p) (RatFunc (ZMod p))).injective]
-        exact hq) hcase hw1 hw2
 
 end ProfileSeparation
 
@@ -5809,7 +3745,6 @@ end FieldFibre
 section BorderedFibre
 variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 /-- Separate the zone row and direction column of a bordered fibre system. -/
 noncomputable def bordEquiv (k n : ℕ) : (Fin k ⊕ Fin n) ⊕ Unit ≃ Fin k ⊕ Fin (n+1) :=
@@ -5824,58 +3759,12 @@ theorem bordEquiv_inr (w : Unit) : bordEquiv k n (Sum.inr w)=Sum.inr (Fin.last n
   cases w
   simp [bordEquiv,Fin.ext_iff]
 
-theorem ringSystem_reindex (s u : GaussLoc p) (load : Bool) :
-    (ringSystem p q o cn xr yc z s u load).submatrix (bordEquiv k n) (bordEquiv k n)=
-      Matrix.fromBlocks (TwoTermDeformation.mixedCore p q o s u cn xr yc)
-        (Matrix.of fun i (_:Unit) => if load then TwoTermDeformation.constants p u*
-          TwoTermDeformation.load p q o (Sum.elim cn xr i) else 1)
-        (Matrix.of fun (_:Unit) j => TwoTermDeformation.entry p q o u z (Sum.elim cn yc j))
-        (Matrix.of fun (_:Unit) (_:Unit) => if load then TwoTermDeformation.constants p u*
-          TwoTermDeformation.load p q o z else 1) := by
-  classical
-  have hlt (c : Fin n) : ((Fin.castAdd 1 c:Fin (n+1)):ℕ)<n := by simp
-  have hnl : ¬((Fin.last n:Fin (n+1)):ℕ)<n := by simp
-  have hbc (c : Fin n) : bordRow xr z (Fin.castAdd 1 c)=xr c := by
-    unfold bordRow; rw [dif_pos (hlt c)]; rfl
-  have hbl : bordRow xr z (Fin.last n)=z := by unfold bordRow; rw [dif_neg hnl]
-  ext i j
-  rcases i with (i|i)|i <;> rcases j with (j|j)|j
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inl,ringSystem,Matrix.fromBlocks_apply₁₁,
-      Matrix.of_apply,TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.map_apply,Sum.elim_inl,
-      Matrix.smul_apply,Matrix.one_apply,smul_eq_mul]
-    split_ifs <;> simp
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inl,bordEquiv_inl_inr,ringSystem,
-      Matrix.fromBlocks_apply₁₂,Matrix.fromBlocks_apply₁₁,Matrix.of_apply,dif_pos (hlt j),
-      TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.map_apply,Sum.elim_inl,Sum.elim_inr,
-      Matrix.zero_apply,map_zero,add_zero]
-    rfl
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inl,bordEquiv_inr,ringSystem,
-      Matrix.fromBlocks_apply₁₂,Matrix.of_apply,dif_neg hnl,Sum.elim_inl]
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inl,bordEquiv_inl_inr,ringSystem,
-      Matrix.fromBlocks_apply₂₁,Matrix.fromBlocks_apply₁₁,Matrix.of_apply,hbc,
-      TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.map_apply,Sum.elim_inl,Sum.elim_inr,
-      Matrix.zero_apply,map_zero,add_zero]
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inr,ringSystem,Matrix.fromBlocks_apply₂₂,
-      Matrix.fromBlocks_apply₁₁,Matrix.of_apply,hbc,dif_pos (hlt j),
-      TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.map_apply,Sum.elim_inr,
-      Matrix.zero_apply,map_zero,add_zero]
-    rfl
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inr,bordEquiv_inr,ringSystem,
-      Matrix.fromBlocks_apply₂₂,Matrix.fromBlocks_apply₁₂,Matrix.of_apply,hbc,dif_neg hnl,Sum.elim_inr]
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inl,bordEquiv_inr,ringSystem,
-      Matrix.fromBlocks_apply₂₁,Matrix.of_apply,hbl,Sum.elim_inl]
-  · simp only [Matrix.submatrix_apply,bordEquiv_inl_inr,bordEquiv_inr,ringSystem,
-      Matrix.fromBlocks_apply₂₂,Matrix.fromBlocks_apply₂₁,Matrix.of_apply,hbl,dif_pos (hlt j),Sum.elim_inr]
-    rfl
-  · simp only [Matrix.submatrix_apply,bordEquiv_inr,ringSystem,Matrix.fromBlocks_apply₂₂,
-      Matrix.of_apply,hbl,dif_neg hnl]
 
 end BorderedFibre
 
 section TwoParameterCoupling
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 theorem residue_response {R K α : Type*} [CommRing R] [Field K] [Fintype α] [DecidableEq α]
     (f : R →+* K) (Q : Matrix α α R) (hQ : IsUnit Q.det) (σ y : α → R) :
@@ -5883,41 +3772,10 @@ theorem residue_response {R K α : Type*} [CommRing R] [Field K] [Fintype α] [D
   rw [UFMoments.map_inv_of_unit f Q hQ]
   simp only [dotProduct,Matrix.mulVec,map_sum,map_mul,Matrix.map_apply]
 
-theorem residue_uniformizer : TwoTermDeformation.residue p (TwoTermDeformation.uniformizer p)=0 :=
-  (WrapParameter.residue_zero_iff (WrapDeform.residue p) (WrapDeform.uniformizer p)
-    (WrapDeform.residue_zero_iff p) _).mpr (dvd_refl _)
-
-theorem residue_nat_sub_ne (a b : ℕ) (h : (a:ZMod p)≠(b:ZMod p)) :
-    (a:TwoTermDeformation.Residue p)-(b:TwoTermDeformation.Residue p)≠0 := by
-  intro hz
-  apply h
-  have hinj : Function.Injective (fun k : ZMod p =>
-      (RatFunc.C (RatFunc.C (RatFunc.C k)) : TwoTermDeformation.Residue p)) :=
-    RatFunc.C_injective.comp (RatFunc.C_injective.comp RatFunc.C_injective)
-  apply hinj
-  simpa only [map_natCast] using sub_eq_zero.mp hz
 
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-/-- Actual two-parameter border of an original node `t` against the
-actual original columns. -/
-noncomputable def sigma2 (u : GaussLoc p) (t : ℕ) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
-    TwoTermDeformation.Ring p :=
-  TwoTermDeformation.entry p q o u t (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i)
-
-noncomputable def rowMoment2 (s u : GaussLoc p) (t : ℕ) :=
-  TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t-
-    sigma2 H u t ⬝ᵥ (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ TwoTermDeformation.prefixRowLoad p H u
-
-noncomputable def rowRef2 (s u : GaussLoc p) (t : ℕ) :=
-  1-sigma2 H u t ⬝ᵥ (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ (1:Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b) → TwoTermDeformation.Ring p)
-
-/-- The actual two-parameter outside row coupling against the actual
-original anchor. -/
-noncomputable def rowCoupling2 (s u : GaussLoc p) (z : Fin d) :=
-  TwoTermDeformation.residue p (rowMoment2 H s u (WrapPrefixSchur.surplusRow H z)-
-    TwoTermDeformation.prefixAnchor p H s u*rowRef2 H s u (WrapPrefixSchur.surplusRow H z))
 
 include H in
 theorem single_bound : N<p*p := lt_of_le_of_lt (Nat.le_mul_of_pos_left N H.hq0) H.hN
@@ -5932,115 +3790,6 @@ theorem rowNode_colour (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
     ((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):ZMod p)=H.colour i := by
   cases i <;> rfl
 
-/-- Original two-parameter displacement kills every cross-colour entry. -/
-theorem core_cross_zero (s u : GaussLoc p) (i j : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b))
-    (hij : H.colour i≠H.colour j) :
-    TwoTermDeformation.residue p (TwoTermDeformation.prefixCore p H s u i j)=0 := by
-  have hc := congrArg (TwoTermDeformation.residue p)
-    (TwoTermDeformation.mixedCore_commutator p q o N (single_bound H) s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-      H.common_bound H.row_bound H.col_bound i j)
-  rw [map_mul,map_mul,residue_uniformizer,zero_mul,map_sub,map_natCast,map_natCast] at hc
-  have hne := residue_nat_sub_ne (p:=p) _ _
-    (show ((Sum.elim (fun i:Fin r => (i:ℕ)) H.ys j:ℕ):ZMod p)≠((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):ZMod p) by
-      rw [colNode_colour,rowNode_colour]; exact fun h => hij h.symm)
-  exact (mul_eq_zero.mp hc).resolve_left hne
-
-theorem sigma_cross_zero (u : GaussLoc p) (t : ℕ) (ht : t<N) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b))
-    (hi : H.colour i≠(t:ZMod p)) : TwoTermDeformation.residue p (sigma2 H u t i)=0 := by
-  have hcol := (UFMember.colNode_lt H.common_bound H.col_bound i)
-  have hc := congrArg (TwoTermDeformation.residue p)
-    (TwoTermDeformation.commutator p q o N u (single_bound H) t _ ht hcol)
-  rw [map_mul,map_mul,residue_uniformizer,zero_mul,map_sub,map_natCast,map_natCast] at hc
-  have hne := residue_nat_sub_ne (p:=p) _ _
-    (show ((Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i:ℕ):ZMod p)≠(t:ZMod p) by rw [colNode_colour]; exact hi)
-  exact (mul_eq_zero.mp hc).resolve_left hne
-
-/-- Reduced actual core: colour-block diagonal, nonsingular. -/
-noncomputable def coreBar (s u : GaussLoc p) := (TwoTermDeformation.prefixCore p H s u).map (TwoTermDeformation.residue p)
-
-theorem coreBar_own (s u : GaussLoc p) :
-    (TwoTermDeformation.prefixOwn p H s u).map (TwoTermDeformation.residue p)=coreBar H s u := by
-  ext i j
-  simp only [coreBar,Matrix.map_apply,TwoTermDeformation.prefixOwn,TwoTermDeformation.own,Matrix.of_apply]
-  by_cases h : H.colour i=H.colour j
-  · rw [if_pos h]
-  · rw [if_neg h,map_zero,core_cross_zero H s u i j h]
-
-theorem coreBar_det (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) : (coreBar H s u).det≠0 := by
-  have h := ((TwoTermDeformation.prefixCore_unit p H s u hs hu huc).map (TwoTermDeformation.residue p)).ne_zero
-  rwa [RingHom.map_det] at h
-
-theorem residue_rowMoment2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
-    TwoTermDeformation.residue p (rowMoment2 H s u t)=
-      TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t)-
-        (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
-          (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixRowLoad p H u i)) := by
-  rw [rowMoment2,map_sub,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc)]
-  rfl
-
-theorem residue_rowRef2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
-    TwoTermDeformation.residue p (rowRef2 H s u t)=
-      1-(fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1 := by
-  rw [rowRef2,map_sub,map_one,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc)]
-  simp only [Pi.one_apply,map_one]
-  rfl
-
-theorem residue_prefixSigma (u : GaussLoc p) (t : ℕ) (ht : t<N) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
-    TwoTermDeformation.residue p (TwoTermDeformation.prefixSigma p H u t i)=
-      TwoTermDeformation.residue p (sigma2 H u t i) := by
-  unfold TwoTermDeformation.prefixSigma
-  split_ifs with h
-  · rfl
-  · rw [map_zero,sigma_cross_zero H u t ht i h]
-
-theorem rational_map_inverse {R S : Type*} [CommRing R] [CommRing S] [IsDomain S]
-    (f : R →+* RatFunc S) (x : R) (hx : IsUnit x) : f (Ring.inverse x)=(f x)⁻¹ := by
-  apply eq_inv_of_mul_eq_one_left
-  rw [← map_mul,Ring.inverse_mul_cancel _ hx,map_one]
-
-set_option maxHeartbeats 1000000 in
-theorem residue_anchor (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) :
-    TwoTermDeformation.residue p (TwoTermDeformation.prefixAnchor p H s u)=
-      (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o H.t0)-
-        (fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
-          (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixRowLoad p H u i)))*
-      (1-(fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1)⁻¹ := by
-  have ht0 : H.t0<N := lt_of_le_of_lt H.hle H.htvN
-  have hO := TwoTermDeformation.prefixOwn_unit p H s u hs hu huc
-  have hB := TwoTermDeformation.prefixReference_unit p H s u hs hu huc
-  have hinv := rational_map_inverse (TwoTermDeformation.residue p) _ hB
-  have hsig : (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixSigma p H u H.t0 i))=
-      (fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) :=
-    funext (residue_prefixSigma H u H.t0 ht0)
-  have href : TwoTermDeformation.residue p (TwoTermDeformation.prefixReference p H s u H.t0)=
-      1-(fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1 := by
-    rw [TwoTermDeformation.prefixReference,map_sub,map_one,residue_response _ _ hO,coreBar_own,hsig]
-    simp only [Pi.one_apply,map_one]
-    rfl
-  rw [TwoTermDeformation.prefixAnchor,map_mul,hinv,href,map_sub,residue_response _ _ hO,coreBar_own,hsig]
-
-theorem residue_reference0 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) :
-    TwoTermDeformation.residue p (TwoTermDeformation.prefixReference p H s u H.t0)=
-      1-(fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1 := by
-  have ht0 : H.t0<N := lt_of_le_of_lt H.hle H.htvN
-  have hO := TwoTermDeformation.prefixOwn_unit p H s u hs hu huc
-  have hsig : (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixSigma p H u H.t0 i))=
-      (fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) :=
-    funext (residue_prefixSigma H u H.t0 ht0)
-  rw [TwoTermDeformation.prefixReference,map_sub,map_one,residue_response _ _ hO,coreBar_own,hsig]
-  simp only [Pi.one_apply,map_one]
-  rfl
-
-theorem reference0_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) :
-    1-(fun i => TwoTermDeformation.residue p (sigma2 H u H.t0 i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1≠0 := by
-  rw [← residue_reference0 H s u hs hu huc]
-  exact ((TwoTermDeformation.prefixReference_unit p H s u hs hu huc).map (TwoTermDeformation.residue p)).ne_zero
 
 end TwoParameterCoupling
 
@@ -6068,30 +3817,15 @@ end BorderedResidue
 section BorderedResidueActual
 variable (p : ℕ) [Fact p.Prime] (q o : ℕ)
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 variable {k n : ℕ} (cn : Fin k → ℕ) (xr yc : Fin n → ℕ) (z : ℕ)
 
-/-- Residue of the ORIGINAL bordered fibre determinant in Schur form. -/
-theorem residue_ringSystem_det (s u : GaussLoc p) (load : Bool)
-    (hP : ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p)).det≠0) :
-    TwoTermDeformation.residue p (ringSystem p q o cn xr yc z s u load).det=
-      ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p)).det*
-        (TwoTermDeformation.residue p (if load then TwoTermDeformation.constants p u*
-          TwoTermDeformation.load p q o z else 1)-
-          (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u z (Sum.elim cn yc j))) ⬝ᵥ
-            ((TwoTermDeformation.mixedCore p q o s u cn xr yc).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-            (fun i => TwoTermDeformation.residue p (if load then TwoTermDeformation.constants p u*
-              TwoTermDeformation.load p q o (Sum.elim cn xr i) else 1))) := by
-  rw [← Matrix.det_submatrix_equiv_self (bordEquiv k n),ringSystem_reindex]
-  exact map_bordered_det (TwoTermDeformation.residue p) _ _ _ _ hP
 
 end BorderedResidueActual
 
 section FibreBinding
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
@@ -6121,45 +3855,6 @@ theorem fibre_col (γ : ZMod p)
         (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) i :=
   WrapJointProfile.whole_col p r n e b d shift H.hp H.hp2 H.er H.ec γ hres i
 
-/-- The actual two-parameter colour block is the ORIGINAL two-parameter
-profile core, under the exact original fibre equivalence. -/
-theorem whole_core2 (γ : ZMod p) (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠γ) (s u : GaussLoc p) :
-    (TwoTermDeformation.prefixCore p H s u).submatrix
-        (fun i => (fibreEquiv H γ hres i).1)
-        (fun j => (fibreEquiv H γ hres j).1)=
-      TwoTermDeformation.mixedCore p q o s u
-        (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
-        (fun c:Fin n => WrapJointProfile.rowProfile p r γ.val c)
-        (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) := by
-  classical
-  have he (i j : Fin (WrapJointProfile.count p r γ.val) ⊕ Fin n) :
-      TwoTermDeformation.entry p q o u
-        (Sum.elim (fun i:Fin r => (i:ℕ)) (WrapPrefixCoreGeometry.xs p (n:=n) r H.er)
-          (WrapJointProfile.wholeEquiv p r n e b d H.hp2 H.er γ hres i).1)
-        (Sum.elim (fun i:Fin r => (i:ℕ)) (WrapPrefixCoreGeometry.ys p (n:=n) r (Fact.out:p.Prime).pos shift H.ec)
-          (WrapJointProfile.wholeEquiv p r n e b d H.hp2 H.er γ hres j).1)=
-      TwoTermDeformation.entry p q o u
-        (Sum.elim (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
-          (fun c:Fin n => WrapJointProfile.rowProfile p r γ.val c) i)
-        (Sum.elim (fun i:Fin (WrapJointProfile.count p r γ.val) => γ.val+(i:ℕ)*p)
-          (fun c:Fin n => WrapJointProfile.colProfile p r γ.val c) j) := by
-    rw [WrapJointProfile.whole_row p r n e b d H.hp2 (hodd H) H.er γ hres i,
-      WrapJointProfile.whole_col p r n e b d shift H.hp H.hp2 H.er H.ec γ hres j]
-  ext i j
-  simp only [TwoTermDeformation.prefixCore,TwoTermDeformation.mixedCore,Matrix.submatrix_apply,
-    Matrix.add_apply,Matrix.of_apply,Matrix.map_apply]
-  congr 1
-  · exact he i j
-  rcases i with i|i <;> rcases j with j|j
-  · change TwoTermDeformation.coefficient p ((WrapOwnCore.constants p s • (1:Matrix (Fin r) (Fin r) _))
-        (WrapJointProfile.commonEquiv p r γ i).1 (WrapJointProfile.commonEquiv p r γ j).1)=
-      TwoTermDeformation.coefficient p ((WrapOwnCore.constants p s • (1:Matrix _ _ _)) i j)
-    have heq : (WrapJointProfile.commonEquiv p r γ i).1=(WrapJointProfile.commonEquiv p r γ j).1 ↔ i=j :=
-      ⟨fun h => (WrapJointProfile.commonEquiv p r γ).injective (Subtype.ext h),fun h => by rw [h]⟩
-    simp only [Matrix.smul_apply,Matrix.one_apply,heq]
-  · rfl
-  · rfl
-  · rfl
 
 theorem rowProfile_eq (γ : ℕ) (c : Fin n) :
     WrapJointProfile.rowProfile p r γ c=pxr p γ (WrapJointProfile.count p r γ) (WrapJointProfile.bit p r γ) n c := by
@@ -6177,128 +3872,10 @@ end FibreBinding
 section RowSeparation
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-/-- Profile nodes of the actual fibre of an original node `t`. -/
-noncomputable def fibreCore (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (s u : GaussLoc p) (t : ℕ) :=
-  TwoTermDeformation.mixedCore p q o s u
-    (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-    (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (WrapJointProfile.bit p r (t:ZMod p).val) n)
-    (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (WrapJointProfile.bit p r (t:ZMod p).val) n)
-
-/-- The reduced actual colour block is the reduced ORIGINAL profile core. -/
-theorem fibre_blk (s u : GaussLoc p) (t : ℕ) (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p)).submatrix
-        (fibreEquiv H (t:ZMod p) hres)
-        (fibreEquiv H (t:ZMod p) hres)=
-      (fibreCore H s u t).map (TwoTermDeformation.residue p) := by
-  rw [UFMoments.blk,Matrix.submatrix_submatrix,coreBar,Matrix.submatrix_map]
-  have hw := whole_core2 H (t:ZMod p) hres s u
-  rw [show ((Subtype.val ∘ ⇑(fibreEquiv H (t:ZMod p) hres)):_ → _)=
-    (fun i => (fibreEquiv H (t:ZMod p) hres i).1) from rfl,hw]
-  congr 1
-  unfold fibreCore
-  congr 1
-  · funext c; exact rowProfile_eq (p:=p) _ c
-  · funext c; exact colProfile_eq (p:=p) _ c
-
-theorem fibreCore_det_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    ((fibreCore H s u t).map (TwoTermDeformation.residue p)).det≠0 := by
-  rw [← fibre_blk H s u t hres,Matrix.det_submatrix_equiv_self]
-  have hb : ∀ a c,H.colour a≠H.colour c → coreBar H s u a c=0 := fun a c h => core_cross_zero H s u a c h
-  exact (UFMoments.inv_restrict (coreBar H s u) H.colour
-    (isUnit_iff_ne_zero.mpr (coreBar_det H s u hs hu huc)) hb (t:ZMod p)).1.ne_zero
-
-/-- The actual reduced response of node `t` is its ORIGINAL profile response. -/
-theorem fibre_moment (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) (f : ℕ → TwoTermDeformation.Ring p) :
-    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i)))=
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-            (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-              (WrapJointProfile.bit p r (t:ZMod p).val) n) j))) ⬝ᵥ
-        ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (f (Sum.elim
-          (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-          (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-            (WrapJointProfile.bit p r (t:ZMod p).val) n) i))) := by
-  classical
-  have hb : ∀ a c,H.colour a≠H.colour c → coreBar H s u a c=0 := by
-    intro a c h
-    exact core_cross_zero H s u a c h
-  have hsz : ∀ a,H.colour a≠(t:ZMod p) → TwoTermDeformation.residue p (sigma2 H u t a)=0 :=
-    fun a h => sigma_cross_zero H u t ht a h
-  rw [fibre_response (coreBar H s u) H.colour (coreBar_det H s u hs hu huc) hb (t:ZMod p) _ _ hsz]
-  rw [← WrapTransport.response_reindex (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p))
-    (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)]
-  have hl : (fun i:{a // H.colour a=(t:ZMod p)} => TwoTermDeformation.residue p (sigma2 H u t i.1)) ∘
-      ⇑(fibreEquiv H (t:ZMod p) hres)=
-      fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-            (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-              (WrapJointProfile.bit p r (t:ZMod p).val) n) j)) := by
-    funext j
-    simp only [Function.comp_apply,sigma2]
-    rw [fibre_col H (t:ZMod p) hres j]
-    rcases j with j|j
-    · rfl
-    · simp only [Sum.elim_inr]
-      rw [colProfile_eq]
-  have hr : (fun i:{a // H.colour a=(t:ZMod p)} =>
-      TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i.1))) ∘
-      ⇑(fibreEquiv H (t:ZMod p) hres)=
-      fun i => TwoTermDeformation.residue p (f (Sum.elim
-          (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-          (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-            (WrapJointProfile.bit p r (t:ZMod p).val) n) i)) := by
-    funext i
-    simp only [Function.comp_apply]
-    rw [fibre_row H (t:ZMod p) hres i]
-    rcases i with i|i
-    · rfl
-    · simp only [Sum.elim_inr]
-      rw [rowProfile_eq]
-  rw [fibre_blk H s u t hres,hl,hr]
-
-/-- Profile border of node `t`. -/
-noncomputable def fibreSigma (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (u : GaussLoc p) (t : ℕ) :
-    Fin (WrapJointProfile.count p r (t:ZMod p).val) ⊕ Fin n → TwoTermDeformation.Residue p :=
-  fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-    (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-      (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-        (WrapJointProfile.bit p r (t:ZMod p).val) n) j))
-
-noncomputable def fibreLoad (_H : WrapPrefixWindow.Setup p q o r n e b d shift N) (u : GaussLoc p) (t : ℕ) :
-    Fin (WrapJointProfile.count p r (t:ZMod p).val) ⊕ Fin n → TwoTermDeformation.Residue p :=
-  fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
-    (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val))
-      (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)
-        (WrapJointProfile.bit p r (t:ZMod p).val) n) i))
-
-theorem fibre_load (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixRowLoad p H u i))=
-      fibreSigma H u t ⬝ᵥ ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ fibreLoad H u t :=
-  fibre_moment H s u hs hu huc t ht hres
-    (fun a => TwoTermDeformation.constants p u*TwoTermDeformation.load p q o a)
-
-theorem fibre_one (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    (fun i => TwoTermDeformation.residue p (sigma2 H u t i)) ⬝ᵥ (coreBar H s u)⁻¹ *ᵥ 1=
-      fibreSigma H u t ⬝ᵥ ((fibreCore H s u t).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1 := by
-  have h := fibre_moment H s u hs hu huc t ht hres (fun _ => (1:TwoTermDeformation.Ring p))
-  simp only [map_one] at h
-  exact h
 
 end RowSeparation
 
@@ -6306,15 +3883,10 @@ end RowSeparation
 section RowSeparationFinal
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 theorem rfH_eq (z : ZMod p) : CatalanCore.Uniform.Content.Hybrid.rfH p z=RatFunc.C z := by
   simp [CatalanCore.Uniform.Content.Hybrid.rfH,RatFunc.algebraMap_C]
 
-theorem residue_constants (u : GaussLoc p) (u0 : ZMod p) (h : res p u=CatalanCore.Uniform.Content.Hybrid.rfH p u0) :
-    TwoTermDeformation.residue p (TwoTermDeformation.constants p u)=RatFunc.C (RatFunc.C (RatFunc.C u0)) := by
-  rw [TwoTermDeformation.constants,RingHom.comp_apply,TwoTermDeformation.coefficient_residue,
-    TwoTermDeformation.first_constant_residue,h,rfH_eq]
 
 theorem lower_window (A K n p t k : ℕ) (htip : t=A+(K+2*n)*p) (h1 : t<k) (h2 : k≤t+p) :
     A+((K+n+1)-1)*p<k-n*p ∧ k-n*p≤A+(K+n+1)*p := by
@@ -6368,164 +3940,6 @@ theorem bit_le (γ : ℕ) : WrapJointProfile.bit p r γ≤1 := by
   have := Nat.mod_lt (WrapJointProfile.lower p r γ-r) (show 0<2 by norm_num)
   omega
 
-set_option maxHeartbeats 2000000 in
-/-- Section 8.3 at an actual outside node `v` with fibre bit `η` (the row
-fibre has the actual bit, the column fibre the complementary bit): a
-separating original pole of either family, each with its own deformation
-parameter, makes the actual reduced coupling against the original anchor
-nonzero. No inverse pivot is specialized. -/
-theorem node_coupling_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (v k η : ℕ) (hη : η≤1)
-    (hk : p∣k ∨ p∣q*k-o)
-    (hsep : (v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v))
-    (hvlo : r+2*n*p≤v) (hvhi : v<r+2*n*p+p) (hvN : v<N)
-    (hPv : ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p)).det≠0) :
-    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o v)-
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-      (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
-        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))-
-    TwoTermDeformation.residue p (TwoTermDeformation.prefixAnchor p H s u)*
-    (1-(fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1)≠0 := by
-  classical
-  obtain ⟨u0,hu0'⟩ := huc
-  have huc : WrapConstant.Has p u := ⟨u0,hu0'⟩
-  have hu0 := residue_constants u u0 hu0'
-  have hu00 : u0≠0 := by
-    intro h; apply hu; rw [hu0',h,map_zero]
-  have ht0N : H.t0<N := lt_of_le_of_lt H.hle H.htvN
-  have ht0lo := H.hlo
-  have ht0hi : H.t0<r+2*n*p+p := lt_of_le_of_lt H.hle H.hhi
-  have hres0 : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(H.t0:ZMod p) :=
-    fun i => H.hfree H.t0 (mem_Icc.mpr ⟨le_rfl,H.hle⟩) i
-  have ho0 : 0<o := by
-    rcases Nat.eq_zero_or_pos o with h|h
-    · exact absurd (by rw [h]; simp) H.ho
-    · exact h
-  have htv := (fibre_tip (p:=p) (r:=r) (n:=n) v hvlo hvhi).symm
-  have ht0 := (fibre_tip (p:=p) (r:=r) (n:=n) H.t0 ht0lo ht0hi).symm
-  unfold pz at htv ht0
-  have hNp : N<p*p := single_bound H
-  have hkv : WrapJointProfile.count p r (v:ZMod p).val+2*n<p := by
-    by_contra hc
-    have : p*p≤(WrapJointProfile.count p r (v:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
-    omega
-  have hk0 : WrapJointProfile.count p r (H.t0:ZMod p).val+2*n<p := by
-    by_contra hc
-    have : p*p≤(WrapJointProfile.count p r (H.t0:ZMod p).val+2*n)*p := Nat.mul_le_mul_right p (by omega)
-    omega
-  have hnp : n*p≤k := by
-    have : n*p≤2*n*p := by nlinarith
-    rcases hsep with h|h <;> omega
-  have hts1 : 1≤k-n*p := by
-    have : n*p+n*p=2*n*p := by ring
-    rcases hsep with h|h <;> omega
-  have htsN : k-n*p≤N := by rcases hsep with h|h <;> omega
-  have hfam : p∣k-n*p ∨ (¬p∣k-n*p ∧ p∣q*(k-n*p)-o) := by
-    have hle : o≤q*(k-n*p) := by
-      have := Nat.le_mul_of_pos_right q hts1
-      have := H.hoq
-      omega
-    rcases hk with hI|hF
-    · exact Or.inl (Nat.dvd_sub hI (Dvd.intro_left n rfl))
-    · have hqk : q*(k-n*p)-o=(q*k-o)-q*n*p := by
-        rw [Nat.mul_sub]
-        have : q*(n*p)=q*n*p := by ring
-        rw [this]
-        have : q*n*p≤q*k := by rw [mul_assoc]; exact Nat.mul_le_mul_left q hnp
-        omega
-      have hF' : p∣q*(k-n*p)-o := by
-        rw [hqk]
-        exact Nat.dvd_sub hF (Dvd.intro_left (q*n) (by ring))
-      refine Or.inr ⟨fun hI => not_both p q o (k-n*p) H.hqp ho0 H.hoq hle hI hF',hF'⟩
-  have hpzv : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n=v := by
-    unfold pz; exact htv.symm
-  have hpz0 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n=H.t0 := by
-    unfold pz; exact ht0.symm
-  have hz1 : pz p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) n≤N := by
-    rw [hpzv]; exact hvN.le
-  have hz2 : pz p (H.t0:ZMod p).val (WrapJointProfile.count p r (H.t0:ZMod p).val) n≤N := by
-    rw [hpz0]; exact ht0N.le
-  obtain ⟨cut1,cut2,hcase,hw1,hw2⟩ : ∃ cut1 cut2,
-      ((cut1=WrapJointProfile.count p r (v:ZMod p).val+n+1 ∧ cut2=WrapJointProfile.count p r (H.t0:ZMod p).val+n) ∨
-        (cut1=WrapJointProfile.count p r (v:ZMod p).val+n ∧ cut2=WrapJointProfile.count p r (H.t0:ZMod p).val+n+1)) ∧
-      ((v:ZMod p).val+(cut1-1)*p<k-n*p ∧ k-n*p≤(v:ZMod p).val+cut1*p) ∧
-      ((H.t0:ZMod p).val+(cut2-1)*p<k-n*p ∧ k-n*p≤(H.t0:ZMod p).val+cut2*p) := by
-    rcases hsep with ⟨h1,h2⟩|⟨h1,h2⟩
-    · exact ⟨_,_,Or.inl ⟨rfl,rfl⟩,lower_window _ _ n p v k htv h1 (by omega),
-        upper_window _ _ n p H.t0 k H.hn ht0 (by omega) h2 hnp⟩
-    · exact ⟨_,_,Or.inr ⟨rfl,rfl⟩,upper_window _ _ n p v k H.hn htv (by omega) h2 hnp,
-        lower_window _ _ n p H.t0 k ht0 h1 (by omega)⟩
-  have hps := profile_separation p q o (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)
-    η (H.t0:ZMod p).val
-    (WrapJointProfile.count p r (H.t0:ZMod p).val) (WrapJointProfile.bit p r (H.t0:ZMod p).val)
-    n N (k-n*p) cut1 cut2 s u u0 (ZMod.val_lt _) (ZMod.val_lt _) hη (bit_le _) H.hn hkv hk0
-    hz1 hz2 H.hN H.hq0 H.hqp ho0 H.hoq hs hu0 hu00 (mem_Icc.mpr ⟨hts1,htsN⟩) hfam hcase hw1 hw2
-  rw [hpzv,hpz0] at hps
-  have hP0 := fibreCore_det_ne H s u hs hu huc H.t0 hres0
-  have hRvT := residue_ringSystem_det p q o _ _ _ v s u true hPv
-  have hRvF := residue_ringSystem_det p q o _ _ _ v s u false hPv
-  have hR0T := residue_ringSystem_det p q o _ _ _ H.t0 s u true hP0
-  have hR0F := residue_ringSystem_det p q o _ _ _ H.t0 s u false hP0
-  simp only [↓reduceIte,Bool.false_eq_true,map_one] at hRvT hRvF hR0T hR0F
-  have hr0 := reference0_ne H s u hs hu huc
-  rw [fibre_one H s u hs hu huc H.t0 ht0N hres0] at hr0
-  rw [residue_anchor H s u hs hu huc,fibre_load H s u hs hu huc H.t0 ht0N hres0,
-    fibre_one H s u hs hu huc H.t0 ht0N hres0]
-  intro hc
-  apply hps
-  rw [map_sub,map_mul,map_mul]
-  have key := coupling_cross ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p)).det
-    ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p)).det
-    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o v)-
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-      (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
-        (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val)) (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) i))))
-    (TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o H.t0)-
-      fibreSigma H u H.t0 ⬝ᵥ ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p))⁻¹ *ᵥ fibreLoad H u H.t0)
-    (1-(fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u v (Sum.elim (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n) j))) ⬝ᵥ
-      ((TwoTermDeformation.mixedCore p q o s u (pcn p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val))
-        (pxr p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)
-        (pyc p (v:ZMod p).val (WrapJointProfile.count p r (v:ZMod p).val) η n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1)
-    (1-fibreSigma H u H.t0 ⬝ᵥ ((fibreCore H s u H.t0).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1) hr0
-  rw [hc,zero_mul,zero_mul,zero_mul] at key
-  rw [hRvT,hRvF,hR0T,hR0F]
-  exact key.symm
-
-/-- Section 8.3, ACTUAL prefix binding: an outside surplus row separated
-from the anchor by an original pole of either family (each family with its
-own deformation parameter) has a NONZERO actual two-parameter coupling.
-No inverse pivot is specialized; the conclusion is generic nonvanishing. -/
-theorem rowCoupling2_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (z : Fin d) (k : ℕ)
-    (hk : p∣k ∨ p∣q*k-o)
-    (hsep : (WrapPrefixSchur.surplusRow H z<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusRow H z))
-    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusRow H z)
-    (hvhi : WrapPrefixSchur.surplusRow H z<r+2*n*p+p) :
-    rowCoupling2 H s u z≠0 := by
-  have hvN : WrapPrefixSchur.surplusRow H z<N := WrapPrefixSchur.surplus_row_bound H z
-  have hresv := surplus_not_residual H z
-  unfold rowCoupling2
-  rw [map_sub,map_mul,residue_rowMoment2 H s u hs hu huc,residue_rowRef2 H s u hs hu huc,
-    fibre_load H s u hs hu huc _ hvN hresv,fibre_one H s u hs hu huc _ hvN hresv]
-  exact node_coupling_ne H s u hs hu huc _ k _ (bit_le _) hk hsep hvlo hvhi hvN
-    (fibreCore_det_ne H s u hs hu huc _ hresv)
 
 end RowSeparationFinal
 
@@ -6533,106 +3947,15 @@ end RowSeparationFinal
 section ColumnCoupling
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-/-- Actual two-parameter column border of an original node `t`. -/
-noncomputable def colSigma2 (u : GaussLoc p) (t : ℕ) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b)) :
-    TwoTermDeformation.Ring p :=
-  TwoTermDeformation.entry p q o u (Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i) t
-
-noncomputable def colMoment2 (s u : GaussLoc p) (t : ℕ) :=
-  TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t-
-    TwoTermDeformation.prefixColLoad p H u ⬝ᵥ (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ colSigma2 H u t
-
-noncomputable def colRef2 (s u : GaussLoc p) (t : ℕ) :=
-  1-(1:Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b) → TwoTermDeformation.Ring p) ⬝ᵥ
-    (TwoTermDeformation.prefixCore p H s u)⁻¹ *ᵥ colSigma2 H u t
-
-/-- The actual two-parameter outside column coupling against the actual
-original (row) anchor. -/
-noncomputable def colCoupling2 (s u : GaussLoc p) (y : Fin d) :=
-  TwoTermDeformation.residue p (colMoment2 H s u (WrapPrefixSchur.surplusCol H y)-
-    TwoTermDeformation.prefixAnchor p H s u*colRef2 H s u (WrapPrefixSchur.surplusCol H y))
-
-/-- Two-parameter cleared reference identity at a shared original node:
-the row and column directions agree, with no column-reference unit. -/
-theorem shared_moments2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N) :
-    rowRef2 H s u t*colMoment2 H s u t=rowMoment2 H s u t*colRef2 H s u t := by
-  have hN := single_bound H
-  apply WrapPrefixSchur.scaled_cross_direction (R:=TwoTermDeformation.Ring p) (TwoTermDeformation.uniformizer p)
-    (TwoTermDeformation.parameterPrime p).ne_zero
-    (TwoTermDeformation.prefixCore p H s u) (TwoTermDeformation.prefixCore_unit p H s u hs hu huc)
-    (fun i => ((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):TwoTermDeformation.Ring p))
-    (fun i => ((Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i:ℕ):TwoTermDeformation.Ring p))
-    (TwoTermDeformation.prefixRowLoad p H u) (TwoTermDeformation.prefixColLoad p H u)
-    (sigma2 H u t) (colSigma2 H u t) (t:TwoTermDeformation.Ring p)
-    (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t)
-  · intro i j
-    have he := TwoTermDeformation.mixedCore_commutator p q o N hN s u (fun i:Fin r => (i:ℕ)) H.xs H.ys
-      H.common_bound H.row_bound H.col_bound i j
-    simpa only [mul_sub,TwoTermDeformation.prefixRowLoad,TwoTermDeformation.prefixColLoad,
-      TwoTermDeformation.prefixCore] using he
-  · intro i
-    have he := TwoTermDeformation.commutator p q o N u hN t _ ht
-      (UFMember.colNode_lt H.common_bound H.col_bound i)
-    simp only [UFMember.colNode] at he
-    simp only [sigma2,TwoTermDeformation.prefixColLoad,← mul_sub]
-    exact he
-  · intro i
-    have he := TwoTermDeformation.commutator p q o N u hN _ t
-      (UFMember.rowNode_lt H.common_bound H.row_bound i) ht
-    simp only [UFMember.rowNode] at he
-    simp only [colSigma2,TwoTermDeformation.prefixRowLoad,← mul_sub]
-    exact he
-
-theorem col_sigma_cross_zero (u : GaussLoc p) (t : ℕ) (ht : t<N) (i : Fin r ⊕ ((Fin n × Fin p) ⊕ Fin b))
-    (hi : H.colour i≠(t:ZMod p)) : TwoTermDeformation.residue p (colSigma2 H u t i)=0 := by
-  have hrow := (UFMember.rowNode_lt H.common_bound H.row_bound i)
-  have hc := congrArg (TwoTermDeformation.residue p)
-    (TwoTermDeformation.commutator p q o N u (single_bound H) _ t hrow ht)
-  rw [map_mul,map_mul,residue_uniformizer,zero_mul,map_sub,map_natCast,map_natCast] at hc
-  have hne := residue_nat_sub_ne (p:=p) _ _
-    (show (t:ZMod p)≠((Sum.elim (fun i:Fin r => (i:ℕ)) H.xs i:ℕ):ZMod p) by
-      rw [rowNode_colour]; exact fun h => hi h.symm)
-  exact (mul_eq_zero.mp hc).resolve_left hne
 
 theorem dot_transpose {K α : Type*} [CommRing K] [Fintype α] (a b : α → K) (M : Matrix α α K) :
     a ⬝ᵥ M *ᵥ b=b ⬝ᵥ Mᵀ *ᵥ a := by
   rw [Matrix.dotProduct_mulVec,Matrix.mulVec_transpose,dotProduct_comm]
 
-theorem residue_colMoment2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
-    TwoTermDeformation.residue p (colMoment2 H s u t)=
-      TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o t)-
-        (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
-          (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixColLoad p H u i)) := by
-  rw [colMoment2,map_sub,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc),
-    dot_transpose,Matrix.transpose_nonsing_inv]
-  rfl
-
-theorem residue_colRef2 (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) :
-    TwoTermDeformation.residue p (colRef2 H s u t)=
-      1-(fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ 1 := by
-  rw [colRef2,map_sub,map_one,residue_response _ _ (TwoTermDeformation.prefixCore_unit p H s u hs hu huc),
-    dot_transpose,Matrix.transpose_nonsing_inv]
-  simp only [Pi.one_apply,map_one]
-  rfl
-
-theorem mixedCore_transpose {ι κ : Type} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
-    (s u : GaussLoc p) (c : ι → ℕ) (xs ys : κ → ℕ) :
-    (TwoTermDeformation.mixedCore p q o s u c xs ys)ᵀ=TwoTermDeformation.mixedCore p q o s u c ys xs := by
-  ext i j
-  simp only [Matrix.transpose_apply,TwoTermDeformation.mixedCore,Matrix.add_apply,Matrix.of_apply,
-    Matrix.map_apply]
-  rw [TwoTermDeformation.entry_symm]
-  congr 1
-  rcases i with i|i <;> rcases j with j|j <;>
-    simp [Matrix.fromBlocks_apply₁₁,Matrix.one_apply,eq_comm]
 
 /-- A surplus column colour is never a residual balanced colour. -/
 theorem surplus_col_not_residual (y : Fin d) (i : Fin b) :
@@ -6662,7 +3985,6 @@ end ColumnCoupling
 section ColumnSeparation
 variable {p : ℕ} [Fact p.Prime]
 
-attribute [local instance] TwoTermDeformation.coefficientDomain TwoTermDeformation.ringDomain
 
 omit [Fact p.Prime] in
 theorem pxr_flip (γ k η n : ℕ) (c : Fin n) : pxr p γ k (1-η) n c=pyc p γ k η n c := rfl
@@ -6676,114 +3998,6 @@ theorem pyc_flip (γ k η n : ℕ) (hη : η≤1) (c : Fin n) : pyc p γ k (1-η
 variable {q o r n e b d shift N : ℕ}
 variable (H : WrapPrefixWindow.Setup p q o r n e b d shift N)
 
-/-- The transposed actual fibre is the actual fibre with the complementary bit. -/
-theorem fibreCore_transpose (s u : GaussLoc p) (t : ℕ) :
-    (fibreCore H s u t)ᵀ=TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) := by
-  unfold fibreCore
-  rw [mixedCore_transpose,_root_.funext (pxr_flip (p:=p) _ _ _ n),_root_.funext (pyc_flip (p:=p) _ _ _ n (bit_le _))]
-
-/-- The actual reduced COLUMN response of node `t` is the ORIGINAL profile
-response of its fibre with the complementary bit. -/
-theorem col_fibre_moment (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p))
-    (f : ℕ → TwoTermDeformation.Ring p) :
-    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i)))=
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
-        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (f (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i))) := by
-  classical
-  have hbT : ∀ a c,H.colour a≠H.colour c → (coreBar H s u)ᵀ a c=0 :=
-    fun a c h => core_cross_zero H s u c a (Ne.symm h)
-  have hdetT : (coreBar H s u)ᵀ.det≠0 := by
-    rw [Matrix.det_transpose]; exact coreBar_det H s u hs hu huc
-  have hsz : ∀ a,H.colour a≠(t:ZMod p) → TwoTermDeformation.residue p (colSigma2 H u t a)=0 :=
-    fun a h => col_sigma_cross_zero H u t ht a h
-  rw [fibre_response (coreBar H s u)ᵀ H.colour hdetT hbT (t:ZMod p) _ _ hsz]
-  rw [← WrapTransport.response_reindex (UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p))
-    (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)]
-  have hblk : (UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p)).submatrix
-      (fibreEquiv H (t:ZMod p) hres) (fibreEquiv H (t:ZMod p) hres)=
-      (TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p) := by
-    have h1 : UFMoments.blk (coreBar H s u)ᵀ H.colour (t:ZMod p)=
-        (UFMoments.blk (coreBar H s u) H.colour (t:ZMod p))ᵀ := rfl
-    rw [h1,← Matrix.transpose_submatrix,fibre_blk H s u t hres,← Matrix.transpose_map,fibreCore_transpose]
-  have hl : (fun i:{a // H.colour a=(t:ZMod p)} => TwoTermDeformation.residue p (colSigma2 H u t i.1)) ∘
-      ⇑(fibreEquiv H (t:ZMod p) hres)=
-      fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j)) := by
-    funext j
-    simp only [Function.comp_apply,colSigma2]
-    rw [fibre_row H (t:ZMod p) hres j,TwoTermDeformation.entry_symm]
-    rcases j with j|j
-    · rfl
-    · simp only [Sum.elim_inr]
-      rw [rowProfile_eq,pyc_flip _ _ _ _ (bit_le _)]
-  have hr : (fun i:{a // H.colour a=(t:ZMod p)} =>
-      TwoTermDeformation.residue p (f (Sum.elim (fun i:Fin r => (i:ℕ)) H.ys i.1))) ∘
-      ⇑(fibreEquiv H (t:ZMod p) hres)=
-      fun i => TwoTermDeformation.residue p (f (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i)) := by
-    funext i
-    simp only [Function.comp_apply]
-    rw [fibre_col H (t:ZMod p) hres i]
-    rcases i with i|i
-    · rfl
-    · simp only [Sum.elim_inr]
-      rw [colProfile_eq,pxr_flip]
-  rw [hblk,hl,hr]
-
-theorem col_fibre_load (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.prefixColLoad p H u i))=
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
-        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ
-        (fun i => TwoTermDeformation.residue p (TwoTermDeformation.constants p u*TwoTermDeformation.load p q o
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) i))) :=
-  col_fibre_moment H s u hs hu huc t ht hres
-    (fun a => TwoTermDeformation.constants p u*TwoTermDeformation.load p q o a)
-
-theorem col_fibre_one (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ) (ht : t<N)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    (fun i => TwoTermDeformation.residue p (colSigma2 H u t i)) ⬝ᵥ (coreBar H s u)ᵀ⁻¹ *ᵥ 1=
-      (fun j => TwoTermDeformation.residue p (TwoTermDeformation.entry p q o u t
-          (Sum.elim (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) j))) ⬝ᵥ
-        ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p))⁻¹ *ᵥ 1 := by
-  have h := col_fibre_moment H s u hs hu huc t ht hres (fun _ => (1:TwoTermDeformation.Ring p))
-  simp only [map_one] at h
-  exact h
-
-/-- The transposed actual fibre stays nonsingular after reduction. -/
-theorem colFibre_det_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (t : ℕ)
-    (hres : ∀ i:Fin b,(WrapPrefixCoreGeometry.xs p (n:=n) r H.er (Sum.inr i):ZMod p)≠(t:ZMod p)) :
-    ((TwoTermDeformation.mixedCore p q o s u (pcn p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val)) (pxr p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n) (pyc p (t:ZMod p).val (WrapJointProfile.count p r (t:ZMod p).val) (1-(WrapJointProfile.bit p r (t:ZMod p).val)) n)).map (TwoTermDeformation.residue p)).det≠0 := by
-  rw [← fibreCore_transpose,Matrix.transpose_map,Matrix.det_transpose]
-  exact fibreCore_det_ne H s u hs hu huc t hres
-
-/-- Section 8.3, ACTUAL prefix binding for an outside surplus COLUMN:
-its independently loaded column fibre is the actual fibre with the
-complementary bit, and a separating original pole of either family makes
-its actual two-parameter coupling nonzero. -/
-theorem colCoupling2_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (y : Fin d) (k : ℕ)
-    (hk : p∣k ∨ p∣q*k-o)
-    (hsep : (WrapPrefixSchur.surplusCol H y<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤WrapPrefixSchur.surplusCol H y))
-    (hvlo : r+2*n*p≤WrapPrefixSchur.surplusCol H y)
-    (hvhi : WrapPrefixSchur.surplusCol H y<r+2*n*p+p) :
-    colCoupling2 H s u y≠0 := by
-  have hvN : WrapPrefixSchur.surplusCol H y<N := WrapPrefixSchur.surplus_col_bound H y
-  have hresv := surplus_col_not_residual H y
-  unfold colCoupling2
-  rw [map_sub,map_mul,residue_colMoment2 H s u hs hu huc,residue_colRef2 H s u hs hu huc,
-    col_fibre_load H s u hs hu huc _ hvN hresv,col_fibre_one H s u hs hu huc _ hvN hresv]
-  exact node_coupling_ne H s u hs hu huc _ k _ (by omega) hk hsep hvlo hvhi hvN
-    (colFibre_det_ne H s u hs hu huc _ hresv)
 
 end ColumnSeparation
 
@@ -6791,258 +4005,6 @@ namespace TwoTermDeformation
 section TwoParameterTransport
 variable (p : ℕ) [Fact p.Prime]
 
-attribute [local instance] coefficientDomain ringDomain
-
-/-- An ORIGINAL nonpole integer reciprocal keeps its first-order value
-under the independent integer deformation, modulo the uniformizer squared. -/
-theorem integer_nonpole_congr (t : ℕ) (ht : res p (t:GaussLoc p)≠0) :
-    uniformizer p^2∣integerNormalized p (t:GaussLoc p)-
-      constants p (WrapPole.originalNormalized p (t:GaussLoc p)) := by
-  have hu : IsUnit (WrapOwnCore.constants p (t:GaussLoc p)) := (isUnit_of_res_ne _ ht).map _
-  have h := originalScaledPoleInverse_nonpole_congr (WrapDeform.residue p)
-    (WrapOwnCore.constants p (UFMoments.piL p)) (WrapOwnCore.constants p (t:GaussLoc p))
-    (WrapOwnCore.constants p 1) hu
-  rw [integerNormalized,dif_neg ht,WrapPole.originalNormalized,dif_neg ht]
-  have he : constants p (UFMoments.piL p*Ring.inverse (t:GaussLoc p))=
-      algebraMap (WrapDeform.Extension p)[X] (Ring p)
-        (Polynomial.C (WrapOwnCore.constants p (UFMoments.piL p)*
-          Ring.inverse (WrapOwnCore.constants p (t:GaussLoc p)))) := by
-    have ht' : IsUnit (t:GaussLoc p) := isUnit_of_res_ne _ ht
-    have hinv : WrapOwnCore.constants p (Ring.inverse (t:GaussLoc p))=
-        Ring.inverse (WrapOwnCore.constants p (t:GaussLoc p)) :=
-      map_ring_inverse_of_unit (WrapOwnCore.constants p) (t:GaussLoc p) ht'
-    rw [← hinv,← map_mul]
-    rfl
-  rw [he]
-  exact h
-
-/-- Two-parameter regular increments: the coefficient image of the
-one-parameter regular increment. -/
-noncomputable def regular (q o t : ℕ) : Ring p := coefficient p (WrapPrefixSource.regular p q o t)
-
-theorem delta_congr (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0) :
-    uniformizer p^2∣delta p q o t-coefficient p (WrapIncrement.delta p q o t) := by
-  have e1 : coefficient p (WrapIncrement.delta p q o t)=
-      constants p (WrapPole.originalNormalized p (t:GaussLoc p))-
-        coefficient p (WrapOwnCore.constants p (q:GaussLoc p))*
-          coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p)) := by
-    unfold WrapIncrement.delta
-    rw [map_sub,map_mul]
-    rfl
-  obtain ⟨z,hz⟩ := integer_nonpole_congr p t ht
-  rw [e1]
-  refine ⟨z,?_⟩
-  unfold delta
-  linear_combination hz
-
-theorem delta_factor (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0)
-    (ha : res p (WrapIncrement.argument p q o t)≠0) :
-    ∃ e : Ring p,delta p q o t=uniformizer p*regular p q o t+uniformizer p^2*e := by
-  obtain ⟨z,hz⟩ := delta_congr p q o t ht
-  have hf := congrArg (coefficient p) (WrapPrefixSource.delta_factor p q o t ht ha)
-  rw [map_mul] at hf
-  refine ⟨z,?_⟩
-  change delta p q o t=coefficient p (WrapDeform.uniformizer p)*regular p q o t+
-    coefficient p (WrapDeform.uniformizer p)^2*z
-  change delta p q o t-coefficient p (WrapIncrement.delta p q o t)=
-    coefficient p (WrapDeform.uniformizer p)^2*z at hz
-  unfold regular
-  linear_combination hz+hf
-
-theorem dsq_dvd (q o t : ℕ) (ht : res p (t:GaussLoc p)≠0)
-    (ha : res p (WrapIncrement.argument p q o t)≠0) :
-    uniformizer p^2∣dsq p q o t := by
-  classical
-  obtain ⟨z,hz⟩ := integer_nonpole_congr p t ht
-  have h1 : constants p (WrapPole.originalNormalized p (t:GaussLoc p))=
-      uniformizer p*constants p (Ring.inverse (t:GaussLoc p)) := by
-    unfold WrapPole.originalNormalized
-    rw [dif_neg ht,map_mul]
-    rfl
-  have h2 : coefficient p (WrapPole.normalizedInverse p (WrapIncrement.argument p q o t) (q:GaussLoc p))=
-      uniformizer p*coefficient p (Ring.inverse
-        (WrapPole.denominator p (WrapIncrement.argument p q o t) (q:GaussLoc p))) := by
-    unfold WrapPole.normalizedInverse
-    rw [dif_neg ha,map_mul]
-    rfl
-  have hiN : integerNormalized p (t:GaussLoc p)=
-      uniformizer p*(constants p (Ring.inverse (t:GaussLoc p))+uniformizer p*z) := by
-    linear_combination hz+h1
-  unfold dsq
-  rw [hiN,h2]
-  exact ⟨(constants p (Ring.inverse (t:GaussLoc p))+uniformizer p*z)^2-
-    coefficient p (WrapOwnCore.constants p ((q:GaussLoc p)^2))*
-      coefficient p (Ring.inverse (WrapPole.denominator p (WrapIncrement.argument p q o t) (q:GaussLoc p)))^2,
-    by ring⟩
-
-theorem increment_congr (q o a b : ℕ) (hat : res p (a:GaussLoc p)≠0)
-    (hbt : res p (b:GaussLoc p)≠0)
-    (haa : res p (WrapIncrement.argument p q o a)≠0)
-    (hba : res p (WrapIncrement.argument p q o b)≠0)
-    (hcol : (a:ZMod p)=(b:ZMod p)) :
-    uniformizer p^2∣delta p q o a-delta p q o b := by
-  obtain ⟨za,hza⟩ := delta_congr p q o a hat
-  obtain ⟨zb,hzb⟩ := delta_congr p q o b hbt
-  obtain ⟨w,hw⟩ := WrapPrefixSource.increment_congr p q o a b hat hbt haa hba hcol
-  have hw' := congrArg (coefficient p) hw
-  rw [map_sub,map_mul,map_pow] at hw'
-  refine ⟨za-zb+coefficient p w,?_⟩
-  change _=coefficient p (WrapDeform.uniformizer p)^2*_
-  change _=coefficient p (WrapDeform.uniformizer p)^2*_ at hza hzb
-  linear_combination hza-hzb+hw'
-
-theorem load_shift_congr (q o a b d : ℕ)
-    (hcol : (a:ZMod p)=(b:ZMod p))
-    (ha : ∀ h∈Icc 1 d,res p ((a+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (a+h))≠0)
-    (hb : ∀ h∈Icc 1 d,res p ((b+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (b+h))≠0) :
-    uniformizer p^2∣(load p q o (a+d)-load p q o a)-(load p q o (b+d)-load p q o b) := by
-  rw [prefix_sub p q o a (a+d) (by omega),prefix_sub p q o b (b+d) (by omega),
-    WrapPrefixSource.window_sum,WrapPrefixSource.window_sum,← Finset.sum_sub_distrib]
-  apply Finset.dvd_sum
-  intro h hh
-  apply increment_congr p q o (a+h) (b+h) (ha h hh).1 (hb h hh).1 (ha h hh).2 (hb h hh).2
-  simpa only [Nat.cast_add,hcol]
-
-theorem diagonal_shift_congr (q o a d : ℕ) (u : GaussLoc p)
-    (ha : ∀ t∈Ioc a (a+d),res p (t:GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o t)≠0) :
-    uniformizer p^2∣entry p q o u (a+d) (a+d)-entry p q o u a a := by
-  classical
-  have he (n : ℕ) : Icc 1 n=Ioc 0 n := by
-    ext t; simp only [mem_Icc,mem_Ioc]; omega
-  have hs : uniformizer p^2∣∑ t∈Ioc a (a+d),dsq p q o t := by
-    apply Finset.dvd_sum
-    intro t ht
-    exact dsq_dvd p q o t (ha t ht).1 (ha t ht).2
-  obtain ⟨z,hz⟩ := hs
-  refine ⟨-(coefficient p (WrapOwnCore.constants p u)*z),?_⟩
-  simp only [entry,↓reduceIte,he,
-    ← Finset.sum_Ioc_consecutive _ (Nat.zero_le a) (show a≤a+d by omega)]
-  rw [hz]
-  ring
-
-theorem entry_shift_congr (q o a b d : ℕ) (u : GaussLoc p)
-    (hcol : (a:ZMod p)=(b:ZMod p))
-    (ha : ∀ h∈Icc 1 d,res p ((a+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (a+h))≠0)
-    (hb : ∀ h∈Icc 1 d,res p ((b+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (b+h))≠0) :
-    uniformizer p^2∣entry p q o u (a+d) (b+d)-entry p q o u a b := by
-  classical
-  have hoff (a b : ℕ) (hab : a<b)
-      (hs : uniformizer p^2∣(load p q o (b+d)-load p q o b)-(load p q o (a+d)-load p q o a)) :
-      uniformizer p^2∣entry p q o u (a+d) (b+d)-entry p q o u a b := by
-    obtain ⟨z,hz⟩ := hs
-    have he : b+d-(a+d)=b-a := by omega
-    simp only [entry,hab.ne,(show a+d≠b+d by omega),↓reduceIte,
-      min_eq_left hab.le,max_eq_right hab.le,
-      min_eq_left (show a+d≤b+d by omega),max_eq_right (show a+d≤b+d by omega),he]
-    rw [← prefix_sub p q o (a+d) (b+d) (by omega),← prefix_sub p q o a b hab.le]
-    refine ⟨coefficient p (WrapOwnCore.constants p u)*
-      coefficient p (WrapOwnCore.constants p (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p)))*z,?_⟩
-    linear_combination coefficient p (WrapOwnCore.constants p u)*
-      coefficient p (WrapOwnCore.constants p (WrapPole.originalNormalized p ((b-a:ℕ):GaussLoc p)))*hz
-  rcases lt_trichotomy a b with hab|hab|hba
-  · exact hoff a b hab (load_shift_congr p q o b a d hcol.symm hb ha)
-  · subst b
-    apply diagonal_shift_congr p q o a d u
-    intro t ht
-    have h : t-a∈Icc 1 d := by simp only [mem_Ioc] at ht; simp only [mem_Icc]; omega
-    have he : a+(t-a)=t := by simp only [mem_Ioc] at ht; omega
-    simpa only [he] using ha (t-a) h
-  · rw [entry_symm p q o u (a+d) (b+d),entry_symm p q o u a b]
-    exact hoff b a hba (load_shift_congr p q o a b d hcol ha hb)
-
-theorem load_shift_factor (q o t d : ℕ) (u : GaussLoc p)
-    (ht : ∀ h∈Icc 1 d,res p ((t+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (t+h))≠0) :
-    ∃ e : Ring p,constants p u*(load p q o (t+d)-load p q o t)=
-      uniformizer p*(constants p u*∑ h∈Icc 1 d,regular p q o (t+h))+uniformizer p^2*e := by
-  classical
-  rw [prefix_sub p q o t (t+d) (by omega),WrapPrefixSource.window_sum]
-  have hf : ∀ h∈Icc 1 d,∃ e : Ring p,delta p q o (t+h)=uniformizer p*regular p q o (t+h)+uniformizer p^2*e :=
-    fun h hh => delta_factor p q o (t+h) (ht h hh).1 (ht h hh).2
-  choose! E hE using hf
-  refine ⟨constants p u*∑ h∈Icc 1 d,E h,?_⟩
-  rw [Finset.sum_congr rfl hE,Finset.sum_add_distrib,← Finset.mul_sum,← Finset.mul_sum]
-  ring
-
-set_option maxHeartbeats 1000000 in
-/-- Two-parameter own-block transport across a regular window: the
-two-parameter congruences replace the one-parameter exact load step. -/
-theorem actual_own_transport {α : Type*} [Fintype α] [DecidableEq α]
-    (q o t d : ℕ) (u : GaussLoc p) (rows cols : α → ℕ)
-    (P : Matrix α α (Ring p))
-    (hr : ∀ i,(rows i:ZMod p)=(t:ZMod p))
-    (hc : ∀ i,(cols i:ZMod p)=(t:ZMod p))
-    (ht : ∀ h∈Icc 1 d,res p ((t+h:ℕ):GaussLoc p)≠0 ∧
-      res p (WrapIncrement.argument p q o (t+h))≠0)
-    (Q0 Q1 : Matrix α α (Ring p))
-    (h0 : ∀ i j,Q0 i j=entry p q o u (rows i) (cols j)+P i j)
-    (h1 : ∀ i j,Q1 i j=entry p q o u (rows i+d) (cols j+d)+P i j)
-    (hQ0 : IsUnit Q0.det) (hQ1 : IsUnit Q1.det) (direction : Ring p)
-    (hz : (constants p u*load p q o t-direction)-
-      (fun i => entry p q o u t (cols i)) ⬝ᵥ Q0⁻¹ *ᵥ
-        (fun i => constants p u*load p q o (rows i)-direction)=0) :
-    ∃ e : Ring p,
-      (constants p u*load p q o (t+d)-direction)-
-        (fun i => entry p q o u (t+d) (cols i+d)) ⬝ᵥ Q1⁻¹ *ᵥ
-          (fun i => constants p u*load p q o (rows i+d)-direction)=
-      (constants p u*∑ h∈Icc 1 d,regular p q o (t+h))*
-        (1-∑ i,((fun j => entry p q o u t (cols j)) ᵥ* Q0⁻¹) i)*
-          uniformizer p+uniformizer p^2*e := by
-  classical
-  have hw (a : ℕ) (hcol : (a:ZMod p)=(t:ZMod p)) :=
-    WrapPrefixSource.regular_window_of_colour p q o a t d hcol ht
-  have hd : ∀ i j,∃ z,Q1 i j=Q0 i j+uniformizer p^2*z := by
-    intro i j
-    obtain ⟨z,hz⟩ := entry_shift_congr p q o (rows i) (cols j) d u
-      ((hr i).trans (hc j).symm) (hw _ (hr i)) (hw _ (hc j))
-    refine ⟨z,?_⟩
-    rw [h1,h0]
-    linear_combination hz
-  have hs : ∀ i,∃ z,entry p q o u (t+d) (cols i+d)=entry p q o u t (cols i)+uniformizer p^2*z := by
-    intro i
-    obtain ⟨z,hz⟩ := entry_shift_congr p q o t (cols i) d u (hc i).symm ht (hw _ (hc i))
-    exact ⟨z,sub_eq_iff_eq_add.mp hz |>.trans (add_comm _ _)⟩
-  let step := constants p u*(load p q o (t+d)-load p q o t)
-  have hl : ∀ i,∃ z,constants p u*load p q o (rows i+d)=
-      constants p u*load p q o (rows i)+step+uniformizer p^2*z := by
-    intro i
-    obtain ⟨z,hz⟩ := load_shift_congr p q o (rows i) t d (hr i) (hw _ (hr i)) ht
-    refine ⟨constants p u*z,?_⟩
-    dsimp only [step]
-    linear_combination constants p u*hz
-  choose ED hED using hd
-  choose es hes using hs
-  choose el hel using hl
-  have hm : Q1=Q0+uniformizer p^2 • Matrix.of ED := by
-    ext i j
-    exact hED i j
-  have hsig : (fun i => entry p q o u (t+d) (cols i+d))=
-      (fun i => entry p q o u t (cols i))+uniformizer p^2 • es := by
-    funext i
-    exact hes i
-  have hunit : IsUnit (Q0+uniformizer p^2 • Matrix.of ED).det := by
-    rw [← hm]; exact hQ1
-  obtain ⟨e,he⟩ := own_shift (uniformizer p) Q0 (Matrix.of ED) hQ0 hunit
-    (fun i => entry p q o u t (cols i)) es
-    (fun i => constants p u*load p q o (rows i)) el
-    (constants p u*load p q o t) 0 direction step
-  obtain ⟨e0,he0⟩ := load_shift_factor p q o t d u ht
-  refine ⟨e+e0*(1-∑ i,((fun j => entry p q o u t (cols j)) ᵥ* Q0⁻¹) i),?_⟩
-  have htload : constants p u*load p q o (t+d)=constants p u*load p q o t+step := by dsimp only [step]; ring
-  rw [htload,hm,hsig,Matrix.dotProduct_mulVec,dotProduct]
-  simp_rw [hel]
-  rw [dotProduct_mulVec,dotProduct] at hz
-  simp only [mul_zero,add_zero] at he
-  rw [hz] at he
-  rw [he,zero_add]
-  dsimp only [step]
-  rw [he0]
-  ring
 
 end TwoParameterTransport
 end TwoTermDeformation
@@ -7051,407 +4013,27 @@ namespace TwoTermDeformation
 section TwoParameterSource
 variable (p : ℕ) [Fact p.Prime]
 
-attribute [local instance] coefficientDomain ringDomain
-
-/-- Residue-field image of an original colour. -/
-noncomputable def residueNode : ZMod p →+* Residue p :=
-  (RatFunc.C:WrapPoleResidue.Residue p →+* Residue p).comp
-    ((RatFunc.C:RatFunc (ZMod p) →+* WrapPoleResidue.Residue p).comp RatFunc.C)
-
-theorem residueNode_injective : Function.Injective (residueNode p) :=
-  RatFunc.C_injective.comp (RatFunc.C_injective.comp RatFunc.C_injective)
-
-theorem residueNode_nat (a : ℕ) : residueNode p (a:ZMod p)=(a:Residue p) := map_natCast _ a
-
-theorem residue_zero_iff (a : Ring p) : residue p a=0 ↔ uniformizer p∣a :=
-  WrapParameter.residue_zero_iff (WrapDeform.residue p) (WrapDeform.uniformizer p)
-    (WrapDeform.residue_zero_iff p) a
-
-theorem unit_of_residue_ne (a : Ring p) (h : residue p a≠0) : IsUnit a :=
-  WrapUnits.of_residue_ne (R:=WrapDeform.Extension p) (K:=WrapPoleResidue.Residue p)
-    (WrapDeform.residue p) a h
-
-theorem residue_pi : residue p (uniformizer p)=0 := (residue_zero_iff p _).mpr (dvd_refl _)
-
-theorem uniformizer_ne : uniformizer p≠0 := (parameterPrime p).ne_zero
 
 variable {ι : Type} [Fintype ι] [DecidableEq ι]
 
-theorem split (col : ι → ZMod p) (Q : Matrix ι ι (Ring p))
-    (hzero : ∀ i j,col i≠col j → residue p (Q i j)=0) :
-    ∃ E : Matrix ι ι (Ring p),Q=own p col Q+uniformizer p • E ∧
-      (∀ i j,col i=col j → E i j=0) := by
-  classical
-  have hz : ∀ i j,uniformizer p∣Q i j-own p col Q i j := by
-    intro i j
-    apply (residue_zero_iff p _).mp
-    by_cases h : col i=col j
-    · simp only [own,Matrix.of_apply,if_pos h,sub_self,map_zero]
-    · simp only [own,Matrix.of_apply,if_neg h,sub_zero]
-      exact hzero i j h
-  choose E hE using hz
-  refine ⟨Matrix.of E,?_,?_⟩
-  · ext i j
-    simp only [Matrix.add_apply,Matrix.smul_apply,Matrix.of_apply,smul_eq_mul]
-    exact sub_eq_iff_eq_add.mp (hE i j) |>.trans (add_comm _ _)
-  · intro i j hij
-    have he := hE i j
-    simp only [own,Matrix.of_apply,if_pos hij,sub_self] at he
-    exact (mul_eq_zero.mp he.symm).resolve_left (uniformizer_ne p)
-
-theorem own_unit (col : ι → ZMod p) (Q : Matrix ι ι (Ring p)) (hQ : IsUnit Q.det)
-    (hzero : ∀ i j,col i≠col j → residue p (Q i j)=0) :
-    IsUnit (own p col Q).det := by
-  classical
-  have he : (own p col Q).map (residue p)=Q.map (residue p) := by
-    ext i j
-    by_cases h : col i=col j
-    · simp only [Matrix.map_apply,own,Matrix.of_apply,if_pos h]
-    · simp only [Matrix.map_apply,own,Matrix.of_apply,if_neg h,map_zero,hzero i j h]
-  apply unit_of_residue_ne p
-  have hh := (hQ.map (residue p)).ne_zero
-  rw [RingHom.map_det] at hh ⊢
-  change ((own p col Q).map (residue p)).det≠0
-  rw [he]
-  exact hh
-
-theorem cross_residue (col : ι → ZMod p) (Q E : Matrix ι ι (Ring p))
-    (hQE : Q=own p col Q+uniformizer p • E)
-    (xi : Matrix ι ι (Ring p)) (yR yC : ι → Ring p)
-    (hdisp : ∀ i j,xi i j*Q i j=uniformizer p*(yC j-yR i))
-    (hxi : ∀ i j,residue p (xi i j)=residueNode p (col j)-residueNode p (col i))
-    (i j : ι) (hcol : col i≠col j) :
-    residue p (E i j)=(residue p (yC j)-residue p (yR i))/
-      (residueNode p (col j)-residueNode p (col i)) := by
-  classical
-  have he : Q i j=uniformizer p*E i j := by
-    rw [hQE]
-    simp only [Matrix.add_apply,own,Matrix.of_apply,if_neg hcol,zero_add,
-      Matrix.smul_apply,smul_eq_mul]
-  have hd := hdisp i j
-  rw [he] at hd
-  have hc : xi i j*E i j=yC j-yR i := by
-    apply mul_left_cancel₀ (uniformizer_ne p)
-    calc
-      _=xi i j*(uniformizer p*E i j) := by ring
-      _=_ := hd
-  have hh := congrArg (residue p) hc
-  rw [map_mul,hxi,map_sub] at hh
-  have hden : residueNode p (col j)-residueNode p (col i)≠0 := by
-    apply sub_ne_zero.mpr
-    intro heq
-    exact hcol ((residueNode_injective p heq).symm)
-  apply (eq_div_iff hden).mpr
-  simpa only [mul_comm] using hh
-
-theorem nat_residue_ne (a b : ℕ) (h : (a:ZMod p)≠(b:ZMod p)) :
-    (a:Residue p)-(b:Residue p)≠0 := by
-  intro hz
-  apply h
-  apply residueNode_injective p
-  simpa only [residueNode_nat] using sub_eq_zero.mp hz
-
-set_option maxHeartbeats 1000000 in
-theorem entry_source (q o N a b : ℕ) (u : GaussLoc p) (hN : N<p*p)
-    (ha : a<N) (hb : b<N) (hcol : (a:ZMod p)≠(b:ZMod p)) :
-    ∃ e : Ring p,entry p q o u a b=uniformizer p*e ∧
-      residue p e=(residue p (constants p u*load p q o b)-residue p (constants p u*load p q o a))/
-        ((b:Residue p)-(a:Residue p)) := by
-  have hd := commutator p q o N u hN a b ha hb
-  have hne := nat_residue_ne p b a (Ne.symm hcol)
-  have hz : residue p (entry p q o u a b)=0 := by
-    have h := congrArg (residue p) hd
-    rw [map_mul,map_mul,residue_pi,zero_mul,map_sub,map_natCast,map_natCast] at h
-    exact (mul_eq_zero.mp h).resolve_left hne
-  obtain ⟨e,he⟩ := (residue_zero_iff p _).mp hz
-  refine ⟨e,he,?_⟩
-  rw [he] at hd
-  have hc : ((b:Ring p)-(a:Ring p))*e=constants p u*load p q o b-constants p u*load p q o a := by
-    apply mul_left_cancel₀ (uniformizer_ne p)
-    linear_combination hd
-  have hh := congrArg (residue p) hc
-  simp only [map_mul,map_sub,map_natCast] at hh
-  apply (eq_div_iff hne).mpr
-  simpa only [map_mul,mul_comm] using hh
 
 section Core
 variable {β : Type} [Fintype β] [DecidableEq β]
 
-set_option maxHeartbeats 1000000 in
-theorem core_cross_residue (q o N : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
-    (hN : N<p*p) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p)) (i j : ι ⊕ β)
-    (hij : WrapFibreIndex.colour p c xs i≠WrapFibreIndex.colour p c xs j) :
-    residue p (mixedCore p q o s u c xs ys i j)=0 := by
-  have hcc : ((Sum.elim c ys j:ℕ):ZMod p)=WrapFibreIndex.colour p c xs j := by
-    cases j with
-    | inl j => rfl
-    | inr j => exact (hcol j).symm
-  have hrr : ((Sum.elim c xs i:ℕ):ZMod p)=WrapFibreIndex.colour p c xs i := by cases i <;> rfl
-  have h := congrArg (residue p) (mixedCore_commutator p q o N hN s u c xs ys hc hx hy i j)
-  rw [map_mul,map_mul,residue_pi,zero_mul,map_sub,map_natCast,map_natCast] at h
-  have hne := nat_residue_ne p (Sum.elim c ys j) (Sum.elim c xs i) (by rw [hcc,hrr]; exact Ne.symm hij)
-  exact (mul_eq_zero.mp h).resolve_left hne
-
-set_option maxHeartbeats 1000000 in
-theorem actual_core_source (q o N : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
-    (hN : N<p*p) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
-    (hQ : IsUnit (mixedCore p q o s u c xs ys).det) :
-    ∃ E : Matrix (ι ⊕ β) (ι ⊕ β) (Ring p),
-      mixedCore p q o s u c xs ys=own p (WrapFibreIndex.colour p c xs) (mixedCore p q o s u c xs ys)+
-        uniformizer p • E ∧
-      IsUnit (own p (WrapFibreIndex.colour p c xs) (mixedCore p q o s u c xs ys)).det ∧
-      (∀ i j,WrapFibreIndex.colour p c xs i=WrapFibreIndex.colour p c xs j → E i j=0) ∧
-      (∀ i j,WrapFibreIndex.colour p c xs i≠WrapFibreIndex.colour p c xs j →
-        residue p (E i j)=
-          (residue p (constants p u*load p q o (Sum.elim c ys j))-
-            residue p (constants p u*load p q o (Sum.elim c xs i)))/
-          (residueNode p (WrapFibreIndex.colour p c xs j)-residueNode p (WrapFibreIndex.colour p c xs i))) := by
-  classical
-  let Q := mixedCore p q o s u c xs ys
-  let col := WrapFibreIndex.colour p c xs
-  have hz : ∀ i j,col i≠col j → residue p (Q i j)=0 :=
-    fun i j hij => core_cross_residue p q o N s u c xs ys hN hc hx hy hcol i j hij
-  obtain ⟨E,hE,hE0⟩ := split p col Q hz
-  refine ⟨E,hE,own_unit p col Q hQ hz,hE0,?_⟩
-  intro i j hij
-  apply cross_residue p col Q E hE
-    (Matrix.of fun i j => ((Sum.elim c ys j:ℕ):Ring p)-((Sum.elim c xs i:ℕ):Ring p))
-    (fun i => constants p u*load p q o (Sum.elim c xs i))
-    (fun i => constants p u*load p q o (Sum.elim c ys i))
-    (fun i j => by
-      simpa only [Matrix.of_apply,mul_sub] using mixedCore_commutator p q o N hN s u c xs ys hc hx hy i j) ?_ i j hij
-  intro a b
-  have hr : ((Sum.elim c xs a:ℕ):ZMod p)=col a := by cases a <;> rfl
-  have hcc : ((Sum.elim c ys b:ℕ):ZMod p)=col b := by
-    cases b with
-    | inl b => rfl
-    | inr b => exact (hcol b).symm
-  simp only [Matrix.of_apply,map_sub,map_natCast,← residueNode_nat,hr,hcc]
 
 end Core
 
-theorem actual_border_source {α : Type*} [Fintype α] [DecidableEq α]
-    (q o N t : ℕ) (u : GaussLoc p) (cols : α → ℕ)
-    (hN : N<p*p) (ht : t<N) (hc : ∀ i,cols i<N) :
-    ∃ e : α → Ring p,
-      (fun i => entry p q o u t (cols i))=
-        (fun i => if (cols i:ZMod p)=(t:ZMod p) then entry p q o u t (cols i) else 0)+uniformizer p • e ∧
-      (∀ i,(cols i:ZMod p)=(t:ZMod p) → e i=0) ∧
-      (∀ i,(cols i:ZMod p)≠(t:ZMod p) → residue p (e i)=
-        (residue p (constants p u*load p q o (cols i))-residue p (constants p u*load p q o t))/
-          ((cols i:Residue p)-(t:Residue p))) := by
-  classical
-  have hs : ∀ i,∃ e : Ring p,
-      entry p q o u t (cols i)=(if (cols i:ZMod p)=(t:ZMod p) then entry p q o u t (cols i) else 0)+
-        uniformizer p*e ∧
-      ((cols i:ZMod p)=(t:ZMod p) → e=0) ∧
-      ((cols i:ZMod p)≠(t:ZMod p) → residue p e=
-        (residue p (constants p u*load p q o (cols i))-residue p (constants p u*load p q o t))/
-          ((cols i:Residue p)-(t:Residue p))) := by
-    intro i
-    by_cases he : (cols i:ZMod p)=(t:ZMod p)
-    · exact ⟨0,by simp only [he,↓reduceIte,mul_zero,add_zero],fun _ => rfl,fun hn => False.elim (hn he)⟩
-    · obtain ⟨e,heq,her⟩ := entry_source p q o N t (cols i) u hN ht (hc i) (Ne.symm he)
-      refine ⟨e,?_,fun hh => False.elim (he hh),fun _ => her⟩
-      simpa only [if_neg he,zero_add] using heq
-  choose e he he0 her using hs
-  refine ⟨e,?_,he0,her⟩
-  funext i
-  exact he i
 
 section Node
 variable {β : Type} [Fintype β] [DecidableEq β]
 
-set_option maxHeartbeats 1000000 in
-theorem actual_node_source (q o N t : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
-    (hN : N<p*p) (ht : t<N) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
-    (hQ : IsUnit (mixedCore p q o s u c xs ys).det)
-    (direction G1 : Ring p) :
-    let Q := mixedCore p q o s u c xs ys
-    let col := WrapFibreIndex.colour p c xs
-    let D := own p col Q
-    let sig := fun i => entry p q o u t (Sum.elim c ys i)
-    let sigOwn := fun i => if col i=(t:ZMod p) then sig i else 0
-    let yR := fun i => constants p u*load p q o (Sum.elim c xs i)-direction
-    let yC := fun i => constants p u*load p q o (Sum.elim c ys i)-direction
-    let yt := constants p u*load p q o t-direction
-    yt-(sigOwn ᵥ* D⁻¹) ⬝ᵥ yR=uniformizer p*G1 →
-      ∃ Bk Rem : Ring p,
-        yt-sig ⬝ᵥ Q⁻¹ *ᵥ yR=uniformizer p*(G1-Bk+uniformizer p*Rem) ∧
-        residue p Bk=residue p (1-∑ j,(sigOwn ᵥ* D⁻¹) j)*
-          ∑ colour : ZMod p,if colour=(t:ZMod p) then 0 else
-            (∑ a∈univ.filter (fun a => col a=colour),
-              residue p ((D⁻¹ *ᵥ yR) a)*residue p (yC a))/
-                (residueNode p colour-residueNode p (t:ZMod p)) := by
-  classical
-  let Q := mixedCore p q o s u c xs ys
-  let col := WrapFibreIndex.colour p c xs
-  let D := own p col Q
-  let sig : ι ⊕ β → Ring p := fun i => entry p q o u t (Sum.elim c ys i)
-  let sigOwn : ι ⊕ β → Ring p := fun i => if col i=(t:ZMod p) then sig i else 0
-  let yR : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c xs i)-direction
-  let yC : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c ys i)-direction
-  let yt := constants p u*load p q o t-direction
-  change yt-(sigOwn ᵥ* D⁻¹) ⬝ᵥ yR=uniformizer p*G1 → _
-  intro hG
-  obtain ⟨E,hQE,hD,hE0,hE⟩ := actual_core_source p q o N s u c xs ys hN hc hx hy hcol hQ
-  have hcols (i : ι ⊕ β) : ((Sum.elim c ys i:ℕ):ZMod p)=col i := by
-    cases i with
-    | inl i => rfl
-    | inr i => exact (hcol i).symm
-  have hcolN : ∀ i:ι ⊕ β,Sum.elim c ys i<N := by
-    intro i
-    cases i with
-    | inl i => exact hc i
-    | inr i => exact hy i
-  obtain ⟨sp,hsp,hsp0,hspr⟩ := actual_border_source p q o N t u (Sum.elim c ys) hN ht hcolN
-  have hsplit : sig=sigOwn+uniformizer p • sp := by
-    simpa only [hcols] using hsp
-  have hxsolve : D *ᵥ (Q⁻¹ *ᵥ yR)+uniformizer p • (E *ᵥ (Q⁻¹ *ᵥ yR))=yR := by
-    rw [← Matrix.smul_mulVec,← Matrix.add_mulVec,← hQE,
-      Matrix.mulVec_mulVec,Matrix.mul_nonsing_inv Q hQ,Matrix.one_mulVec]
-  have hDb : ∀ a b,col a≠col b → D a b=0 := by
-    intro a b hab
-    exact if_neg hab
-  have hs0 : ∀ a,col a≠(t:ZMod p) → sigOwn a=0 := by
-    intro a ha
-    exact if_neg ha
-  have hspr' : ∀ a,col a≠(t:ZMod p) → residue p (sp a)=
-      (residue p (yC a)-residue p yt)/(residueNode p (col a)-residueNode p (t:ZMod p)) := by
-    intro a ha
-    have hh := hspr a (by rw [hcols]; exact ha)
-    have heq : ((Sum.elim c ys a:ℕ):Residue p)=residueNode p (col a) := by
-      rw [← hcols,residueNode_nat]
-    rw [heq,← residueNode_nat p t] at hh
-    dsimp only [yC,yt]
-    rw [map_sub,map_sub,sub_sub_sub_cancel_right]
-    exact hh
-  have hE' : ∀ a b,col a≠col b → residue p (E a b)=
-      (residue p (yC b)-residue p (yR a))/(residueNode p (col b)-residueNode p (col a)) := by
-    intro a b hab
-    dsimp only [yC,yR]
-    rw [map_sub,map_sub,sub_sub_sub_cancel_right]
-    exact hE a b hab
-  obtain ⟨Bk,Rem,hm,hr⟩ := WrapMoments.mixed_phi2_expansion (uniformizer p)
-    (residue p) (residue_pi p) (residueNode p) (residueNode_injective p) col (t:ZMod p) D E hD hDb yR yC yt hE0 hE'
-    sigOwn sp hs0 (fun a ha => hsp0 a (by rw [hcols]; exact ha)) hspr'
-    (Q⁻¹ *ᵥ yR) hxsolve G1 hG
-  refine ⟨Bk,Rem,?_,hr⟩
-  rw [← hsplit] at hm
-  exact hm
 
 end Node
 
-theorem normalized_response {α : Type*} [Fintype α] [DecidableEq α]
-    (Q : Matrix α α (Ring p)) (sigma y : α → Ring p) (yt direction W : Ring p)
-    (hunit : IsUnit (1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1))
-    (hm : (yt-direction)-sigma ⬝ᵥ Q⁻¹ *ᵥ (fun i => y i-direction)=uniformizer p*W) :
-    ∃ F : Ring p,
-      yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*(1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1)+
-        uniformizer p*((1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1)*F) ∧
-      residue p F=residue p W/residue p (1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1) := by
-  let A := 1-sigma ⬝ᵥ Q⁻¹ *ᵥ 1
-  have hv : (fun i => y i-direction)=y-direction • (1:α → Ring p) := by
-    funext i
-    simp only [Pi.sub_apply,Pi.smul_apply,Pi.one_apply,smul_eq_mul,mul_one]
-  rw [hv,Matrix.mulVec_sub,Matrix.mulVec_smul,dotProduct_sub,dotProduct_smul] at hm
-  simp only [smul_eq_mul] at hm
-  have he : yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*A+uniformizer p*W := by
-    dsimp only [A]
-    linear_combination hm
-  have hi : A*Ring.inverse A=1 := Ring.mul_inverse_cancel A hunit
-  refine ⟨W*Ring.inverse A,?_,?_⟩
-  · change yt-sigma ⬝ᵥ Q⁻¹ *ᵥ y=direction*A+uniformizer p*(A*(W*Ring.inverse A))
-    rw [he]
-    have hc : A*(W*Ring.inverse A)=W := by
-      calc
-        _=W*(A*Ring.inverse A) := by ring
-        _=W := by rw [hi,mul_one]
-    rw [hc]
-  · rw [map_mul,rational_map_inverse (residue p) A hunit,div_eq_mul_inv]
 
 section Normalized
 variable {β : Type} [Fintype β] [DecidableEq β]
 
-set_option maxHeartbeats 1000000 in
-/-- Two-parameter normalized source of an ACTUAL original prefix node:
-the transported own coefficient plus all cross-colour corrections. -/
-theorem actual_normalized_source (q o N t : ℕ) (s u : GaussLoc p) (c : ι → ℕ) (xs ys : β → ℕ)
-    (hN : N<p*p) (ht : t<N) (hc : ∀ i,c i<N) (hx : ∀ i,xs i<N) (hy : ∀ i,ys i<N)
-    (hcol : ∀ i,(xs i:ZMod p)=(ys i:ZMod p))
-    (hQ : IsUnit (mixedCore p q o s u c xs ys).det)
-    (direction G1 : Ring p) (K0 : Residue p) :
-    let Q := mixedCore p q o s u c xs ys
-    let col := WrapFibreIndex.colour p c xs
-    let D := own p col Q
-    let sig := fun i => entry p q o u t (Sum.elim c ys i)
-    let sigOwn := fun i => if col i=(t:ZMod p) then sig i else 0
-    let LR := fun i => constants p u*load p q o (Sum.elim c xs i)
-    let LC := fun i => constants p u*load p q o (Sum.elim c ys i)
-    let Lt := constants p u*load p q o t
-    let B := 1-∑ j,(sigOwn ᵥ* D⁻¹) j
-    (Lt-direction)-(sigOwn ᵥ* D⁻¹) ⬝ᵥ (fun i => LR i-direction)=uniformizer p*G1 →
-    residue p G1=K0*residue p B → residue p B≠0 →
-    ∃ F : Ring p,
-      Lt-sig ⬝ᵥ Q⁻¹ *ᵥ LR=direction*(1-sig ⬝ᵥ Q⁻¹ *ᵥ 1)+
-        uniformizer p*((1-sig ⬝ᵥ Q⁻¹ *ᵥ 1)*F) ∧
-      residue p F=K0-
-        ∑ colour : ZMod p,if colour=(t:ZMod p) then 0 else
-          (∑ a∈univ.filter (fun a => col a=colour),
-            residue p ((D⁻¹ *ᵥ (fun i => LR i-direction)) a)*residue p (LC a-direction))/
-              (residueNode p colour-residueNode p (t:ZMod p)) := by
-  classical
-  let Q := mixedCore p q o s u c xs ys
-  let col := WrapFibreIndex.colour p c xs
-  let D := own p col Q
-  let sig : ι ⊕ β → Ring p := fun i => entry p q o u t (Sum.elim c ys i)
-  let sigOwn : ι ⊕ β → Ring p := fun i => if col i=(t:ZMod p) then sig i else 0
-  let LR : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c xs i)
-  let LC : ι ⊕ β → Ring p := fun i => constants p u*load p q o (Sum.elim c ys i)
-  let Lt := constants p u*load p q o t
-  let B := 1-∑ j,(sigOwn ᵥ* D⁻¹) j
-  change (Lt-direction)-(sigOwn ᵥ* D⁻¹) ⬝ᵥ (fun i => LR i-direction)=uniformizer p*G1 →
-    residue p G1=K0*residue p B → residue p B≠0 → _
-  intro hG hGres hB
-  obtain ⟨Bk,Rem,hm,hBk⟩ := actual_node_source p q o N t s u c xs ys
-    hN ht hc hx hy hcol hQ direction G1 hG
-  obtain ⟨E,hQE,hD,hE0,hE⟩ := actual_core_source p q o N s u c xs ys hN hc hx hy hcol hQ
-  have hmap : Q.map (residue p)=D.map (residue p) := by
-    ext i j
-    have he := congrArg (fun M : Matrix (ι ⊕ β) (ι ⊕ β) (Ring p) => residue p (M i j)) hQE
-    simpa only [Matrix.map_apply,Matrix.add_apply,Matrix.smul_apply,smul_eq_mul,
-      map_add,map_mul,residue_pi,zero_mul,add_zero] using he
-  have hcols (i : ι ⊕ β) : ((Sum.elim c ys i:ℕ):ZMod p)=col i := by
-    cases i with
-    | inl i => rfl
-    | inr i => exact (hcol i).symm
-  have hcolN : ∀ i:ι ⊕ β,Sum.elim c ys i<N := by
-    intro i
-    cases i with
-    | inl i => exact hc i
-    | inr i => exact hy i
-  obtain ⟨sp,hsp,hsp0,hspr⟩ := actual_border_source p q o N t u (Sum.elim c ys) hN ht hcolN
-  have hsplit : sig=sigOwn+uniformizer p • sp := by simpa only [hcols] using hsp
-  have hsig : ∀ i,residue p (sig i)=residue p (sigOwn i) := by
-    intro i
-    have he := congrArg (fun v : ι ⊕ β → Ring p => residue p (v i)) hsplit
-    simpa only [Pi.add_apply,Pi.smul_apply,smul_eq_mul,map_add,map_mul,residue_pi,zero_mul,add_zero] using he
-  have hA := WrapPrefixType.reference_map_congr (residue p) Q D hQ hD sig sigOwn hmap hsig
-  have hBref : 1-sigOwn ⬝ᵥ D⁻¹ *ᵥ 1=B := by
-    rw [dotProduct_mulVec,dotProduct]
-    simp only [Pi.one_apply,mul_one]
-    rfl
-  rw [hBref] at hA
-  have hunit : IsUnit (1-sig ⬝ᵥ Q⁻¹ *ᵥ 1) :=
-    unit_of_residue_ne p _ (by rw [hA]; exact hB)
-  obtain ⟨F,hF,hr⟩ := normalized_response p Q sig LR Lt direction (G1-Bk+uniformizer p*Rem) hunit hm
-  refine ⟨F,hF,?_⟩
-  rw [hr,map_add,map_sub,map_mul,residue_pi,zero_mul,add_zero,hGres,hBk,hA]
-  field_simp [hB]
-  <;> ring
 
 end Normalized
 
@@ -7828,8 +4410,6 @@ theorem residue_ringSystem1_det (s u : GaussLoc p) (load : Bool)
 
 end FractionalFibreSystem
 
-theorem ringHom_det {R S m : Type*} [CommRing R] [CommRing S] [Fintype m] [DecidableEq m]
-    (f : R →+* S) (A : Matrix m m R) : f A.det=(f.mapMatrix A).det := RingHom.map_det f A
 
 section FractionalClearedSystem
 variable {p : ℕ} [Fact p.Prime] {q o : ℕ}
@@ -8788,31 +5368,6 @@ theorem colCoupling_frac_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc 
   exact node_coupling1_ne H s u hs hu huc _ k _ (by omega) hkI hkF hsep hvlo hvhi hvN
     (colFibre1_det_ne H s u hs hu huc _ hresv)
 
-/-- R2 kill supplier in exactly the `hO` form consumed by
-`retained_credit_bound` (assembly input: retained interval `I`, outside kill
-set `O`, kill proof): every actual outside surplus node separated from the
-anchor by an original fractional pole is a zero-weight colour or killed. -/
-theorem fractional_outside_kills (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (O : Finset ℕ)
-    (hcover : ∀ v∈O,(∃ z:Fin d,WrapPrefixSchur.surplusRow H z=v) ∨
-      (∃ y:Fin d,WrapPrefixSchur.surplusCol H y=v))
-    (hfrac : ∀ v∈O,∃ k,¬p∣k ∧ p∣q*k-o ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)))
-    (hlo : ∀ v∈O,r+2*n*p≤v) (hhi : ∀ v∈O,v<r+2*n*p+p) :
-    ∀ gamma∈O.image (fun v:ℕ => (v:ZMod p)),H.weight s u gamma=0 ∨
-      gamma∈WrapPrefixSchur.killedColumns H s u∪WrapPrefixSchur.killedRows H s u := by
-  classical
-  intro gamma hg
-  obtain ⟨v,hv,rfl⟩ := mem_image.mp hg
-  obtain ⟨k,hkI,hkF,hsep⟩ := hfrac v hv
-  rcases hcover v hv with ⟨z,hz⟩|⟨y,hy⟩
-  · subst hz
-    by_cases hwv : H.weight s u (WrapPrefixSchur.surplusRow H z:ZMod p)=0
-    · exact Or.inl hwv
-    · exact Or.inr (mem_union_right _ (row_killed_colour H s u z
-        (rowCoupling_frac_ne H s u hs hu huc z k hkI hkF hsep (hlo _ hv) (hhi _ hv)) hwv))
-  · subst hy
-    exact Or.inr (mem_union_left _ (col_killed_colour H s u y
-      (colCoupling_frac_ne H s u hs hu huc y k hkI hkF hsep (hlo _ hv) (hhi _ hv))))
 
 end FractionalKills
 
@@ -10090,60 +6645,6 @@ theorem colCoupling_int_ne (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (
   exact node_coupling_int_ne H s u hs hu huc _ k _ (by omega) hkI hsep hvlo hvhi hvN
     (colFibre1_det_ne H s u hs hu huc _ hresv)
 
-/-- R3 kill supplier in exactly the `hO` form consumed by
-`retained_credit_bound`: every actual outside surplus node separated from
-the anchor by an original INTEGER pole is a zero-weight colour or killed. -/
-theorem integer_outside_kills (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (O : Finset ℕ)
-    (hcover : ∀ v∈O,(∃ z:Fin d,WrapPrefixSchur.surplusRow H z=v) ∨
-      (∃ y:Fin d,WrapPrefixSchur.surplusCol H y=v))
-    (hint : ∀ v∈O,∃ k,p∣k ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)))
-    (hlo : ∀ v∈O,r+2*n*p≤v) (hhi : ∀ v∈O,v<r+2*n*p+p) :
-    ∀ gamma∈O.image (fun v:ℕ => (v:ZMod p)),H.weight s u gamma=0 ∨
-      gamma∈WrapPrefixSchur.killedColumns H s u∪WrapPrefixSchur.killedRows H s u := by
-  classical
-  intro gamma hg
-  obtain ⟨v,hv,rfl⟩ := mem_image.mp hg
-  obtain ⟨k,hkI,hsep⟩ := hint v hv
-  rcases hcover v hv with ⟨z,hz⟩|⟨y,hy⟩
-  · subst hz
-    by_cases hwv : H.weight s u (WrapPrefixSchur.surplusRow H z:ZMod p)=0
-    · exact Or.inl hwv
-    · exact Or.inr (mem_union_right _ (row_killed_colour H s u z
-        (rowCoupling_int_ne H s u hs hu huc z k hkI hsep (hlo _ hv) (hhi _ hv)) hwv))
-  · subst hy
-    exact Or.inr (mem_union_left _ (col_killed_colour H s u y
-      (colCoupling_int_ne H s u hs hu huc y k hkI hsep (hlo _ hv) (hhi _ hv))))
-
-/-- The combined R2 ∪ R3 kill set, in the `hO` form of
-`retained_credit_bound`: every actual outside surplus node separated from
-the anchor by ANY original pole (integer or fractional). -/
-theorem pole_outside_kills (s u : GaussLoc p) (hs : res p s=(RatFunc.X:RatFunc (ZMod p)))
-    (hu : res p u≠0) (huc : WrapConstant.Has p u) (O : Finset ℕ)
-    (hcover : ∀ v∈O,(∃ z:Fin d,WrapPrefixSchur.surplusRow H z=v) ∨
-      (∃ y:Fin d,WrapPrefixSchur.surplusCol H y=v))
-    (hpole : ∀ v∈O,∃ k,(p∣k ∨ p∣q*k-o) ∧ ((v<k ∧ k≤H.t0) ∨ (H.t0<k ∧ k≤v)))
-    (hlo : ∀ v∈O,r+2*n*p≤v) (hhi : ∀ v∈O,v<r+2*n*p+p) :
-    ∀ gamma∈O.image (fun v:ℕ => (v:ZMod p)),H.weight s u gamma=0 ∨
-      gamma∈WrapPrefixSchur.killedColumns H s u∪WrapPrefixSchur.killedRows H s u := by
-  classical
-  intro gamma hg
-  obtain ⟨v,hv,rfl⟩ := mem_image.mp hg
-  obtain ⟨k,hk,hsep⟩ := hpole v hv
-  have hone : ∀ w∈({v}:Finset ℕ),w=v := fun w hw => mem_singleton.mp hw
-  have hv1 : (v:ZMod p)∈({v}:Finset ℕ).image (fun v:ℕ => (v:ZMod p)) :=
-    mem_image_of_mem _ (mem_singleton_self v)
-  by_cases hkI : p∣k
-  · exact integer_outside_kills H s u hs hu huc {v}
-      (fun w hw => by rw [hone w hw]; exact hcover v hv)
-      (fun w hw => ⟨k,hkI,by rw [hone w hw]; exact hsep⟩)
-      (fun w hw => by rw [hone w hw]; exact hlo v hv)
-      (fun w hw => by rw [hone w hw]; exact hhi v hv) _ hv1
-  · exact fractional_outside_kills H s u hs hu huc {v}
-      (fun w hw => by rw [hone w hw]; exact hcover v hv)
-      (fun w hw => ⟨k,hkI,hk.resolve_left hkI,by rw [hone w hw]; exact hsep⟩)
-      (fun w hw => by rw [hone w hw]; exact hlo v hv)
-      (fun w hw => by rw [hone w hw]; exact hhi v hv) _ hv1
 
 end IntegerKills
 
@@ -10194,25 +6695,11 @@ theorem beta3_translate (m a p w0 w1 c : ℕ) (hw0 : p≤w0) (hw : w0≤w1) :
 -- R3_MARKER
 
 
-
-
 #print axioms spectral_top_domain
 #print axioms stepBordered_zero
 #print axioms stepBordered_one
 #print axioms scaled_cross_ne
-#print axioms embedB_clearedEntry
-#print axioms embedP_injective
-#print axioms residue_cross_ne
-#print axioms profile_separation
-#print axioms ringSystem_reindex
-#print axioms residue_anchor
 #print axioms coupling_cross
-#print axioms rowCoupling2_ne
-#print axioms colCoupling2_ne
-#print axioms TwoTermDeformation.actual_own_transport
-#print axioms TwoTermDeformation.actual_normalized_source
-#print axioms shared_moments2
-#print axioms residue_ringSystem_det
 #print axioms embed1_clearedEntry
 #print axioms embed1_clearedSystem_det
 #print axioms residue_cross1_ne
@@ -10220,7 +6707,6 @@ theorem beta3_translate (m a p w0 w1 c : ℕ) (hw0 : p≤w0) (hw : w0≤w1) :
 #print axioms node_coupling1_ne
 #print axioms rowCoupling_frac_ne
 #print axioms colCoupling_frac_ne
-#print axioms fractional_outside_kills
 #print axioms hload_fd
 #print axioms fd_choose_mul
 #print axioms harmonic_uniq
@@ -10236,8 +6722,6 @@ theorem beta3_translate (m a p w0 w1 c : ℕ) (hw0 : p≤w0) (hw : w0≤w1) :
 #print axioms node_coupling_int_ne
 #print axioms rowCoupling_int_ne
 #print axioms colCoupling_int_ne
-#print axioms integer_outside_kills
-#print axioms pole_outside_kills
 #print axioms rowCoupling_pole_ne
 #print axioms colCoupling_pole_ne
 #print axioms beta3_translate

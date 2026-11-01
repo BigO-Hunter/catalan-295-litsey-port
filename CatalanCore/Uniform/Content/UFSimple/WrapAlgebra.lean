@@ -90,18 +90,6 @@ theorem mixedBorder_response_mixed (Q : Matrix ι ι R) (hQ : IsUnit Q.det)
   simp only [y, dotProduct, Fintype.sum_sum_type, Sum.elim_inl,
     Sum.elim_inr, mul_zero, Finset.sum_const_zero, add_zero]
 
-/-- A cleared numerator bound survives any specialization whose ORIGINAL
-clearing denominator becomes a unit. Elimination pivots are not denominators
-in this statement and may specialize to zero. -/
-theorem specialize_cleared {A B : Type*} [CommRing A] [CommRing B]
-    (phi : A →+* B) (c D f : A) (h : c ∣ D * f) (hD : IsUnit (phi D)) :
-    phi c ∣ phi f := by
-  apply hD.dvd_mul_left.mp
-  obtain ⟨a, ha⟩ := h
-  refine ⟨phi a, ?_⟩
-  simpa only [map_mul] using congrArg phi ha
 
 end CatalanCore.Uniform.Content.UFSimple.WrapAlgebra
-
-
 

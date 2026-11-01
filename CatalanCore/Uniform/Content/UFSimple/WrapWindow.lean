@@ -364,18 +364,6 @@ theorem price_le : H.witness.price≤closedBound (s+1-l) (r+2*l-1) p H.t0 H.tv H
   have hls := H.hls
   omega
 
-/-- The full original determinant has the closed wrapped price, with no
-fictitious spectral diagonal or retained-support hypothesis. -/
-theorem full_gle : GLE p (closedBound (s+1-l) (r+2*l-1) p H.t0 H.tv H.w0)
-    (FullN Fr (fun a:Fin r => (a:ℕ)) (WrapActual.xs r (m:=s+l)) (WrapActual.ys r) (X:ℚ[X])).det := by
-  let M := FullN Fr (fun a:Fin r => (a:ℕ)) (WrapActual.xs r (m:=s+l)) (WrapActual.ys r) (X:ℚ[X])
-  have hs := WrapSource.gle_minor_reindex (M.map (scaleU p))
-    (WrapGeometry.rowFullEquiv (Fin r) s l H.hl H.hls)
-    (WrapGeometry.colFullEquiv (Fin r) s l H.hl H.hls) H.witness id id (le_rfl)
-  have hg := gle_submatrix_of_scaleU M id id hs
-  have hf : GLE p H.witness.price M.det := by
-    simpa only [Nat.sub_self,add_zero,Matrix.submatrix_id_id] using hg
-  exact hf.mono H.price_le
 
 end Window
 

@@ -65,14 +65,6 @@ theorem mul (hx : Rel phi point x x0) (hy : Rel phi point y y0) : Rel phi point 
   · simp only [Polynomial.eval_mul,hx0,hy0]
     ring
 
-/-- A cleared inverse of an elementary denominator specializes using
-that elementary denominator's original unit, independently of pivots. -/
-theorem inverse_polynomial (f : R[X]) (hf : IsUnit (f.eval point))
-    (u : WrapParameter.Extension phi)
-    (hu : algebraMap R[X] (WrapParameter.Extension phi) f*u=1) :
-    Rel phi point u (Ring.inverse (f.eval point)) := by
-  refine ⟨1,f,hf,by simpa using hu,?_⟩
-  simp only [Polynomial.eval_one,Ring.mul_inverse_cancel _ hf]
 
 /-- Test scalar divisibility follows after descending the original
 cleared numerator. Only its original elementary denominator is canceled. -/
@@ -98,22 +90,6 @@ theorem descend (pi : R) (hker : ∀ a,phi a=0 ↔ pi∣a) (hpi : Prime pi)
     x0=↑u⁻¹*(D.eval point*x0) := by rw [← hu]; simp
     _=pi^k*(↑u⁻¹*z) := by rw [hz]; ring
 
-/-- Evaluation on original-unit cleared values is functional, even
-though arbitrary generic pivots need not be evaluable. -/
-theorem unique (hx : Rel phi point x x0) (hy : Rel phi point x y0) : x0=y0 := by
-  obtain ⟨f,D,hD,hx,hx0⟩ := hx
-  obtain ⟨g,E,hE,hy,hy0⟩ := hy
-  have hinj : Function.Injective (algebraMap R[X] (WrapParameter.Extension phi)) :=
-    IsLocalization.injective _ (Ideal.primeCompl_le_nonZeroDivisors (WrapParameter.primeIdeal phi))
-  have he : f*E=g*D := by
-    apply hinj
-    rw [map_mul,map_mul,← hx,← hy]
-    ring
-  have hv := congrArg (Polynomial.eval point) he
-  simp only [Polynomial.eval_mul,hx0,hy0] at hv
-  have hm : (D.eval point*E.eval point)*x0=(D.eval point*E.eval point)*y0 := by
-    linear_combination hv
-  exact mul_left_cancel₀ (hD.mul hE).ne_zero hm
 
 /-- A nonzero test residue proves a nonzero generic residue. Only the
 original elementary clearing denominator must survive this test point;

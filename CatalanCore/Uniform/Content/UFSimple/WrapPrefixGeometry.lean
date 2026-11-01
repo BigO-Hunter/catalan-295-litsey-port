@@ -62,18 +62,5 @@ theorem col_surplus (r : ℕ) (hp : 0<p) (s : ℕ)
   change r+2*(n*p+(ec (Sum.inr i):ℕ))+1=r+2*n*p+2*(ec (Sum.inr i):ℕ)+1
   ring
 
-/-- The checker's compressed coordinate differs from the original node
-by n full periods, for both axes and either residual orientation. -/
-theorem surplus_translation (r n p slot bit : ℕ) :
-    r+2*n*p+2*slot+bit=(r+n*p+2*slot+bit)+n*p := by ring
-
-theorem translation_colour (p x n : ℕ) :
-    ((x+n*p:ℕ):ZMod p)=(x:ZMod p) := by simp
-
-/-- Source windows lift back to actual nodes by the same translation;
-the quotient index changes by n, never by a guessed prefix index. -/
-theorem translation_quotient (p x n : ℕ) (hp : 0<p) :
-    (x+n*p)/p=x/p+n := by
-  rw [Nat.add_mul_div_right _ _ hp]
 
 end CatalanCore.Uniform.Content.UFSimple.WrapPrefixGeometry

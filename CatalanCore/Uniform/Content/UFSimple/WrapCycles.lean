@@ -51,21 +51,5 @@ theorem colour_eq (r p s : ℕ) (hp : p=2*s+1) {n : ℕ} (c : Fin n) (i : Fin p)
   · rw [h]; simp only [Nat.cast_add,ZMod.natCast_self,add_zero]
   · rw [h]; simp only [Nat.cast_add,ZMod.natCast_self,add_zero]
 
-theorem slot_bound (p : ℕ) {n : ℕ} (c : Fin n) (i : Fin p) : (c:ℕ)*p+(i:ℕ)<n*p := by
-  have h : ((c:ℕ)+1)*p≤n*p := Nat.mul_le_mul_right p (by have := c.2; omega)
-  have hi := i.2
-  rw [Nat.add_mul,one_mul] at h
-  omega
-
-theorem row_bound (r p : ℕ) {n : ℕ} (c : Fin n) (i : Fin p) : row r p c i<r+2*n*p := by
-  have hh := slot_bound p c i
-  unfold row
-  nlinarith
-
-theorem col_bound (r p : ℕ) (hp : 0<p) (s : ℕ) {n : ℕ} (c : Fin n) (i : Fin p) :
-    col r p hp s c i<r+2*n*p := by
-  have hh := slot_bound p c (shift p hp s i)
-  unfold col
-  nlinarith
 
 end CatalanCore.Uniform.Content.UFSimple.WrapCycles
