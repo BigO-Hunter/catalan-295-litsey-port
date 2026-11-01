@@ -1,6 +1,7 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.RConst
+public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefMomMerge
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Data
 public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefE0
 public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefE1
@@ -55,14 +56,16 @@ theorem log2_lb : ((6931471803 / 10000000000 : ℚ) : ℝ) ≤ Real.log 2 := by
 
 def rr0 : ℚ := ((30870737 : ℚ) / 200000000)
 
+set_option profiler true in
 theorem rr0_le : rLimQ X0.T.η (6931471803 / 10000000000) (((316687211 : ℚ) / 250000000)) (((36235697 : ℚ) / 500000000)) enU0 (((23859569 : ℚ) / 250000000)) (raQ X0) (iRRQ X0)
-    (ipPartQ (ofTrial X0.T) 1000) (5 / 58) X0.T.Sup (20 / 58) (bQ X0) ≤ rr0 := by decide +kernel
+    (ipPartQ (ofTrial X0.T) 1000) (5 / 58) X0.T.Sup (20 / 58) (bQ X0) ≤ rr0 := by
+  rw [ipPartQ_merge (R := ofTrial X0.T) merge0]; decide +kernel
 
 theorem hr_0 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X0 N).constTotal (58 * N) - (famD X0 N).constant ≤ (rr0 : ℝ) + ε := by
   have hok : ∀ C : ℝ, (X0.Cb : ℝ) ≤ C → X0.T.DataOK C := fun C hC => T0.dataOK hC
-  have h := famD_const X0 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) ((((316687211 : ℚ) / 250000000) : ℚ) : ℝ) ((((36235697 : ℚ) / 500000000) : ℚ) : ℝ)
-    (enU0 : ℝ) ((((23859569 : ℚ) / 250000000) : ℚ) : ℝ) log2_lb norm_v_le_0 norm_p_le_0 norm_a_le_0
+  have h := famD_const X0 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) _ _
+    (enU0 : ℝ) _ log2_lb norm_v_le_0 norm_p_le_0 norm_a_le_0
     (refEnergy_T0_le (μ := famMu X0) ⟨rfl, rfl, rfl, rfl⟩ (ofTrial_OK (hok _ le_rfl))) ε hε
   have e := rLim_cast X0.T.η (6931471803 / 10000000000) ((316687211 : ℚ) / 250000000) ((36235697 : ℚ) / 500000000) enU0 ((23859569 : ℚ) / 250000000) (raQ X0) (iRRQ X0)
     (ipPartQ (ofTrial X0.T) 1000) (5 / 58) X0.T.Sup (20 / 58) (bQ X0)
@@ -74,14 +77,16 @@ theorem hr_0 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
 
 def rr1 : ℚ := ((145423449 : ℚ) / 1000000000)
 
+set_option profiler true in
 theorem rr1_le : rLimQ X1.T.η (6931471803 / 10000000000) (((1254524289 : ℚ) / 1000000000)) (((36001837 : ℚ) / 500000000)) enU1 (((47475607 : ℚ) / 500000000)) (raQ X1) (iRRQ X1)
-    (ipPartQ (ofTrial X1.T) 1000) (5 / 58) X1.T.Sup (20 / 58) (bQ X1) ≤ rr1 := by decide +kernel
+    (ipPartQ (ofTrial X1.T) 1000) (5 / 58) X1.T.Sup (20 / 58) (bQ X1) ≤ rr1 := by
+  rw [ipPartQ_merge (R := ofTrial X1.T) merge1]; decide +kernel
 
 theorem hr_1 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X1 N).constTotal (58 * N) - (famD X1 N).constant ≤ (rr1 : ℝ) + ε := by
   have hok : ∀ C : ℝ, (X1.Cb : ℝ) ≤ C → X1.T.DataOK C := fun C hC => T1.dataOK hC
-  have h := famD_const X1 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) ((((1254524289 : ℚ) / 1000000000) : ℚ) : ℝ) ((((36001837 : ℚ) / 500000000) : ℚ) : ℝ)
-    (enU1 : ℝ) ((((47475607 : ℚ) / 500000000) : ℚ) : ℝ) log2_lb norm_v_le_1 norm_p_le_1 norm_a_le_1
+  have h := famD_const X1 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) _ _
+    (enU1 : ℝ) _ log2_lb norm_v_le_1 norm_p_le_1 norm_a_le_1
     (refEnergy_T1_le (μ := famMu X1) ⟨rfl, rfl, rfl, rfl⟩ (ofTrial_OK (hok _ le_rfl))) ε hε
   have e := rLim_cast X1.T.η (6931471803 / 10000000000) ((1254524289 : ℚ) / 1000000000) ((36001837 : ℚ) / 500000000) enU1 ((47475607 : ℚ) / 500000000) (raQ X1) (iRRQ X1)
     (ipPartQ (ofTrial X1.T) 1000) (5 / 58) X1.T.Sup (20 / 58) (bQ X1)
@@ -93,14 +98,16 @@ theorem hr_1 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
 
 def rr2 : ℚ := ((9020207 : ℚ) / 200000000)
 
+set_option profiler true in
 theorem rr2_le : rLimQ X2.T.η (6931471803 / 10000000000) (((1116756367 : ℚ) / 1000000000)) (((33346513 : ℚ) / 500000000)) enU2 (((44708877 : ℚ) / 500000000)) (raQ X2) (iRRQ X2)
-    (ipPartQ (ofTrial X2.T) 1000) (5 / 58) X2.T.Sup (20 / 58) (bQ X2) ≤ rr2 := by decide +kernel
+    (ipPartQ (ofTrial X2.T) 1000) (5 / 58) X2.T.Sup (20 / 58) (bQ X2) ≤ rr2 := by
+  rw [ipPartQ_merge (R := ofTrial X2.T) merge2]; decide +kernel
 
 theorem hr_2 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X2 N).constTotal (58 * N) - (famD X2 N).constant ≤ (rr2 : ℝ) + ε := by
   have hok : ∀ C : ℝ, (X2.Cb : ℝ) ≤ C → X2.T.DataOK C := fun C hC => T2.dataOK hC
-  have h := famD_const X2 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) ((((1116756367 : ℚ) / 1000000000) : ℚ) : ℝ) ((((33346513 : ℚ) / 500000000) : ℚ) : ℝ)
-    (enU2 : ℝ) ((((44708877 : ℚ) / 500000000) : ℚ) : ℝ) log2_lb norm_v_le_2 norm_p_le_2 norm_a_le_2
+  have h := famD_const X2 hok 1000 ((6931471803 / 10000000000 : ℚ) : ℝ) _ _
+    (enU2 : ℝ) _ log2_lb norm_v_le_2 norm_p_le_2 norm_a_le_2
     (refEnergy_T2_le (μ := famMu X2) ⟨rfl, rfl, rfl, rfl⟩ (ofTrial_OK (hok _ le_rfl))) ε hε
   have e := rLim_cast X2.T.η (6931471803 / 10000000000) ((1116756367 : ℚ) / 1000000000) ((33346513 : ℚ) / 500000000) enU2 ((44708877 : ℚ) / 500000000) (raQ X2) (iRRQ X2)
     (ipPartQ (ofTrial X2.T) 1000) (5 / 58) X2.T.Sup (20 / 58) (bQ X2)
