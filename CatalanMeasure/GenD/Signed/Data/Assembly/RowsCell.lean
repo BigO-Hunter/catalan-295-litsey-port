@@ -463,6 +463,42 @@ theorem rowPos_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.
   nlinarith [mul_le_mul_of_nonneg_left a₁ (by linarith : (0 : ℝ) ≤ 1 - s), mul_le_mul_of_nonneg_left a₂ hs0]
 
 
+/-- **σ⁺ rows (`hpos`) from the R cells at the upper corner only.**  For `x ∈ (0, 1)` the remainder
+`rc α (-log (1 - x²))` is nondecreasing in `α` (`rc ≥ 0`), so the corner `α₂` bounds every `α ≤ α₂` (the interval
+`[0, 1/200]` needs no corner at `α = 0`). -/
+theorem rowPosHi_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {rc : ℝ} (hrc : 0 ≤ rc) {α₂ : ℝ} (Ft F : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hpl : Ft.plogs = F.plogs) (hpo : Ft.poles = F.poles) {δ : ℚ} (hδ : l1Q Ft.poly F.poly ≤ δ)
+    {g xc T : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - 1 / 1024)
+    (hR : ∀ x ∈ Icc g xc, fieldTower F (poleF F.poles) 0 x + lfieldTower Ts 0 x ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ≤ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
+      (famD X N).fPosMR (groupedMarkedField P410 N) rc α x ≤ T + δ + K + ε := by
+  have hlim : ∀ x ∈ Ico g xc, posLim X x ≤ (fun x => T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))) x := by
+    intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
+    have e := hFt x hx01
+    have hi0 : (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; linarith [hx.2]
+    rw [hi0] at e
+    have := hR x ⟨hx.1, hx.2.le⟩
+    have := fieldTower_le_cell Ft F hpl hpo hδ hx1 poleF
+    show posLim X x ≤ T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))
+    linarith
+  intro ε hε
+  filter_upwards [posMS_fam X hok hRt hg (by linarith) hlim ε hε] with N hN α hα x hx hgx hxx
+  have a := hN x ⟨hgx, hxx⟩
+  have hL : 0 ≤ -Real.log (1 - x ^ 2) := by
+    have h1 : 0 < 1 - x ^ 2 := by nlinarith [hx.1, hx.2]
+    have h2 : 1 - x ^ 2 ≤ 1 := by nlinarith
+    linarith [Real.log_nonpos h1.le h2]
+  unfold SignedData.fPosMR
+  have : rc * α * (-Real.log (1 - x ^ 2)) ≤ rc * α₂ * (-Real.log (1 - x ^ 2)) :=
+    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hα hrc) hL
+  linarith
+
 /-! ### Near-type rows: corner cells of the trapezoid `{lo ≤ α ≤ hi, 0 ≤ β ≤ α}` -/
 
 /-- The near limit field of a family member (`RnL = -(53/58) log(1+y²) + (24/29) log|y|`). -/
