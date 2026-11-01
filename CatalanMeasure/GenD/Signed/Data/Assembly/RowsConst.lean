@@ -46,10 +46,10 @@ theorem hκ410 : ∀ i {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
   intro i ε hε
   fin_cases i
   · filter_upwards [curv_ge_01] with N hN
-    show (kc01 : ℝ) - ε ≤ _
+    show (kc01 : ℝ) - ε ≤ curvQ (famD X0 N) (famD X1 N) (58 * N)
     linarith
   · filter_upwards [curv_ge_12] with N hN
-    show (kc12 : ℝ) - ε ≤ _
+    show (kc12 : ℝ) - ε ≤ curvQ (famD X1 N) (famD X2 N) (58 * N)
     linarith
 
 end

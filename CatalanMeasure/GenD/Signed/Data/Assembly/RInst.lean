@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.RConst
 public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefMomMerge
+public import CatalanMeasure.GenD.Signed.Data.Assembly.CurvFast
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Data
 public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefE0
 public import CatalanMeasure.GenD.Signed.Data.Consts.EvalRefE1
@@ -23,6 +24,7 @@ public import CatalanMeasure.GenD.Signed.Data.Consts.EvalNormT.NormA2
 
 `rr0, rr1, rr2`: rational upper bounds of `rLim` (the limit of `constTotal - constant`) of the three trials; `hr_t` is
 `famD_const` with the norm bounds `EvalNormT`, the energy bound `refEnergy_T{t}_le`, the exact sums and `l2 = 0.6931471803`.
+`raQ` and `ipPartQ` enter through lower bounds checked on the fixed-point enclosures of `CurvFast` (`Cert.IvEval`).
 -/
 
 namespace CatalanMeasure.GenD.Signed.Data.Assembly
@@ -32,6 +34,7 @@ open CatalanMeasure.Signed CatalanMeasure.Signed.Consts
 open CatalanMeasure.GenD.Signed.Data.Trial
 open CatalanMeasure.GenD.Signed.Data.Consts.EvalRef
 open CatalanMeasure.GenD.Signed.Data.Consts.EvalNormT
+open CatalanMeasure.Cert.Iv
 
 set_option maxRecDepth 1000000
 set_option Elab.async false
@@ -49,6 +52,12 @@ theorem rLim_cast (η l2 Vq Pq Rq Aq raq iRRq Lq γ Sup σ Bq : ℚ) :
   push_cast
   ring
 
+theorem rLimQ_anti {η l2 Vq Pq Rq Aq raq raq' iRRq Lq Lq' γ Sup σ Bq : ℚ} (h1 : raq' ≤ raq)
+    (h2 : Lq' ≤ Lq) :
+    rLimQ η l2 Vq Pq Rq Aq raq iRRq Lq γ Sup σ Bq ≤ rLimQ η l2 Vq Pq Rq Aq raq' iRRq Lq' γ Sup σ Bq := by
+  unfold rLimQ
+  linarith
+
 theorem log2_lb : ((6931471803 / 10000000000 : ℚ) : ℝ) ≤ Real.log 2 := by
   have := Real.log_two_gt_d9
   norm_num at this ⊢
@@ -56,10 +65,28 @@ theorem log2_lb : ((6931471803 / 10000000000 : ℚ) : ℝ) ≤ Real.log 2 := by
 
 def rr0 : ℚ := ((30870737 : ℚ) / 200000000)
 
+def Lra0 : ℚ := ((97378320062707686659247 : ℚ) / 500000000000000000000000)
+
+def Lip0 : ℚ := ((226719766597860371234943 : ℚ) / 1000000000000000000000000)
+
+-- kcost: 400 steps x 20 poles of 3^81-scale integer ops, estimated 10 s
+set_option profiler true in
+theorem hra0 : Lra0 ≤ raQ X0 := by
+  rw [raQ_eq_rbQ]
+  exact le_rbQ X0 X0 (by decide +kernel) _ (by decide +kernel)
+
+-- kcost: 1000 moments x 25 coefficients of 3^81-scale integer ops, estimated 20 s
+set_option profiler true in
+set_option maxHeartbeats 4000000 in
+theorem hip0 : Lip0 ≤ ipPartQ (ofTrial X0.T) 1000 := by
+  rw [ipPartQ_merge (R := ofTrial X0.T) merge0]
+  exact le_ipPartQ rfl rfl 1000 _ (by decide +kernel)
+
+-- kcost: short rationals plus the exact sums iRRQ (400 terms) and bQ (120 terms), estimated 5 s
 set_option profiler true in
 theorem rr0_le : rLimQ X0.T.η (6931471803 / 10000000000) (((316687211 : ℚ) / 250000000)) (((36235697 : ℚ) / 500000000)) enU0 (((23859569 : ℚ) / 250000000)) (raQ X0) (iRRQ X0)
-    (ipPartQ (ofTrial X0.T) 1000) (5 / 58) X0.T.Sup (20 / 58) (bQ X0) ≤ rr0 := by
-  rw [ipPartQ_merge (R := ofTrial X0.T) merge0]; decide +kernel
+    (ipPartQ (ofTrial X0.T) 1000) (5 / 58) X0.T.Sup (20 / 58) (bQ X0) ≤ rr0 :=
+  le_trans (rLimQ_anti hra0 hip0) (by decide +kernel)
 
 theorem hr_0 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X0 N).constTotal (58 * N) - (famD X0 N).constant ≤ (rr0 : ℝ) + ε := by
@@ -77,10 +104,28 @@ theorem hr_0 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
 
 def rr1 : ℚ := ((145423449 : ℚ) / 1000000000)
 
+def Lra1 : ℚ := ((193799004577884853892173 : ℚ) / 1000000000000000000000000)
+
+def Lip1 : ℚ := ((112528634119704197797863 : ℚ) / 500000000000000000000000)
+
+-- kcost: 400 steps x 20 poles of 3^81-scale integer ops, estimated 10 s
+set_option profiler true in
+theorem hra1 : Lra1 ≤ raQ X1 := by
+  rw [raQ_eq_rbQ]
+  exact le_rbQ X1 X1 (by decide +kernel) _ (by decide +kernel)
+
+-- kcost: 1000 moments x 25 coefficients of 3^81-scale integer ops, estimated 20 s
+set_option profiler true in
+set_option maxHeartbeats 4000000 in
+theorem hip1 : Lip1 ≤ ipPartQ (ofTrial X1.T) 1000 := by
+  rw [ipPartQ_merge (R := ofTrial X1.T) merge1]
+  exact le_ipPartQ rfl rfl 1000 _ (by decide +kernel)
+
+-- kcost: short rationals plus the exact sums iRRQ (400 terms) and bQ (120 terms), estimated 5 s
 set_option profiler true in
 theorem rr1_le : rLimQ X1.T.η (6931471803 / 10000000000) (((1254524289 : ℚ) / 1000000000)) (((36001837 : ℚ) / 500000000)) enU1 (((47475607 : ℚ) / 500000000)) (raQ X1) (iRRQ X1)
-    (ipPartQ (ofTrial X1.T) 1000) (5 / 58) X1.T.Sup (20 / 58) (bQ X1) ≤ rr1 := by
-  rw [ipPartQ_merge (R := ofTrial X1.T) merge1]; decide +kernel
+    (ipPartQ (ofTrial X1.T) 1000) (5 / 58) X1.T.Sup (20 / 58) (bQ X1) ≤ rr1 :=
+  le_trans (rLimQ_anti hra1 hip1) (by decide +kernel)
 
 theorem hr_1 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X1 N).constTotal (58 * N) - (famD X1 N).constant ≤ (rr1 : ℝ) + ε := by
@@ -98,10 +143,28 @@ theorem hr_1 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
 
 def rr2 : ℚ := ((9020207 : ℚ) / 200000000)
 
+def Lra2 : ℚ := ((182960895808237531838551 : ℚ) / 1000000000000000000000000)
+
+def Lip2 : ℚ := ((206143747710714435341251 : ℚ) / 1000000000000000000000000)
+
+-- kcost: 400 steps x 20 poles of 3^81-scale integer ops, estimated 10 s
+set_option profiler true in
+theorem hra2 : Lra2 ≤ raQ X2 := by
+  rw [raQ_eq_rbQ]
+  exact le_rbQ X2 X2 (by decide +kernel) _ (by decide +kernel)
+
+-- kcost: 1000 moments x 25 coefficients of 3^81-scale integer ops, estimated 20 s
+set_option profiler true in
+set_option maxHeartbeats 4000000 in
+theorem hip2 : Lip2 ≤ ipPartQ (ofTrial X2.T) 1000 := by
+  rw [ipPartQ_merge (R := ofTrial X2.T) merge2]
+  exact le_ipPartQ rfl rfl 1000 _ (by decide +kernel)
+
+-- kcost: short rationals plus the exact sums iRRQ (400 terms) and bQ (120 terms), estimated 5 s
 set_option profiler true in
 theorem rr2_le : rLimQ X2.T.η (6931471803 / 10000000000) (((1116756367 : ℚ) / 1000000000)) (((33346513 : ℚ) / 500000000)) enU2 (((44708877 : ℚ) / 500000000)) (raQ X2) (iRRQ X2)
-    (ipPartQ (ofTrial X2.T) 1000) (5 / 58) X2.T.Sup (20 / 58) (bQ X2) ≤ rr2 := by
-  rw [ipPartQ_merge (R := ofTrial X2.T) merge2]; decide +kernel
+    (ipPartQ (ofTrial X2.T) 1000) (5 / 58) X2.T.Sup (20 / 58) (bQ X2) ≤ rr2 :=
+  le_trans (rLimQ_anti hra2 hip2) (by decide +kernel)
 
 theorem hr_2 (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
     (famD X2 N).constTotal (58 * N) - (famD X2 N).constant ≤ (rr2 : ℝ) + ε := by
