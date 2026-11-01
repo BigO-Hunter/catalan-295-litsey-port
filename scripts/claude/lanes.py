@@ -17,6 +17,11 @@ than itself is refused. Near the floor the driver sheds its youngest owned job t
 and requeues it once.
 """
 import ctypes as C, json, os, subprocess, sys, time, uuid
+# Receipts carry Lean output (non-ASCII); a cp1252 console made `submit` crash while printing.
+try:
+    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+except (AttributeError, ValueError):
+    pass
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -167,6 +172,32 @@ def stale_count(target):
     return sum(1 for line in r.stdout.splitlines() if 'Building ' in line or 'needs to be rebuilt' in line and False)
 
 
+_IMPS = {}
+
+
+def imports_of(target):
+    """Direct imports of a module target (cached by source mtime); empty for `run` jobs and unknown files."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from closure_check import path_of, IMPORT
+    f = path_of(target) if not target.startswith('job.') else None
+    if not f:
+        return set()
+    mt = os.path.getmtime(f)
+    if target not in _IMPS or _IMPS[target][0] != mt:
+        with open(f, encoding='utf-8') as fh:
+            _IMPS[target] = (mt, set(IMPORT.findall(fh.read(20000).split('\nnamespace', 1)[0])))
+    return _IMPS[target][1]
+
+
+def maxlanes():
+    """Lane cap, read live from LANES/maxlanes.txt (default MAXLANES); memory admission still applies.
+    31 Oct: a fixed 6 left 16 of 22 cores idle while hybrid modules queued (Sean: minimise wall clock)."""
+    try:
+        return max(1, int((LANES / 'maxlanes.txt').read_text(encoding='utf-8').split()[0]))
+    except (OSError, ValueError, IndexError):
+        return MAXLANES
+
+
 def log(msg):
     with open(LANES / 'driver.log', 'a', encoding='utf-8') as f:
         f.write(time.strftime('%Y-%m-%d %H:%M:%S ') + msg + '\n')
@@ -216,20 +247,49 @@ def drive():
                 log(f"shed {spec['target']} phys={phys0:.1f} commit={commit0:.1f} tries={tries}")
                 del running[jid]
                 last = time.time() + 30
-        def _mt(p):
-            try: return p.stat().st_mtime
-            except OSError: return float('inf')
-        queued = sorted(Q.glob('*.json'), key=_mt)
-        for qf in queued[:12]:
+        # Priority (Sean, 31 Oct: "410 jobs get priority"): `priority.txt` lists target prefixes,
+        # highest first; then other builds; then `run` jobs (job.*). Within a rank, oldest first.
+        try:
+            prio = [l.split('#')[0].strip() for l in (LANES / 'priority.txt').read_text(encoding='utf-8').splitlines()]
+            prio = [p for p in prio if p]
+        except OSError:
+            prio = []
+        def _key(p):
             try:
-                t = json.loads(qf.read_text(encoding='utf-8'))
+                mt = p.stat().st_mtime
+                t = json.loads(p.read_text(encoding='utf-8')).get('target', '')
+            except (OSError, ValueError):
+                return (len(prio) + 2, float('inf'))
+            for i, pre_ in enumerate(prio):
+                if t == pre_ or t.startswith(pre_ + '.') or t.startswith(pre_):
+                    return (i, mt)
+            return (len(prio) + (1 if t.startswith('job.') else 0), mt)
+        queued = sorted(Q.glob('*.json'), key=_key)
+        # A queue is a queue (Sean, 31 Oct): submit everything at once.  A build whose direct import is
+        # still queued or running waits in the queue (no waves, no refusal); it is neither preflighted
+        # nor admitted until that import's job has finished.
+        specs = {}
+        for qf in queued:
+            try:
+                specs[qf] = json.loads(qf.read_text(encoding='utf-8'))
             except (json.JSONDecodeError, OSError):
+                pass
+        pend = {t['target'] for t in specs.values()} | {s['target'] for _, s in running.values()}
+        def blocked(t):
+            return not t.get('cmd') and bool(imports_of(t['target']) & pend)
+        npre = 0
+        for qf in queued:
+            t = specs.get(qf)
+            if t is None or blocked(t):
                 continue
+            npre += 1
+            if npre > 12:
+                break
             if not t.get('cmd') and (t['target'] not in pre or time.time() - pre[t['target']][1] > 600):
                 pre[t['target']] = (pool.submit(stale_count, t['target']), time.time())
         busy = {s['target'] for _, s in running.values()}
         pick = None
-        if (queued and not (LANES / 'PAUSE').exists() and len(running) < MAXLANES
+        if (queued and not (LANES / 'PAUSE').exists() and len(running) < maxlanes()
                 and time.time() - last >= RAMP):
             phys, commit = mem()
             # manage-compute-campaigns envelope: free + own live workers - floor - margin must
@@ -242,12 +302,18 @@ def drive():
             env_c = commit + own_c - FLOOR - MARGIN
             # Backfill: the first queued job (priority order) that fits starts, so light
             # modules run beside a heavy one instead of waiting behind it.
+            pending_rank = None   # rank of a higher-priority build still in preflight
             for qf in queued[:200]:
                 try:
                     s = json.loads(qf.read_text(encoding='utf-8'))
                 except (json.JSONDecodeError, OSError):
                     continue   # being written by a submitter (28 Oct 11:51 crash), or just taken
-                if s['target'] in busy:
+                if s['target'] in busy or blocked(s):
+                    continue
+                # A lower-priority job may jump a higher one only if that one does not fit; a
+                # build still in preflight might fit, so lower ranks wait for it (31 Oct: `run`
+                # jobs otherwise took every lane right after a driver restart).
+                if pending_rank is not None and _key(qf)[0] > pending_rank:
                     continue
                 # Generator cap (replaces defer-generators.sh): while MAXGEN capped `run` jobs are
                 # running, a queued capped `run` job waits so a freed lane goes to a module build.
@@ -256,6 +322,8 @@ def drive():
                 if not s.get('cmd'):
                     f = pre.get(s['target'])
                     if f is None or not f[0].done():
+                        if pending_rank is None:
+                            pending_rank = _key(qf)[0]
                         continue   # preflight still running in the background
                 ec, ew = est(s['target'])
                 bb = float(s.get('budget', 3))
@@ -264,10 +332,9 @@ def drive():
                 if need_w + ew <= env_w and need_c + ec <= env_c:
                     pick, spec = qf, s
                     break
-                # Starvation guard (skill: reserve headroom for a ready large or critical job):
-                # if this job has waited > STARVE seconds, nothing behind it may backfill.
-                if time.time() - float(s.get('submitted', time.time())) > STARVE:
-                    break
+                # No starvation hold (Sean, 31 Oct): "We must always be using all available space
+                # that is safe. Small jobs can jump the queue if they fit now." Priority order
+                # (priority.txt) gives critical jobs the first fit; anything else that fits runs.
         if pick:
             why = hold_refusal(spec['target'])
             if why:
@@ -276,6 +343,14 @@ def drive():
                 pick.unlink(missing_ok=True)
                 log(f"refuse-hold {spec['target']}")
                 pick = None
+        if pick and spec.get('cmd') and os.path.basename(str(spec['cmd'][0])).lower() in ('lake', 'lake.exe'):
+            # 31 Oct: a `run` job with a bare `lake.exe` killed the driver (not on PATH); direct lake
+            # builds bypass the guard anyway. Builds go through `submit`.
+            spec.update(rc=94, ended=time.time(), output='lanes: refused: direct lake command; use `submit <Module> <GB>`')
+            (DONE / f'{pick.stem}.json').write_text(json.dumps(spec), encoding='utf-8')
+            pick.unlink(missing_ok=True)
+            log(f"refuse-lake {spec['target']}")
+            pick = None
         if pick and not spec.get('cmd'):
             why = registry_refusal(spec['target'])
             if why:
@@ -314,9 +389,18 @@ def drive():
                 fh = open(spec['out'], 'w', encoding='utf-8')
                 argv = spec.get('cmd') or [str(PY), '-I', 'scripts/claude/run_guarded.py',
                                            spec['target'], 'build', str(int(b))]
-                proc = subprocess.Popen(argv, cwd=spec.get('cwd', str(WORK)),
-                                        stdout=fh, stderr=subprocess.STDOUT,
-                                        env={**os.environ, 'LEAN_NUM_THREADS': THREADS})
+                try:
+                    proc = subprocess.Popen(argv, cwd=spec.get('cwd', str(WORK)),
+                                            stdout=fh, stderr=subprocess.STDOUT,
+                                            env={**os.environ, 'LEAN_NUM_THREADS': THREADS})
+                except OSError as e:
+                    # A bad command must fail its own job, never the driver.
+                    fh.close()
+                    spec.update(rc=127, ended=time.time(), output=f'lanes: could not start: {e}')
+                    (DONE / f'{jid}.json').write_text(json.dumps(spec), encoding='utf-8')
+                    (RUN / pick.name).unlink(missing_ok=True)
+                    log(f"fail-start {spec['target']} {e}")
+                    continue
                 fh.close()
                 spec['started'] = time.time()
                 running[jid] = (proc, spec)

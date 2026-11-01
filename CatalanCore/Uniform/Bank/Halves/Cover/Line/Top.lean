@@ -1,8 +1,12 @@
-import CatalanCore.Uniform.Bank.Halves.Cover.Line.B00
-import CatalanCore.Uniform.Bank.Halves.Cover.Line.B01
-import CatalanCore.Uniform.Bank.Halves.Cover.Line.B02
-import CatalanCore.Uniform.Bank.Halves.Cover.Line.B03
-import CatalanCore.Uniform.Bank.Halves.Cover.Line.B04
+module
+
+public import CatalanCore.Uniform.Bank.Halves.Cover.Line.B00
+public import CatalanCore.Uniform.Bank.Halves.Cover.Line.B01
+public import CatalanCore.Uniform.Bank.Halves.Cover.Line.B02
+public import CatalanCore.Uniform.Bank.Halves.Cover.Line.B03
+public import CatalanCore.Uniform.Bank.Halves.Cover.Line.B04
+
+@[expose] public section
 set_option Elab.async false
 set_option maxRecDepth 100000
 

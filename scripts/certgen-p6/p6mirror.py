@@ -1,4 +1,4 @@
-# Exact integer mirror of the Lean SigmaP6 ray/segment/line checks (port of paper-lambda/scripts/lean-cert/mirror*.py).
+# Exact integer mirror of the Lean SigmaP6 ray/segment/line checks (port of paper-trigamma/scripts/lean-cert/mirror*.py).
 # Config (module constants): sigma file, r0 = 1/10, rho^2 * 2^80 = 2^RHOE, arctan extension past j = JM via arctan(1/2) shift.
 import json, math, sys, os, bisect
 sys.set_int_max_str_digits(0)

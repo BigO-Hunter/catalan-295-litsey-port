@@ -9,11 +9,12 @@ large integers `q`.
 > **Theorem.**
 >
 > - μ(G) ≤ 532;
-> - μ(G ± 5π²/48) ≤ 31.4411, for both signs;
+> - μ(G ± 5π²/48) ≤ 31.2876, for both signs;
 > - μ(L(2, χ₋₃)) ≤ 13.7046;
-> - μ(L(2, χ₋₃) ± π²/9) ≤ 9.5133, for both signs;
-> - μ(ψ′(a/5) − π²/6) ≤ 23.9115 for a = 1, 2, 3, 4;
-> - μ(ψ′(a/7) − π²/6) ≤ 2801 for a = 1, …, 6.
+> - μ(L(2, χ₋₃) ± π²/9) ≤ 9.4998, for both signs;
+> - μ(ψ′(a/5) − π²/6) ≤ 23.8272 for a = 1, 2, 3, 4;
+> - μ(ψ′(a/7) − π²/6) ≤ 2207.8697 for a = 1, …, 6;
+> - μ(π²) ≤ 6.5253 (weaker than the known bounds, included for completeness).
 
 For `G` the Lean statement is `|G − a/b| > b^(−532)` for every integer `a` and every sufficiently large
 integer `b`. For each of the other fifteen numbers `x`, with exponent `B`, it is: for every `e > 0` there
@@ -28,7 +29,7 @@ All proofs are kernel-checked in Lean and use only the axioms `propext`, `Quot.s
   source and PDF in [`paper/`](paper/) (`catalan-measure-hexagon.tex` is the single-file version),
   Hexagon preprint [`hexagon:2610.00187`](https://hexagonmath.org/2610.00187).
 - S. Litsey, *Irrationality measures for differences of trigamma values* (2026), the other fifteen
-  measures: LaTeX source and PDF in [`paper-lambda/`](paper-lambda/) (`lambda-irrationality-hexagon.tex`
+  measures: LaTeX source and PDF in [`paper-trigamma/`](paper-trigamma/) (`trigamma-irrationality-hexagon.tex`
   is the single-file version), Hexagon preprint [`hexagon:2610.00401`](https://hexagonmath.org/2610.00401).
 
 Both papers build on OpenAI's proof that `G` is irrational ([openai/math](https://github.com/openai/math);
@@ -134,23 +135,24 @@ Together they give `μ ≤ γ/(D − Λ)`:
 
 | number | (s, t) | c | Λ | D | γ | γ/(D − Λ) | B |
 |---|---|---|---|---|---|---|---|
-| G ± 5π²/48 | (1/4, 1), (3/4, 1) | 1/5 | 3.5160256 | 3.7447213 | 7.1904273 | 31.44102 | 31.4411 |
+| G ± 5π²/48 | (1/4, 1), (3/4, 1) | 1/5 | 3.5149036 | 3.7447213 | 7.1904273 | 31.28751 | 31.2876 |
 | L(2, χ₋₃) | (1/3, 2/3) | 1/2 | 4.0959278 | 4.6435117 | 7.5043742 | 13.70452 | 13.7046 |
-| L(2, χ₋₃) ± π²/9 | (1/3, 1), (2/3, 1) | 3/10 | 3.3114645 | 4.0291249 | 6.8272548 | 9.513211 | 9.5133 |
-| ψ′(a/5) − π²/6 | (a/5, 1) | 2/9 | 3.5139083 | 3.8135797 | 7.1655663 | 23.91141 | 23.9115 |
-| ψ′(a/7) − π²/6 | (a/7, 1) | 1/6 | 3.6398277162 | 3.6424792669 | 7.4259546075 | 2800.609 | 2801 |
+| L(2, χ₋₃) ± π²/9 | (1/3, 1), (2/3, 1) | 3/10 | 3.3104458 | 4.0291249 | 6.8272548 | 9.499725 | 9.4998 |
+| ψ′(a/5) − π²/6 | (a/5, 1) | 2/9 | 3.5128488 | 3.8135797 | 7.1655663 | 23.82717 | 23.8272 |
+| ψ′(a/7) − π²/6 | (a/7, 1) | 1/6 | 3.6391158643 | 3.6424792669 | 7.4259546075 | 2207.870 | 2207.8697 |
+| π² | (1/2, 1) | 3/10 | 2.9923824 | 3.9785713 | 6.4350874 | 6.525207 | 6.5253 |
 
 Here `Λ` is the content constant, `D` the decay constant and `γ` the window constant. They are the
 rational numbers of the formal proof, rounded outward (`Λ` and `γ` up, `D` down); the column
-`γ/(D − Λ)` is the exact quotient, rounded up. The shift `s = 1/2`, with `Ψ(1/2, 1) = π²/3`, belongs to
-the same family, but the exponent the method gives for it is larger than the known bounds for `μ(ζ(2))`,
-so it is not stated.
+`γ/(D − Λ)` is the exact quotient, rounded up. The row for π² uses `Ψ(1/2, 1) = π²/3`. Its bound is
+weaker than the known bounds for `μ(π²)` and is included for completeness.
 
 The shared results are in `CatalanCore/Uniform/` (namespace `CatalanCore.Uniform`): the content theorem
 `Content.BankShared.Check.hasScaledContent_of_check`, and its form for frames with several first poles,
 `Content.BankShared.KTerm.hasScaledContent_of_kcheck`; the rank bound
 `Content.BankShared.TwoTerm.LP2HypW.gle` and the window bound
-`Content.BankShared.TwoTerm.Pre.prefix_gle`; the selection theorem `BlockGeom.hasNV0`; the decay theorem
+`Content.BankShared.TwoTerm.Pre.prefix_gle`; the third-order bound at the primes where the border of the
+matrix wraps around, `Content.UFSimple.WrapPrefixCheck.catValid_prefix_full`; the selection theorem `BlockGeom.hasNV0`; the decay theorem
 `Decay.AltDecay.altGeom_hasScaledDecay`; and the deduction `measure_of_family_nv0_even`. They also use
 modules from the rest of `CatalanCore/` and from `CatalanFrames/` and `CatalanLambda/` (among them the
 frames, Cauchy determinants and Andréief's identity). The data of each family are in
@@ -161,7 +163,7 @@ frames, Cauchy determinants and Andréief's identity). The data of each family a
 The shifts `1/4` and `3/4`, with `ψ′(1/4) = π² + 8G` and `ψ′(3/4) = π² − 8G`. The two shifts exchange the
 two classes of primes modulo 4, so they have the same content constant, and one decay certificate serves
 both. The frame, the decay cover and the nonvanishing are in `Bank/Fourths/`, the content table in
-`Bank/FourthsContent/`. The theorem is `CatalanCore.Uniform.Bank.FourthsContent.Bound.lambda_measure`,
+`Bank/FourthsContent/`. The theorem is `CatalanCore.Uniform.Bank.FourthsContent.Level3Bound.lambda_measure`,
 whose Boolean argument selects the sign; the public theorems are `TrigammaDifferences.lambda_minus_measure`
 and `TrigammaDifferences.lambda_plus_measure` (the names refer to `λ± = G/2 ± 5π²/96`, so that
 `G ± 5π²/48 = 2λ±`).
@@ -180,7 +182,7 @@ the theorem is `CatalanCore.Uniform.Bank.Chi3.KContent.chi3_measure_L2_k`; the p
 
 The shifts `1/3` and `2/3`: with `L = L(2, χ₋₃)`, `ψ′(1/3) = 2π²/3 + 9L/2` and `ψ′(2/3) = 2π²/3 − 9L/2`.
 The content table uses the primes in the classes modulo 6. The data are in `Bank/Thirds/` and
-`Bank/ThirdsContent/`; the theorems are `CatalanCore.Uniform.Bank.ThirdsContent.Bound.thirds_plus_measure`
+`Bank/ThirdsContent/`; the theorems are `CatalanCore.Uniform.Bank.ThirdsContent.Level3Bound.thirds_plus_measure`
 and `thirds_minus_measure`, and the public theorems `TrigammaDifferences.chi3_plus_pi2_measure` and
 `TrigammaDifferences.chi3_minus_pi2_measure`.
 
@@ -189,7 +191,7 @@ and `thirds_minus_measure`, and the public theorems `TrigammaDifferences.chi3_pl
 For `1 ≤ a ≤ 4`, `ψ′(a/5) − ζ(2)` is a rational linear combination of the values `L(2, χ)` for the
 Dirichlet characters `χ` modulo 5. The four shifts share one content table, indexed by the four root
 classes of the primes, and one decay certificate. The data are in `Bank/Fifths/` and
-`Bank/FifthsContent/`; the theorems are `CatalanCore.Uniform.Bank.FifthsContent.Bound.fifths1_measure`,
+`Bank/FifthsContent/`; the theorems are `CatalanCore.Uniform.Bank.FifthsContent.Level3Bound.fifths1_measure`,
 …, `fifths4_measure`, and the public theorems `TrigammaDifferences.fifths1_measure`, …,
 `TrigammaDifferences.fifths4_measure`.
 
@@ -198,9 +200,15 @@ classes of the primes, and one decay certificate. The data are in `Bank/Fifths/`
 For `1 ≤ a ≤ 6`, likewise a combination of the values `L(2, χ)`, `χ` modulo 7, and of `π²`, with six root
 classes. Here `D − Λ` is about `2.7·10⁻³`, and the exponent is correspondingly large. The data are in
 `Bank/Sevenths/` and `Bank/SeventhsContent/`; the theorem is
-`CatalanCore.Uniform.Bank.SeventhsContent.Bound.sevenths_measure`, whose argument is `a − 1` in `Fin 6`,
+`CatalanCore.Uniform.Bank.SeventhsContent.Level3Bound.sevenths_measure`, whose argument is `a − 1` in `Fin 6`,
 and the public theorems are `TrigammaDifferences.sevenths1_measure`, …,
 `TrigammaDifferences.sevenths6_measure`.
+
+### π²
+
+The shift `1/2`, with `Ψ(1/2, 1) = π²/3`. The data are in `Bank/Halves/` and `Bank/HalvesContent/`; the
+theorem is `CatalanCore.Uniform.Bank.HalvesContent.Bound.pi2_measure`, and the public theorem is
+`TrigammaDifferences.pi2_measure`. The bound `6.5253` is weaker than the known bounds for `μ(π²)`.
 
 ## Kernel-checked certificates
 

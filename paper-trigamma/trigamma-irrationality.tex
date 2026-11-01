@@ -1,0 +1,1610 @@
+\documentclass[11pt]{amsart}
+\IfFileExists{lmodern.sty}%
+  {\usepackage[T1]{fontenc}\usepackage{lmodern}\usepackage{microtype}}%
+  {\usepackage[expansion=false]{microtype}}
+\usepackage{amssymb,mathtools}
+\usepackage{booktabs,array}
+\usepackage{enumitem}
+\emergencystretch=2.5em
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+
+% ---------------------------------------------------------------------------
+% Location of the Lean formalization.
+\newcommand{\FormalizationURL}{https://github.com/slitsey/catalan-irrationality-measure}
+\newcommand{\FormalizationLink}{\url{\FormalizationURL}}
+% ---------------------------------------------------------------------------
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}[theorem]{Remark}
+\numberwithin{equation}{section}
+\setcounter{tocdepth}{1}
+
+\newcommand{\Z}{\mathbb Z}
+\newcommand{\Q}{\mathbb Q}
+\newcommand{\R}{\mathbb R}
+\newcommand{\C}{\mathbb C}
+\newcommand{\F}{\mathbb F}
+\newcommand{\N}{\mathbb N}
+\newcommand{\den}{\operatorname{den}}
+\newcommand{\rank}{\operatorname{rank}}
+\newcommand{\corank}{\operatorname{corank}}
+\newcommand{\lean}[1]{\nolinkurl{#1}}
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+\newcommand{\Lw}{\mathsf L}          % Loewner matrix
+\newcommand{\cO}{\mathcal O}
+\newcommand{\Id}{\mathrm{Id}}
+\newcommand{\err}{\operatorname{err}}
+\newcommand{\cI}{\mathcal I}
+
+% ---------------------------------------------------------------------------
+% Headline bounds: the rational numbers of the public theorems of SolutionHybrid.lean (namespace TrigammaDifferences):
+% lambda_{plus,minus}_measure 78219/2500; chi3_{plus,minus}_pi2_measure 47499/5000; fifths{1..4}_measure 14892/625;
+% sevenths{1..6}_measure 22078697/10000; pi2_measure 65253/10000; chi3_measure 137046/10000.
+\newcommand{\MuLamU}{31.2876}
+\newcommand{\MuThirdsU}{9.4998}
+\newcommand{\MuFifthsU}{23.8272}
+\newcommand{\MuSeventhsU}{2207.8697}
+\newcommand{\MuChi}{13.7046}
+\newcommand{\MuHalvesU}{6.5253}
+% Per-family data (Table tab:data), rounded outward from the Lean rationals:
+% Lambda = bankData (Fourths/Thirds/Fifths/SeventhsContent/Level3Data.lean; HalvesContent/AutoData.lean),
+%   kData (Chi3/KContent/Data.lean); D = Dchi.Dt (*/Cover/Env.lean); gamma = s_ccert (Common/Data/*/Data.lean),
+%   equal to cL, ctT, c5, c7, cH and to the literals of Chi3/KContent/Bound.lean `chi3_measureLB_k`.
+% (7 decimals, 10 for sevenths: the rounded values themselves give gamma/(D - Lambda) < B; ExpX is the exact quotient
+%  rounded up.)
+\newcommand{\LamFour}{3.5149036}  \newcommand{\DFour}{3.7447213}  \newcommand{\gFour}{7.1904273}  \newcommand{\ExpFour}{31.28751}
+\newcommand{\LamThree}{3.3104458} \newcommand{\DThree}{4.0291249} \newcommand{\gThree}{6.8272548} \newcommand{\ExpThree}{9.499725}
+\newcommand{\LamFive}{3.5128488}  \newcommand{\DFive}{3.8135797}  \newcommand{\gFive}{7.1655663}  \newcommand{\ExpFive}{23.82717}
+\newcommand{\LamSeven}{3.6391158643} \newcommand{\DSeven}{3.6424792669} \newcommand{\gSeven}{7.4259546075} \newcommand{\ExpSeven}{2207.870}
+\newcommand{\LamHalf}{2.9923824}  \newcommand{\DHalf}{3.9785713}  \newcommand{\gHalf}{6.4350874}  \newcommand{\ExpHalf}{6.525207}
+\newcommand{\LamChi}{4.0959278}   \newcommand{\DChi}{4.6435117}   \newcommand{\gChi}{7.5043742}  \newcommand{\ExpChi}{13.70452}
+\newcommand{\MuChiExact}{13.704516}
+% ---------------------------------------------------------------------------
+
+\begin{document}
+
+\title[Irrationality measures for differences of trigamma values]{Irrationality measures for differences of trigamma values}
+
+\author{Sean Litsey}
+\email{sean.litsey.math@gmail.com}
+
+\date{October 31, 2026}
+
+\subjclass[2020]{Primary 11J82; Secondary 11J72, 15A15, 31A15, 68V20}
+
+\keywords{Irrationality exponent, trigamma function, $L(2,\chi_{-3})$, L\"owner matrices,
+Cauchy determinants, Andr\'eief identity, $p$-adic valuations, Hermite interpolation,
+formal verification, Lean}
+
+\begin{abstract}
+Let $\mu(\xi)$ denote the irrationality exponent of a real number $\xi$. We prove
+\[
+\begin{gathered}
+ \mu\Bigl(G\pm\frac{5\pi^2}{48}\Bigr)\le \MuLamU,\qquad
+ \mu\bigl(L(2,\chi_{-3})\bigr)\le \MuChi,\\
+ \mu\Bigl(L(2,\chi_{-3})\pm\frac{\pi^2}9\Bigr)\le \MuThirdsU,\qquad
+ \mu(\pi^2)\le\MuHalvesU,\\
+ \mu\Bigl(\psi'(\tfrac k5)-\frac{\pi^2}6\Bigr)\le\MuFifthsU\quad(1\le k\le4),\\
+ \mu\Bigl(\psi'(\tfrac k7)-\frac{\pi^2}6\Bigr)\le\MuSeventhsU\quad(1\le k\le6).
+\end{gathered}
+\]
+Each of these numbers is, up to a rational affine map, a difference of two values of the trigamma function $\psi'$
+at rational points. For $L(2,\chi_{-3})$ and $L(2,\chi_{-3})\pm\pi^2/9$ the best bound known before was $24781$, due to
+Calegari, Dimitrov and Tang. For $\pi^2$ the known bounds are stronger than ours. We know of no earlier irrationality
+measure for the other numbers. For $\psi'(\frac k5)-\pi^2/6$ and $\psi'(\frac k7)-\pi^2/6$ we know of no earlier proof
+of irrationality.
+
+The approximations are determinants of rectangular L\"owner matrices of digamma differences at integer nodes. Their
+denominators are bounded prime by prime by a finite list of local bounds. A bound at third order in the Smith normal
+form treats the primes at which the border of the matrix wraps around. Nonvanishing follows from Hermite interpolation in
+characteristic zero. The size is bounded with Andr\'eief's identity and a lower bound for a discrete logarithmic energy,
+checked on a finite cover by cells. The proof is formalized in Lean~4.
+\end{abstract}
+
+\maketitle
+\tableofcontents
+
+%% =====================================================================
+\section{Introduction}\label{sec:intro}
+
+\subsection{The result}
+The \emph{irrationality exponent} $\mu(\xi)$ of a real number $\xi$ is the infimum of the real numbers $\mu$ such that
+$|\xi-a/b|>b^{-\mu}$ for all integers $a$ and all sufficiently large integers $b$. It does not change under
+$\xi\mapsto r\xi+r'$ with $r,r'\in\Q$ and $r\ne0$. A finite bound for $\mu(\xi)$ is an irrationality measure for
+$\xi$, and it shows that $\xi$ is irrational. We prove
+\begin{equation}\label{eq:headline}
+\begin{gathered}
+ \mu\Bigl(G\pm\frac{5\pi^2}{48}\Bigr)\le \MuLamU,\qquad
+ \mu\bigl(L(2,\chi_{-3})\bigr)\le \MuChi,\\
+ \mu\Bigl(L(2,\chi_{-3})\pm\frac{\pi^2}9\Bigr)\le \MuThirdsU,\qquad
+ \mu(\pi^2)\le\MuHalvesU,\\
+ \mu\Bigl(\psi'(\tfrac k5)-\frac{\pi^2}6\Bigr)\le\MuFifthsU\quad(1\le k\le4),\\
+ \mu\Bigl(\psi'(\tfrac k7)-\frac{\pi^2}6\Bigr)\le\MuSeventhsU\quad(1\le k\le6).
+\end{gathered}
+\end{equation}
+Here
+\begin{gather*}
+ G=\sum_{j=0}^\infty\frac{(-1)^j}{(2j+1)^2}=0.91596\,55941\ldots,\\
+ L(2,\chi_{-3})=\sum_{n\ge0}\Bigl(\frac1{(3n+1)^2}-\frac1{(3n+2)^2}\Bigr)=0.78130\,24128\ldots
+\end{gather*}
+are Catalan's constant and the value at $2$ of the Dirichlet $L$-function of the nontrivial character modulo $3$.
+
+All these numbers are differences of values of the trigamma function $\psi'$. For $0<s<t\le1$ put
+\[
+ \Psi(s,t)=\psi'(s)-\psi'(t)=\sum_{n=0}^\infty\Bigl(\frac1{(n+s)^2}-\frac1{(n+t)^2}\Bigr).
+\]
+From $\psi'(\frac14)=\pi^2+8G$, $\psi'(\frac34)=\pi^2-8G$, $\psi'(\frac13)=\frac{2\pi^2}3+\frac92L(2,\chi_{-3})$,
+$\psi'(\frac23)=\frac{2\pi^2}3-\frac92L(2,\chi_{-3})$, $\psi'(\frac12)=\frac{\pi^2}2$ and $\psi'(1)=\frac{\pi^2}6$ one gets
+\begin{gather*}
+ \Psi(\tfrac14,1)=8\Bigl(G+\frac{5\pi^2}{48}\Bigr),\qquad \Psi(\tfrac34,1)=-8\Bigl(G-\frac{5\pi^2}{48}\Bigr),\\
+ \Psi(\tfrac13,1)=\frac92\Bigl(L(2,\chi_{-3})+\frac{\pi^2}9\Bigr),\qquad
+ \Psi(\tfrac23,1)=-\frac92\Bigl(L(2,\chi_{-3})-\frac{\pi^2}9\Bigr),\\
+ \Psi(\tfrac13,\tfrac23)=9L(2,\chi_{-3}),\qquad \Psi(\tfrac12,1)=\frac{\pi^2}3 .
+\end{gather*}
+For $q=5$ and $q=7$ and $\gcd(k,q)=1$ the number $\Psi(\frac kq,1)=\psi'(\frac kq)-\frac{\pi^2}6$ is a rational linear
+combination of $\pi^2$ and the values $L(2,\chi)$ for the Dirichlet characters $\chi$ modulo $q$. Indeed
+\[
+ \psi'(\tfrac kq)=q^2\sum_{n\equiv k\ (q)}\frac1{n^2}=\frac{q^2}{\varphi(q)}\sum_{\chi\bmod q}\bar\chi(k)L(2,\chi).
+\]
+Since $\mu$ is invariant under rational affine maps, the bounds \eqref{eq:headline} are the following theorem.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+$(s,t)$ & the number, up to a rational affine map & $B$ \\
+\midrule
+$(\frac14,1)$, $(\frac34,1)$ & $G+\frac{5\pi^2}{48}$, $G-\frac{5\pi^2}{48}$ & $\MuLamU$ \\
+$(\frac13,\frac23)$ & $L(2,\chi_{-3})$ & $\MuChi$ \\
+$(\frac13,1)$, $(\frac23,1)$ & $L(2,\chi_{-3})+\frac{\pi^2}9$, $L(2,\chi_{-3})-\frac{\pi^2}9$ & $\MuThirdsU$ \\
+$(\frac k5,1)$, $k=1,2,3,4$ & $\psi'(\frac k5)-\frac{\pi^2}6$ & $\MuFifthsU$ \\
+$(\frac k7,1)$, $k=1,\dots,6$ & $\psi'(\frac k7)-\frac{\pi^2}6$ & $\MuSeventhsU$ \\
+$(\frac12,1)$ & $\pi^2$ & $\MuHalvesU$ \\
+\bottomrule
+\end{tabular}
+\caption{The pairs of shifts and the exponents of Theorem~\ref{thm:main}.}\label{tab:main}
+\end{table}
+
+\begin{theorem}\label{thm:main}\label{thm:thirds}\label{thm:fifths}
+Let $(s,t)$ and $B$ be in one row of Table~\ref{tab:main}. For every $\varepsilon>0$ there is $b_0$ such
+that for all coprime integers $a$, $b$ with $b\ge b_0$,
+\[
+ \Bigl|\Psi(s,t)-\frac ab\Bigr|>b^{-B-\varepsilon}.
+\]
+In particular $\Psi(s,t)$ and the number in the same row are irrational, with irrationality exponent at
+most $B$.
+\end{theorem}
+
+The rows come from one construction with different shifts. The bound for $\pi^2$ is not new. Since
+$\zeta(2)=\pi^2/6$, irrationality exponents for $\pi^2$ and for the value of the Riemann zeta function at $2$ coincide.
+We state the known bounds for $\pi^2$. The best known bounds are $5.0193784$ of Giraudin \cite{Giraudin26} and $4.62675$ of
+Leibtag et al.\ \cite{LBKWSK26}. We include the row because it shows the reach of the construction. One family of
+determinants, with the same three estimates, covers every row of Table~\ref{tab:main}.
+
+Catalan's constant itself is a trigamma difference, $G=\frac1{16}\Psi(\frac14,\frac34)$. The technique covers this pair
+of shifts as well. For this pair, however, the content constant given by our local bounds exceeds the decay constant
+in our computations. So the method gives no irrationality measure for $G$. The companion paper \cite{Litsey2026}
+refines OpenAI's construction for $G$ instead, and proves a finite irrationality exponent for it. The computations for
+$G$ are not part of the formal proof.
+
+Theorem~\ref{thm:main} has been verified in the Lean~4 proof assistant, together with every theorem, proposition and
+lemma used in its proof. The formal proof has no unproved steps and uses only the standard axioms.
+Section~\ref{sec:lean} describes it. The remarks and Section~\ref{sec:limits} discuss the method and are not part of the
+formal proof. The formalization is available at \FormalizationLink. The use of AI in this work is disclosed at the end
+of the paper.
+
+\subsection{Previous results}
+\emph{Catalan's constant.} In October 2026 OpenAI \cite{OpenAI2026} proved that $G$ is irrational and formalized the
+proof in Lean. Sun's preprint \cite{Sun2026} had claimed a proof of the irrationality of $G$. Wachs \cite{Wachs2026}
+reports that its main estimate is not justified. Finite irrationality exponents for $G$ were obtained after OpenAI's
+proof by Jha \cite{Jha2026}, Carreira \cite{Carreira2026}, Bojnal \cite{Bojnal2026}, Xu \cite{Xu2026} and the author
+\cite{Litsey2026}. Carreira \cite{Carreira2026b} also records attempts to carry the determinant method to $\beta(4)$. For
+the arithmetic of $G$ and related values before these results see
+\cite{RivoalZudilin2003,Zudilin2003,Zudilin02Cheb,KrattRivoal08,KrattZudilin19} and the survey \cite{Zudilin19Survey}.
+Eskandari, Murty and Nemoto \cite{EMN2025} construct a $2$-dimensional mixed motive over $\Q$ with period $G$. They use
+it to obtain linear forms in $1$ and $G$. Eskandari \cite{Eskandari2026} improves the approximation exponent of these
+forms of Rivoal--Zudilin type from $0.52$ to $0.62$. These are explicit approximations, not a lower bound for all
+rationals. Our searches found no irrationality result and no irrationality measure for $G-5\pi^2/48$ or
+$G+5\pi^2/48$.
+
+\emph{The value $L(2,\chi_{-3})$.} Calegari, Dimitrov and Tang \cite{CDT2024} proved that $1$, $\pi^2$ and
+$L(2,\chi_{-3})$ are linearly independent over $\Q$. Their proof applies a new arithmetic holonomy bound to a
+construction of Zagier. In \cite{CDT2025} they made holonomy bounds effective. Theorem~5.1 there gives
+$\mu(L(2,\chi_{-3}))\le24781$. The remark that follows that theorem states that the same theorem and proof hold for any
+$\Q$-linear combination of $L(2,\chi_{-3})$ and $\pi^2$. So $24781$ is also the known bound for
+$L(2,\chi_{-3})\pm\pi^2/9$. Theorem~\ref{thm:main} improves it to $\MuChi$ for $L(2,\chi_{-3})$ and to $\MuThirdsU$ for
+$L(2,\chi_{-3})\pm\pi^2/9$. Leibtag et al.\ \cite{LBKWSK26} find numerically that Ap\'ery-like approximations from
+conservative matrix fields have positive approximation exponents for $L(2,\chi_{-3})\pm\pi^2/9$. A supplement to their
+paper uses one such field to give an Ap\'ery-style proof of the theorem of Calegari, Dimitrov and Tang. The exponent it
+proves for each of these two numbers is only greater than $10^{-4}$.
+
+\emph{The numbers $\psi'(\frac k5)-\pi^2/6$ and $\psi'(\frac k7)-\pi^2/6$.} Our searches found no irrationality result for
+them. Prellberg \cite{Prellberg26} proved that $\mathrm{Li}_2(1/5)$ is irrational. That is a different number.
+
+\emph{Other constants.} Since September 2026 a series of new results has appeared in this area. Several of them were
+obtained with AI systems. They join classical results such as the bound $\mu(\log2)<3.5746$ of Marcovecchio
+\cite{Marcovecchio09}, the bounds of Rhin and Viola for $\pi^2$ and $\zeta(3)$ \cite{RhinViola96,RhinViola01}, which
+followed Ap\'ery and Beukers \cite{Apery79,Beukers79}, and Zudilin's bound for $\pi^2$ \cite{Zudilin14}. OpenAI proved
+$\mu(\pi)=2$, with a Lean formalization \cite{OpenAIPi2026}. This improves the bound $\mu(\pi)<7.1033$ of Zeilberger and
+Zudilin \cite{ZeilbergerZudilin20}. Liu, Jiang and Zhang proved $\mu(\log r)=2$ for every rational $r>0$ with $r\ne1$
+\cite{LiuJiangZhang26}. Their result also covers nonzero rational combinations of such logarithms. Giraudin lowered the
+bound for $\mu(\pi^2)$ to $5.0193784$ with two hypergeometric constructions of Zudilin \cite{Zudilin14} at new parameters
+\cite{Giraudin26}. Giraudin also lowered the bound for $\mu(\zeta(3))$ to $5.5138800$ by applying the Rhin--Viola method
+at a new integral direction \cite{Giraudin26z3}. Leibtag, Barkan, Kalisch, Weinbaum, Shalyt and Kaminer \cite{LBKWSK26}
+showed that the classical constructions are one-dimensional trajectories in conservative matrix fields. By searching over
+other trajectories they obtained $\mu(\pi^2)<4.62675$ and $\mu(\zeta(3))<5.4197$. Prellberg \cite{Prellberg26} proved that
+$\mathrm{Li}_2(-1/4)$, $\mathrm{Li}_2(1/5)$ and $\mathrm{Li}_2(-1/3)$ are irrational. These are three cases left open in
+\cite{CDT2024}. The proof uses the integrals of Rhin--Viola and Viola--Zudilin. Fauzan \cite{Fauzan2026} announced a proof
+that $\zeta(5)$ is irrational, using rationally normalized Hankel determinants. Lai \cite{Lai2026} combined that method
+with simultaneous approximations of Zudilin and of Dauguet and Zudilin. Lai showed that $1$, $\zeta(3)$ and $\zeta(4)$
+are linearly independent over $\Q$.
+
+\emph{Determinants.} Irrationality proofs built on determinants of large size have a precedent in Zudilin's
+determinantal criterion with Hankel determinants \cite{Zudilin}. The preprint of Liu, Jiang and Zhang on logarithms
+\cite{LiuJiangZhang26} uses a separated-weight interpolation determinant. The arguments of Fauzan and Lai
+\cite{Fauzan2026,Lai2026} use Hankel determinants. Brown \cite{Brown26} proposes a multivariate transfinite-diameter test
+for Mellin-type integrals and applies it to $\pi^2$. The framework we use is OpenAI's \cite{OpenAI2026}. In it the decay
+of the determinants is controlled by Cauchy determinants and Andr\'eief's identity, and the denominators are controlled
+prime by prime. Our determinants are L\"owner matrices, that is, matrices of divided differences, of a digamma
+difference. They are a matrix-valued analogue of Pad\'e and Hermite--Pad\'e approximation \cite{NikishinSorokin91}.
+Formal proofs of irrationality results in Lean also include the irrationality of $\zeta(3)$ by Liu, Zhang and Zhi
+\cite{LZZ25}.
+
+\subsection{What is needed}
+OpenAI's argument for $G$ and the irrationality measures built on it use one determinant of large size. Its denominators
+and its decay are balanced very closely. An irrationality measure needs three estimates for a family of determinants
+$P(x)$ that depend on a variable $x$. The first bounds the denominators of the coefficients of $P$. The second bounds
+$|P(x)|$ at every point $x$ near the constant, not only at the constant. The third shows that some member of the family
+does not vanish at a given rational point, at a size that can be chosen in terms of the denominator of that point. In
+this paper we use a different and much smaller family of determinants. We prove the three estimates once, uniformly in
+the shift.
+
+\subsection{New ideas}
+The proof rests on the following ideas. Section~\ref{sec:overview} explains each of them in more detail.
+\begin{enumerate}[leftmargin=*]
+\item \emph{Rectangular frames with an interleaved border.} The matrix has a long common block, which carries the
+ variable, and a border of rows and columns that never meet the diagonal. The degree of the determinant stays that of
+ the common block. The decay is that of a larger configuration of nodes.
+\item \emph{The content from a finite list of local bounds.} Each local bound for the $p$-adic valuation of the
+ denominator is an explicit integer expression in four integers attached to the prime. A finite table of affine pieces,
+ checked by comparisons of rational numbers, gives the content constant for every shift with the same denominator.
+\item \emph{The content at third order.} Some primes meet a residue class of the border twice. For them Schur complements
+ eliminate the pairs of border nodes in one class. Rational interpolation then separates the remaining border nodes.
+\item \emph{Nonvanishing in characteristic zero.} Hermite interpolation bounds the corank of the matrix at a rational
+ point independently of its size. No prime enters, so the size can be chosen freely.
+\item \emph{Decay through a certificate measure.} A comparison measure, polynomial on finitely many segments, bounds a
+ discrete logarithmic energy from below. The inequalities that remain are checked on a finite cover by cells.
+\end{enumerate}
+The constants of the proof for each row of Table~\ref{tab:main} are listed in Table~\ref{tab:data}.
+
+\subsection{Organization}
+Section~\ref{sec:overview} explains the construction and the main ideas without technicalities, and states the general
+deduction. Section~\ref{sec:construction} gives the construction. Sections~\ref{sec:content}, \ref{sec:nonvanishing}
+and~\ref{sec:decay} prove the three estimates, content, nonvanishing and decay, uniformly in the shift.
+Section~\ref{sec:chi3-quarter} treats the frame of the pair $(\frac13,\frac23)$. Section~\ref{sec:proof} deduces
+Theorem~\ref{thm:main}. Section~\ref{sec:families} collects the facts specific to each family, and
+Section~\ref{sec:limits} discusses the limits of the method. Section~\ref{sec:lean} describes the formalization. The
+disclosure of AI use follows it.
+
+\subsection{Notation and conventions}
+We write $\psi$ for the digamma function, the logarithmic derivative of Euler's gamma function, and $v_p$ for the
+$p$-adic valuation. For $P\in\Q[x]$, $\den P$ is the least positive integer whose product with $P$ lies in $\Z[x]$. We
+write $[0,r)=\{0,1,\dots,r-1\}$. For finite sets $X_0$, $Y_0$ of integers and a matrix $A$ indexed by integers,
+$A[X_0,Y_0]$ is the submatrix with rows $X_0$ and columns $Y_0$.
+
+%% =====================================================================
+\section{Overview of the method}\label{sec:overview}
+
+\subsection{L\"owner matrices of digamma differences}
+Let $F$ be a function analytic near a finite set of distinct points. The \emph{L\"owner matrix} \cite{Loewner34} of $F$
+is the matrix of divided differences indexed by the points:
+\[
+ \Lw_F[t,t']=\frac{F(t')-F(t)}{t'-t}\ (t\ne t'),\qquad \Lw_F[t,t]=F'(t).
+\]
+It is a Cauchy-like structured matrix. Hermite's formula gives
+$\Lw_F=\frac1{2\pi i}\oint F(z)\,\upsilon(z)\upsilon(z)^{\top}dz$ with $\upsilon_t(z)=1/(z-t)$. A representation of $F$ as
+a Stieltjes or contour integral therefore exhibits $\Lw_F$ as a Gram matrix of Cauchy kernels.
+
+For a rational shift $0<s<1$ with denominator $q$ we take the digamma difference $F_s$. For the pair
+$(\frac13,\frac23)$ we take a combination $F_\chi$ of three digamma functions. The nodes are integers. We put
+\begin{equation}\label{eq:frames}
+\begin{gathered}
+ F_s(z)=\psi(z+1)-\psi(z+s),\qquad \omega=\tfrac1{q^2},\quad \xi_s=-\tfrac1{q^2}\Psi(s,1),\\
+ F_{\chi}(z)=-\tfrac13\psi(z+\tfrac13)+\tfrac12\psi(z+\tfrac12)-\tfrac16\psi(z+1),\\
+ \omega=-\tfrac16,\quad \xi_\chi=\tfrac1{36}\Psi(\tfrac13,\tfrac23).
+\end{gathered}
+\end{equation}
+In each case $\xi=\omega\,F'(0)$. The differences $F(t')-F(t)$ and $F'(t)-F'(0)$ are rational for integers $t,t'\ge0$.
+Let $R$ and $Q$ be finite sets of nonnegative integer nodes, which index the rows and the columns. Then
+\begin{equation}\label{eq:shift}
+ \omega\,\Lw_F[R,Q]=M[R,Q]+\xi\,\Id_{R,Q},\qquad \Id_{R,Q}[t,t']=\mathbf 1[t=t'],
+\end{equation}
+with an explicit rational symmetric kernel $M$ on $\Z_{\ge0}^2$, given in \S\ref{sec:construction}. Replacing $\xi$ by a
+variable $x$ gives the matrix polynomial $\Phi(x)=M[R,Q]+x\Id_{R,Q}$. Its determinant $P(x)$ has rational coefficients
+and degree at most $|R\cap Q|$, and $P(\xi)=\det(\omega\,\Lw_F[R,Q])$.
+
+Suppose that $|\xi-a/b|$ is very small. Then $P(a/b)$ is very close to $P(\xi)$, which is tiny. On the other hand
+$b^{|R\cap Q|}\den(P)\,P(a/b)$ is an integer. If it is not zero, we get a contradiction as soon as
+\[
+ \underbrace{\log\den P}_{\text{content}}+|R\cap Q|\log b\ <\ \underbrace{-\log|P(a/b)|}_{\text{decay}} .
+\]
+Three estimates are therefore needed. The first is an upper bound for the \emph{content} $\log\den P$. The second is an
+upper bound for $|P(x)|$ near $\xi$, the \emph{decay}. The third is the \emph{nonvanishing} of $P(a/b)$ for some member
+of a family of determinants whose size can be chosen in terms of $b$. Each estimate is proved once, for every shift.
+The families differ only in a few parameters.
+
+\subsection{Rectangular frames with an interleaved border}
+We take a long common block $C=[0,r)$, which carries the variable $x$. We add a border of $m\approx\alpha r$ row nodes
+and $m$ column nodes, interleaved:
+\[
+ X'=\{r,r+2,\dots,r+2m-2\},\qquad Y'=\{r+1,r+3,\dots,r+2m-1\}.
+\]
+The rows are $R=C\sqcup X'$ and the columns are $Q=C\sqcup Y'$. The determinant $P(x)=\det\Phi(x)$ still has degree at
+most $r$. So the integrality loss $|R\cap Q|\log b$ is that of $r$ nodes. The matrix has size $r+m$, and its decay is
+that of a configuration of $(1+\alpha)r$ nodes. The content grows too, but less, because the border rows and columns
+never meet the diagonal. The \emph{members} of the family are the principal restrictions obtained by deleting a bounded
+number of common nodes. The only parameter of the geometry is $c=2\alpha$, the length of the border relative to $r$. We
+use $c=\frac3{10},\frac15,\frac3{10},\frac29,\frac16$ for $q=2,4,3,5,7$, and $c=\frac12$ for $F_\chi$.
+
+The interleaving of $X'$ and $Y'$ is essential. It keeps the two Cauchy determinants in Andr\'eief's formula comparable
+(\S\ref{sec:decay}). It also gives the reduction of the matrix modulo a prime an alternating structure. Several of the
+arithmetic bounds of \S\ref{sec:content} rest on this structure.
+
+\subsection{The content from local bounds}
+As in the work of Rhin and Viola \cite{RhinViola96,RhinViola01}, we bound the $p$-adic valuation of $\den P$ prime by
+prime. We then sum the bounds against $\log p$ with the prime number theorem in arithmetic progressions. For a prime
+$p\asymp r$ the relevant data are the scale $r$, the border size $m$, the prime $p$ and the first pole $k_p$. This is the
+first index $k_p\ge1$ at which the second digamma term of $F_s$ has a pole modulo $p$. We have $k_p=\kappa p+O(1)$ with
+$\kappa=j/q$, where $j\equiv qs\,p^{-1}\pmod q$ is the \emph{root class} of $p$. The frame $F_\chi$ has two such first
+poles. On each class of primes modulo $6$ both are affine functions of one index of the same kind
+(Section~\ref{sec:chi3-quarter}).
+
+We prove a finite list of local bounds, each by its own mechanism. The first is the assignment bound, with explicit
+potentials. Three bounds concern the rank of the reduction modulo $p$ of a rescaled matrix. Another comes from windows of
+consecutive border nodes free of poles. In such a window the reduction is translation invariant between residue classes.
+The window bound also applies to the primes $p\le m$, which meet the border several times. Modulo $p$, the border covers
+an arc of residue classes once more than the others. On this arc the translation argument improves the assignment bound.
+
+Every local bound is an explicit integer expression in $(r,m,p,k_p)$. It is built from affine forms with $\min$, $\max$,
+truncated subtraction, the distance to $p\Z$ and the multiple $p\lfloor r/p\rfloor$. It holds in a range of $p/r$
+described by linear inequalities. Replacing $(r,m,p,k_p)$ by $(1,\alpha,\theta,\kappa\theta)$ turns each bound into a
+piecewise affine profile in $\theta=p/r$. The error is bounded by an explicit constant. The content constant is then
+\[
+ \Lambda=\frac1{\varphi(q)}\sum_j\int_0^\infty\mathcal P_j(\theta)\,d\theta,
+\]
+where $\mathcal P_j$ is the pointwise minimum of the valid profiles for the root class $j$. A finite table of affine pieces
+above $\mathcal P_j$ is a certificate for $\Lambda$. Each piece carries the name of the bound that justifies it. The table
+is correct if finitely many comparisons of rational numbers hold. One theorem, Theorem~\ref{thm:content}, turns an
+accepted table into the content estimate. The bounds depend on the shift $s$ only through the root class. So the same
+table serves every shift with denominator $q$, and the numbers $\Psi(s,1)$ for these shifts receive the same exponent.
+
+\subsection{The content at third order}
+For the primes $p\le2m$ the border $[r,r+2m)$ meets some residue classes modulo $p$ more than once. The bounds above work
+at first or second order in the Smith normal form of the rescaled matrix, and they are not sharp there. We gain at third
+order. Write $m=np+\bar m$ with $0\le\bar m<p$, and $d=\|m\|_p$.
+
+First eliminate the common block. Consider a residue class that carries a pair of border nodes $t$ and $t+p$, one a row
+and one a column. It contributes a unit pivot. Its leading coefficient is the increment of the frame over $(t,t+p]$.
+This interval contains exactly one pole of each digamma term, and the two contributions cannot cancel. Eliminating these
+pivots by Schur complements leaves a matrix whose Smith normal form looks like that of a smaller geometry. This geometry
+has a shorter common block and a border of $d$ rows and $d$ columns. The separation argument of the bound (S) can be run
+on it at third order.
+
+Two facts make this work. First, the Schur complement changes the second-order term. The change is exactly compensated
+by replacing the moments of the common block by the moments of the mixed blocks that the elimination produces. These
+blocks are not symmetric. The compensation is a pair of identities for bordered inverses. Second, the remaining border
+nodes must still be separated from each other. For a cut at the second pole we deform the shift, $s\mapsto s+pY$, and
+evaluate at the pole. There the bordered system becomes a pair of Cauchy blocks. For a cut at a multiple of $p$ we take
+the leading coefficient in $Y$, which leaves the harmonic numbers. There the bordered system is a problem of rational
+interpolation of type $(n,n)$ on consecutive integers. Its value at infinity is $H_{\beta+n}+2H_n$, where $\beta$ is the
+number of common nodes of the class. Two neighbouring classes differ by $1/(\beta+n+1)$, a $p$-adic unit. The resulting
+bound (U) is again an explicit integer expression in $(r,m,p,k_p)$. It holds for every member with no loss for the
+deleted nodes.
+
+\subsection{Nonvanishing}
+Let $x_0$ be a rational point. The kernel of $\Phi(x_0)$ is identified with a space of pairs of polynomials that satisfy
+Hermite interpolation conditions at the nodes. Two such pairs have vanishing cross product, by a count of degrees and
+zeros. A further pair in the kernel would give a rational antidifference of the increment of the frame. No such
+antidifference exists, because the pole at $-1$ is isolated in its class modulo $\Z$. This bounds the corank of
+$\Phi(x_0)$ by a number that depends only on the frame and the period of the geometry. A principal restriction that
+deletes at most that many common nodes is then nonsingular. This is Theorem~\ref{thm:selection}. No prime enters, so
+the size $r$ can be chosen freely in terms of $b$.
+
+\subsection{Decay}
+Moving Hermite's contour to a polygonal path $\Gamma$ in the left half-plane writes $\omega\,\Lw_F[R,Q]$ as a Gram matrix
+$\int\upsilon_t\upsilon_{t'}\,d\Omega$. Here $\Omega$ is a complex measure. It has signed atoms at poles of $F$ and an
+exponentially small density on $\Gamma$. Andr\'eief's identity with two families of functions, one for the rows and one
+for the columns, gives
+\[
+ |\det\Lw_F[R,Q]|\le\frac1{n_*!}\int\bigl|\mathsf C_R(z)\bigr|\,\bigl|\mathsf C_Q(z)\bigr|\prod_{i=1}^{n_*}d|\Omega|(z_i),
+\]
+where $n_*$ is the size of the matrix and $\mathsf C_R$, $\mathsf C_Q$ are Cauchy determinants. Taking logarithms turns
+the integrand into a discrete logarithmic energy. The free points $z_i$ interact with the nodes in an external field.
+
+We bound this energy from below by comparing it with a \emph{certificate measure} $\sigma$. This is a density that is
+polynomial on each of finitely many segments. The comparison uses the conditional positive definiteness of the
+logarithmic kernel. What is left is a lower bound for one explicit function $\Upsilon$. It is needed on the contour, on
+the segment carrying the atoms and on the interval of the nodes. We prove it on a finite cover of these sets by cells,
+each checked in exact rational arithmetic. One theorem, Theorem~\ref{thm:decay}, gives the decay for every geometry
+parameter $c\le1$ and every frame whose poles are separated from the contour. A family supplies only $\sigma$, the
+polygon and the cover.
+
+\subsection{The deduction}
+Write $\eta=D-\Lambda$, where $D$ is the decay constant. Let $\gamma$ be the window constant of the decay estimate. This
+means that the decay holds at every point within $e^{-\gamma r}$ of $\xi$. Section~\ref{sec:proof} combines the three
+estimates. The result is
+\[
+ \mu(\xi)\le\frac\gamma\eta=\frac\gamma{D-\Lambda}.
+\]
+
+\subsection{Formal verification}
+Every step is formalized in Lean~4 with Mathlib \cite{Lean4,Mathlib}. This includes the local arithmetic bounds and the
+checker of the content tables. It includes the interpolation argument for nonvanishing, the contour representation and
+the cell checks of the decay certificates. It also includes the prime number theorem in arithmetic progressions. The
+formal proofs are built on a shared core. The core contains rectangular determinants, Gauss valuations, the local
+bounds, the content checker, the selection in characteristic zero, the decay theorem and the measure deduction. A family
+supplies its frame, its geometry parameter and its data tables. The written proofs below are at the level of a research
+article. For long computations we point to the formal proof, which is the basis for the correctness of
+Theorem~\ref{thm:main}.
+
+%% =====================================================================
+\section{The construction}\label{sec:construction}
+
+\subsection{The kernels}
+Let $0<s<1$ be rational with denominator $q$. Put $o=q(1-s)$, so that $k-1+s=(qk-o)/q$. For the function $F_s$ of
+\eqref{eq:frames}, the kernel $M$ of \eqref{eq:shift} is as follows. Here $0\le t<t'$ are integers, and
+$M[t',t]=M[t,t']$.
+\begin{align*}
+ M[t,t']&=\frac1{q^2(t'-t)}\sum_{k=t+1}^{t'}\Bigl(\frac1k-\frac q{qk-o}\Bigr),\\
+ M[t,t]&=-\frac1{q^2}\sum_{k=1}^{t}\Bigl(\frac1{k^2}-\frac{q^2}{(qk-o)^2}\Bigr).
+\end{align*}
+For $s=\frac34$ this is $M[t,t']=-\frac1{t'-t}\sum_{k=t+1}^{t'}\frac1{16k(4k-1)}$. For the function $F_\chi$,
+\[
+ M[t,t']=\frac1{6(t'-t)}\sum_{k=t+1}^{t'}g(k),\qquad M[t,t]=\frac16\sum_{k=1}^{t}g'(k),
+\]
+with $g(k)=\frac1{3k-2}-\frac1{2k-1}+\frac1{6k}$. Then
+$-\frac16g'(k)=\frac1{2(3k-2)^2}-\frac1{3(2k-1)^2}+\frac1{36k^2}$.
+
+We write each frame as $F=\sum_{\varsigma\in\mathcal T}w_\varsigma\psi(z+\varsigma)$, where $\mathcal T$ is the set of
+shifts of $F$ and $\sum_\varsigma w_\varsigma=0$. For $F_s$, $\mathcal T=\{1,s\}$ with $w_1=1$ and $w_s=-1$. For
+$F_\chi$, $\mathcal T=\{\frac13,\frac12,1\}$. The number $|\mathcal T|$ of digamma terms is $2$ for $F_s$ and $3$ for
+$F_\chi$.
+
+\begin{lemma}\label{lem:loewner}
+For each function of \eqref{eq:frames}, $\omega\,\Lw_F[R,Q]=M[R,Q]+\xi\Id_{R,Q}$ for all finite sets
+$R,Q\subset\Z_{\ge0}$, with $\omega$ and $\xi$ as in \eqref{eq:frames}.
+\end{lemma}
+\begin{proof}
+From $\psi(w+1)-\psi(w)=1/w$ one gets $F_s(k)-F_s(k-1)=\frac1k-\frac1{k-1+s}=\frac1k-\frac q{qk-o}$. Telescoping gives the
+off-diagonal entries. In the same way $\psi'(w+1)-\psi'(w)=-1/w^2$ gives $F_s'(t)-F_s'(0)$. Finally
+$\omega F_s'(0)=q^{-2}(\psi'(1)-\psi'(s))=-q^{-2}\Psi(s,1)=\xi_s$. For $F_\chi$ the entries are computed in the same way.
+For the value at $0$, the multiplication formula $\sum_{i<n}\psi'(z+\frac in)=n^2\psi'(nz)$ gives
+$\psi'(\frac12)=3\psi'(1)$ and $\psi'(\frac13)+\psi'(\frac23)=8\psi'(1)$. Hence
+$F_\chi'(0)=-\frac13\psi'(\frac13)+\frac12\psi'(\frac12)-\frac16\psi'(1)=-\frac16\Psi(\frac13,\frac23)$, and
+$-\frac16F_\chi'(0)=\frac1{36}\Psi(\frac13,\frac23)=\xi_\chi$.
+\end{proof}
+
+Since $\mu(u\xi+u')=\mu(\xi)$ for rational $u\ne0$ and $u'$, Theorem~\ref{thm:main} is a statement about the numbers
+$\xi$ of \eqref{eq:frames}.
+
+\subsection{Geometries}
+\begin{definition}\label{def:geometry}
+Let $r,m\ge0$. The \emph{geometry} $\mathcal G(r,m)$ consists of the common nodes $C=[0,r)$, the row nodes
+$X'=\{r+2i:0\le i<m\}$ and the column nodes $Y'=\{r+2i+1:0\le i<m\}$. Rows are indexed by $R=C\sqcup X'$ and columns by
+$Q=C\sqcup Y'$. Let $I\subseteq C$ be a set of deleted common nodes. The matrix
+\[
+ \Phi_{\mathcal G,I}(x)=\bigl(M[t,t']+x\,\mathbf 1[t=t'\in C\setminus I]\bigr)_{t\in R\setminus I,\ t'\in Q\setminus I}
+\]
+is square of size $|C\setminus I|+m$. Put $P_{\mathcal G,I}(x)=\det\Phi_{\mathcal G,I}(x)\in\Q[x]$. We write
+$\Phi_{\mathcal G}$ and $P_{\mathcal G}$ when $I=\emptyset$.
+\end{definition}
+
+By Lemma~\ref{lem:loewner}, $\Phi_{\mathcal G}(\xi+h)=\omega\,\Lw_F[R,Q]+h\Id_{R,Q}$ for real $h$. The geometry with
+$m=0$ is the square L\"owner matrix of size $r$.
+
+\begin{definition}\label{def:altgeom}
+Let $0<c\le1$ and $\alpha=c/2$. The \emph{alternating geometry} of parameter $c$ at an even scale $r$ is
+$\mathcal G(r,m(r))$ with $m(r)=\lceil\alpha r-\frac12\rceil$. Then $|m(r)-\alpha r|\le\frac12$, and the border
+$[r,r+2m)$ has length $cr+O(1)$. For a depth $K\ge0$, its \emph{members} are the matrices
+$\Phi_{r,I}=\Phi_{\mathcal G,I}$ with $|I|\le K$. We put $P_{r,I}=\det\Phi_{r,I}$.
+\end{definition}
+
+For the frames $F_s$ we use $c=\frac3{10},\frac15,\frac3{10},\frac29,\frac16$ for $q=2,4,3,5,7$. For $F_\chi$ we use
+$c=\frac12$, as explained in Section~\ref{sec:chi3-quarter}. All $o(1)$ terms below are uniform over the members as
+$r\to\infty$.
+
+\begin{lemma}[integrality]\label{lem:integrality}
+$P_{\mathcal G,I}$ has degree at most $|C\setminus I|$. If $a/b$ is a fraction in lowest terms with
+$P_{\mathcal G,I}(a/b)\ne0$, then $|\den(P_{\mathcal G,I})\,P_{\mathcal G,I}(a/b)|\ge b^{-|C\setminus I|}$.
+\end{lemma}
+\begin{proof}
+The variable occurs only in the $|C\setminus I|$ diagonal entries indexed by $C\setminus I$. So each Leibniz term has
+degree at most $|C\setminus I|$. Then $b^{|C\setminus I|}\den(P_{\mathcal G,I})\,P_{\mathcal G,I}(a/b)$ is a nonzero
+integer.
+\end{proof}
+
+\begin{remark}
+Suppose that the $m\times m$ block $M[X',Y']$ is invertible. The Schur complement then gives
+$P_{\mathcal G}(x)=\det M[X',Y']\cdot\det(x\Id_C+\widetilde M)$ with
+$\widetilde M=M[C,C]-M[C,Y']M[X',Y']^{-1}M[X',C]$. So the rectangular determinant is, up to a constant, the
+characteristic polynomial of a rational matrix of size $|C|$, as in the square case. We do not need this
+factorisation. Lemma~\ref{lem:integrality} only uses the degree bound.
+\end{remark}
+
+%% =====================================================================
+\section{Arithmetic: the content}\label{sec:content}
+
+In this section we bound the common denominator of the coefficients of the members $P_{r,I}$ for the frames $F_s$. The
+method is that of Rhin and Viola \cite{RhinViola96,RhinViola01}. The $p$-adic valuation of the denominator is bounded
+prime by prime. The bounds are summed against $\log p$ with the prime number theorem in arithmetic progressions. What is
+new is the form of the local bounds. Each is proved by its own argument. All of them are explicit integer expressions in
+four integers attached to the prime. Their minimum, integrated, gives the content constant. The comparison between the
+local bounds and a table of affine pieces is a finite computation with rational numbers. Theorem~\ref{thm:content} turns
+a table that passes it into the content estimate. Section~\ref{sec:chi3-quarter} treats the frame $F_\chi$.
+
+\subsection{The root class of a prime}
+Fix the frame $F_s$, with $s$ of denominator $q$, and the alternating geometry of parameter $c=2\alpha$. Put $N=r+2m$.
+Let $p>q$ be a prime. The indices $k\ge1$ at which the entries of $M$ acquire a denominator divisible by $p$ are the
+multiples of $p$ and the solutions of $qk\equiv o\pmod p$. Let $k_p$ be the least of the latter. Then
+\[
+ qk_p=jp+o,\qquad 0<j<q,\qquad j\equiv qs\,p^{-1}\pmod q .
+\]
+We call $j$ the \emph{root class} of $p$ and put $\kappa=\kappa_j=j/q$. Then $k_p-\kappa p=o/q\in[\frac1q,1-\frac1q]$. So
+the first pole is at distance less than one from $\kappa p$, uniformly in $s$. Throughout we assume $q(r+2m)<p^2$. Then
+every pole below $N$ is simple, and only the first power of $p$ matters. The primes with $p^2\le q(r+2m)$ and the prime
+powers contribute $O(r^{3/2}\log r)$ in total.
+
+\subsection{Gauss valuations, the assignment bound and the rank of the reduction}
+Fix a prime $p$. Let $\cO\subset\Q(x)$ be the localisation of $\Z_{(p)}[x]$ at the prime ideal $(p)$. It is a discrete
+valuation ring with uniformiser $p$ and residue field $\F_p(x)$. Its valuation $v$, restricted to $\Q[x]$, is the
+\emph{Gauss valuation} $v(f)=\min_k v_p(f_k)$ for $f=\sum f_kx^k$. By Gauss's lemma $v(fg)=v(f)+v(g)$, and
+$v_p(\den f)=\max(0,-v(f))$. For a member we write $e_p(r,I)=v_p(\den P_{r,I})$.
+
+\begin{lemma}[assignment bound and LP duality]\label{lem:trop}
+Let $A$ be a square matrix over $\Q[x]$ with rows $X_0$ and columns $Y_0$. Let $W_{tt'}=\max(0,-v(A_{tt'}))$, and let
+$\tau(W)$ be the largest weight $\sum W_{tt'}$ of a perfect matching between $X_0$ and $Y_0$. Then
+$v(\det A)\ge-\tau(W)$. If real numbers $u_t$, $u'_{t'}$ satisfy $W_{tt'}\le u_t+u'_{t'}$ for all $t\in X_0$ and
+$t'\in Y_0$, then $\tau(W)\le\sum_tu_t+\sum_{t'}u'_{t'}$.
+\end{lemma}
+\begin{proof}
+Each Leibniz term is a product of entries along a perfect matching. So its valuation is at least minus the weight of the
+matching. The valuation of a sum is at least the minimum of the valuations of its terms. The second statement is weak
+LP duality for the assignment problem. The weight of a perfect matching is at most $\sum_tu_t+\sum_{t'}u'_{t'}$.
+\end{proof}
+
+\begin{lemma}[rank of the reduction]\label{lem:rank}
+Let $(u,u')$ be integer potentials with $W_{tt'}\le u_t+u'_{t'}$ for the matrix $\Phi_{r,I}$ at $p$, of value
+$\tau'=\sum_tu_t+\sum_{t'}u'_{t'}$. Then $\widetilde\Phi=\operatorname{diag}(p^{u})\,\Phi_{r,I}\,
+\operatorname{diag}(p^{u'})$ has entries in $\cO$, and
+\[
+ e_p(r,I)\le\tau'-\corank_{\F_p(x)}(\widetilde\Phi\bmod p).
+\]
+\end{lemma}
+\begin{proof}
+We have $v(\det\Phi_{r,I})=-\tau'+v(\det\widetilde\Phi)$. Over the discrete valuation ring $\cO$ the Smith normal form
+shows $v(\det\widetilde\Phi)\ge\corank(\widetilde\Phi\bmod p)$.
+\end{proof}
+
+The rank bounds below use a refinement of Lemma~\ref{lem:rank} at second order. Suppose that, after a unimodular change
+of rows and columns over $\cO$, the first $n_1$ rows and the first $n_2$ columns of $\widetilde\Phi$ are divisible by
+$p$. Suppose also that the $n_1\times n_2$ block where they meet is divisible by $p^2$. Dividing the first $n_1$ rows by
+$p$ leaves the first $n_2$ columns divisible by $p$. So
+\begin{equation}\label{eq:corner}
+ v(\det\widetilde\Phi)\ge n_1+n_2 .
+\end{equation}
+
+The vectors that produce such rows and columns are kernel vectors of the reduction of $\widetilde\Phi$ on single residue
+classes. The condition on the corner is a statement about their pairing at first order, which we now describe. Let
+$\widetilde\Phi=p^2\Phi_{r,I}$, so that all potentials equal $1$. Since $q(r+2m)<p^2$, two distinct nodes $t\ne t'$ have
+$v_p(t'-t)\ge1$ only if $t\equiv t'\pmod p$, and then $v_p(t'-t)=1$. Hence $\widetilde\Phi$ has entries in $\cO$. Its
+reduction is block diagonal over the residue classes modulo $p$, which we call the \emph{fibres}. For nodes $t$, $t'$
+in distinct fibres,
+\begin{equation}\label{eq:firstorder}
+ \widetilde\Phi_{tt'}\equiv\frac{p\,(V(t')-V(t))}{t'-t}\pmod{p^2}.
+\end{equation}
+Here $V(t)\in\F_p$ is the residue of $p$ times the partial sum $\sum_{k\le t}(\frac1k-\frac q{qk-o})$, up to the
+normalising factor $q^{-2}$. The function $V$ is a step function of $t$ which jumps only at the poles $t\equiv0$ and
+$t\equiv k_p$. Since $t'-t$ is prime to $p$, only its residue matters in \eqref{eq:firstorder}.
+
+For a vector $\mathbf y$ indexed by nodes, its \emph{moment pair} is
+\[
+ \hat{\mathbf y}=\Bigl(\sum_ty_t,\ \sum_ty_tV(t)\Bigr).
+\]
+
+\begin{lemma}[pairing]\label{lem:pairing}
+Let $\mathbf y$ be supported on the rows of one fibre and $\mathbf y'$ on the columns of a different fibre. Let $t$ and
+$t'$ be nodes of the first and of the second fibre. Then
+\[
+ \mathbf y^{\top}\widetilde\Phi\,\mathbf y'\equiv\frac p{t'-t}\,
+ \det\begin{pmatrix}\hat{\mathbf y}\\ \hat{\mathbf y}'\end{pmatrix}\pmod{p^2}.
+\]
+In particular the pairing vanishes modulo $p^2$ whenever the moment pairs of $\mathbf y$ and $\mathbf y'$ are
+proportional.
+\end{lemma}
+\begin{proof}
+Expand $\mathbf y^{\top}\widetilde\Phi\,\mathbf y'$ with \eqref{eq:firstorder}.
+\end{proof}
+
+The moment pairs are never both zero. This follows from the displacement structure of L\"owner matrices.
+
+\begin{lemma}[moment lemma]\label{lem:moment}
+Let $A$ be a matrix with rows indexed by a set $X_0$ of distinct integers and columns by a set $Y_0$, with
+$|X_0|=|Y_0|+1$. Suppose that its off-diagonal entries are $A(t,t')=(\mathcal L(t')-\mathcal L(t))/(t'-t)$ for some
+function $\mathcal L$, and that its diagonal entries, on $X_0\cap Y_0$, are arbitrary. Then $A$ has a nonzero left kernel
+vector $\mathbf y$ with $(\sum_ty_t,\sum_ty_t\mathcal L(t))\ne(0,0)$.
+\end{lemma}
+\begin{proof}
+Write $\operatorname{diag}(X_0)$ and $\operatorname{diag}(Y_0)$ for the diagonal matrices of the indices. Then
+$\operatorname{diag}(X_0)A-A\operatorname{diag}(Y_0)=\mathcal L_{X_0}\mathbf 1^{\top}-\mathbf 1\mathcal L_{Y_0}^{\top}$,
+because the diagonal entries cancel on common indices. The left kernel $\mathcal V$ of $A$ is nonzero. Suppose that
+every $\mathbf y\in\mathcal V$ had zero moment pair. Multiplying on the left by $\mathbf y^{\top}$ would give
+$\mathbf y^{\top}\operatorname{diag}(X_0)A=0$. So $\operatorname{diag}(X_0)$ would preserve $\mathcal V$. As this matrix
+is diagonal with distinct entries, $\mathcal V$ would contain a standard basis vector. That vector is supported on one
+index $t$, and its moment pair is $(1,\mathcal L(t))\ne(0,0)$. This is a contradiction.
+\end{proof}
+
+\subsection{The local bounds}
+We now list the local bounds. Each is a statement of the following form. Let $P_{r,I}$ be a member with $|I|\le K$, and
+let $p>p_0$ be a prime with $q(r+2m)<p^2$ that satisfies the stated conditions. Then
+\begin{equation}\label{eq:localform}
+ e_p(r,I)\le\tau(r,m,p,k_p)+\mathrm{debit}\cdot|I| .
+\end{equation}
+Here $\tau$ is the stated expression, and the \emph{debit}, $0$ or $1$, is the stated cost of each deleted node. The
+constant $p_0$ depends only on the frame. We write $(\cdot)_+=\max(\cdot,0)$, $\|m\|_p$ for the distance of $m$ to
+$p\Z$, and $\bar u=(k_p+p-r)_+$.
+
+\begin{theorem}[local bounds]\label{thm:local}
+The following bounds of the form \eqref{eq:localform} hold.
+\begin{center}
+{\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lp{0.47\textwidth}p{0.27\textwidth}c@{}}
+\toprule
+ & bound $\tau$ & conditions & debit\\
+\midrule
+(T1) & $2(r+m)$ & none & $0$\\
+(T1$'$) & $2r+2m-\|m\|_p$ & none & $0$\\
+(T2) & $2(r-\bar u)_++2m+\min(\bar u,2m)$ & $2m<p\le r$ & $0$\\
+(T3) & $2r+m$ & $2m<p\le r$ & $0$\\
+(T4) & $2(r-k_p)_++2m+(2m-(p-r))_+$ & $r<p$ & $0$\\
+(T5) & $(2m-(k_p-r)_+)_+$ & $N\le p$, $r\le k_p$ & $0$\\
+(LP1) & $\tau_{\rm T2}-(\min(\bar u,2m)-m)_+$ & $p\le r<p+k_p$, $N\le2p$ & $1$\\
+(LP2) & $2(r-k_p)+3m$ & $r<p<r+m$, $k_p\le r$, $N\le2p$ & $1$\\
+(W) & $2r+2m-(t_2-t_1)$ for each window $[t_1,t_2)$ of Theorem~\ref{thm:window} & as there & $0$\\
+(R) & $\Pi_R$ of \eqref{eq:PiR} & $2m<p$ & $0$\\
+(S) & $\Pi_S$ of \eqref{eq:PiS} & $2m\le p$ & $1$\\
+(U$_n$) & $\Pi_{U,n}$ of \eqref{eq:PiU}, $n\ge0$ & $np\le m<(n+1)p$, and $p\le2m$ if $n=0$ & $0$\\
+\bottomrule
+\end{tabular}}
+\end{center}
+\end{theorem}
+
+The rest of this subsection proves Theorem~\ref{thm:local}, family by family.
+
+\subsubsection{The assignment bounds (T1)--(T5)}\label{sssec:trop}
+These follow from Lemma~\ref{lem:trop} with explicit potentials. Consider an off-diagonal entry $M[t,t']$. By the
+ultrametric inequality, $-v_p(M[t,t'])$ is at most the number of the following two events that occur: the interval
+$(t,t']$ contains a pole, and $p$ divides $t'-t$. A diagonal entry $M[t,t]$ has $-v_p\le2$ if $t\ge k_p$ and $-v_p\le0$
+if $t<k_p$. The bound (T1) is the trivial bound, with potentials $1$ on every row and column.
+
+For (T1$'$) the potentials depend on the residue class modulo $p$. On the rows of a class they are $\frac12$,
+$\frac32$ or $1$, according as $X'$ has more, fewer or as many nodes in the class as $Y'$. On the columns they are
+$\frac32$, $\frac12$ or $1$ in the same three cases. The border alternates between $X'$ and $Y'$. So the imbalance is
+at most one per class, and the number of unbalanced classes is $2\|m\|_p$.
+
+For (T2)--(T5) one starts from the potential $\mathbf 1[t\ge k_p]$ on the common nodes $t$, which pays for the diagonal.
+One adds $1$, or $1+\mathbf 1[t\ge p]$, on the border nodes $t$. Then one raises the potentials of the common nodes that
+have a congruent partner in the border. In each range one checks $W\le u+u'$ entrywise. Two facts are used. Two distinct
+nodes not congruent modulo $p$ have weight at most $1$. Two border nodes are never congruent once $2m<p$. For (T5) we
+have $N\le p$ and $r\le k_p$. Then no common node pays for the diagonal, and only the border nodes beyond $k_p$ carry
+potential $1$. So (T5) vanishes once $k_p\ge N$, which happens for $p/r>\max(1+2\alpha,1/\kappa)+o(1)$. All cases are
+checked in the formal proof.
+
+\subsubsection{Primes near $r$: the bounds (LP1) and (LP2)}\label{sssec:lp}
+For $p$ close to $r$ the reduction of the rescaled matrix has a large block of rank one per residue class. Its corank
+can be computed. We give the proof of (LP2). The bound (LP1) applies to the primes with $p\le r<p+k_p$ and $N\le2p$. It
+is proved by the same method. With the potentials of (T2), eliminating an invertible block of common nodes brings the
+reduction to the form $\begin{psmallmatrix}\tilde x\Id&\mathcal J_Y\\ \mathcal J_X&0\end{psmallmatrix}$, where $\tilde x$
+is the variable $x$ plus a constant. In this form the border nodes below $p+k_p$ contribute rows and columns
+proportional to unit vectors. The Frobenius--K\"onig theorem bounds its rank. The saving over (T2) is
+$(\min(2m,p+k_p-r)-m)_+$, where $\min(2m,p+k_p-r)$ is the number of border nodes below $p+k_p$. We refer to the formal
+proof for the details.
+% Lean: Content.Smith.LP1Hyp.gle; branch Content.BankShared.TwoTerm.lp1_gle_tt.
+
+\begin{theorem}\label{thm:lp2}
+Assume $r<p<r+m$, $k=k_p\le r$ and $N=r+2m\le2p$, and that every pole below $N$ is simple. Then
+$v(\det\Phi_{r,\emptyset})\ge-(2(r-k)+3m)$. The same holds for every member, with debit $1$ per deleted node.
+\end{theorem}
+% Lean: Content.BankShared.TwoTerm.LP2HypW.gle; branch lp2w_gle_tt (catalogue entry brLP2w).
+\begin{proof}
+Use the potentials $u(t)=\mathbf 1[k\le t]$ for common nodes $t<r$ and $u(t)=1+\mathbf 1[p\le t]$ for border nodes $t$.
+Their value is $\tau'=2(r-k)+2m+(N-p)$. Since $N\le2p$, the poles below $N$ are $k$, $p$, and $p+k$ if $p+k<N$. Each is
+simple. The residues of $p$ times the increment $\frac1t-\frac q{qt-o}$ at these poles are $-q/j$, $1$ and $-q/(q+j)$.
+
+\emph{Rows and columns beyond $p+k$ vanish.} Let $t\in[p+k,N)$ be a border node, so that $u(t)=2$. Let $t'$ be a node of
+the other kind. If $t'<k$, then $u(t')=0$. The partial sum over $(t',t]$ then has valuation at least $-1$, and
+$t-t'\in(p,2p)$ is prime to $p$. Otherwise $u(t')\ge1$ and $v_p(M[t',t])\ge-2$. In both cases the rescaled entry is
+divisible by $p$.
+
+\emph{The remaining entries.} For nodes below $p+k$ the only poles are $k$ and $p$. Put $C_0=[0,k)$ and $C_1=[k,r)$.
+Recall that $\omega=q^{-2}$ is the normalisation of \eqref{eq:frames}. The reduction has the following blocks. On
+$C_0\times C_0$ it is the regular part plus $x$ on the diagonal. On $C_0\times C_1$ the entries are
+$-\omega q/(j(t-t'))$ with $t'\in C_0$ and $t\in C_1$. On $C_1\times C_1$ it is the scalar matrix $\omega(q/j)^2\Id$. A
+border node $t\in[r,p)$ against $t'\in C_0$ gives $\omega q/(j(t-t'))$. A border node $t\in[p,p+k)$ against $t'\in C_0$
+gives $\omega(1-q/j)$ if $t'=t-p$, and $0$ otherwise. All other border entries vanish.
+
+\emph{Rank.} Delete the zero rows and columns found above. This does not change the rank. Eliminate the scalar block on
+$C_1$. The Schur complement on $C_0$ is $\tilde x\Id$ plus a constant multiple of the matrix with entries
+$\sum_{i=1}^{p-r}\frac1{(t+i)(t'+i)}$ for $t,t'\in C_0$. Here $\tilde x$ is $x$ plus a constant, and the computation uses
+the reflection $H_{p-1-n}\equiv H_n\pmod p$ of harmonic numbers. The border nodes $t\in[r,p)$ are indexed by $i=p-t$.
+They are all present because $N>p$. Even offsets are rows and odd offsets are columns, and together they cover
+$1\le i\le p-r$. So row and column operations remove that multiple and leave
+$\begin{psmallmatrix}\tilde x\Id&\mathcal J_Y\\ \mathcal J_X&0\end{psmallmatrix}$. Here it is essential that $x$ is an
+indeterminate, so that $\tilde x$ is a unit. A Schur complement on $\tilde x\Id$ then shows that the rank is
+$k+\rank(\mathcal J_X\mathcal J_Y)$. In $\mathcal J_X\mathcal J_Y$ the block between the high rows and the high columns is
+zero, since their offsets $t-p$ have opposite parities. So $\rank(\mathcal J_X\mathcal J_Y)\le p-r$. In total the rank of
+the reduction is at most $(r-k)+k+(p-r)=p$, and the corank is at least $r+m-p$. Lemma~\ref{lem:rank} gives
+$v(\det)\ge(r+m-p)-\tau'=-(2(r-k)+3m)$. Deleting a common node changes the potentials by at most one.
+\end{proof}
+
+Under the hypothesis $N\le p+k$ the third pole does not occur, and the proof is shorter. The border nodes beyond $p+k$
+only contribute rows and columns that vanish modulo $p$. This observation allows the whole range $N\le2p$, which is
+automatic on the interval $r<p<r+m$.
+
+\subsubsection{Pole-free windows: the bound (W)}\label{sssec:window}
+Like the rank bounds, the bound (W) does not come from the valuations of the entries alone. Between two consecutive
+poles the step function $V$ of \eqref{eq:firstorder} is constant. The reductions of the fibres of nearby residue classes
+are then translates of one another. Kernel vectors can be transported from one fibre to the next. Their pairings vanish
+modulo $p^2$ by Lemma~\ref{lem:pairing}. The corner bound \eqref{eq:corner} turns this into a saving at second order.
+
+A \emph{cut} is an integer $t$ with $t\equiv0$, $t\equiv k_p$ or $t\equiv r\pmod p$. A window $[t_1,t_2)$ of integers is
+\emph{cut-free} if no cut lies in the open interval $(t_1,t_2)$.
+
+\begin{theorem}\label{thm:window}
+Assume that every pole below $N$ is simple and $N<p^2$. Let $n\ge0$ with $np\le m$, and put $N_n=r+2(m-np)$. Let
+$[t_1,t_2)$ be a cut-free window with $\max(r,N_n-p)\le t_1\le t_2\le\min(N_n,r+p)$. Then every member satisfies
+\[
+ e_p(r,I)\le2r+2m-(t_2-t_1).
+\]
+\end{theorem}
+% Lean: Content.BankShared.TwoTerm.Pre.prefix_gle (any frame whose poles below N are simple); branches brWin (n = 0,
+% Check/Catalogue.lean) and brPre (Check/Prefix.lean).
+For $n=0$ the windows lie in the border above $\max(r,N-p)$, and the bound applies to primes $p>m$. For
+$n=\lfloor m/p\rfloor\ge1$ it applies to the small primes $p\le m$. For these primes only (T1) and (T1$'$) are
+available among the assignment bounds. Read modulo $p$, the window range is then the arc of residues that receive an odd
+number of border nodes. The saving over (T1$'$) is the amount, if any, by which the length of the longest cut-free run
+of this arc exceeds $\|m\|_p$. For other $n$ the window range is empty. The proof uses the frame only through its poles.
+For a frame with several digamma terms the same statement holds when the cuts are the residues of all the poles and
+of $r$.
+
+\begin{proof}
+Let $\widetilde\Phi=p^2\Phi$, with independent diagonal variables on the common nodes. Every member is a coefficient of
+this determinant, so a bound for it bounds every member. Let $i<i'$ be two positions of the window. They lie in
+different residue classes. The translation $t\mapsto t+(i'-i)$ maps the nodes of the fibre of $i$ bijectively onto those
+of the fibre of $i'$. It maps common nodes to common nodes, since no $t\equiv r$ lies in $(i,i']$. It maps border nodes
+to border nodes, since both classes lie in the window range. It maps $X'$ to $Y'$ when $i'-i$ is odd. There is no pole
+in $(i,i']$. So the step function $V$ and the diagonal residues are unchanged, and so are the differences of nodes.
+Hence the reduced block of the fibre of $i'$ equals that of $i$ when $i'-i$ is even, and its transpose when $i'-i$ is
+odd.
+
+In the window the fibres alternate between one more row than column and one more column than row. Take a nonzero left
+kernel vector $\mathbf y$ of one block and transport it to every fibre of the window. It is a left kernel vector on the
+fibres with a surplus row and a right kernel vector on the others. Its moment pair is the same everywhere. By
+Lemma~\ref{lem:pairing} all pairings between these vectors vanish modulo $p^2$. There are $n_1$ such vectors on rows and
+$n_2$ on columns, with $n_1+n_2=t_2-t_1$. Extending them to unimodular matrices, \eqref{eq:corner} gives
+$v(\det\widetilde\Phi)\ge t_2-t_1$. Since $\det\widetilde\Phi=p^{2(r+m)}\det\Phi$, the theorem follows.
+\end{proof}
+
+\subsubsection{The rank bound (R)}\label{sssec:rank}
+Let $2m<p$. Write $r=k_0p+r_p$ with $0\le r_p<p$. Note that $k_p=\lceil jp/q\rceil$, since $0<o<q$. Put
+$\mathrm{arc}_0=[0,k_p-1]$ and $\mathrm{arc}_1=[k_p,p-1]$. For $k\ge0$ and $\iota\in\{0,1\}$ let
+\[
+\begin{gathered}
+ n_{k,\iota}=\bigl|[r,r+2m)\cap[kp+\min\mathrm{arc}_\iota,\,kp+\max\mathrm{arc}_\iota]\bigr|,\\
+ n_{\rm sq}=\bigl|[\max(0,r+2m-p),\min(r,k_p))\bigr|,
+\end{gathered}
+\]
+and
+\begin{multline}\label{eq:PiR}
+ \Pi_R=2(r+m)\\-\max\bigl(m+n_{\rm sq},\ n_{0,0}+n_{1,0}+2n_{\rm sq},\ n_{k_0,0},\ n_{k_0,1},\ n_{k_0+1,0},\ n_{k_0+1,1}\bigr).
+\end{multline}
+
+\begin{proof}[Proof of the bound (R)]
+Every node is $t=i+pk$ with residue $i\in[0,p)$ and digit $k$. Write $k(i)$ for the number of common nodes in the fibre
+of $i$. The border has length $2m<p$. So this fibre contains the common digits $0,\dots,k(i)-1$ and at most one border
+digit, namely $k(i)\in\{k_0,k_0+1\}$. This border node is a row or a column according to the parity of $i+pk(i)-r$. The
+step function $V$ is constant on the fibre up to the bit $\iota(i)=\mathbf 1[i\ge k_p]$. Thus the reduced block of a fibre
+depends only on $(k(i),\iota(i))$ and on the role of its border digit. Its entries have the L\"owner form of
+Lemma~\ref{lem:moment}.
+
+A fibre with a border row has a left kernel vector with nonzero moment pair. A fibre with a border column has such a
+right kernel vector. For the digit $0$ below the pole the step function vanishes. So these fibres share the moment
+direction $(1,0)$. A fibre of type $(1,0)$ without border digit has the zero block and contributes one row and one
+column. Choosing one such vector per fibre kills $m+n_{\rm sq}$ rows and as many columns. This gives the saving
+$m+n_{\rm sq}$.
+
+Within a class of fibres of the same type $(k,\iota)$ all moment pairs are equal. So by Lemma~\ref{lem:pairing} the
+pairings between the killed rows and columns of one class vanish modulo $p^2$. Then \eqref{eq:corner} gives a saving
+equal to the number of killed coordinates of the class. This number is $n_{k,\iota}$ for $k\ge1$ and
+$(k,\iota)\ne(1,0)$. It is $n_{0,0}+n_{1,0}+2n_{\rm sq}$ for the class of direction $(1,0)$. Taking the best class gives
+\eqref{eq:PiR}. A deleted common node changes at most one fibre. Give up that fibre, and one further fibre to restore the
+balance of rows and columns. The trivial certificate then costs at most two killed coordinates of each kind. The smaller
+matrix compensates for them, so the debit is $0$.
+\end{proof}
+
+\subsubsection{Separated border nodes: the bound (S)}\label{ssec:sep}
+The bound (S) uses a different source of cancellation. Choose a window $[t_0,t_v]$ of border nodes whose residues lie in
+one arc between consecutive poles. Consider a border node outside it. Suppose the interval between the node and $t_0$
+contains a singular index. Then the residues modulo $p$ of $p$ times the partial sums at the two nodes differ, because
+two singular contributions in an interval of length less than $p$ cannot cancel. The leading coefficient in $x$ of the
+bordered determinant of a fibre is this residue. So the cross product of the two bordered fibre determinants has a
+nonzero leading coefficient. The border node is then eliminated against $t_0$ with no further information. Count the
+residues of the window together with the residues of the eliminated border nodes. This gives an explicit bound, a
+minimum over the four window types $(k,\iota)\in\{k_0,k_0+1\}\times\{0,1\}$, which we now state.
+
+Let $2m\le p$, and let $k_0$, $r_p$, $\mathrm{arc}_0$, $\mathrm{arc}_1$ and $n_{k,\iota}$ be as in \S\ref{sssec:rank}.
+For a type $(k,\iota)$ let $\mathcal K_{k,\iota}$ be the interval of the integers $kp+i$ with $i\in\mathrm{arc}_\iota$,
+and with $i<r_p$ if $k=k_0+1$. The border nodes in $\mathcal K_{k,\iota}$ form the window, and there are $n_{k,\iota}$ of
+them. Let $n_K$ be the number of border nodes in $\mathcal K_{k,\iota}$ and in its two translates
+$\mathcal K_{k,\iota}\pm p$. Put
+\[
+ n_\emptyset=p-|\mathcal K_{k,\iota}|-(2m-n_K),\qquad n_+=(n_{k,\iota}-m)_+ .
+\]
+Since $2m\le p$, each residue class receives at most one border node. So $n_K$ is the number of border nodes whose
+residues are those of $\mathcal K_{k,\iota}$. And $n_\emptyset$ is the number of the other residue classes that receive
+no border node. Then
+\begin{equation}\label{eq:PiS}
+ \Pi_S=\min_{(k,\iota)}\bigl(2r+m-n_+-(n_+-n_\emptyset)_+\bigr),
+\end{equation}
+where a type whose window is empty contributes $2r+m$. The bound (S) is $e_p(r,I)\le\Pi_S+|I|$. Its proof carries out the
+elimination above for every border node outside the window. We refer to the formal proof for it.
+% Lean: Content.UFSimple.closedPrice (the minimum of four closedBound candidates, Content/UFSimple/Closed.lean and
+% Cell.lean) and its layer ufClosedLayer (debit 1); catalogue entry brS = tS (Content/BankShared/Check/UF.lean), with
+% closedPrice <= tS (closedPrice_le_tS). Here \mathcal K_{k,z} = [w0, t_v], w0 = candB + candL, t_v = candB + candUb, n_K = beta3.
+
+\subsubsection{The border wrapping around: the bound (U$_n$)}\label{sssec:wrap}
+When $p\le2m$ the border meets some residue classes more than once, and the bound (S) is not available. The bound (U$_n$)
+extends it to these primes. It works at third order in the Smith normal form. We show two things. After the elimination
+of a block of unit pivots, the rescaled matrix has the Smith invariants of a smaller geometry, to which the separation
+argument of (S) applies. The third-order information of that argument survives the elimination.
+
+Write $m=np+\bar m$ with $0\le\bar m<p$, so that $n=\lfloor m/p\rfloor$. Put
+\[
+ d=\|m\|_p=\min(\bar m,p-\bar m),\qquad \bar r=r+m-d .
+\]
+For $i\in\{0,1,2\}$ and $\iota\in\{0,1\}$ let $Z_i=p\lfloor r/p\rfloor+(n+i)p$, and put
+\[
+ w_0=Z_i+\min\mathrm{arc}_\iota,\quad t_0=\max(\bar r,w_0),\quad t_v=\min(Z_i+\max\mathrm{arc}_\iota,\,\bar r+p-1).
+\]
+Consider the virtual geometry with common block $[0,\bar r)$ and border $[\bar r,\bar r+2d)$. In it, let
+$n_+=\bigl(\min(t_v+1,\bar r+2d)-t_0-d\bigr)_+$. Let $n_K$ be the number of border nodes in $[w_0,t_v]$ and in its two
+translates by $\pm p$, and let $n_\emptyset=p-(t_v+1-w_0)-(2d-n_K)$. Then
+\begin{equation}\label{eq:PiU}
+ \Pi_{U,n}=\min_{i,\iota}\Bigl(2(r+m)-d-n_+-(n_+-n_\emptyset)_+\Bigr),
+\end{equation}
+all subtractions being truncated. This is the expression \eqref{eq:PiS} for the virtual geometry $(\bar r,d)$, with the
+windows $[w_0,t_v]$ in place of $\mathcal K_{k,\iota}$. Note that $2(r+m)-d=2\bar r+d$.
+
+\begin{theorem}\label{thm:wrap}
+Let $p>p_0$ be a prime with $q(r+2m)<p^2$, and let $n\ge0$ with $np\le m<(n+1)p$. Assume $p\le2m$ if $n=0$. Then every
+member satisfies $e_p(r,I)\le\Pi_{U,n}$.
+\end{theorem}
+% Lean: n = 0: Content.UFSimple.WrapCheck.catValid_wrap (branch brWrap; full determinant WrapFamilyClosed.wrapped_member_gle,
+% members WrapLayer.commonMinor_gle). n >= 1: Content.UFSimple.WrapPrefixCheck.catValid_prefix_full (branch brPrefix n,
+% expression WrapExpr.tWrap n; members WrapPrefixLayer.commonMinor_gle_G). Catalogue: UFSimple.prefixBranches 24.
+
+We first describe the proof for $n=0$, that is $m<p\le2m$. We then give the changes for $n\ge1$. As in the proof of
+Theorem~\ref{thm:window} we work with $\widetilde\Phi=p^2\Phi$. We put an independent indeterminate $x_t$ on each common
+diagonal entry. We work over the discrete valuation ring $\cO$ of Gauss valuations in these indeterminates. Every member
+is a coefficient of $\det\widetilde\Phi$, up to the deletion of common rows and columns, which we treat at the end.
+
+\emph{Balanced pivots.} For $n=0$ there are $2m-p$ residue classes that carry two border nodes $t<t+p$, one a row and the
+other a column. There are $2d$ classes that carry one border node, and they lie in an interval of length $2d<p$.
+Eliminate the common block. Its fibres are invertible because the $x_t$ are indeterminates. Consider a class with two
+border nodes. Let $A$ be its common fibre, let $\mathbf a$ and $\mathbf a'$ be the couplings of its border column and
+border row to $A$, and let $\varkappa$ be its border entry. After the elimination the class has the pivot
+$\varpi=\varkappa-\mathbf a'^{\top}A^{-1}\mathbf a$. As the $x_t$ tend to infinity, $\varpi$ tends to a nonzero multiple
+of the residue of $p$ times the increment of the frame over $(t,t+p]$. This interval contains exactly one pole of each
+digamma term. Let $k'p$ be the multiple of $p$ in it, and $t'$ the pole of the second term. If the two contributions
+cancelled, then $q(t'-k'p)\equiv o$ with $|q(t'-k'p)-o|<q$. Hence $q(t'-k'p)=o$, which is impossible for $0<o<q$. So
+these $2m-p$ pivots are units.
+
+After them, the matrix of size $r+m=\bar r+d$ is equivalent over $\cO$ to $\operatorname{diag}(\Id_{\bar r},p\,\Xi)$,
+with $\Xi$ of size $d$. Its Schur complement on the border has the expansion
+\begin{equation}\label{eq:schur3}
+ S=p\,S_1+p^2\bigl(S_2-\mathcal C_{UB}\mathcal B^{-1}\mathcal C_{BU}\bigr)+O(p^3).
+\end{equation}
+Here $\mathcal B$ is the diagonal of the balanced pivots. The matrices $\mathcal C_{UB}$ and $\mathcal C_{BU}$ are the
+first-order couplings between these pivots and the single border nodes. The correction term in \eqref{eq:schur3} is not
+negligible. The following identities account for it.
+
+\begin{lemma}[bordered inverses]\label{lem:bordered}
+Let $A$ be an invertible square matrix over a commutative ring, and let $\mathbf u$ be a vector.
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item Let $A'$ be obtained from $A$ by replacing one column by a vector $\mathbf w$, and suppose that $A'$ is invertible.
+ Let $\mathbf u'$ be obtained from $\mathbf u$ by replacing the corresponding entry by $\mathbf u^\top A^{-1}\mathbf w$.
+ Then $\mathbf u'^{\top}A'^{-1}\mathbf u=\mathbf u^\top A^{-1}\mathbf u$.
+\item Suppose that the matrix
+ \[
+  A'=\begin{pmatrix}A&\mathbf a\\ \mathbf a'^\top&\varkappa\end{pmatrix}
+ \]
+ is invertible. Then
+ $(\mathbf u,y)^\top A'^{-1}(\mathbf u,\mathbf a'^\top A^{-1}\mathbf u)=\mathbf u^\top A^{-1}\mathbf u$ for every
+ scalar $y$.
+\end{enumerate}
+No symmetry of $A$ or $A'$ is assumed.
+\end{lemma}
+\begin{proof}
+(a) Comparing columns gives $\mathbf u'^{\top}=\mathbf u^\top A^{-1}A'$. (b) We have
+$A'\,(A^{-1}\mathbf u,0)^\top=(\mathbf u,\mathbf a'^\top A^{-1}\mathbf u)^\top$.
+\end{proof}
+
+\emph{Moments.} In the separation argument of (S), a border node is credited when its moment relative to a chosen
+reference node vanishes. That moment is a bilinear form $\mathbf u^\top A^{-1}\mathbf u$ in the inverse of the common
+fibre $A$. After the elimination, the common fibre of a class with two border nodes is replaced by a mixed block $A'$ as
+in Lemma~\ref{lem:bordered}. Its lower node is a row and its upper node a column, or conversely. The added product in
+the inverse of $A'$ is exactly the product subtracted in \eqref{eq:schur3}. Lemma~\ref{lem:bordered} shows that the
+mixed moment equals the old one on every class that the separation argument credits. The single border nodes outside the
+window are separated from it as in (S), because two singular contributions in an interval of length $2d<p$ cannot
+cancel. The count of (S), applied to the virtual geometry $(\bar r,d)$, then gives \eqref{eq:PiU}. It uses the
+third-order analogue of \eqref{eq:corner}. Suppose that $n_+$ kernel vectors on each side survive, and that
+at most $n_0$ residue classes carry a nonzero source. Then
+$\sum_i\min(v_i,3)\ge d+n_++(n_+-n_0)_+$, where $v_1,v_2,\dots$ are the valuations of the
+Smith invariants. The first term $d$ is the factor $p$ of $p\,\Xi$.
+
+\emph{Members.} Deleting $k$ common nodes lowers the trivial bound $2(r+m)$ by $2k$. Consider a class with one deleted
+common node and an unchanged direction. It keeps its moment. Indeed, let $A$ be the common fibre and delete its last
+coordinate. The residual of the smaller solution is supported on that coordinate. The equality of the two directions
+forces its pairing with the load to vanish. A class whose direction changes gives a new separation instead. Classes with
+two or more deleted nodes, and classes outside the window, cost at most one each. Let $k_1$, $k_2$ and $k'$ be the
+numbers of classes of these three kinds. Then $k_1+2k_2+k'\le k$. An elementary inequality for the count
+$n_++(n_+-n_0)_+$ shows that the loss is at most $2k$. Hence the bound holds for every
+member with debit $0$.
+
+\emph{Larger $n$.} Let $np\le m<(n+1)p$. Each class of the remaining border absorbs $n$ pairs of border nodes. Its block
+after the elimination is a mixed block. Its rows and columns are the nodes of $2n+1$ consecutive quotients
+$\beta,\beta+1,\dots,\beta+2n$. Here $\beta$ is the number of common nodes in the class, and the quotient of a node $t$ in
+the class of a residue $i$ is $(t-i)/p$. The window counts are those of the first case at the scale $r+np$, translated by
+$np$. The new difficulty is to show that a remaining border node separated from the window by a pole has a nonzero
+coupling. The directions are now those of $(n+1)\times(n+1)$ bordered systems.
+
+\begin{lemma}[bordered systems and rational interpolation]\label{lem:interp}
+Let $\mathbb K$ be a field and $\mathcal Z=\{0,1,\dots,2n\}$, with $(2n)!\ne0$ in $\mathbb K$. Let
+$\mathcal L:\mathcal Z\to\mathbb K$, and let $\mathcal Z=X\sqcup Y$ with $|X|=n+1$ and $|Y|=n$. Consider the bordered
+system
+\[
+ \sum_{y\in Y}\frac{\mathcal L(y)-\mathcal L(x)}{y-x}\,c_y+\vartheta=\mathcal L(x)\qquad(x\in X)
+\]
+in the unknowns $c_y$ and $\vartheta$. Its solutions correspond bijectively to the pairs $(\mathcal N,\mathcal D)$ of
+polynomials with $\mathcal D$ monic of degree $n$, $\deg\mathcal N\le n$ and $\mathcal N(t)=\mathcal L(t)\mathcal D(t)$
+for $t\in\mathcal Z$. Under this correspondence $\vartheta$ is the coefficient of $t^n$ in $\mathcal N$. In particular the
+system is nonsingular exactly when the interpolation problem of type $(n,n)$ has a unique solution. Then
+$\vartheta=\lim_{t\to\infty}\mathcal N(t)/\mathcal D(t)$ depends only on $\mathcal L$ and not on the split.
+\end{lemma}
+\begin{proof}
+Let $\mathcal W(t)=\prod_{y\in Y}(t-y)$, and let $\mathcal W_y=\mathcal W/((t-y)\mathcal W'(y))$ be the Lagrange
+polynomials of $Y$. Given a solution, put $\mathcal D=\mathcal W-\sum_yc_y\mathcal W'(y)\,\mathcal W_y$ and
+$\mathcal N=\vartheta\mathcal W-\sum_yc_y\mathcal L(y)\mathcal W'(y)\,\mathcal W_y$. Then
+$\mathcal N(y)=\mathcal L(y)\mathcal D(y)$ for $y\in Y$. Dividing $\mathcal N(x)-\mathcal L(x)\mathcal D(x)$ by
+$\mathcal W(x)\ne0$ gives the equation of the row $x$. Conversely, Lagrange interpolation on $Y$ recovers
+$c_y=-\mathcal D(y)/\mathcal W'(y)$ and $\vartheta$ from $(\mathcal N,\mathcal D)$.
+\end{proof}
+
+\begin{lemma}[harmonic loads]\label{lem:harmonic}
+Let $\mathcal A\in\mathbb K$ with $\mathcal A+i\ne0$ for $0\le i<2n$, and let
+$\mathcal L_{\mathcal A}(t)=\sum_{0\le i<t}1/(\mathcal A+i)$. Let the characteristic of $\mathbb K$ be $0$ or larger than
+$2n$. For every split, the bordered system of Lemma~\ref{lem:interp} with $\mathcal L=\mathcal L_{\mathcal A}$ is
+nonsingular. Its direction is $\vartheta=\mathcal L_{\mathcal A}(n)+\mathsf c_n$, with $\mathsf c_n\in\mathbb K$
+depending only on $n$. Consequently, for the harmonic load $\mathcal L(t)=H_t$ on the quotients $\beta,\dots,\beta+2n$ the
+direction is $H_{\beta+n}+\mathsf c_n$. The directions of two classes with $\beta$ and $\beta+1$ common nodes differ by
+$1/(\beta+n+1)$.
+\end{lemma}
+\begin{proof}
+Write $\Delta$ for the forward difference. For $l\ge1$ one has
+$\Delta^l\mathcal L_{\mathcal A}(k)=(-1)^{l-1}(l-1)!/(\mathcal A+k)_l$, where $(y)_l$ is the rising factorial. One also
+has $\Delta^l[\binom tk f(t)](0)=\binom lk\Delta^{l-k}f(k)$. By Lemma~\ref{lem:interp} a solution is a pair
+$(\mathcal N,\mathcal D)$ with $\mathcal N=\mathcal L_{\mathcal A}\mathcal D$ on $\mathcal Z$. Since $\mathcal N$ has degree
+at most $n$, this means $\Delta^l(\mathcal L_{\mathcal A}\mathcal D)(0)=0$ for $n<l\le2n$. Write
+$\mathcal D=\sum_k\mathsf d_k\binom tk$ and insert the two formulas. After removing nonzero factors of the rows and
+columns, these $n$ equations become a system for the coefficients $\mathsf d_k$ with $k<n$. Its matrix is the Cauchy
+matrix $\bigl(1/(l-k)\bigr)_{n<l\le2n,\,0\le k<n}$, and its right-hand side comes from $\mathsf d_n=1$. The Cauchy matrix
+is nonsingular. So $\mathcal D$ is unique, which is the nonsingularity.
+
+The same computation shows that $\mathsf d_k/(\mathcal A+k)_{n-k}$ does not depend on $\mathcal A$. For $k<n$,
+$\Delta^{n-k}\mathcal L_{\mathcal A}(k)$ is a constant multiple of $1/(\mathcal A+k)_{n-k}$. Hence
+$\vartheta=\Delta^n(\mathcal L_{\mathcal A}\mathcal D)(0)/n!=\mathcal L_{\mathcal A}(n)+\mathsf c_n$ with
+$\mathsf c_n$ independent of $\mathcal A$. For the harmonic load on the quotients $\beta+t$ we have
+$H_{\beta+t}=H_\beta+\mathcal L_{\beta+1}(t)$. A constant added to $\mathcal L$ is added to $\vartheta$. So the direction is
+$H_\beta+\mathcal L_{\beta+1}(n)+\mathsf c_n=H_{\beta+n}+\mathsf c_n$.
+\end{proof}
+% Lean: Content.UFSimple.WrapPrefixClosed.HSplit.det_ne and HSplit.dir (arbitrary split; dir: the A-independence of the
+% constant), with harmonic_uniq (the Cauchy step).
+
+\begin{remark}\label{rem:hahn}
+The interpolation problem of Lemma~\ref{lem:harmonic} can be solved in closed form. Its denominator is the polynomial
+$\mathcal D_n(t)=\sum_{k=0}^n\binom nk\binom{2n-k}{n-k}(\mathcal A+k)_{n-k}\,t(t-1)\cdots(t-k+1)$, of Hahn type \cite{KLS}.
+The constant is $\mathsf c_n=2H_n$. The determinant of the bordered system is
+$\operatorname{sf}(n)^2\operatorname{sf}(n-1)^2\big/\bigl(\prod_{x\in X,y\in Y}|x-y|\cdot\prod_{i<n}(\mathcal A+i)_{n+1}\bigr)$,
+with $\operatorname{sf}(n)=\prod_{i\le n}i!$. All its prime factors are at most $2n$ or divide some $\mathcal A+i$. These
+closed forms are not used in the proof and are not part of the formalization.
+\end{remark}
+
+\emph{Separation for $n\ge1$.} Between a remaining border node and the reference node of the window lies a cut. Suppose
+first that the cut is a pole of the second digamma term. Deform the shift to $s+pY$, with an indeterminate $Y$. Evaluate
+at the value of $Y$ at which that pole becomes central. After multiplication by the vanishing factor, the bordered systems
+of the two classes become block systems built from Cauchy matrices on the quotients. The square blocks are nonsingular
+by Cauchy's determinant formula. A rectangular Cauchy matrix with $k+1$ rows and $k$ columns has a left kernel vector
+with nonzero coordinate sum. Otherwise the rational function $\sum_iy_i/(T_i-T)$, formed from a kernel vector $(y_i)$
+and the row nodes $T_i$, would vanish at the $k$ column nodes while its numerator has degree less than $k$. This gives the
+two directions the values $0$ and the weight of the term, which differ.
+
+Suppose next that the cut is a multiple of $p$. Take instead the leading coefficient in $Y$. Every fractional pole term
+tends to $0$, and the loads become the harmonic numbers. The two classes have $\beta$ and $\beta+1$ common nodes.
+Lemma~\ref{lem:harmonic} gives directions that differ by $1/(\beta+n+1)$. This is a unit because $\beta+2n+1<p$, by
+$q(r+2m)<p^2$.
+
+In both cases the comparison is made on the cleared numerators of the original determinants, not on inverses. The result
+returns to $Y=0$ by Gauss's lemma. The cleared denominators are products of the elementary denominators of the entries,
+which are units at $Y=0$. So a lower bound for the Gauss valuation of the deformed determinant gives the same lower bound
+for every coefficient of the original one. With these separations, the count and the treatment of the members are those
+of the case $n=0$.
+
+\subsection{Profiles}\label{ssec:profiles}
+Let $\mathcal E$ be the set of integer expressions in $r,p,m,k$ built from integer constants with the following
+operations: addition, multiplication by integer constants, truncated subtraction $(X-Y)_+$, $\min$, $\max$, and the
+distance $\|X\|_p$ of an expression $X$ to $p\Z$. The quantities $p\lfloor r/p\rfloor$ and $r\bmod p$ are also allowed.
+Every bound of Theorem~\ref{thm:local} lies in $\mathcal E$. For (R) and (S) this is \eqref{eq:PiR} and \eqref{eq:PiS}.
+The ends of the intervals $\mathcal K_{k,\iota}$ are $kp=p\lfloor r/p\rfloor+(k-k_0)p$ plus $0$, $k_p$, $k_p-1$, $p-1$ or
+$r_p-1$. For (U$_n$) this is \eqref{eq:PiU} with $d=\|m\|_p$ and $Z_i=p\lfloor r/p\rfloor+(n+i)p$. For (W) the window
+ends are the cuts nearest to the ends of the window range, which are expressions of the same kind.
+
+The \emph{homogenisation} $\hat\tau(\theta)$ of $\tau\in\mathcal E$ replaces $r,p,m,k$ by $1,\theta,\alpha,\kappa\theta$.
+It replaces every constant by $0$, $\|X\|_p$ by $\theta\|\hat X/\theta\|$ and $p\lfloor r/p\rfloor$ by
+$\theta\lfloor1/\theta\rfloor$. It is piecewise affine with rational breakpoints, finitely many in every interval bounded
+away from $0$.
+
+\begin{lemma}[homogenisation]\label{lem:homog}
+For each $\tau\in\mathcal E$ there is an explicit constant $\err(\tau)$ such that
+$|\tau(r,p,m(r),k_p)-r\hat\tau(p/r)|\le\err(\tau)$ for all $r,p\ge1$. It is computed recursively from
+$\err(m)=\frac12$, $\err(k)=1-\frac1q$ and the rules $\err(\tau+\tau')=\err(\tau)+\err(\tau')$ and
+$\err(\min(\tau,\tau'))\le\max(\err(\tau),\err(\tau'))$.
+\end{lemma}
+\begin{proof}
+The real version of $\tau$, with the constants dropped, is positively homogeneous of degree one. Every operation is
+$1$-Lipschitz in the maximum norm. The inputs differ from their homogeneous values by $|m-\alpha r|\le\frac12$ and
+$|k_p-\kappa p|\le1-\frac1q$. Induct on $\tau$.
+\end{proof}
+
+The conditions of Theorem~\ref{thm:local} are linear inequalities in $r,p,m,k$, strict or not. They homogenise to
+intervals of $\theta$. At an endpoint the error of such an inequality is a combination of $m-\alpha r$ and $k_p-\kappa p$.
+With the rounding $m=\lceil\alpha r-\frac12\rceil$ two endpoints are \emph{exact}. These are $\theta=2\alpha$, from
+$2m<p$, and $\theta=(1+2\alpha)/(1+\kappa)$, from $N\le p+k$. At an exact endpoint the condition holds for every prime on
+the correct side. The other endpoints are exact, or hold outside a strip of primes of bounded width around the endpoint.
+On that strip another bound must be used.
+
+\subsection{The checker and the content theorem}\label{ssec:checker}
+For the root class $j$ let $\mathcal P_j(\theta)$ be the minimum of the homogenised bounds $\hat\tau(\theta)$ over the
+bounds $\tau$ of Theorem~\ref{thm:local} valid at $\theta$. A \emph{content table} for the frame $F_s$ and the geometry
+of parameter $c$ consists of the following data. It contains the parameters $(q,\alpha,K)$. For every root class $j$ it
+contains an increasing sequence $0<\theta_0<\theta_1<\dots<\theta_{\rm end}$. On each piece $(\theta_{i-1},\theta_i]$ it
+contains an affine function $\ell_i(\theta)$ and a constant $\err_i\ge0$. Each piece is tagged with a bound $\tau$ of
+Theorem~\ref{thm:local}. At each inexact endpoint of the validity interval of $\tau$, the piece is also tagged with a
+second bound valid across that endpoint. Finally, the table contains a constant $\ell_0$ for the prefix $(0,\theta_0]$
+and the rational number $\Lambda_{\rm fin}$. The \emph{checker} accepts the table if the following conditions hold.
+\begin{enumerate}[label=(C\arabic*),leftmargin=*]
+\item For each shift of the table, every unit class modulo the modulus $q^*$ of the prime number theorem used is assigned
+ a root class with a table.
+\item On each piece $\ell_i$ is nonnegative, and the piece lies in the validity interval of its bound. Moreover
+ $\hat\tau$ lies below $\ell_i$ at both ends and at both one-sided limits of each breakpoint inside the piece.
+\item At each inexact endpoint the second bound is valid on both sides and lies below $\ell_i$ there. The constant
+ $\err_i$ exceeds the error constants of Lemma~\ref{lem:homog}, the debits times $K$, the strip widths times the slopes,
+ and the trivial bound at the scales below an explicit threshold.
+\item $\ell_0\ge2+2\alpha$ and $0<\theta_0\le1$. Also $\theta_{\rm end}\ge\max(q(1+2\alpha),p_0/2)$ and
+ $\kappa_j\theta_{\rm end}\ge1+2\alpha$.
+\item $\frac1{\varphi(q)}\sum_j\bigl(\ell_0\theta_0+\sum_i\int_{\theta_{i-1}}^{\theta_i}\ell_i(\theta)\,d\theta\bigr)
+ =\Lambda_{\rm fin}$.
+\end{enumerate}
+All of these are comparisons of rational numbers.
+
+\begin{theorem}[content]\label{thm:content}
+Let $0<c\le1$, and let $F_s$ be a frame with $s$ of denominator $q$. Suppose that the checker accepts a content table of
+depth $K$ with $s$ among its shifts. Then for every even $r$ and every member with $|I|\le K$,
+\[
+ \log\den P_{r,I}\le(\Lambda_{\rm fin}+o(1))\,r^2 .
+\]
+\end{theorem}
+\begin{proof}
+By definition $\den P_{r,I}=\prod_pp^{e_p(r,I)}$. Fix a piece $(\theta_{i-1},\theta_i]$ of the root class $j$. Let $p$ be
+a prime in a unit class assigned to $j$, with $\theta_{i-1}r<p\le\theta_ir$. Let $r$ be beyond the threshold of (C3).
+Then the conditions of the tagged bound hold, either exactly or outside a strip where the second bound applies.
+Lemma~\ref{lem:homog} with (C2) and (C3) gives $e_p(r,I)\le r\,\ell_i(p/r)+\err_i$. Below the threshold the trivial bound
+is at most $\err_i$.
+
+For $p\le\theta_0r$ the bound (T1) gives $e_p\le\ell_0r+O(1)$. The primes with $p^2\le q(r+2m)$, the prime powers and the
+finitely many primes below $p_0$ contribute $O(r^{3/2}\log r)$. For $p>\theta_{\rm end}r$, (C4) gives $N\le p$ and
+$k_p\ge N$, and (T5) gives $e_p=0$.
+
+Fix a unit class modulo $q^*$. By the prime number theorem in arithmetic progressions,
+\[
+ \sum_{\substack{\theta_{i-1}r<p\le\theta_ir\\ p\text{ in the class}}}r\,\ell_i(p/r)\log p
+ =\frac{r^2}{\varphi(q^*)}\int_{\theta_{i-1}}^{\theta_i}\ell_i(\theta)\,d\theta+o(r^2).
+\]
+The class $j$ receives $\varphi(q^*)/\varphi(q)$ unit classes modulo $q^*$, because the map that sends a unit to $qs$
+times its inverse permutes the units modulo $q$. Summing and using (C5) gives the theorem. The constants $\err_i$
+contribute $O(r)$.
+\end{proof}
+
+The tables of this paper are generated from the functions $\mathcal P_j$ themselves. The pieces are the maximal intervals
+on which $\mathcal P_j$ is affine and attained by one bound. So $\Lambda_{\rm fin}=\frac1{\varphi(q)}\sum_j\int\mathcal P_j$
+up to the prefix. Every bound of Theorem~\ref{thm:local} is available to the tables: (T1)--(T5), (LP1), (LP2), (R), (S),
+the windows (W) and the bounds (U$_n$). The windows with $n=0$ are used for $m<p$, between consecutive cuts.
+
+On $(0,\alpha]$, that is for $p\le m$, the only other bounds are (T1), (T1$'$) and (U$_n$). With (T1$'$) alone the
+profile there is the sawtooth $2+2\alpha-\theta\|\alpha/\theta\|$. Its integral is
+\[
+ \int_0^\alpha\Bigl(2+2\alpha-\theta\Bigl\|\frac\alpha\theta\Bigr\|\Bigr)d\theta=2\alpha+\frac{\alpha^2}2+2\alpha^2\log2,
+\]
+since $\int_1^\infty\|y\|y^{-3}\,dy=\frac32-2\log2$. The windows with $n=\lfloor m/p\rfloor\ge1$ lower this profile on the
+strips $\alpha/(n+1)<\theta\le\alpha/n$. The tables use them for $n\le8$, again with each window running between two
+consecutive cuts. For $q=3,4,5,7$ the tables also use (U$_0$) on $(\alpha,2\alpha]$ and (U$_n$) on the strips with
+$1\le n\le24$. The table for $q=2$ uses only the other bounds. Beyond the strips used, a table resolves the sawtooth into
+teeth down to $\alpha/n_0$. It ends with a constant piece on $(0,\alpha/n_0]$, which costs $\alpha^2T_{n_0}$ with
+$0<T_n\le1/(4n^2)$. The number $\Lambda_{\rm fin}$ is then rational, and (C5) is an identity between rational numbers.
+The bounds depend on the shift $s$ only through the root class, and their profiles only through $(q,j,\alpha)$. So one
+table serves all shifts with denominator $q$.
+% Lean: the catalogue tableT ++ [brLP1, brLP2w, brRank, brS] ++ windows brWin ++ brPre (1 <= n <= 8), cited through
+% Content.BankShared.Check.catValid_bankUFwP, then ++ [brWrap] ++ prefixBranches 24 in each *Content/Level3Auto.lean
+% (q = 3,4,5,7); HalvesContent/Auto.lean uses catValid_bankUFwP only.
+
+%% =====================================================================
+\section{Nonvanishing}\label{sec:nonvanishing}
+
+The deduction needs, for every rational $x_0$ and every large scale, one member of the family that does not vanish at
+$x_0$. For the frames of \eqref{eq:frames} this holds in characteristic zero. The number of deleted common nodes is
+bounded independently of $r$. This is the statement used in Section~\ref{sec:proof}.
+
+\subsection{Selection in characteristic zero}\label{ssec:selection}
+Normalise the frame so that the divided differences of $F$ at consecutive nodes have prefix values $f_t$, with
+$f_{t+1}-f_t=\Delta_F(t)$. The diagonal prefix $\tilde f_t$ satisfies $\tilde f_{t+1}-\tilde f_t=-\Delta_F'(t)$. For
+$F_s$,
+\[
+ \Delta_F(z)=\omega\Bigl(\frac1{z+1}-\frac1{z+s}\Bigr)=\frac{\omega(s-1)}{(z+1)(z+s)} .
+\]
+For $F_\chi$, with $\omega=-\frac16$,
+\[
+ \Delta_F(z)=\frac{1-z}{216\,(z+1)(z+\frac13)(z+\frac12)} .
+\]
+
+\begin{theorem}[selection]\label{thm:selection}
+Let $F$ be a frame of \eqref{eq:frames}, and consider the alternating geometry of parameter $c$. There is $K$, depending
+only on $|\mathcal T|$ and on the period $2$ of the border, with the following property. For every large even $r$ and
+every $x_0\in\Q$ some member $P_{r,I}$ with $|I|\le K$ satisfies $P_{r,I}(x_0)\ne0$.
+\end{theorem}
+% Lean: CatalanCore.Uniform.BlockGeom.hasNV0, with depth BlockGeom.selectionDepth (at most 64 for the two-term frames).
+
+\begin{proof}[Sketch of proof]
+Write $N=r+2m$. By barycentric interpolation, a vector in the right kernel of $\Phi_{r,\emptyset}(x_0)$ corresponds to a
+pair of polynomials $(\mathsf u,\mathsf w)$ of degree less than $r+m$. The pair satisfies the \emph{value conditions}
+$\mathsf w(t)=f_t\mathsf u(t)$ at the $N$ nodes. It satisfies the \emph{jet conditions}
+$\mathsf w'(t)=f_t\mathsf u'(t)+(x_0-\tilde f_t)\mathsf u(t)$ at the common nodes $t$. The left kernel is described
+in the same way. Two such pairs have zero cross product $\mathsf w_1\mathsf u_2-\mathsf w_2\mathsf u_1$. Indeed its
+degree is at most $2(r+m)-2$, while the value and jet conditions give $N+r=2(r+m)$ zeros, counted with multiplicity.
+
+Consider a pair whose degrees are small enough. Write $\Delta_F=n_\Delta/d_\Delta$ in lowest terms. The discrete
+Wronskian
+\[
+ \mathrm{Wr}(z)=d_\Delta(z)\bigl[\mathsf w(z+1)\mathsf u(z)-\mathsf w(z)\mathsf u(z+1)\bigr]
+ -n_\Delta(z)\mathsf u(z)\mathsf u(z+1)
+\]
+has more prescribed zeros at the nodes than its degree allows. So it vanishes identically. Then
+$\mathsf w/\mathsf u$ would be a rational antidifference of $\Delta_F$. This is impossible, because the simple pole of
+$\Delta_F$ at $-1$ is isolated in its class modulo $\Z$. The other poles of $\Delta_F$ are $-s$ for $F_s$, and $-\frac13$
+and $-\frac12$ for $F_\chi$. None of them is congruent to $-1$ modulo $\Z$. Clearing denominators in
+$\mathsf w(z+1)/\mathsf u(z+1)-\mathsf w(z)/\mathsf u(z)=\Delta_F(z)$ would propagate a root of the denominator
+indefinitely in one direction. Counting the zeros along chains of nodes of step $2$ bounds the dimension of the kernel.
+So the corank of $\Phi_{r,\emptyset}(x_0)$ is at most a number $K$ that depends only on $|\mathcal T|$ and on the number
+of such chains. That number is bounded independently of $r$.
+
+Finally, the left and right kernels map to the same interpolation space. At a common node $t$ their coordinates are the
+values $\mathsf u(t)$ times nonzero factors. No nonzero kernel pair has $\mathsf u$ vanishing at every common node.
+Otherwise, dividing by the node polynomial of the common nodes would give a pair of degree less than $m$ that satisfies
+the value conditions at all $N$ nodes, and the Wronskian argument applies again. Hence there is a set $I$ of
+$|I|=\corank$ common nodes such that no nonzero left or right kernel vector vanishes on $I$. The rows outside $I$ then
+span the row space, and the columns outside $I$ span the column space. So the principal minor that deletes $I$ is
+nonzero.
+\end{proof}
+% Lean: NVAdapter.finite_common_deletion_exact (the corank bound and the deletion) and BlockGeom.hasNV0; the depth is
+% BlockGeom.selectionDepth.
+
+The theorem applies to every frame of \eqref{eq:frames}. For $F_\chi$ the pole of $\Delta_F$ at $-1$ is again isolated
+in its class modulo $\Z$, since the other poles are $-\frac13$ and $-\frac12$. In the formal proof the depth is $K\le64$
+for all the frames of this paper.
+
+%% =====================================================================
+\section{Analytic decay}\label{sec:decay}
+
+In this section we bound $|P_{r,I}(x)|$ for $x$ near $\xi$. The argument is that of OpenAI \cite{OpenAI2026} for square
+determinants, with three changes. The determinant has two families of nodes, one for the rows and one for the columns.
+The comparison measure is a density on finitely many segments rather than an explicit equilibrium measure. The
+inequalities that remain are verified on a finite cover by cells. The result is one theorem for every geometry parameter
+$c\le1$ and every frame of \eqref{eq:frames}.
+
+\subsection{A contour representation}
+Hermite's formula gives $\Lw_F[t,t']=\frac1{2\pi i}\oint F(z)\upsilon_t(z)\upsilon_{t'}(z)\,dz$ with
+$\upsilon_t(z)=1/(z-t)$. The contour encloses the nodes and no pole of $F$. Write
+$F=\sum_{\varsigma\in\mathcal T}w_\varsigma\psi(z+\varsigma)$ as in \S\ref{sec:construction}. The reflection formula
+$\psi(w)=\psi(1-w)-\pi\cot\pi w$ splits $F=\tilde F+E$. Here $\tilde F$ is analytic in the left half-plane and
+$O(1/|z|)$ there, and
+\[
+ E(z)=-\pi\sum_{\varsigma\in\mathcal T}w_\varsigma\cot\pi(z+\varsigma).
+\]
+The function $E$ is $1$-periodic. Since the weights sum to zero, $E(z)=O(e^{-2\pi|\Im z|})$ for $|\Im z|\ge1$. For
+$F_s$ one has $E(z)=\pi[\cot\pi(z+s)-\cot\pi z]$.
+
+Let $\Gamma$ be a polygonal path, symmetric under complex conjugation. It crosses the real axis at a point $x^*<0$ that
+is not a pole of $F$, runs through the left half-plane and ends in two rays. The poles of $F$ are the points
+$-(i+\varsigma)$ with $i\ge0$ and $\varsigma\in\mathcal T$. Moving the contour to $\Gamma$ picks up the residues of $F$
+at the poles in $(x^*,0)$. The part of the integrand with $\tilde F$ integrates to $0$ over $\Gamma$. Hence, for all
+integers $t,t'\ge0$,
+\begin{equation}\label{eq:gram}
+ \Lw_F[t,t']=\int\upsilon_t\upsilon_{t'}\,d\Omega .
+\end{equation}
+Here $\Omega$ is the complex measure with the mass $-\operatorname{res}_y(F)$ at each pole $y\in(x^*,0)$ of $F$ and the
+density $(2\pi i)^{-1}E(z)\,dz$ on $\Gamma$. This is a Gram representation with respect to a measure with finitely many
+atoms and an exponentially small density on $\Gamma$. After scaling by $r$, the atoms lie on a segment $[-r_0,0]$ with
+density $|\mathcal T|$. The separation condition on $x^*$ is a finite check on the fractional parts of $\varsigma-x^*$
+for $\varsigma\in\mathcal T$.
+% Lean: |T| is SplineData.dim, required to equal Fr.d in altGeom_hasScaledDecay (the poles -(n + u), u in T, give |T| atoms
+% per unit length); the shifts are Frame.mu.
+
+\subsection{Two-family Andr\'eief bound}
+For a set $C''\subseteq C$ of common nodes put $\mathcal M_{C''}=\omega\,\Lw_F[C''\sqcup X',C''\sqcup Y']$. Consider a
+member with common nodes $C'=C\setminus I$. Put $R'=C'\sqcup X'$, $Q'=C'\sqcup Y'$ and $n_*=|C'|+m$. By multilinearity in
+the diagonal,
+\begin{equation}\label{eq:expand}
+ P_{r,I}(\xi+h)=\sum_{C''\subseteq C'}h^{|C'|-|C''|}\det\mathcal M_{C''} .
+\end{equation}
+Andr\'eief's identity \cite{Forrester2018Andreief} for the two families $(\upsilon_t)_{t\in R'}$ and
+$(\upsilon_{t'})_{t'\in Q'}$ gives
+\[
+ \det\Lw_F[R',Q']=\frac1{n_*!}\int\det[\upsilon_t(z_i)]\,\det[\upsilon_{t'}(z_i)]\prod_{i=1}^{n_*}d\Omega(z_i).
+\]
+Cauchy's determinant formula evaluates both factors. We take absolute values. The logarithmic potential theory behind
+what follows is in \cite{SaffTotik}. We obtain
+\begin{multline*}
+ |\det\Lw_F[R',Q']|\le\frac1{n_*!}\int\prod_{i<i'}|z_i-z_{i'}|^2\,\\
+ \prod_{\mathcal F\in\{R',Q'\}}\frac{\prod_{t<t'\in\mathcal F}|t'-t|}{\prod_{i,\,t\in\mathcal F}|z_i-t|}\
+ \prod_id|\Omega|(z_i).
+\end{multline*}
+The integrand is the exponential of minus a discrete logarithmic energy. The free points $z_i$ repel each other with
+weight $1$. Each node family repels itself with weight $\frac12$ and attracts the free points with weight $1$. The
+density $|E|\approx e^{-2\pi|\Im z|}$ acts as an external field. The rows and columns differ only in the interleaved
+border. So the two node families have the same macroscopic density. After scaling by $r$, both are
+\[
+ \nu_c=\mathrm{Leb}|_{[0,1]}+\tfrac12\mathrm{Leb}|_{[1,1+c]},
+\]
+of mass $|\nu_c|=1+c/2$.
+
+\subsection{The energy certificate}
+For a regularisation radius $\rho>0$ let $k_\rho(z,w)=-\frac12\log(|z-w|^2+\rho^2)$. Then $k_\rho(z,w)\le-\log|z-w|$.
+
+\begin{lemma}[conditional positive definiteness]\label{lem:cpd}
+Let $z_i\in\C$ be finitely many points and $y_i$ real numbers with $\sum_iy_i=0$. Then
+$\sum_{i,j}y_iy_jk_\rho(z_i,z_j)\ge0$.
+\end{lemma}
+\begin{proof}
+We use Frullani's integral $\log T=\int_0^\infty(e^{-u}-e^{-Tu})\,du/u$ for $T>0$. Together with $\sum_iy_i=0$ it gives
+$\sum_{i,j}y_iy_j(-\log(|z_i-z_j|^2+\rho^2))=\int_0^\infty\frac{e^{-u\rho^2}}u\sum_{i,j}y_iy_je^{-u|z_i-z_j|^2}du$.
+Gaussian kernels are positive definite. Indeed, expanding $e^{2u\langle z,z'\rangle}$ in powers and using the binomial
+theorem writes the inner sum as a convergent sum of squares.
+\end{proof}
+
+A \emph{certificate measure} is a probability measure $\sigma$, symmetric under conjugation, carried by finitely many
+segments $\mathcal S_i\subset\Gamma\cup[-r_0,0]\cup[0,1]$ with rational endpoints. On each segment it has a density
+$\sigma_i(y)\,dy$ in the parameter $y\in[0,1]$ of the segment. Here $\sigma_i$ is a polynomial with rational coefficients,
+and $0\le\sigma_i\le\bar\sigma_i$ for a rational $\bar\sigma_i$. We write $\Theta_\sigma=\sum_i\bar\sigma_i/|\mathcal S_i|$
+for the sum of the bounds of its densities with respect to arclength.
+
+We compare the free points and the deleted nodes with $|\nu_c|\sigma$ through Lemma~\ref{lem:cpd}. This bounds the
+free--free energy from below by a sum of one-point terms and the constant $|\nu_c|^2\cI(\sigma)$. Riemann-sum comparisons
+replace the node sums by the potential $U^{\nu_c}$ and the node self-energy by $\cI(\nu_c)$, up to $O(r\log r)$. With the
+external field one arrives at the function
+\[
+ \Upsilon(z)=|\nu_c|\,U^\sigma(z)-U^{\nu_c}(z)+(1-\varepsilon_0)\pi|\Im z|
+\]
+for a small fixed $\varepsilon_0>0$. Here $U^\sigma(z)=\int\log\frac1{|z-w|}\,d\sigma(w)$ is the logarithmic potential of
+$\sigma$, and $U^{\nu_c}$ is that of $\nu_c$. A \emph{certificate} consists of $\sigma$ and rational numbers
+$\Upsilon_\Gamma$, $\Upsilon_0$, $J$, $\cI_\sigma$, $\cI_\nu$ with the following properties.
+\begin{enumerate}[label=(\alph*),leftmargin=*]
+\item $\Upsilon\ge\Upsilon_\Gamma$ on $\Gamma$.
+\item $\Upsilon\ge\Upsilon_0$ on $[0,1]$, the scaled position of the deleted common nodes.
+\item $J\le\int_{-r_0}^0\min(\Upsilon(x)-\Upsilon_\Gamma,0)\,dx$.
+\item $\cI(\sigma)\le\cI_\sigma$ and $\cI(\nu_c)\ge\cI_\nu$.
+\end{enumerate}
+
+\begin{theorem}[decay and window]\label{thm:decay}
+Let $0<c\le1$. Let $F$ be a frame of \eqref{eq:frames} whose poles are separated from $x^*$. Let
+$(\sigma,\Upsilon_\Gamma,\Upsilon_0,J,\cI_\sigma,\cI_\nu)$ be a certificate for $\Gamma$ and $\nu_c$. Let $\rho>0$,
+$\delta_\rho\ge\pi\rho\,\Theta_\sigma$, $\delta_{\rm m}>0$ and $\delta_J>0$ be rational, and put
+\[
+ \delta=3|\nu_c|^2\delta_\rho+4|\nu_c|^2\delta_{\rm m}+2|\mathcal T|\,\delta_J .
+\]
+Let $D$ and $\gamma$ be rational numbers with
+\[
+ D\le2(|\nu_c|\Upsilon_\Gamma+|\mathcal T|J)-|\nu_c|^2\cI_\sigma+\cI_\nu-\delta,\qquad
+ \gamma\ge2(\Upsilon_\Gamma-\Upsilon_0).
+\]
+Then for every depth $K$, every member of the alternating geometry of parameter $c$ and every real $h$ with
+$|h|\le e^{-\gamma r}$,
+\[
+ |P_{r,I}(\xi+h)|\le\exp\bigl(-(D-o(1))r^2\bigr).
+\]
+\end{theorem}
+% Lean: CatalanCore.Uniform.Decay.AltDecay.altGeom_hasScaledDecay (hypotheses: contourCheck, energyCheck, PolyTables3.check);
+% D = SplineData.Dt and gamma = ccert, with SplineData.dofOk (D <= Dof - bridgeLoss, Spline/Final.lean) and
+% 2(m' - g_min) <= ccert in basicOkP; J = Scap; delta_rho, delta_m, delta_J are lossS (>= pi rho B_s), theta, etaS.
+
+The loss $\delta$ comes from replacing $\sigma$ by finitely many atoms in the comparison with the free points. The
+regularisation radius $\rho$ of Lemma~\ref{lem:cpd} and the mesh of the atoms lower $\Upsilon_\Gamma$ by
+$|\nu_c|(\delta_\rho+\delta_{\rm m})$. They raise $\cI_\sigma$ by $\delta_\rho+2\delta_{\rm m}$. Darboux sums for the
+integral in (c) lower $J$ by $\delta_J$. Inserted in the expression for $D$, these changes give $\delta$. The tolerances
+$\delta_{\rm m}$ and $\delta_J$ may be any positive rational numbers, since the atoms can be taken as fine as needed. In
+the certificates of this paper $\rho=10^{-12}$ and $\delta<10^{-9}$.
+
+The node energy $\cI(\nu_c)$ is a finite rational combination of the values $\mathcal H(y_k)$, where
+$\mathcal H(y)=\frac12y^2\log|y|-\frac34y^2$ and the $y_k$ are the rational differences of the endpoints of the two pieces
+of $\nu_c$. The lower bound $\cI_\nu$ is checked with rational enclosures of the logarithms. These come from the series of
+$\operatorname{artanh}$ and a reduction to $[1,2)$. The energy $\cI(\sigma)$ is a finite sum of pair energies of
+polynomial densities on segments. Each is a closed form of the type polynomial times logarithm plus arctangent, and is
+bounded in the same way. The conditions (a)--(c) are statements about $\Upsilon$ on sets of positive measure. They are
+proved on a cover by cells.
+
+\subsection{The cover by cells}\label{ssec:slope-cert}
+Each of the conditions (a)--(c) is checked on a finite cover by cells with exact rational arithmetic. On a cell, the
+potential $U^\sigma$ is split into the contribution of the segments of $\sigma$ near the cell and the rest. A near segment
+is bounded by a Taylor polynomial in the cell variable with an explicit remainder. For a cell that meets the line of a
+segment beyond its end, the same bound is used for the segment with its orientation reversed. At a corner of $\Gamma$ the
+two incident segments are treated together. Far segments are bounded by a multipole expansion with an explicit tail. The
+potential $U^{\nu_c}$ is an explicit elementary function, and it is bounded above by monotonicity on the cell.
+
+For (a) the cells are intervals of the arclength on each edge of $\Gamma$. The bound is proved on a horizontal
+neighbourhood of the edge of fixed width. Beyond the last vertex the ray is handled by an analytic tail bound. For (b)
+the cells are intervals of $[0,1]$. For (c) the integrand is bounded above on each cell of $[-r_0,0]$ by a constant or by
+a chord. Then $J$ is the sum of the integrals of these majorants.
+
+\begin{proposition}[certified constants]\label{prop:cert}
+For each row of Table~\ref{tab:data} there is a certificate measure $\sigma$ on a polygon $\Gamma$, with a cover by cells
+accepted by the checks above, for which Theorem~\ref{thm:decay} gives the constants $D$ and $\gamma$ of the table.
+\end{proposition}
+
+All inequalities are verified by the Lean kernel, as described in Section~\ref{sec:lean}. The certificate data are the
+polygon, the density $\sigma$ and the cells. They were computed with floating-point optimisation and interval arithmetic
+in Arb \cite{Arb}. Lean checks them with rational arithmetic only. The data play no role in the proof beyond being
+accepted.
+
+\begin{remark}[how good a certificate can be]\label{rem:certlimit}
+For an exponent $B$ the certificate meets $B$ exactly when $B(D-\Lambda)-\gamma\ge0$. This quantity is a concave function
+of $\sigma$. Its maximum over all probability measures on $\Gamma\cup[-r_0,0]\cup[0,1]$ is attained at a measure
+$\sigma^*$. For this measure $|\nu_c|\sigma^*$ is the weighted equilibrium measure of the constrained energy problem on
+this set, with the external field $(1-\varepsilon_0)\pi|\Im z|-U^{\nu_c}$ and the upper constraint $|\mathcal T|\,dx$ on
+the segment \cite{SaffTotik}. Weak duality expresses the deficit of any certificate as a sum of nonnegative terms. The
+first is the energy of $2B|\nu_c|(\sigma-\sigma^*)$. This is the difference between $2B|\nu_c|\sigma$ and the optimal
+dual measure $2B|\nu_c|\sigma^*$. So a certificate close to the best possible one must be close to $\sigma^*$ in energy.
+Then $\Upsilon-\Upsilon_\Gamma$ is a small ripple on the support of $\sigma^*$. This is why a pointwise verification on a
+cover is needed. This remark is not used in the proof of Theorem~\ref{thm:main} and is not part of the formalization.
+\end{remark}
+
+\subsection{Node removal and the window}
+The argument applies to every subset $C''\subseteq C'$ of the common nodes. Removing common nodes turns them into points
+of the configuration that are not integrated over. Only common nodes can be removed. A node removed from one family only
+would leave an uncancelled term of weight $\frac12$. By condition (b) one obtains
+\[
+ |\det\mathcal M_{C''}|\le\exp\bigl(-(D-o(1))r^2+\gamma r\,|C'\setminus C''|\bigr),
+\]
+uniformly in $C''$. Insert this into \eqref{eq:expand} with $|h|e^{\gamma r}\le1$. The sum has at most
+$2^{|C'|}=e^{O(r)}$ terms, each at most $e^{-(D-o(1))r^2}$. This gives Theorem~\ref{thm:decay}. The deletion of at most
+$K$ common nodes in a member changes the energy by $O(r)$.
+
+%% =====================================================================
+\input{chi3-quarter-border}
+
+%% =====================================================================
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
+
+The three estimates combine as follows.
+
+\begin{theorem}[deduction]\label{thm:deduction}
+Let $F$ be a frame of \eqref{eq:frames} with its geometry. Let $K$ be a depth such that, for every large $r$ and every
+rational $x_0$, some member $P_{r,I}$ with $|I|\le K$ satisfies $P_{r,I}(x_0)\ne0$, as in Theorem~\ref{thm:selection}.
+Suppose that the content constant $\Lambda$ of Theorem~\ref{thm:content} and the constants $D$, $\gamma$ of
+Theorem~\ref{thm:decay} satisfy $\Lambda<D$. Then $\mu(\xi)\le\gamma/(D-\Lambda)$.
+\end{theorem}
+
+\begin{proof}
+Let $\eta=D-\Lambda$, and let $\mu_0>\mu_1>\gamma/\eta$. Suppose that $|\xi-a/b|<b^{-\mu_0}$ with $b$ large. Let $r$ be
+the least admissible scale with $r\ge\mu_1\log b/\gamma$. By Theorem~\ref{thm:selection} with $x_0=a/b$ there is a member
+with $P_{r,I}(a/b)\ne0$. By Lemma~\ref{lem:integrality}, $|\den(P_{r,I})\,P_{r,I}(a/b)|\ge b^{-r}$. Write $a/b=\xi+h$.
+Then $|h|<b^{-\mu_0}\le e^{-\gamma r}$, because $\gamma r\le\mu_1\log b+O(1)<\mu_0\log b$ for large $b$. By
+Theorems~\ref{thm:content} and~\ref{thm:decay},
+\[
+ |\den(P_{r,I})\,P_{r,I}(a/b)|\le e^{(\Lambda+o(1))r^2}e^{-(D-o(1))r^2}=e^{-(\eta-o(1))r^2}.
+\]
+Comparing the two bounds gives $(\eta-o(1))r^2\le r\log b$. But $\eta r\ge(\mu_1\eta/\gamma)\log b$ with
+$\mu_1\eta/\gamma>1$. This is a contradiction for large $b$.
+\end{proof}
+
+\begin{proof}[Proof of Theorem~\ref{thm:main}]
+For each row of Table~\ref{tab:main} the frame, the geometry parameter and the constants are those of
+Table~\ref{tab:data}. The content constant is given by Theorem~\ref{thm:content} with the content table of the formal
+proof. For the pair $(\frac13,\frac23)$ it is given by Section~\ref{sec:chi3-quarter}. The decay constants are given by
+Proposition~\ref{prop:cert}, and nonvanishing by Theorem~\ref{thm:selection}. In every row $\gamma/(D-\Lambda)<B$.
+Theorem~\ref{thm:deduction}, applied at the even scales, gives $\mu(\xi)\le B$. By \eqref{eq:frames}, $\xi$ is a nonzero
+rational multiple of $\Psi(s,t)$. This proves Theorem~\ref{thm:main}.
+\end{proof}
+
+\begin{table}[ht]
+\centering
+{\setlength{\tabcolsep}{2pt}
+\begin{tabular}{@{}lcccccc@{}}
+\toprule
+$(s,t)$ & $c$ & $\Lambda$ & $D$ & $\gamma$ & $\gamma/\eta$ & $B$\\
+\midrule
+$(\frac k4,1)$ & $\frac15$ & $\LamFour$ & $\DFour$ & $\gFour$ & $\ExpFour$ & $\MuLamU$\\
+$(\frac k3,1)$ & $\frac3{10}$ & $\LamThree$ & $\DThree$ & $\gThree$ & $\ExpThree$ & $\MuThirdsU$\\
+$(\frac k5,1)$ & $\frac29$ & $\LamFive$ & $\DFive$ & $\gFive$ & $\ExpFive$ & $\MuFifthsU$\\
+$(\frac k7,1)$ & $\frac16$ & $\LamSeven$ & $\DSeven$ & $\gSeven$ & $\ExpSeven$ & $\MuSeventhsU$\\
+$(\frac12,1)$ & $\frac3{10}$ & $\LamHalf$ & $\DHalf$ & $\gHalf$ & $\ExpHalf$ & $\MuHalvesU$\\
+$(\frac13,\frac23)$ & $\frac12$ & $\LamChi$ & $\DChi$ & $\gChi$ & $\ExpChi$ & $\MuChi$\\
+\bottomrule
+\end{tabular}}
+\caption{The data of the proof of Theorem~\ref{thm:main}, with $k$ prime to the denominator. For each pair of shifts the table gives the geometry parameter
+$c$, the content constant $\Lambda$, the decay constant $D$, the window constant $\gamma$ and the exponent. The constants
+are the rational numbers of the formal proof, rounded outward to the digits shown: $\Lambda$ and $\gamma$ up, $D$ down.
+The column $\gamma/\eta$, with $\eta=D-\Lambda$, is the exact quotient, rounded up.}\label{tab:data}
+\end{table}
+
+\begin{remark}[relation to linear independence criteria]
+The deduction is a one-dimensional version of the familiar scheme behind the criteria of Nesterenko
+\cite{Nesterenko85} and their use by Ball and Rivoal \cite{BallRivoal01}. The nonzero integer
+$b^{|C\setminus I|}\den(P_{r,I})\,P_{r,I}(a/b)$ plays the role of a small linear form with integer coefficients. There are
+two differences. The lower bound for the form comes from an arithmetic nonvanishing statement rather than from an analytic
+asymptotic. The size $r$ of the determinant is chosen in terms of $b$.
+\end{remark}
+
+%% =====================================================================
+\section{The families}\label{sec:families}
+
+We collect the facts specific to each row of Table~\ref{tab:data}. Section~\ref{sec:chi3-quarter} treats the pair
+$(\frac13,\frac23)$. In every other row the frame is $F_s$ of \eqref{eq:frames} with $s=k/q$, $\omega=q^{-2}$ and
+$\xi_s=-q^{-2}\Psi(\frac kq,1)$. The content table, the certificate measure and the cover are the data of the formal
+proof.
+
+\subsection{The shifts $\frac14$ and $\frac34$}
+Here $\xi_{1/4}=-\frac1{16}\Psi(\frac14,1)$ and $\xi_{3/4}=-\frac1{16}\Psi(\frac34,1)$. The geometry parameter is
+$c=\frac15$, so $\alpha=\frac1{10}$. The two shifts $s=\frac k4$ with $k=1,3$ have root classes $j\equiv kp^{-1}\pmod4$.
+These exchange the two classes of primes modulo $4$. By the transport of \S\ref{ssec:checker} the two shifts have the
+same content constant. The same certificate serves both, since the decay depends on the shift only through the separation
+of the poles from the contour.
+
+\subsection{The shifts $\frac13$ and $\frac23$}\label{sec:thirds}
+Here $\xi_{1/3}=-\frac19\Psi(\frac13,1)$ and $\xi_{2/3}=-\frac19\Psi(\frac23,1)$. The geometry parameter is
+$c=\frac3{10}$. The content table uses the primes in the classes modulo $6$. The two root classes $j=1,2$ correspond to
+first poles near $p/3$ and $2p/3$.
+
+\subsection{The shifts $\frac k5$}\label{sec:fifths}
+For $1\le k\le4$ the geometry parameter is $c=\frac29$. The four shifts share one content table, indexed by the four root
+classes, and one certificate.
+
+\subsection{The shifts $\frac k7$}\label{sec:sevenths}
+For $1\le k\le6$ the geometry parameter is $c=\frac16$, and there are six root classes. Here $D-\Lambda$ is small, about
+$3.4\cdot10^{-3}$. The exponent is correspondingly large.
+
+\subsection{The shift $\frac12$}\label{sec:halves}
+Here $q=2$, $\omega=\frac14$ and $\xi_{1/2}=-\frac14\Psi(\frac12,1)$. There is one root class, $j=1$, with first pole
+$k_p=\frac{p+1}2$. The geometry parameter is $c=\frac3{10}$. As explained after Theorem~\ref{thm:main}, the resulting
+bound is weaker than the known ones for this number.
+
+%% =====================================================================
+\section{Limits of the method}\label{sec:limits}
+
+The exponents are determined by three constants through $\gamma/(D-\Lambda)$. Since $\partial\mu/\partial D=-\gamma/\eta^2$,
+the exponent is most sensitive to the decay where $\eta$ is small. For the shifts $\frac14$ and $\frac34$,
+$\gamma/\eta^2\approx136$. For the shifts $\frac k7$ it is about $6.6\cdot10^5$.
+
+On the arithmetic side, the profiles $\mathcal P_j$ are minima of the bounds of Theorem~\ref{thm:local}. Every further
+local bound lowers $\Lambda$ by the integral of the amount by which it lies below $\mathcal P_j$. The content constant of
+the method is the integral of the true exponent $e_p$, which the local bounds approximate from above. At third order this
+approximation is close to exhaustion for the shifts $\frac k5$ and $\frac k7$. We computed the Smith normal forms exactly
+at scales $r\le2400$ and primes $p\le2m$. There the minimum of the local bounds, with (U$_n$) included, equals the true
+exponent at all but a few isolated primes. For the shifts $\frac k7$ the invariants of valuation at least $4$ contribute
+about $5\cdot10^{-6}$ to $\Lambda$. The bounds (U$_n$) gain about $7\cdot10^{-4}$. So the content of the method at third
+order is essentially used up. These computations are not part of the proof.
+
+On the analytic side, Remark~\ref{rem:certlimit} explains why a certificate of the present form cannot do better than the
+constrained equilibrium measure on the chosen contour. A larger decay constant needs a different contour or a different
+treatment of the energy problem. The geometry parameter $c$ trades the two sides against each other. A longer border
+increases $D$, through the larger node measure. It also increases $\Lambda$, through the border rows and columns of the
+assignment bound.
+
+%% =====================================================================
+\section{Formalization}\label{sec:lean}
+\raggedbottom
+
+The proof of Theorem~\ref{thm:main} is formalized in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib}, together with every
+theorem, proposition and lemma it uses. The remarks and Section~\ref{sec:limits} are not part of the formalization. The
+development is available at
+\begin{center}
+\FormalizationLink
+\end{center}
+It combines analytic and arithmetic proofs with generated rational data. Kernel checks verify the content tables of
+Section~\ref{sec:content} and the decay certificates of Section~\ref{sec:decay}. Numerical computations alone are not
+used as proof.
+
+The statements of Theorem~\ref{thm:main} are in the file \lean{ChallengeHybrid.lean}. Their proofs are in
+\lean{SolutionHybrid.lean}, in the namespace \lean{TrigammaDifferences}. Each final theorem concerns the classical
+number of one row of Table~\ref{tab:main}, written as a series as in Section~\ref{sec:intro}. It states that for every
+$e>0$ there is $b_0$ such that $b^{-(B+e)}<|\xi-a/b|$ for all $b\ge b_0$ and all $a\in\Z$ coprime to $b$. The theorems
+are the following.
+\begin{itemize}
+\item \lean{lambda_plus_measure} and \lean{lambda_minus_measure}: the pairs $(\frac14,1)$ and $(\frac34,1)$,
+ with $B=\MuLamU$.
+\item \lean{chi3_measure}: the pair $(\frac13,\frac23)$, with $B=\MuChi$.
+\item \lean{chi3_plus_pi2_measure} and \lean{chi3_minus_pi2_measure}: the pairs $(\frac13,1)$ and $(\frac23,1)$, with
+ $B=\MuThirdsU$.
+\item \lean{fifths1_measure}, \dots, \lean{fifths4_measure}: the pairs $(\frac k5,1)$ for $k=1,\dots,4$, with
+ $B=\MuFifthsU$.
+\item \lean{sevenths1_measure}, \dots, \lean{sevenths6_measure}: the pairs $(\frac k7,1)$ for $k=1,\dots,6$, with
+ $B=\MuSeventhsU$.
+\item \lean{pi2_measure}: the pair $(\frac12,1)$, with $B=\MuHalvesU$.
+\end{itemize}
+The shared results are in the namespace \lean{CatalanCore.Uniform}.
+\begin{itemize}
+\item \lean{Content.BankShared.Check.hasScaledContent_of_check} is Theorem~\ref{thm:content}. The local bounds of
+ Theorem~\ref{thm:local} form its catalogue, in \lean{Check/Catalogue.lean}, \lean{Check/LP2W.lean},
+ \lean{Check/Prefix.lean} and \lean{Check/UF.lean}, with the closed rank bound and the branches of
+ Theorem~\ref{thm:wrap}. Its form for frames with several first poles is
+ \lean{Content.BankShared.KTerm.hasScaledContent_of_kcheck}.
+\item \lean{Content.BankShared.TwoTerm.LP2HypW.gle} is Theorem~\ref{thm:lp2}.
+\item \lean{Content.BankShared.TwoTerm.Pre.prefix_gle} is Theorem~\ref{thm:window}.
+\item \lean{Content.UFSimple.WrapCheck.catValid_wrap} and \lean{Content.UFSimple.WrapPrefixCheck.catValid_prefix_full}
+ are Theorem~\ref{thm:wrap} for $n=0$ and for $n\ge1$. Lemma~\ref{lem:harmonic} is
+ \lean{Content.UFSimple.WrapPrefixClosed.HSplit.det_ne} with \lean{HSplit.dir}.
+\item \lean{BlockGeom.hasNV0} is Theorem~\ref{thm:selection}.
+\item \lean{Decay.AltDecay.altGeom_hasScaledDecay} is Theorem~\ref{thm:decay}. It uses the node energy check
+ \lean{Decay/Nodes/EnergyCheck.lean}, the contour check \lean{Decay/ContourCheck.lean} and the cell checks
+ \lean{Decay/PolyWire3}.
+\item \lean{measure_of_family_nv0_even} is Theorem~\ref{thm:deduction} at the even scales.
+\end{itemize}
+The solution has no \lean{sorry} and no \lean{native_decide}. The command \texttt{\#print axioms} reports only the three
+standard axioms \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound}. The prime number theorem in arithmetic
+progressions enters the content asymptotics. Its formal source is the PNT+ project \cite{PNTPlus}, through OpenAI's
+workspace and compatibility additions. We use its Wiener--Ikehara theorem.
+
+The proofs were checked with Lean \texttt{v4.35.0-rc2} and the matching Mathlib release. The vendored files from OpenAI's
+repository and from the PNT+ project were converted to Lean's module system and ported to the current toolchain. The
+repository's README and provenance documents describe the changes.
+
+\section*{Disclosure of AI use}
+
+The mathematics, the Lean formalization, the certificate generators and the text of this paper were produced by AI
+systems at the request of the author. The author posed the problems, directed the work and is responsible for this
+paper. The systems were Claude Opus~5.5, Claude Sonnet~5.5 and Claude Haiku~5.5 (Anthropic), running in Claude Code, and
+GPT-6.1 Sol (OpenAI), running in Codex. OpenAI's irrationality proof for Catalan's constant and its Lean formalization
+\cite{OpenAI2026} underlie this work. We use Lean~4 \cite{Lean4}, Mathlib \cite{Mathlib}, the PNT+ project \cite{PNTPlus}
+and Arb \cite{Arb}. Arb, through \texttt{python-flint}, provides the interval arithmetic used to generate certificate
+data, which Lean re-checks. The formal verification in Lean is intended as an independent check of every step of the
+argument above.
+
+\subsection*{Acknowledgements}
+We thank the authors of Mathlib and of the PNT+ project, and OpenAI for making its formalization available.
+
+\bibliographystyle{amsplain}
+\bibliography{refs}
+
+\end{document}
