@@ -20,6 +20,10 @@ public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSigns
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSlope
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkStatSigns
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkStatSlope
+public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupLim
+public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupXg
+public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupXs
+public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupK590
 public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB0
 public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB1
 public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB2
@@ -90,6 +94,12 @@ namespace CatalanMeasure.Signed.Consts
 #print axioms mmaxOf_ge
 #print axioms mmaxOf_hMm
 #print axioms mmax410_hMm
+#print axioms freeRowX_eventually_of_region
+#print axioms link_cap_of_region
+#print axioms link_hgap_K590
+#print axioms link_hsup_K590
+#print axioms link_hgap_odd
+#print axioms link_hsup_odd
 #print axioms certH_mul_le
 #print axioms Hq_mono
 #print axioms certH_mul_le_mono

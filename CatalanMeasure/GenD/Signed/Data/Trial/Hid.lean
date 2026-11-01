@@ -8,8 +8,8 @@ public import CatalanMeasure.GenD.Signed.Data.Consts.PolyPos
 
 The three endpoint trials are given by exact rational data (`TrialQ`): the sequences `v, a, p, R`
 (finite part `f` plus a geometric tail of rational complex pairs, `SeqQ`), the split parameter `η`,
-the particle sup `Sup` and the polynomial-density species `qT, qF` (`PieceQ`).  `TrialQ.form` is the
-`TrialForm` of FieldForm.
+the particle sup `Sup` and the polynomial-density species of the signed reference `P - N`: `qT, qF` (`P`)
+and `qTn, qFn` (`N`) (`PieceQ`).  `TrialQ.form` is the `TrialForm` of FieldForm.
 
 For every field class the Lean limit field is an explicit cell field plus an explicit constant:
 
@@ -74,10 +74,13 @@ structure TrialQ where
   Sup : ℚ
   qT : List PieceQ
   qF : List PieceQ
+  /-- The negative part `N` of the signed reference `P - N` (`P` has `qT`, `qF`). -/
+  qTn : List PieceQ
+  qFn : List PieceQ
 
 def TrialQ.form (T : TrialQ) : TrialForm :=
   ⟨T.v.form, T.a.form, T.p.form, (T.η : ℝ), T.R.form, (T.Sup : ℝ), T.qT.map PieceQ.toPiece,
-    T.qF.map PieceQ.toPiece⟩
+    T.qF.map PieceQ.toPiece, T.qTn.map PieceQ.toPiece, T.qFn.map PieceQ.toPiece⟩
 
 /-! ### Literal helpers (data modules emit `raw_ints%` integer lists) -/
 
@@ -479,6 +482,32 @@ theorem fval_refRow (qT qF : List PieceQ) (x : ℝ) :
   have hp : (refRowFieldQ qT qF).poles = [] := by simp [refRowFieldQ, fqAdd, fqNeg]
   simp only [fval, fieldTower, poleTower_zero, hp, poleFn_nil]
 
+/-- The reference row of the signed reference `P - N` as one `FieldQ`
+(`refRowFieldQ qT qF - refRowFieldQ qTn qFn`; no poles). -/
+def refRowSFQ (qT qF qTn qFn : List PieceQ) : FieldQ :=
+  fqSum [refRowFieldQ qT qF, fqScale (-1) (refRowFieldQ qTn qFn)]
+
+theorem fval_refRowS (qT qF qTn qFn : List PieceQ) (x : ℝ) :
+    fval (refRowSFQ qT qF qTn qFn) x =
+      refRowForm (qT.map PieceQ.toPiece) (qF.map PieceQ.toPiece) x -
+        refRowForm (qTn.map PieceQ.toPiece) (qFn.map PieceQ.toPiece) x := by
+  simp only [refRowSFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
+    fval_refRow]
+  push_cast
+  ring
+
+/-- The Laurent terms of the dilated potential of the signed species `P - N`:
+`dilTermsQ qs ++ scaleL (-1) (dilTermsQ qn)`. -/
+def dilTermsS (qs qn : List PieceQ) : List LTerm := dilTermsQ qs ++ scaleL (-1) (dilTermsQ qn)
+
+theorem dilS_eq (qs qn : List PieceQ) (x : ℝ) (hx : x ≠ 0) :
+    dilPot (qs.map PieceQ.toPiece) x - dilPot (qn.map PieceQ.toPiece) x =
+      lfieldTower (dilTermsS qs qn) 0 x := by
+  rw [dilTermsS, lfieldTower_append, lfieldTower_scaleL_zero, ← dilPot_eq_lfieldTower qs x hx,
+    ← dilPot_eq_lfieldTower qn x hx]
+  push_cast
+  ring
+
 theorem denPoly_fQ (bs : List ℚ) (x : ℝ) :
     denPoly (fQ bs) bs.length x = 2 * polyTow (negX (polyS bs)) 0 x := by
   rw [polyTow_zero_negX, polyTow_polyS, denPoly, finS]
@@ -574,15 +603,15 @@ def snK : ℝ := -cSv T - 4 * (T.η : ℝ) * cTp T - 2 * cSa T
 theorem hid_sn {RfL : ℝ → ℝ} {rf : FieldQ} (hrf : ∀ x, RfL x = fval rf x)
     {vS pT aS rS : List ℚ} {rr : FieldQ}
     (hv : polyS T.v.f = vS) (hp : polyT T.p.f = pT) (ha : polyS T.a.f = aS)
-    (hRs : polyS T.R.f = rS) (hrr : refRowFieldQ T.qT T.qF = rr)
+    (hRs : polyS T.R.f = rS) (hrr : refRowSFQ T.qT T.qF T.qTn T.qFn = rr)
     (hRt : T.R.tail = []) (har : ∀ t ∈ T.a.tail, t.ri = 0)
     {fq : FieldQ} (hfq : fq = snFQ T rf vS pT aS rS rr) (x : ℝ) :
     fNegLim T.form RfL x = fieldTower fq (poleFn fq.poles) 0 x + snK T := by
   subst hv hp ha hRs hrr hfq
   rw [fieldTower_poleFn]
   simp only [snFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
-    fval_seqS, fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRow, ← hrf]
-  simp only [fNegLim, snK, cSv, cTp, cSa, TrialQ.form]
+    fval_seqS, fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRowS, ← hrf]
+  simp only [fNegLim, snK, cSv, cTp, cSa, TrialForm.refRow, TrialQ.form]
   push_cast
   ring
 
@@ -597,17 +626,17 @@ def spK : ℝ := -cSv T - 4 * (T.η : ℝ) * cTp T + 2 * cSa T + 2 * (T.Sup : �
 theorem hid_sp {RfL : ℝ → ℝ} {rf : FieldQ} (hrf : ∀ x, RfL x = fval rf x)
     {vS pT aS rS bS : List ℚ} {rr : FieldQ} {bs : List ℚ} {σ : ℚ} {csL θL : ℝ}
     (hv : polyS T.v.f = vS) (hp : polyT T.p.f = pT) (ha : polyS T.a.f = aS)
-    (hRs : polyS T.R.f = rS) (hb : polyS bs = bS) (hrr : refRowFieldQ T.qT T.qF = rr)
+    (hRs : polyS T.R.f = rS) (hb : polyS bs = bS) (hrr : refRowSFQ T.qT T.qF T.qTn T.qFn = rr)
     (hRt : T.R.tail = []) (har : ∀ t ∈ T.a.tail, t.ri = 0)
     {fq : FieldQ} (hfq : fq = spFQ T rf vS pT aS rS bS rr σ) {x : ℝ} (hx : x ≠ 0) :
     fPosLim T.form RfL σ (fQ bs) bs.length csL θL x =
-      fieldTower fq (poleFn fq.poles) 0 x + lfieldTower (dilTermsQ T.qT) 0 x + spK T +
+      fieldTower fq (poleFn fq.poles) 0 x + lfieldTower (dilTermsS T.qT T.qTn) 0 x + spK T +
         csL * (if 1 - θL < x then 1 else 0) := by
   subst hv hp ha hRs hb hrr hfq
-  rw [fieldTower_poleFn, ← dilPot_eq_lfieldTower _ x hx]
+  rw [fieldTower_poleFn, ← dilS_eq _ _ x hx]
   simp only [spFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
-    fval_seqS, fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRow, fval_poly, ← hrf]
-  simp only [fPosLim, spK, cSv, cTp, cSa, TrialQ.form, denPoly_fQ]
+    fval_seqS, fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRowS, fval_poly, ← hrf]
+  simp only [fPosLim, spK, cSv, cTp, cSa, TrialForm.refRow, TrialForm.dilT, TrialQ.form, denPoly_fQ]
   push_cast
   ring
 
@@ -637,14 +666,14 @@ def smK : ℝ := -2 * (T.η : ℝ) * cTp T - 2 * cSa T
 theorem hid_sm {RmL : ℝ → ℝ} {rm : FieldQ} (hrm : ∀ x, RmL x = fval rm x)
     {pT aS rS : List ℚ} {rr : FieldQ}
     (hp : polyT T.p.f = pT) (ha : polyS T.a.f = aS) (hRs : polyS T.R.f = rS)
-    (hrr : refRowFieldQ T.qT T.qF = rr) (hRt : T.R.tail = []) (har : ∀ t ∈ T.a.tail, t.ri = 0)
+    (hrr : refRowSFQ T.qT T.qF T.qTn T.qFn = rr) (hRt : T.R.tail = []) (har : ∀ t ∈ T.a.tail, t.ri = 0)
     {fq : FieldQ} (hfq : fq = smFQ T rm pT aS rS rr) (x : ℝ) :
     fNegMLim T.form RmL x = fieldTower fq (poleFn fq.poles) 0 x + smK T := by
   subst hp ha hRs hrr hfq
   rw [fieldTower_poleFn]
   simp only [smFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
-    fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRow, ← hrm]
-  simp only [fNegMLim, smK, cTp, cSa, TrialQ.form]
+    fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRowS, ← hrm]
+  simp only [fNegMLim, smK, cTp, cSa, TrialForm.refRow, TrialQ.form]
   push_cast
   ring
 
@@ -659,18 +688,18 @@ def spmK : ℝ := -2 * (T.η : ℝ) * cTp T + 2 * cSa T + 2 * (T.Sup : ℝ)
 theorem hid_spm {RmL : ℝ → ℝ} {rm : FieldQ} (hrm : ∀ x, RmL x = fval rm x)
     {pT aS rS bS : List ℚ} {rr : FieldQ} {bs : List ℚ} {σ rc α : ℚ} {csL θL : ℝ}
     (hp : polyT T.p.f = pT) (ha : polyS T.a.f = aS) (hRs : polyS T.R.f = rS)
-    (hb : polyS bs = bS) (hrr : refRowFieldQ T.qT T.qF = rr) (hRt : T.R.tail = [])
+    (hb : polyS bs = bS) (hrr : refRowSFQ T.qT T.qF T.qTn T.qFn = rr) (hRt : T.R.tail = [])
     (har : ∀ t ∈ T.a.tail, t.ri = 0)
     {fq : FieldQ} (hfq : fq = spmFQ T rm pT aS rS bS rr σ rc α) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     fPosMSLim T.form RmL σ (fQ bs) bs.length csL θL x + rc * α * (-Real.log (1 - x ^ 2)) =
-      fieldTower fq (poleFn fq.poles) 0 x + lfieldTower (dilTermsQ T.qT) 0 x + spmK T +
+      fieldTower fq (poleFn fq.poles) 0 x + lfieldTower (dilTermsS T.qT T.qTn) 0 x + spmK T +
         csL * (if 1 - θL < x then 1 else 0) := by
   subst hp ha hRs hb hrr hfq
-  rw [fieldTower_poleFn, ← dilPot_eq_lfieldTower _ x hx.1.ne']
+  rw [fieldTower_poleFn, ← dilS_eq _ _ x hx.1.ne']
   simp only [spmFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
-    fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRow, fval_poly,
+    fval_seqT, fval_seqSn _ har, fval_rS _ hRt, fval_refRowS, fval_poly,
     fval_m1sq ⟨by linarith [hx.1], hx.2⟩, ← hrm]
-  simp only [fPosMSLim, spmK, cTp, cSa, TrialQ.form, denPoly_fQ]
+  simp only [fPosMSLim, spmK, cTp, cSa, TrialForm.refRow, TrialForm.dilT, TrialQ.form, denPoly_fQ]
   push_cast
   ring
 
@@ -690,16 +719,16 @@ theorem hid_near {RnL : ℝ → ℝ} {rn : FieldQ} (hrn : ∀ x, RnL x = fval rn
     {fq : FieldQ} (hfq : fq = nearFQ T rn aS rS bS σ α β) {x : ℝ} (hx : x ∈ Ioo (0 : ℝ) 1) :
     fNearMSLim T.form RnL α β σ (fQ bs) bs.length csL θL x =
       fieldTower fq (poleFn fq.poles) 0 x +
-        lfieldTower (scaleL (-1) (reflL (dilTermsQ T.qF))) 0 x + nearK T α β +
+        lfieldTower (scaleL (-1) (reflL (dilTermsS T.qF T.qFn))) 0 x + nearK T α β +
         csL * (if 1 - θL < x then 1 else 0) := by
   subst ha hRs hb hfq
-  rw [fieldTower_poleFn, lfieldTower_scaleL_zero, ← dilPot_neg_eq_lfieldTower _ x hx.1.ne']
+  rw [fieldTower_poleFn, lfieldTower_scaleL_zero, lfieldTower_reflL_zero, ← dilS_eq _ _ (-x) (neg_ne_zero.mpr hx.1.ne')]
   have e1 : Real.log |x - ((-1 : ℚ) : ℝ)| = Real.log (1 + x) := by
     rw [← Real.log_abs (1 + x)]; push_cast; ring_nf
   simp only [nearFQ, fval_sum, List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, fval_scale,
     fval_seqSn _ har, fval_rS _ hRt, fval_poly, fval_log, e1,
     fval_m1sq ⟨by linarith [hx.1], hx.2⟩, ← hrn]
-  simp only [fNearMSLim, nearK, cSa, TrialQ.form, denPoly_fQ]
+  simp only [fNearMSLim, nearK, cSa, TrialForm.dilF, TrialQ.form, denPoly_fQ]
   push_cast
   ring
 
@@ -954,6 +983,13 @@ structure TrialQ.DataOK (T : TrialQ) (Cb : ℝ) : Prop where
   pF : ∀ q ∈ T.qF, PieceOK q.toPiece
   bdT : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas (T.qT.map PieceQ.toPiece)) Cb
   bdF : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas (T.qF.map PieceQ.toPiece)) Cb
+  /-- The negative part `N` of `P - N`: nonnegative pieces on `(0, 1/8]`, density `≤ Cb`, mass `≤ 1`. -/
+  pTn : ∀ q ∈ T.qTn, PieceOK q.toPiece
+  pFn : ∀ q ∈ T.qFn, PieceOK q.toPiece
+  hTn : ∀ q ∈ T.qTn, q.hi ≤ 1 / 8
+  bdTn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas (T.qTn.map PieceQ.toPiece)) Cb
+  bdFn : CatalanMeasure.Signed.ReflectionEnergy.BD (polyMeas (T.qFn.map PieceQ.toPiece)) Cb
+  nm : (T.qTn.map PieceQ.massQ).sum + (T.qFn.map PieceQ.massQ).sum ≤ 1
 
 /-- **`TrialForm.Spec` of a trial**: the definitional equations of the family member plus the
 data checks. -/
@@ -963,8 +999,10 @@ theorem TrialQ.spec (T : TrialQ) (D : SignedData) (hτ : D.τ ∈ Ioo (0 : ℝ) 
     (hp : D.p = tseq (fQ T.p.f) (T.p.tail.map TailQ.toC))
     (hη : D.η = T.η) (hR : D.R = fun n => fQ T.R.f (n + 1)) (hSup : D.Sup = T.Sup)
     (ht : D.t = mneg D.μ D.τ)
-    (hμT : D.μ true = polyMeas (T.qT.map PieceQ.toPiece))
-    (hμF : D.μ false = polyMeas (T.qF.map PieceQ.toPiece))
+    (hμT : D.μ.P true = polyMeas (T.qT.map PieceQ.toPiece))
+    (hμF : D.μ.P false = polyMeas (T.qF.map PieceQ.toPiece))
+    (hμTn : D.μ.N true = polyMeas (T.qTn.map PieceQ.toPiece))
+    (hμFn : D.μ.N false = polyMeas (T.qFn.map PieceQ.toPiece))
     (hok : T.DataOK D.Cb) : T.form.Spec D where
   hτ := hτ
   hv := hv
@@ -993,6 +1031,8 @@ theorem TrialQ.spec (T : TrialQ) (D : SignedData) (hτ : D.τ ∈ Ioo (0 : ℝ) 
   ht := ht
   hμT := hμT
   hμF := hμF
+  hμTn := hμTn
+  hμFn := hμFn
   pT := by
     intro q hq
     obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
@@ -1001,11 +1041,45 @@ theorem TrialQ.spec (T : TrialQ) (D : SignedData) (hτ : D.τ ∈ Ioo (0 : ℝ) 
     intro q hq
     obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
     exact hok.pF r hr
-  bd := by
-    intro b
-    cases b
-    · rw [hμF]; exact hok.bdF
-    · rw [hμT]; exact hok.bdT
+  pTn := by
+    intro q hq
+    obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
+    exact hok.pTn r hr
+  pFn := by
+    intro q hq
+    obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
+    exact hok.pFn r hr
+  hTn := by
+    intro q hq
+    obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
+    have h := hok.hTn r hr
+    show ((r.hi : ℚ) : ℝ) ≤ 1 / 8
+    have h2 : ((r.hi : ℚ) : ℝ) ≤ (((1 / 8 : ℚ)) : ℝ) := Rat.cast_le.mpr h
+    have h3 : (((1 / 8 : ℚ)) : ℝ) = 1 / 8 := by norm_num
+    exact h2.trans_eq h3
+  bd :=
+    { hP := fun b => by
+        cases b
+        · rw [hμF]; exact hok.bdF
+        · rw [hμT]; exact hok.bdT
+      hN := fun b => by
+        cases b
+        · rw [hμFn]; exact hok.bdFn
+        · rw [hμTn]; exact hok.bdTn
+      hNm := by
+        rw [Fintype.sum_bool, hμTn, hμFn]
+        have hm : ∀ qs : List PieceQ, (∀ q ∈ qs, PieceOK q.toPiece) →
+            (polyMeas (qs.map PieceQ.toPiece)).real univ = (((qs.map PieceQ.massQ).sum : ℚ) : ℝ) := by
+          intro qs hqs
+          have hq' : ∀ q ∈ qs.map PieceQ.toPiece, PieceOK q := by
+            intro q hq
+            obtain ⟨r, hr, rfl⟩ := List.mem_map.mp hq
+            exact hqs r hr
+          have := integral_const_polyMeas hq'
+          rw [integral_const, smul_eq_mul, mul_one] at this
+          rw [this, polyMass_cast]
+        rw [hm _ hok.pTn, hm _ hok.pFn]
+        exact_mod_cast hok.nm }
 
 /-- The total mass of the species of a trial (the contract's `mass μ`), as a rational. -/
 theorem polyMass_trial (qs : List PieceQ) :
