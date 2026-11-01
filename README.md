@@ -28,7 +28,7 @@ All proofs are kernel-checked in Lean and use only the axioms `propext`, `Quot.s
   source and PDF in [`paper/`](paper/) (`catalan-measure-hexagon.tex` is the single-file version),
   Hexagon preprint [`hexagon:2610.00187`](https://hexagonmath.org/2610.00187).
 - S. Litsey, *Irrationality measures for differences of trigamma values* (2026), the other fifteen
-  measures: LaTeX source and PDF in [`paper-lambda/`](paper-lambda/) (`lambda-irrationality-hexagon.tex`
+  measures: LaTeX source and PDF in [`paper-trigamma/`](paper-trigamma/) (`trigamma-irrationality-hexagon.tex`
   is the single-file version), Hexagon preprint [`hexagon:2610.00401`](https://hexagonmath.org/2610.00401).
 
 Both papers build on OpenAI's proof that `G` is irrational ([openai/math](https://github.com/openai/math);

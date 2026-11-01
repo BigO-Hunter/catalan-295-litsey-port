@@ -50,8 +50,8 @@ sources:
     relationship: other
     note: >-
       The companion paper by S. Litsey (2026), whose arguments the Lean
-      development follows. LaTeX source and PDF are in paper-lambda/
-      (lambda-irrationality-hexagon.tex is the single-file version); Hexagon
+      development follows. LaTeX source and PDF are in paper-trigamma/
+      (trigamma-irrationality-hexagon.tex is the single-file version); Hexagon
       preprint hexagon:2610.00401.
   - title: "Catalan's constant is irrational"
     authors:

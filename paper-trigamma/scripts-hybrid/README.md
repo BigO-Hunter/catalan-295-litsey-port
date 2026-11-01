@@ -1,6 +1,6 @@
 # scripts-hybrid: reproducing the hybrid (mu(lambda) <= 46.45) numerical certificate
 
-These files accompany Part 1 ("The rectangular hybrid frame and mu(lambda) <= 46.45") of `lambda-irrationality.tex`.
+These files accompany Part 1 ("The rectangular hybrid frame and mu(lambda) <= 46.45") of `trigamma-irrationality.tex`.
 They are copies of the audited originals in `DX-hybrid-decay/` (and `orig/` for the control), with ONE change:
 the hard-coded `sys.path.insert(0, '.../work/pylibs')` line of `hcert.py` is replaced by an optional
 `PYLIBS` environment variable.

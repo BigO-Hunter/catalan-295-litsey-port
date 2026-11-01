@@ -1,4 +1,4 @@
-# Arb certificate for the HYBRID k_rho energy step.  Adapted from paper-lambda/scripts/arb/kcert.py (unchanged originals in orig/).
+# Arb certificate for the HYBRID k_rho energy step.  Adapted from paper-trigamma/scripts/arb/kcert.py (unchanged originals in orig/).
 # Usage: python hcert.py sigma.json ALPHA mtarget gtarget tag nseg
 #  node measure nu = Leb[0,1] + 1/2 Leb[1,1+L], L=2*alpha; b=1+alpha (number of free charges per r)
 #  g(s) = b U^sigma_rho(s) - U^nu(s) + (1-eps) pi |Im s|
