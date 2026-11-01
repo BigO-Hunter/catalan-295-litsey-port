@@ -102,36 +102,6 @@ theorem rowSN_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.D
     linarith
   · linarith
 
-/-- **Series window at `c`, pointwise.**  The proof of `l1_series_sound` before the constant bound: the field plus
-the Laurent part is at most the Laurent-free field `fq'` plus `δ + l1Err`, at every point of `[c - ρ, c]`. -/
-theorem l1_series_pt (fq fq' : FieldQ) (es : List L1Ent) (c ρ : ℚ) (n : ℕ) (δ : ℚ)
-    (h : l1OK c ρ es = true)
-    (hlog : ∀ e ∈ es, ∀ (α β : ℚ), e.1.2 = some (α, β) → |Real.log |(α : ℝ)| - (e.2.1 : ℝ)| ≤ (e.2.2 : ℝ))
-    (hpl : fq'.plogs = fq.plogs ++ l1Plogs c n es) (hpo : fq'.poles = fq.poles)
-    (hD : polyAB (vecAdd (vecAdd fq.poly (l1Poly c n es)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) c ρ ≤ δ)
-    {x : ℝ} (hl : (c : ℝ) - ρ ≤ x) (hr : x ≤ (c : ℝ)) :
-    fieldTower fq (poleF fq.poles) 0 x + lfieldTower (es.map Prod.fst) 0 x ≤
-      fieldTower fq' (poleF fq'.poles) 0 x + ((δ + l1Err c ρ n es : ℚ) : ℝ) := by
-  unfold l1OK at h
-  simp only [Bool.and_eq_true, decide_eq_true_eq] at h
-  obtain ⟨⟨hρ, hρc⟩, hall⟩ := h
-  have h1 := l1_list_le c ρ n hρ hρc x hl hr es hall hlog
-  have h3 := (polyTow_range (vecAdd (vecAdd fq.poly (l1Poly c n es)) (fq'.poly.map (fun t => (-1 : ℚ) * t)))
-    c ρ x (by rw [abs_le]; constructor <;> linarith)).2
-  have h4 : ((polyAB (vecAdd (vecAdd fq.poly (l1Poly c n es)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) c ρ : ℚ) : ℝ)
-      ≤ (δ : ℝ) := by exact_mod_cast hD
-  simp only [l0_vecAdd, l0_map_mul] at h3
-  have e : fieldTower fq' (poleF fq'.poles) 0 x =
-      polyTow fq'.poly 0 x + (plogSumTower fq.plogs 0 x + plogSumTower (l1Plogs c n es) 0 x) +
-        poleTower fq.poles (poleF fq.poles) 0 x := by
-    unfold fieldTower; rw [hpl, hpo, l1_plogSum_append]
-  have e2 : fieldTower fq (poleF fq.poles) 0 x =
-      polyTow fq.poly 0 x + plogSumTower fq.plogs 0 x + poleTower fq.poles (poleF fq.poles) 0 x := rfl
-  rw [e, e2]
-  have h5 := (abs_le.mp h3).2
-  push_cast at h5 ⊢
-  linarith
-
 /-- **Positive free rows (`hSp`) from SP cells.**  Five regions of `(0,1)`: the log-form end window at `0`
 (`hR0`, rounded interior field `F2`), the gap (`hR1`, the trial field `Ft` itself), the interior (`hR2`, `F2`),
 the jump region (`hR3`, rounded field `F3`) and the log-form end window at `1` (`hR4`, `F3`).  The spike cost

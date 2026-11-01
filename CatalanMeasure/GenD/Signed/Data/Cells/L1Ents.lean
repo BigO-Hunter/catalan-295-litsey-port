@@ -116,4 +116,24 @@ theorem l1_series_soundM (fq fq' : FieldQ) (ts : List LTerm) (nl : ℕ) (c ρ : 
 
 #print axioms l1_series_soundM
 
+/-- `l1_series_soundM` with a pointwise bound `g` (end windows: `g x = TR + U + c log|x - e|`) -/
+theorem l1_series_soundMG (fq fq' : FieldQ) (ts : List LTerm) (nl : ℕ) (c ρ : ℚ) (n : ℕ) (δ : ℚ) (g : ℝ → ℝ)
+    (hlogs : l1LogsOk nl (l1Prune (mergeL ts)) = true)
+    (h : l1OK c ρ (l1EsOf nl ts) = true)
+    (hpl : fq'.plogs = fq.plogs ++ l1Plogs c n (l1EsOf nl ts)) (hpo : fq'.poles = fq.poles)
+    (hD : polyAB (vecAdd (vecAdd fq.poly (l1Poly c n (l1EsOf nl ts)))
+      (fq'.poly.map (fun t => (-1 : ℚ) * t))) c ρ ≤ δ)
+    (S : Set ℝ) (hS : ∀ x ∈ S, (c : ℝ) - ρ ≤ x ∧ x ≤ (c : ℝ))
+    (hcell : ∀ x ∈ S, fieldTower fq' (poleF fq'.poles) 0 x ≤ g x) :
+    ∀ x ∈ S, fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤
+      g x + ((δ + l1Err c ρ n (l1EsOf nl ts) : ℚ) : ℝ) := by
+  intro x hx
+  have key := l1_series_soundG fq fq' (l1EsOf nl ts) c ρ n δ g h (l1Ents_hlog nl _ hlogs) hpl hpo hD S hS hcell x hx
+  have e : lfieldTower ((l1EsOf nl ts).map Prod.fst) 0 x = lfieldTower ts 0 x := by
+    rw [l1EsOf, l1Ents_map, lfieldTower_l1Prune, lfieldTower_mergeL]
+  rw [e] at key
+  exact key
+
+#print axioms l1_series_soundMG
+
 end CatalanMeasure.GenD.Signed.Data.Cells

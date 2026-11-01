@@ -565,19 +565,19 @@ theorem l1_list_le (c ρ : ℚ) (n : ℕ) (hρ : 0 < ρ) (hρc : ρ < c) (x : �
       simp only [l1Poly, l1Plogs, l1Err, l0_vecAdd, l1_plogSum_append, Rat.cast_add]
       linarith
 
-/-- **Series window at `c`, soundness.**  `fq'` is a Laurent-free field with the plogs `fq.plogs ++ l1Plogs`, the
+/-- **Series window at `c`, soundness, pointwise bound `g`.**  `fq'` is a Laurent-free field with the plogs `fq.plogs ++ l1Plogs`, the
 poles of `fq`, and a polynomial within `δ` (on `[c - ρ, c]`) of `fq.poly + l1Poly`.  A bound `T` of `fq'` on a
 subset `S ⊆ [c - ρ, c]` gives the bound `T + δ + l1Err` of `fq` plus the Laurent part on `S`.  Every term with a
 factor `log|αx - β|` carries a rational `lam` with `|log|α| - lam| ≤ eta` (`lam = eta = 0` when `|α| = 1`). -/
-theorem l1_series_sound (fq fq' : FieldQ) (es : List L1Ent) (c ρ : ℚ) (n : ℕ) (δ T : ℚ)
+theorem l1_series_soundG (fq fq' : FieldQ) (es : List L1Ent) (c ρ : ℚ) (n : ℕ) (δ : ℚ) (g : ℝ → ℝ)
     (h : l1OK c ρ es = true)
     (hlog : ∀ e ∈ es, ∀ (α β : ℚ), e.1.2 = some (α, β) → |Real.log |(α : ℝ)| - (e.2.1 : ℝ)| ≤ (e.2.2 : ℝ))
     (hpl : fq'.plogs = fq.plogs ++ l1Plogs c n es) (hpo : fq'.poles = fq.poles)
     (hD : polyAB (vecAdd (vecAdd fq.poly (l1Poly c n es)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) c ρ ≤ δ)
     (S : Set ℝ) (hS : ∀ x ∈ S, (c : ℝ) - ρ ≤ x ∧ x ≤ (c : ℝ))
-    (hcell : ∀ x ∈ S, fieldTower fq' (poleF fq'.poles) 0 x ≤ (T : ℝ)) :
+    (hcell : ∀ x ∈ S, fieldTower fq' (poleF fq'.poles) 0 x ≤ g x) :
     ∀ x ∈ S, fieldTower fq (poleF fq.poles) 0 x + lfieldTower (es.map Prod.fst) 0 x ≤
-      ((T + δ + l1Err c ρ n es : ℚ) : ℝ) := by
+      g x + ((δ + l1Err c ρ n es : ℚ) : ℝ) := by
   unfold l1OK at h
   simp only [Bool.and_eq_true, decide_eq_true_eq] at h
   obtain ⟨⟨hρ, hρc⟩, hall⟩ := h
@@ -602,9 +602,25 @@ theorem l1_series_sound (fq fq' : FieldQ) (es : List L1Ent) (c ρ : ℚ) (n : �
   push_cast at h5 ⊢
   linarith
 
+/-- **Series window at `c`, soundness** (constant bound; `l1_series_soundG`). -/
+theorem l1_series_sound (fq fq' : FieldQ) (es : List L1Ent) (c ρ : ℚ) (n : ℕ) (δ T : ℚ)
+    (h : l1OK c ρ es = true)
+    (hlog : ∀ e ∈ es, ∀ (α β : ℚ), e.1.2 = some (α, β) → |Real.log |(α : ℝ)| - (e.2.1 : ℝ)| ≤ (e.2.2 : ℝ))
+    (hpl : fq'.plogs = fq.plogs ++ l1Plogs c n es) (hpo : fq'.poles = fq.poles)
+    (hD : polyAB (vecAdd (vecAdd fq.poly (l1Poly c n es)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) c ρ ≤ δ)
+    (S : Set ℝ) (hS : ∀ x ∈ S, (c : ℝ) - ρ ≤ x ∧ x ≤ (c : ℝ))
+    (hcell : ∀ x ∈ S, fieldTower fq' (poleF fq'.poles) 0 x ≤ (T : ℝ)) :
+    ∀ x ∈ S, fieldTower fq (poleF fq.poles) 0 x + lfieldTower (es.map Prod.fst) 0 x ≤
+      ((T + δ + l1Err c ρ n es : ℚ) : ℝ) := by
+  intro x hx
+  have h := l1_series_soundG fq fq' es c ρ n δ (fun _ => (T : ℝ)) h hlog hpl hpo hD S hS hcell x hx
+  push_cast at h ⊢
+  linarith
+
 #print axioms l1_pow
 #print axioms l1_laurent
 #print axioms l1_ent_le
+#print axioms l1_series_soundG
 #print axioms l1_series_sound
 
 end CatalanMeasure.GenD.Signed.Data.Cells
