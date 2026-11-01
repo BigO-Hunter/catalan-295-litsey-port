@@ -270,8 +270,12 @@ def drive():
                     pick, spec = qf, s
                     break
                 # Starvation guard (skill: reserve headroom for a ready large or critical job):
-                # if this job has waited > STARVE seconds, nothing behind it may backfill.
-                if time.time() - float(s.get('submitted', time.time())) > STARVE:
+                # if this job has waited > STARVE seconds, nothing behind it may backfill --
+                # but only if it would fit once our own running jobs finish. A job that does not
+                # fit even then (memory held outside the lanes) must not block the queue: on
+                # 31 Oct a 8.6 GB forecast vs 8.5 GB envelope deadlocked 11 jobs for 20+ minutes.
+                if (time.time() - float(s.get('submitted', time.time())) > STARVE
+                        and ew <= env_w and ec <= env_c):
                     break
         if pick:
             why = hold_refusal(spec['target'])
