@@ -731,6 +731,95 @@ theorem famD_spikeEnv (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.
   have hSup : X.T.form.Sup = (X.T.Sup : ℝ) := rfl
   linarith
 
+/-! ### Helpers for the row instances (`RowsQ0`–`RowsQ2`) -/
+
+/-- `l1Q` with structural recursion on the first list (the kernel evaluates it; `l1Q` itself is
+well-founded because its `[]` case recurses on the second list). -/
+def l1S : List ℚ → List ℚ → ℚ
+  | [], bs => (bs.map qAbs).sum
+  | a :: as, [] => qAbs a + l1S as []
+  | a :: as, b :: bs => qAbs (a - b) + l1S as bs
+
+theorem l1Q_nil_left (bs : List ℚ) : l1Q [] bs = (bs.map qAbs).sum := by
+  induction bs with
+  | nil => simp [l1Q]
+  | cons b bs ih => simp [l1Q, ih]
+
+theorem l1Q_eq_l1S (as bs : List ℚ) : l1Q as bs = l1S as bs := by
+  induction as generalizing bs with
+  | nil => simp [l1S, l1Q_nil_left]
+  | cons a as ih => cases bs <;> simp [l1Q, l1S, ih]
+
+/-- The end-window comparison `TR + U + c log (endR) ≤ T` carried by `endUOK`. -/
+theorem endUOK_cmp {fq : FieldQ} {ts : List LTerm} {e lo hi : ℚ} {k kR : ℕ} {U TR T : ℚ}
+    (hchk : endUOK fq ts e lo hi k kR U TR T = true) :
+    (TR : ℝ) + U + (endC fq ts e : ℝ) * Real.log (endR e lo hi : ℝ) ≤ T := by
+  unfold endUOK at hchk
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨h1, hc⟩, hRk⟩, hT⟩ := hchk
+  unfold endOK at h1
+  simp only [Bool.and_eq_true, decide_eq_true_eq] at h1
+  obtain ⟨⟨⟨⟨⟨⟨hle, hel⟩, hR0⟩, hR3⟩, hk⟩, -⟩, -⟩ := h1
+  have hlog2 : Real.log ((endR e lo hi : ℚ) : ℝ) ≤ -(69 / 100 * (kR : ℝ)) := by
+    have h2 : ((endR e lo hi : ℚ) : ℝ) ≤ ((1 : ℝ) / 2) ^ kR := by
+      have := (Rat.cast_le (K := ℝ)).mpr hRk; push_cast at this; exact this
+    have hR0' : (0 : ℝ) < (endR e lo hi : ℝ) := by exact_mod_cast hR0
+    have h3 := Real.log_le_log hR0' h2
+    rw [Real.log_pow, one_div, Real.log_inv] at h3
+    have := Real.log_two_gt_d9
+    have hk0 : (0 : ℝ) ≤ kR := Nat.cast_nonneg kR
+    nlinarith
+  have hc' : (0 : ℝ) ≤ (endC fq ts e : ℝ) := by exact_mod_cast hc
+  have hT' : ((TR + U - endC fq ts e * (69 / 100 * (kR : ℚ)) : ℚ) : ℝ) ≤ (T : ℝ) := by exact_mod_cast hT
+  push_cast at hT'
+  have := mul_le_mul_of_nonneg_left hlog2 hc'
+  linarith
+
+theorem endR_one {lo : ℚ} (h : lo ≤ 1) : endR 1 lo 1 = 1 - lo := by
+  unfold endR qmax; split_ifs <;> linarith
+
+theorem endR_zero {lo : ℚ} (h : lo ≤ 0) : endR 0 lo 0 = -lo := by
+  unfold endR qmax; split_ifs <;> linarith
+
+/-- **A log-form end window at `E`** of a cell field `fq` on `[lo, hi]` (`hi` the cover end), as the end
+modules export it (`…Log`, `…End`, `…Cpos`), with `lo` strictly inside `(lo₀, E)` or `(E, lo₀)`. -/
+def EndW (fq : FieldQ) (E hi T : ℚ) (inside : ℚ → Prop) : Prop :=
+  ∃ (lo TR U : ℚ) (k kR : ℕ), inside lo ∧
+    (∀ x ∈ Icc ((lo : ℚ) : ℝ) ((hi : ℚ) : ℝ), x ≠ ((E : ℚ) : ℝ) →
+      fieldTower fq (poleF fq.poles) 0 x ≤ ((TR : ℚ) : ℝ) + ((U : ℚ) : ℝ) +
+        ((endC fq [] E : ℚ) : ℝ) * Real.log |x - ((E : ℚ) : ℝ)|) ∧
+    endUOK fq [] E lo hi k kR U TR T = true ∧ 0 < endC fq [] E
+
+theorem chord_mono {lo hi a b c d α : ℝ} (hac : a ≤ c) (hbd : b ≤ d) : chord lo hi a b α ≤ chord lo hi c d α := by
+  unfold chord
+  have h0 := interpL_nonneg lo hi α
+  have h1 := interpL_le_one lo hi α
+  nlinarith
+
+theorem bilin_mono {lo hi T00 T01 T10 T11 U00 U01 U10 U11 α β : ℝ} (hlo : lo < hi) (hα : α ∈ Icc lo hi)
+    (hβ : β ∈ Icc 0 α) (h00 : T00 ≤ U00) (h01 : T01 ≤ U01) (h10 : T10 ≤ U10) (h11 : T11 ≤ U11) :
+    bilin lo hi T00 T01 T10 T11 α β ≤ bilin lo hi U00 U01 U10 U11 α β := by
+  have hd : 0 < hi - lo := by linarith
+  have hs0 : 0 ≤ (α - lo) / (hi - lo) := div_nonneg (by linarith [hα.1]) hd.le
+  have hs1 : (α - lo) / (hi - lo) ≤ 1 := div_le_one_of_le₀ (by linarith [hα.2]) hd.le
+  have ht0 : 0 ≤ β / α := div_nonneg hβ.1 (hβ.1.trans hβ.2)
+  have ht1 : β / α ≤ 1 := div_le_one_of_le₀ hβ.2 (hβ.1.trans hβ.2)
+  unfold bilin
+  have a1 : 0 ≤ (1 - (α - lo) / (hi - lo)) * (1 - β / α) := mul_nonneg (by linarith) (by linarith)
+  have a2 : 0 ≤ (1 - (α - lo) / (hi - lo)) * (β / α) := mul_nonneg (by linarith) ht0
+  have a3 : 0 ≤ ((α - lo) / (hi - lo)) * (1 - β / α) := mul_nonneg hs0 (by linarith)
+  have a4 : 0 ≤ ((α - lo) / (hi - lo)) * (β / α) := mul_nonneg hs0 ht0
+  nlinarith [mul_le_mul_of_nonneg_left h00 a1, mul_le_mul_of_nonneg_left h01 a2,
+    mul_le_mul_of_nonneg_left h10 a3, mul_le_mul_of_nonneg_left h11 a4]
+
+/-- `bilin` of the corner values `0, c lo, 0, c hi` of `c β` is `c β`. -/
+theorem bilin_lin {lo hi c α β : ℝ} (hlo : lo < hi) (hα0 : 0 < α) :
+    bilin lo hi 0 (c * lo) 0 (c * hi) α β = c * β := by
+  have hd : hi - lo ≠ 0 := by linarith
+  unfold bilin
+  field_simp
+  ring
+
 end
 
 end CatalanMeasure.GenD.Signed.Data.Assembly
