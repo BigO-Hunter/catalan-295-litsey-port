@@ -1,6 +1,8 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Phase2
+public import CatalanMeasure.GenD.Signed.Data.Assembly.Decay
+public import CatalanMeasure.CellCert.Scaled
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkMean
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkStatSigns
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkStatSlope
@@ -28,7 +30,7 @@ open Set Filter
 open CatalanMeasure.Signed CatalanMeasure.Signed.Consts OAI.InternalCatalan CatalanMeasure.Parametric
 open CatalanMeasure.GenD.D58.Cert590 (Pc P V)
 
-open CatalanMeasure.GenD.D58
+open CatalanMeasure.GenD.D58 CatalanMeasure.GenD.Analytic CatalanMeasure.CellCert
 
 noncomputable section
 
@@ -275,8 +277,8 @@ def link410 (R : Rows410) {residual nearCap : ℝ}
     have h5 : 2 * (P410.g0 : ℝ) / P410.n0 = 5 / 29 := by norm_num [P410, D58.Odd.design]
     rw [h5]
     fin_cases i
-    · have := q_ge_I0 rfl (fun _ => rfl) (fun _ => rfl) hα; linarith
-    · have := q_ge_I1 rfl (fun _ => rfl) (fun _ => rfl) hα; linarith
+    · have := q_ge_I0 (G := gcertG eL gCp) rfl (fun _ => rfl) (fun _ => rfl) hα; dsimp only; linarith
+    · have := q_ge_I1 (G := gcertG eL gCp) rfl (fun _ => rfl) (fun _ => rfl) hα; dsimp only; linarith
   a0 := 7 / 100
   ts := 13 / 128
   dgap := 1 / 25
@@ -287,7 +289,7 @@ def link410 (R : Rows410) {residual nearCap : ℝ}
   hηT := by norm_num
   hgap := by
     have := link_hgap_odd (δ := 13 / 100000) (by norm_num) hp hv hM
-    filter_upwards [this] with N hN x h0 h1 using by rw [hM]; exact hN x h0 h1
+    filter_upwards [this] with N hN x h0 h1 using hN x h0 h1
   hsmall := fun α hα => by
     have h5 : 2 * (P410.g0 : ℝ) / P410.n0 = 5 / 29 := by norm_num [P410, D58.Odd.design]
     rw [h5]
@@ -326,7 +328,7 @@ def link410 (R : Rows410) {residual nearCap : ℝ}
   hC1nn := by norm_num [phase2]
   hsup := by
     have := link_hsup_odd (δ := 13 / 100000) (by norm_num) hp hv hM
-    filter_upwards [this] with N hN x hx using by rw [hM]; exact hN x hx
+    filter_upwards [this] with N hN x hx using hN x hx
   Kn := fun N => ((58 * N : ℕ) : ℝ)
   Tn := fun N => ((58 * N : ℕ) : ℝ) + 1
   Mmax := mmaxOf s410
@@ -358,7 +360,7 @@ theorem hec410' {residual nearCap : ℝ}
     (D0 : SecondTrialBoundsEnd P410 0 K590.target residual nearCap K590.secondCost' G410)
     (hp : D0.p = trialSeqS Pc P) (hv : D0.v = trialSeqS CatalanMeasure.GenD.D58.Cert590.Vc CatalanMeasure.GenD.D58.Cert590.V) :
     eL * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < (13 / 100000) / 2 :=
-  hec_K590 (by unfold eL; positivity) le_rfl le_rfl hp hv
+  hec_K590 (by positivity) le_rfl le_rfl hp hv
 
 end
 
