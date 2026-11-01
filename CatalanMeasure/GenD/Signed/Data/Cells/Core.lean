@@ -1378,6 +1378,291 @@ theorem plogSumVecI_eq (c : ℚ) (M : ℕ) : ∀ (plogs : List (List ℚ × ℚ)
     | nil => simp [plogSumVecI, plogSumVec]
     | cons L Ls => simp only [plogSumVecI, plogSumVec, plogVecI_eq, ih]
 
+/-! ### The `logTailQ` table (exact; `plogVecI_tab`)
+
+`logTailQ d (m + 1) = -(m / (m + 1)) logTailQ d m / d`, so the `M` tail coefficients of a centre
+cost one step each instead of a power, a quotient and a sign per entry of every convolution. -/
+
+/-- `[t, t₊₁, …]` (`n` entries) from `t` at index `m` by the ratio recurrence. -/
+def ltAux (u : ℚ) : ℕ → ℕ → ℚ → List ℚ
+  | 0, _, _ => []
+  | n + 1, m, t => t :: ltAux u n (m + 1) (-((m : ℚ) / ((m : ℚ) + 1)) * t * u)
+
+/-- `[0, logTailQ d 1, …, logTailQ d M]` (`ltTab_getD`). -/
+def ltTab (d : ℚ) (M : ℕ) : List ℚ := 0 :: ltAux d⁻¹ M 1 d⁻¹
+
+theorem logTailQ_succ (d : ℚ) (m : ℕ) (hm : 1 ≤ m) :
+    logTailQ d (m + 1) = -((m : ℚ) / ((m : ℚ) + 1)) * logTailQ d m * d⁻¹ := by
+  unfold logTailQ
+  obtain ⟨j, rfl⟩ : ∃ j, m = j + 1 := ⟨m - 1, by omega⟩
+  by_cases hd : d = 0
+  · subst hd; simp
+  · simp only [Nat.add_sub_cancel, pow_succ]
+    push_cast
+    field_simp
+
+theorem ltAux_getD (d : ℚ) : ∀ (n m : ℕ) (t : ℚ), 1 ≤ m → t = logTailQ d m →
+    ∀ i < n, (ltAux d⁻¹ n m t).getD i 0 = logTailQ d (m + i) := by
+  intro n
+  induction n with
+  | zero => intro m t _ _ i hi; omega
+  | succ n ih =>
+    intro m t hm ht i hi
+    cases i with
+    | zero => simp [ltAux, ht]
+    | succ i =>
+      simp only [ltAux, List.getD_cons_succ]
+      rw [ih (m + 1) _ (by omega) (by rw [logTailQ_succ d m hm, ht]) i (by omega)]
+      congr 1; omega
+
+theorem ltTab_getD (d : ℚ) (M m : ℕ) (h1 : 1 ≤ m) (h2 : m ≤ M) :
+    (ltTab d M).getD m 0 = logTailQ d m := by
+  obtain ⟨i, rfl⟩ : ∃ i, m = i + 1 := ⟨m - 1, by omega⟩
+  simp only [ltTab, List.getD_cons_succ]
+  rw [ltAux_getD d M 1 d⁻¹ le_rfl (by simp [logTailQ]) i (by omega)]
+  congr 1; omega
+
+theorem partialConv_congr (U : List ℚ) (V W : ℕ → ℚ) (k : ℕ) :
+    ∀ n, (∀ j < n, V (k - j) = W (k - j)) → partialConv U V k n = partialConv U W k n := by
+  intro n
+  induction n with
+  | zero => intro _; rfl
+  | succ n ih =>
+    intro h
+    simp only [partialConv]
+    rw [ih (fun j hj => h j (by omega)), h n (by omega)]
+
+/-- `plogVecI` with the tail coefficients read from `ltTab`. -/
+def plogVecIT (P : List ℚ) (e c L : ℚ) (M : ℕ) : List ℚ :=
+  let Pk := shiftLK c M P
+  let T := ltTab (c - e) M
+  (List.range (M + 1)).map (fun k => L * Pk.getD k 0 + partialConv Pk (fun m => T.getD m 0) k k)
+
+theorem plogVecIT_eq (P : List ℚ) (e c L : ℚ) (M : ℕ) : plogVecIT P e c L M = plogVecI P e c L M := by
+  unfold plogVecIT plogVecI
+  simp only
+  apply List.map_congr_left
+  intro k hk
+  rw [List.mem_range] at hk
+  unfold plogCoefQ
+  rw [partialConv_congr _ _ _ k k (fun j hj => ltTab_getD _ M _ (by omega) (by omega))]
+
+def plogSumVecIT (c : ℚ) (M : ℕ) : List (List ℚ × ℚ) → List ℚ → List ℚ
+  | t :: ts, L :: Ls => vecAdd (plogVecIT t.1 t.2 c L M) (plogSumVecIT c M ts Ls)
+  | _, _ => []
+
+theorem plogSumVecIT_eq (c : ℚ) (M : ℕ) : ∀ (plogs : List (List ℚ × ℚ)) (Ls : List ℚ),
+    plogSumVecIT c M plogs Ls = plogSumVecI c M plogs Ls := by
+  intro plogs
+  induction plogs with
+  | nil => intro Ls; cases Ls <;> simp [plogSumVecIT, plogSumVecI]
+  | cons t ts ih =>
+    intro Ls
+    cases Ls with
+    | nil => simp [plogSumVecIT, plogSumVecI]
+    | cons L Ls => simp only [plogSumVecIT, plogSumVecI, plogVecIT_eq, ih]
+
+/-! ### Merging plogs with a common centre (exact; `plogSumVecM_eq`)
+
+`Σ_i P_i(x) log|x - e| = (Σ_i P_i)(x) log|x - e|`: the plogs of a field share few centres (SP: 38
+plogs, 14 centres), and the coefficient vector is linear in the polynomial, so the evaluator adds
+the polynomials of equal centres first.  When two plogs with one centre carry different supplied
+log values the merge returns `none` and the evaluator falls back to the unmerged list. -/
+
+theorem polyTow_vecAdd : ∀ (P Q : List ℚ) (k : ℕ) (x : ℝ),
+    polyTow (vecAdd P Q) k x = polyTow P k x + polyTow Q k x := by
+  intro P
+  induction P with
+  | nil => intro Q k x; simp [vecAdd, polyTow]
+  | cons a as ih =>
+    intro Q k x
+    cases Q with
+    | nil => simp [vecAdd, polyTow]
+    | cons b bs =>
+      cases k with
+      | zero => simp only [vecAdd, polyTow, ih]; push_cast; ring
+      | succ k => simp only [vecAdd, polyTow, ih]; ring
+
+theorem shiftL_vecAdd_getD (c : ℚ) (M : ℕ) (P Q : List ℚ) (i : ℕ) (hi : i ≤ M) :
+    (shiftL c M (vecAdd P Q)).getD i 0 = (shiftL c M P).getD i 0 + (shiftL c M Q).getD i 0 := by
+  have h := shiftL_spec c M (vecAdd P Q) i hi
+  rw [polyTow_vecAdd, add_div, ← shiftL_spec c M P i hi, ← shiftL_spec c M Q i hi] at h
+  exact_mod_cast h
+
+theorem partialConv_add (U A B : List ℚ) (V : ℕ → ℚ) (k : ℕ) :
+    ∀ n, (∀ j < n, U.getD j 0 = A.getD j 0 + B.getD j 0) →
+      partialConv U V k n = partialConv A V k n + partialConv B V k n := by
+  intro n
+  induction n with
+  | zero => intro _; simp [partialConv]
+  | succ n ih =>
+    intro h
+    simp only [partialConv]
+    rw [ih (fun j hj => h j (by omega)), h n (by omega)]
+    ring
+
+theorem plogVec_getD (P : List ℚ) (e c L : ℚ) (M k : ℕ) :
+    (plogVec P e c L M).getD k 0 = if k ≤ M then plogCoefQ (shiftL c M P) (c - e) L k else 0 := by
+  unfold plogVec
+  by_cases hk : k ≤ M
+  · rw [if_pos hk, List.getD_eq_getElem _ _ (by simp; omega)]
+    simp
+  · rw [if_neg hk, List.getD_eq_getElem?_getD, List.getElem?_eq_none (by simp; omega)]
+    rfl
+
+theorem plogVec_vecAdd_getD (P Q : List ℚ) (e c L : ℚ) (M k : ℕ) :
+    (plogVec (vecAdd P Q) e c L M).getD k 0 =
+      (plogVec P e c L M).getD k 0 + (plogVec Q e c L M).getD k 0 := by
+  rw [plogVec_getD, plogVec_getD, plogVec_getD]
+  split_ifs with hk
+  · unfold plogCoefQ
+    rw [shiftL_vecAdd_getD c M P Q k hk,
+      partialConv_add _ _ _ _ k k (fun j hj => shiftL_vecAdd_getD c M P Q j (by omega))]
+    ring
+  · simp
+
+/-- Insert the plog `(P, e)` (log value `L`) into a list with distinct centres. -/
+def insPlog (P : List ℚ) (e L : ℚ) :
+    List (List ℚ × ℚ) → List ℚ → Option (List (List ℚ × ℚ) × List ℚ)
+  | [], [] => some ([(P, e)], [L])
+  | (Q, f) :: r, L' :: Ls =>
+    if e = f then (if L = L' then some ((vecAdd P Q, f) :: r, L' :: Ls) else none)
+    else (insPlog P e L r Ls).map (fun x => ((Q, f) :: x.1, L' :: x.2))
+  | _, _ => none
+
+/-- The plogs (with their log values) merged by centre; `none` if a centre carries two log values or
+the lists are not aligned. -/
+def mergePlogs : List (List ℚ × ℚ) → List ℚ → Option (List (List ℚ × ℚ) × List ℚ)
+  | [], [] => some ([], [])
+  | t :: ts, L :: Ls => (mergePlogs ts Ls).bind (fun x => insPlog t.1 t.2 L x.1 x.2)
+  | _, _ => none
+
+/-- `plogSumVecIT` on the merged plogs (equal to `plogSumVecI`: `plogSumVecM_eq`). -/
+def plogSumVecM (c : ℚ) (M : ℕ) (plogs : List (List ℚ × ℚ)) (Ls : List ℚ) : List ℚ :=
+  match mergePlogs plogs Ls with
+  | some (ps, ls) => plogSumVecIT c M ps ls
+  | none => plogSumVecIT c M plogs Ls
+
+theorem plogVec_length (P : List ℚ) (e c L : ℚ) (M : ℕ) : (plogVec P e c L M).length = M + 1 := by
+  simp [plogVec]
+
+theorem vecAdd_length : ∀ (a b : List ℚ), (vecAdd a b).length = max a.length b.length := by
+  intro a
+  induction a with
+  | nil => intro b; simp [vecAdd]
+  | cons x xs ih =>
+    intro b
+    cases b with
+    | nil => simp [vecAdd]
+    | cons y ys => simp [vecAdd, ih, Nat.succ_max_succ]
+
+/-- On aligned lists the sum vector is empty or has length `M + 1`. -/
+theorem plogSumVec_length (c : ℚ) (M : ℕ) : ∀ (ps : List (List ℚ × ℚ)) (ls : List ℚ),
+    ps.length = ls.length → (plogSumVec c M ps ls).length = if ps = [] then 0 else M + 1 := by
+  intro ps
+  induction ps with
+  | nil => intro ls _; cases ls <;> simp [plogSumVec]
+  | cons t ts ih =>
+    intro ls hl
+    cases ls with
+    | nil => simp at hl
+    | cons L Ls =>
+      simp only [plogSumVec, vecAdd_length, plogVec_length, ih Ls (by simpa using hl)]
+      rw [if_neg (List.cons_ne_nil _ _)]
+      split_ifs <;> simp
+
+theorem plogSumVec_cons_getD (c : ℚ) (M : ℕ) (t : List ℚ × ℚ) (ts : List (List ℚ × ℚ)) (L : ℚ)
+    (Ls : List ℚ) (k : ℕ) :
+    (plogSumVec c M (t :: ts) (L :: Ls)).getD k 0 =
+      (plogVec t.1 t.2 c L M).getD k 0 + (plogSumVec c M ts Ls).getD k 0 := by
+  simp only [plogSumVec, vecAdd_getD]
+
+theorem insPlog_spec (c : ℚ) (M : ℕ) (P : List ℚ) (e L : ℚ) : ∀ (ps : List (List ℚ × ℚ))
+    (ls : List ℚ) (ps' : List (List ℚ × ℚ)) (ls' : List ℚ), ps.length = ls.length →
+    insPlog P e L ps ls = some (ps', ls') →
+    ps'.length = ls'.length ∧ ps' ≠ [] ∧
+      ∀ k, (plogSumVec c M ps' ls').getD k 0 =
+        (plogVec P e c L M).getD k 0 + (plogSumVec c M ps ls).getD k 0 := by
+  intro ps
+  induction ps with
+  | nil =>
+    intro ls ps' ls' _ h
+    cases ls with
+    | nil =>
+      simp only [insPlog, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      refine ⟨rfl, by simp, fun k => ?_⟩
+      rw [plogSumVec_cons_getD]
+    | cons _ _ => simp [insPlog] at h
+  | cons q r ih =>
+    intro ls ps' ls' hl h
+    obtain ⟨Q, f⟩ := q
+    cases ls with
+    | nil => simp [insPlog] at h
+    | cons L' Ls =>
+      simp only [insPlog] at h
+      split_ifs at h with hef hL
+      · simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        subst hef hL
+        refine ⟨by simpa using hl, by simp, fun k => ?_⟩
+        rw [plogSumVec_cons_getD, plogSumVec_cons_getD, plogVec_vecAdd_getD]; ring
+      · rcases hx : insPlog P e L r Ls with _ | ⟨ps₁, ls₁⟩
+        · rw [hx] at h; simp at h
+        · rw [hx] at h
+          simp only [Option.map_some, Option.some.injEq, Prod.mk.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          obtain ⟨h2, _, h4⟩ := ih Ls ps₁ ls₁ (by simpa using hl) hx
+          refine ⟨by simp [h2], by simp, fun k => ?_⟩
+          rw [plogSumVec_cons_getD, plogSumVec_cons_getD, h4]; ring
+
+theorem mergePlogs_spec (c : ℚ) (M : ℕ) : ∀ (plogs : List (List ℚ × ℚ)) (Ls : List ℚ)
+    (ps : List (List ℚ × ℚ)) (ls : List ℚ), mergePlogs plogs Ls = some (ps, ls) →
+    plogs.length = Ls.length ∧ ps.length = ls.length ∧ (ps = [] ↔ plogs = []) ∧
+      ∀ k, (plogSumVec c M ps ls).getD k 0 = (plogSumVec c M plogs Ls).getD k 0 := by
+  intro plogs
+  induction plogs with
+  | nil =>
+    intro Ls ps ls h
+    cases Ls with
+    | nil =>
+      simp only [mergePlogs, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      exact ⟨rfl, rfl, Iff.rfl, fun _ => rfl⟩
+    | cons _ _ => simp [mergePlogs] at h
+  | cons t ts ih =>
+    intro Ls ps ls h
+    cases Ls with
+    | nil => simp [mergePlogs] at h
+    | cons L Ls =>
+      simp only [mergePlogs] at h
+      rcases hm : mergePlogs ts Ls with _ | ⟨ps₁, ls₁⟩
+      · rw [hm] at h; simp at h
+      · rw [hm] at h
+        simp only [Option.bind_some] at h
+        obtain ⟨h1, h2, _, h4⟩ := ih Ls ps₁ ls₁ hm
+        obtain ⟨g1, g2, g3⟩ := insPlog_spec c M t.1 t.2 L ps₁ ls₁ ps ls h2 h
+        refine ⟨by simp [h1], g1, by simp [g2], fun k => ?_⟩
+        rw [g3, h4, plogSumVec_cons_getD]
+
+theorem plogSumVecM_eq (c : ℚ) (M : ℕ) (plogs : List (List ℚ × ℚ)) (Ls : List ℚ) :
+    plogSumVecM c M plogs Ls = plogSumVecI c M plogs Ls := by
+  unfold plogSumVecM
+  rcases hm : mergePlogs plogs Ls with _ | ⟨ps, ls⟩
+  · exact plogSumVecIT_eq c M plogs Ls
+  · simp only
+    rw [plogSumVecIT_eq]
+    obtain ⟨h1, h2, h3, h4⟩ := mergePlogs_spec c M plogs Ls ps ls hm
+    rw [plogSumVecI_eq, plogSumVecI_eq]
+    apply List.ext_getElem
+    · rw [plogSumVec_length c M ps ls h2, plogSumVec_length c M plogs Ls h1]
+      by_cases hp : plogs = []
+      · simp [hp, h3.mpr hp]
+      · simp [hp, (not_congr h3).mpr hp]
+    · intro n hn1 hn2
+      have := h4 n
+      rwa [List.getD_eq_getElem _ _ hn1, List.getD_eq_getElem _ _ hn2] at this
+
 /-- `plogErr1` with the integer Taylor shift -/
 def plogErr1I (P : List ℚ) (c ε : ℚ) (M : ℕ) : List ℚ :=
   let Pk := shiftLK c M P
@@ -2266,7 +2551,7 @@ theorem poleVecT_err (Q K0 Mi Wi MiF WiF : ℕ) (poles : List PoleR) (c : ℚ) (
 /-- the coefficients of the field at `c`: integer Taylor shifts, two-class truncated fixed-point poles -/
 def fieldCoefsT (fq : FieldQ) (Ls : List ℚ) (c : ℚ) (M Q K0 MiF WiF : ℕ) : List ℚ :=
   vecAdd (shiftLK c M fq.poly)
-    (vecAdd (plogSumVecI c M fq.plogs Ls) (poleVecT Q K0 MiF WiF fq.poles c M))
+    (vecAdd (plogSumVecM c M fq.plogs Ls) (poleVecT Q K0 MiF WiF fq.poles c M))
 
 def errVecT (c : ℚ) (N : ℕ) (plogs : List (List ℚ × ℚ)) (εs : List ℚ) (Q Mi Wi K0 MiF WiF nN nF : ℕ) :
     List ℚ :=
@@ -2298,7 +2583,7 @@ theorem fieldCoefsT_approx (fq : FieldQ) (F : ℝ → ℝ) (Ls εs : List ℚ) (
   have hd : (fieldCoefsT fq Ls c M Q K0 MiF WiF).getD k 0 - (fieldCoefs fq Ls c M).getD k 0 =
       (poleVecT Q K0 MiF WiF fq.poles c M).getD k 0 - (poleVec fq.poles c M).getD k 0 := by
     unfold fieldCoefsT fieldCoefs
-    rw [shiftLK_eq', plogSumVecI_eq]
+    rw [shiftLK_eq', plogSumVecM_eq, plogSumVecI_eq]
     rw [vecAdd_getD, vecAdd_getD, vecAdd_getD, vecAdd_getD]
     ring
   have hq := poleVecT_err Q K0 Mi Wi MiF WiF fq.poles c M k hk1 hk hMi hMiF hnear
@@ -3030,7 +3315,7 @@ theorem coefs0_approx (fq : FieldQ) (Ls εs : List ℚ) (c : ℚ) (M Q K0 MiF Wi
   have h1 := shiftL_spec c M fq.poly 0 (Nat.zero_le _)
   have h2 := plogSumVec_approx c M fq.plogs Ls εs hL hne 0 (Nat.zero_le _)
   unfold fieldCoefsT
-  rw [shiftLK_eq', plogSumVecI_eq, vecAdd_getD, vecAdd_getD, poleVecT_zero, add_zero]
+  rw [shiftLK_eq', plogSumVecM_eq, plogSumVecI_eq, vecAdd_getD, vecAdd_getD, poleVecT_zero, add_zero]
   simp only [Nat.factorial_zero, Nat.cast_one, div_one] at h1 h2
   push_cast
   rw [h1]
