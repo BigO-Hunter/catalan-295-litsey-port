@@ -44,7 +44,7 @@ theorem norm_ge_partial {u : ℕ → ℝ} (h : Summable fun k => |u k|) (K : ℕ
     have : (1 : ℝ) ≤ ((k + 1 : ℕ) : ℝ) := by exact_mod_cast Nat.succ_pos k
     exact div_le_self (sq_nonneg _) this
   unfold barrierTrialNormSq
-  exact sum_le_tsum _ (fun k _ => div_nonneg (sq_nonneg _) (by positivity)) h3
+  exact Summable.sum_le_tsum _ (fun k _ => div_nonneg (sq_nonneg _) (by positivity)) h3
 
 def sqQ (s : SeqQ) (k : ℕ) : ℚ := s.f.getD k 0 + tailValQ s.tail (k + 1)
 
@@ -71,8 +71,6 @@ theorem lbNorm_le (s t : SeqQ)
   push_cast
   refine Finset.sum_congr rfl fun k _ => ?_
   rw [seq_succ, seq_succ]
-  push_cast
-  ring
 
 /-- Exact `ip (ΔR, ΔR)` for finite references. -/
 def lbRRQ (X Y : FamPar) : ℚ :=
@@ -91,7 +89,7 @@ theorem famD_ipRR (X Y : FamPar) (N : ℕ) :
     ring
   · intro n hn
     have hn' : max X.T.R.f.length Y.T.R.f.length ≤ n := by simpa using hn
-    rw [famD_R_zero X N n (le_trans (le_max_left _ _) hn'), famD_R_zero Y N n (le_trans (le_max_right _ _) hn')]
+    simp only [famD_R_zero X N n (le_trans (le_max_left _ _) hn'), famD_R_zero Y N n (le_trans (le_max_right _ _) hn')]
     simp
 
 /-- The `b`-part of the curvature: `denW ≥ (sp/ν)² · 2/(i+1)` with `sp/ν = 20/58`. -/
@@ -157,7 +155,43 @@ theorem famD_ubRa (X Y : FamPar) (N : ℕ) :
   ring
 
 theorem srefOK_mono {μ : SRef} {C C' : ℝ} (h : μ.OK C) (hC : C ≤ C') : μ.OK C' :=
-  ⟨fun τ => BD_mono (h.hP τ) hC, fun τ => BD_mono (h.hN τ) hC, h.hNm⟩
+  ⟨fun τ => CatalanMeasure.Signed.BD_mono (h.hP τ) hC, fun τ => CatalanMeasure.Signed.BD_mono (h.hN τ) hC, h.hNm⟩
+
+theorem famD_v_eq (X : FamPar) (N : ℕ) :
+    (famD X N).v = tseq (fQ X.T.v.f) (X.T.v.tail.map TailQ.toC) := rfl
+
+theorem famD_lbV (X Y : FamPar) (hokX : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
+    (hokY : ∀ C : ℝ, (Y.Cb : ℝ) ≤ C → Y.T.DataOK C) (K N : ℕ) :
+    ((lbNorm X.T.v Y.T.v K : ℚ) : ℝ) ≤ barrierTrialNormSq (fun k => (famD X N).v k - (famD Y N).v k) := by
+  have hX := Glue410.Spec_summable_v (famD_spec X hokX N)
+  have hY := Glue410.Spec_summable_v (famD_spec Y hokY N)
+  rw [famD_v_eq] at hX ⊢
+  rw [famD_v_eq] at hY ⊢
+  exact lbNorm_le X.T.v Y.T.v hX hY K
+
+theorem famD_a_eq (X : FamPar) (N : ℕ) :
+    (famD X N).a = tseq (fQ X.T.a.f) (X.T.a.tail.map TailQ.toC) := rfl
+
+theorem famD_lbA (X Y : FamPar) (hokX : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
+    (hokY : ∀ C : ℝ, (Y.Cb : ℝ) ≤ C → Y.T.DataOK C) (K N : ℕ) :
+    ((lbNorm X.T.a Y.T.a K : ℚ) : ℝ) ≤ barrierTrialNormSq (fun k => (famD X N).a k - (famD Y N).a k) := by
+  have hX := Glue410.Spec_summable_a (famD_spec X hokX N)
+  have hY := Glue410.Spec_summable_a (famD_spec Y hokY N)
+  rw [famD_a_eq] at hX ⊢
+  rw [famD_a_eq] at hY ⊢
+  exact lbNorm_le X.T.a Y.T.a hX hY K
+
+theorem famD_p_eq (X : FamPar) (N : ℕ) :
+    (famD X N).p = tseq (fQ X.T.p.f) (X.T.p.tail.map TailQ.toC) := rfl
+
+theorem famD_lbP (X Y : FamPar) (hokX : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
+    (hokY : ∀ C : ℝ, (Y.Cb : ℝ) ≤ C → Y.T.DataOK C) (K N : ℕ) :
+    ((lbNorm X.T.p Y.T.p K : ℚ) : ℝ) ≤ barrierTrialNormSq (fun k => (famD X N).p k - (famD Y N).p k) := by
+  have hX := Glue410.Spec_summable_p (famD_spec X hokX N)
+  have hY := Glue410.Spec_summable_p (famD_spec Y hokY N)
+  rw [famD_p_eq] at hX ⊢
+  rw [famD_p_eq] at hY ⊢
+  exact lbNorm_le X.T.p Y.T.p hX hY K
 
 /-- **`κc ≤ curvQ`** for two trials of the family. -/
 theorem famD_curv (X Y : FamPar) (hokX : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
@@ -180,15 +214,29 @@ theorem famD_curv (X Y : FamPar) (hokX : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T
   have hrB := famD_regular Y hokY hCY N
   have hX := famD_spec X hokX N
   have hY := famD_spec Y hokY N
-  have h := curvQ_ge (famD X N) (famD Y N) (58 * N) hc hrA hrB hX.ht hY.ht hη1
-    ((lbNorm X.T.v Y.T.v K : ℚ) : ℝ) ((lbNorm X.T.a Y.T.a K : ℚ) : ℝ)
-    ((lbNorm X.T.p Y.T.p K : ℚ) : ℝ) ((lbRRQ X Y : ℚ) : ℝ) (lbRB : ℝ) ((lbBQ X Y : ℚ) : ℝ)
-    ((ubRaQ X Y : ℚ) : ℝ) ubIM
-    (lbNorm_le X.T.v Y.T.v (Glue410.Spec_summable_v hX) (Glue410.Spec_summable_v hY) K)
-    (lbNorm_le X.T.a Y.T.a (Glue410.Spec_summable_a hX) (Glue410.Spec_summable_a hY) K)
-    (lbNorm_le X.T.p Y.T.p (Glue410.Spec_summable_p hX) (Glue410.Spec_summable_p hY) K)
-    (famD_ipRR X Y N).ge hRB (famD_lbB X Y N hN) (famD_ubRa X Y N).le (hIM N)
-  exact h
+  have hV : ((lbNorm X.T.v Y.T.v K : ℚ) : ℝ) ≤
+      barrierTrialNormSq (fun k => (famD X N).v k - (famD Y N).v k) :=
+    famD_lbV X Y hokX hokY K N
+  have hA : ((lbNorm X.T.a Y.T.a K : ℚ) : ℝ) ≤
+      barrierTrialNormSq (fun k => (famD X N).a k - (famD Y N).a k) :=
+    famD_lbA X Y hokX hokY K N
+  have hP : ((lbNorm X.T.p Y.T.p K : ℚ) : ℝ) ≤
+      barrierTrialNormSq (fun k => (famD X N).p k - (famD Y N).p k) :=
+    famD_lbP X Y hokX hokY K N
+  have hRR : ((lbRRQ X Y : ℚ) : ℝ) ≤
+      ip (fun n => (famD X N).R n - (famD Y N).R n) (fun n => (famD X N).R n - (famD Y N).R n) :=
+    (famD_ipRR X Y N).ge
+  have hRB' : (lbRB : ℝ) ≤ refBil (famD X N).μ (famD X N).μ - refBil (famD X N).μ (famD Y N).μ -
+      refBil (famD Y N).μ (famD X N).μ + refBil (famD Y N).μ (famD Y N).μ := hRB
+  have hBb := famD_lbB X Y N hN
+  have hRa : raBil (famD X N).R (famD X N).a - raBil (famD X N).R (famD Y N).a -
+      raBil (famD Y N).R (famD X N).a + raBil (famD Y N).R (famD Y N).a ≤ ((ubRaQ X Y : ℚ) : ℝ) :=
+    (famD_ubRa X Y N).le
+  have hIM' : ip (fun n => mpos (famD X N).μ (famD X N).τ n - mpos (famD Y N).μ (famD X N).τ n)
+      (fun n => mpos (famD X N).μ (famD X N).τ n - mpos (famD Y N).μ (famD X N).τ n) ≤ ubIM := hIM N
+  have hη1' : (famD X N).η ≤ 1 := hη1
+  exact curvQ_ge (famD X N) (famD Y N) (58 * N) hc hrA hrB hX.ht hY.ht hη1' _ _ _ _ _ _ _ _
+    hV hA hP hRR hRB' hBb hRa hIM'
 
 /-- `Σ_{n<K} (Δ mposQ_n)² / (n+1)` of two trial references. -/
 def ipDiffQ (X Y : FamPar) (K : ℕ) : ℚ :=

@@ -4,6 +4,8 @@ public import CatalanMeasure.GenD.Signed.Data.Assembly.EndGlue
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Bridge
 public import CatalanMeasure.GenD.Signed.Data.Cells.Core
 public import CatalanMeasure.GenD.Signed.Data.Cells.L1Series
+public import CatalanMeasure.GenD.Signed.Data.Cells.QTau
+public import CatalanMeasure.GenD.Signed.Data.Trial.Hid
 
 @[expose] public section
 
@@ -628,6 +630,100 @@ theorem rowNearTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → 
   rw [hsplit] at hm
   have := hN α β hβ.1 x hgx'
   nlinarith
+
+
+/-! ### The spike environment from the Frostman cells -/
+
+theorem famD_R_fin (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, (famD X N).R k = X.T.form.R.f (k + 1) := by
+  have h := famD_spec X hok N
+  have hRt' : X.T.form.R.tail = [] := by simp [TrialQ.form, SeqQ.form, hRt]
+  intro k
+  rw [TrialForm.R_eq h]
+  simp [hRt', gseq]
+
+theorem famD_R_zeroL (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, X.T.form.R.L ≤ k → (famD X N).R k = 0 := by
+  intro k hk
+  rw [famD_R_fin X hok hRt N]
+  exact (famD_spec X hok N).hRf (k + 1) (by omega)
+
+theorem refTilt_succ (R : ℕ → ℝ) (k : ℕ) :
+    refTilt R (k + 1) = -(-1 : ℝ) ^ (k + 1) * R k / ((k + 1 : ℕ) : ℝ) := by
+  simp [refTilt]
+
+/-- **`SpikeEnv` of the family members** from a Frostman bound `frLim ≤ S0 < Sup` at `τ = 1` on
+`[-1, 1]` (the FR cells): `|Q_τ - Q_1| ≤ e Σ |R_k|` (`qTau_sub_le_fin`) and `e = dampE N → 0`. -/
+theorem famD_spikeEnv (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {S0 : ℝ} (hfr : ∀ x ∈ Icc (-1 : ℝ) 1, frLim X.T.form x ≤ S0) (hgap : S0 < X.T.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (famD X N)) := by
+  set L := X.T.form.R.L
+  set SR : ℝ := ∑ k ∈ Finset.range L, |X.T.form.R.f (k + 1)|
+  have hd : Tendsto (fun N : ℕ => dampE N * SR) atTop (𝓝 0) := by
+    have : Tendsto (fun N : ℕ => dampE N) atTop (𝓝 0) := by
+      have h := (tendsto_natCast_atTop_atTop (R := ℝ)).atTop_add (tendsto_const_nhds (x := (1 : ℝ)))
+      have := (h.inv_tendsto_atTop).const_mul (1 / 2 ^ 30 : ℝ)
+      simpa [dampE, div_eq_mul_inv] using this
+    simpa using this.mul_const SR
+  filter_upwards [hd.eventually (gt_mem_nhds (sub_pos.mpr hgap)), eventually_gt_atTop 0] with N hN hN0
+  have h := famD_spec X hok N
+  have hR := famD_R_fin X hok hRt N
+  have hR0 := famD_R_zeroL X hok hRt N
+  have he := dampE_mem N
+  have hfs : ∀ {f : ℕ → ℝ}, (∀ k, L ≤ k → f k = 0) → HasSum f (∑ k ∈ Finset.range L, f k) :=
+    fun hf => hasSum_sum_of_ne_finset_zero (fun k hk => hf k (by simpa using hk))
+  refine ⟨{
+    hν := by show (0 : ℝ) < 58 * (N : ℝ); positivity
+    he := he
+    hsp := by show ((20 * N : ℕ) : ℝ) ≤ 58 * (N : ℝ); push_cast; nlinarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
+    hθ := by show (1 / 1024 : ℝ) ∈ Ioo (0 : ℝ) 1; constructor <;> norm_num
+    ha := Glue410.Spec_summable_a h
+    hr := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
+    hra := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
+    Qref := fun x => ∑ k ∈ Finset.range L, refTilt (famD X N).R (k + 1) *
+      realEnergyTau (famD X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x
+    hQ := fun x _ => hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)
+    hℓ := ?_
+    hbK := fun i hi => by
+      show bSeq X.bs i = 0
+      have hi' : X.bs.length < i := hi
+      unfold bSeq
+      rw [if_neg (by omega), List.getD_eq_default _ _ (by omega)]
+      simp }⟩
+  intro x hx
+  have hx1 : |x| ≤ 1 := abs_le.mpr hx
+  have hQt := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
+    (fun k hk => by rw [hR0 k hk]; simp)
+  have hQ1 := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
+    (fun k hk => by rw [hR0 k hk]; simp)
+  have hq := Data.Cells.qTau_sub_le_fin (K := L) he.1.le (by linarith [he.2]) hR0 hx hQt hQ1
+  have hsum : ∑ k ∈ Finset.range L, |(famD X N).R k| = SR := by
+    simp only [SR, hR]
+  rw [hsum] at hq
+  have hfr' := hfr x hx
+  have hTa : barrierTrialT (famD X N).a x = X.T.form.a.Tform x := by
+    rw [h.ha]; exact barrierTrialT_tseq h.haf h.haT hx1
+  have hQ1e : ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x = frLim X.T.form x + 2 * X.T.form.a.Tform x := by
+    unfold frLim
+    rw [sub_add_cancel]
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [hR k, pow_succ]
+    ring
+  have hQte : (∑ k ∈ Finset.range L, refTilt (famD X N).R (k + 1) *
+      realEnergyTau (famD X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x) =
+      ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
+        (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x := by
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [refTilt_succ]; rfl
+  show _ - 2 * barrierTrialT (famD X N).a x ≤ (X.T.Sup : ℝ)
+  rw [hQte, hTa]
+  rw [hQ1e] at hq
+  have := (abs_le.mp hq).2
+  have hSup : X.T.form.Sup = (X.T.Sup : ℝ) := rfl
+  linarith
 
 end
 
