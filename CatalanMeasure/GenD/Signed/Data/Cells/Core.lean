@@ -4839,6 +4839,152 @@ theorem endL0U_sound (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k kR n : ℕ) (
   push_cast at hm this ⊢
   linarith
 
+
+/-! ### Laurent series windows on `(0, hi]` and the merge of equal Laurent factors (lane J, 31 Oct 2026)
+
+**Why Laurent cells fail on `(2^-20, 1/4)`.**  The cell checker `lcellW` expands every Laurent term `a(1/x)`,
+`a(1/x) log|x|`, `a(1/x) log|αx - β|` separately.  Each term is of size `x^-26`, and only the SUM has the exact
+cancellation of `l0OK` (the potential of a bounded density at `1/x`).  The cell data enclose the logarithm
+literals with error `2^-100` and bound the order-`M` tail by absolute values, so the cancellation is lost:
+the coefficient error `lErr` is `2^-100 Σ|a(1/c)|` (2.7e-2 at `c = 1/4`, 4.8e7 at `c = 1/10`), above the margin.
+
+**The fix.**  The same exact cancellation turns the Laurent part into a polynomial: on `(0, hi]`
+`lfieldTower ts 0 x = P(x) + c_L log|x| + R(x)` with `P = x^n W(1/x)` (`l0P`, a polynomial of degree `n`
+with exact rational coefficients) and `R ≤ l0Err` (Taylor remainder, `l0errS_le`).  `l0_series_sound` reduces
+the bound on any subset of `(0, hi]` to the bound of a Laurent-free field `fq'` (the polynomial of `fq` plus `P`,
+rounded; plain `cellW` cells and plog windows), the threshold lowered by the rounding bound `δ` and `l0Err`. -/
+
+/-- the polynomial `x^N · P(1/x)` of a coefficient list of length `≤ N + 1` -/
+def l0Rev : ℕ → List ℚ → List ℚ
+  | _, [] => []
+  | N, c :: cs => vecAdd (List.replicate N 0 ++ [c]) (l0Rev (N - 1) cs)
+
+theorem l0_rev_eval (x : ℝ) (hx : x ≠ 0) : ∀ (l : List ℚ) (N : ℕ), l.length ≤ N + 1 →
+    x ^ N * polyTow l 0 x⁻¹ = polyTow (l0Rev N l) 0 x
+  | [], N, _ => by simp [l0Rev, l0_nil]
+  | c :: cs, N, hlen => by
+      have hxw : x * x⁻¹ = 1 := mul_inv_cancel₀ hx
+      rcases N with _ | N'
+      · have hcs : cs = [] := by
+          cases cs with
+          | nil => rfl
+          | cons d ds => simp at hlen
+        subst hcs
+        simp [l0Rev, l0_vecAdd, l0_cons, l0_nil]
+      · have ih := l0_rev_eval x hx cs N' (by simp at hlen; omega)
+        have e : l0Rev (N' + 1) (c :: cs) =
+            vecAdd (List.replicate (N' + 1) 0 ++ [c]) (l0Rev N' cs) := by simp [l0Rev]
+        rw [e, l0_vecAdd, l0_replicate, ← ih]
+        simp only [l0_cons, l0_nil, mul_zero, add_zero]
+        linear_combination (x ^ N' * polyTow cs 0 x⁻¹) * hxw
+
+/-- the series polynomial of the Laurent part: `x^n W(1/x)` as a polynomial in `x` -/
+def l0P (ts : List LTerm) (n : ℕ) : List ℚ := l0Rev n ((l0W n ts).take (n + 1))
+
+/-- **The Laurent part as a polynomial** (`c_L = 0`): on `(0, hi]`, `lfieldTower ts 0 x ≤ P(x) + l0Err`. -/
+theorem l0_series_le (ts : List LTerm) (hi : ℚ) (n : ℕ) (h : l0OK ts hi n = true) (hc : l0C ts = 0) :
+    ∀ x : ℝ, 0 < x → x ≤ (hi : ℝ) →
+      lfieldTower ts 0 x ≤ polyTow (l0P ts n) 0 x + ((l0Err hi n ts : ℚ) : ℝ) := by
+  unfold l0OK at h
+  simp only [Bool.and_eq_true, decide_eq_true_eq, List.all_eq_true] at h
+  obtain ⟨⟨⟨h0, hts⟩, hX⟩, hW⟩ := h
+  intro x hx0 hxh
+  have hcls : ∀ t ∈ ts, t.2 = none ∨ t.2 = some (1, 0) ∨ (l0Ser t).isSome = true :=
+    fun t ht => l0_class hi n t (hts t ht)
+  rw [l0_ident n x hx0 ts hcls]
+  have hXc := l0_sumX_const (l0X ts) (fun q hq => by simpa using hX q hq) x⁻¹
+  rw [hXc]
+  have hWt := l0_take_drop (l0W n ts) (n + 1) (fun q hq => by simpa using hW q hq) x⁻¹
+  rw [hWt]
+  have hrev := l0_rev_eval x hx0.ne' ((l0W n ts).take (n + 1)) n (by simp [List.length_take])
+  have herr := l0errS_le hi n x hx0 hxh ts hts
+  have hc' : (l0X ts).headD 0 = 0 := hc
+  rw [hc', Rat.cast_zero, zero_mul, add_zero]
+  unfold l0P
+  linarith [hrev, herr]
+
+/-- **Series window, soundness.**  `fq'` is a Laurent-free field with the plogs and poles of `fq` and a polynomial
+within `δ` (on `[0, hi]`) of `fq.poly + P`.  A bound `T` of `fq'` on a subset `S ⊆ (0, hi]` gives the bound
+`T + δ + l0Err` of `fq` plus the Laurent part on `S`. -/
+theorem l0_series_sound (fq fq' : FieldQ) (ts : List LTerm) (hi : ℚ) (n : ℕ) (δ T : ℚ)
+    (h : l0OK ts hi n = true) (hc : l0C ts = 0)
+    (hpl : fq'.plogs = fq.plogs) (hpo : fq'.poles = fq.poles)
+    (hD : polyAB (vecAdd (vecAdd fq.poly (l0P ts n)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) 0 hi ≤ δ)
+    (S : Set ℝ) (hS : ∀ x ∈ S, 0 < x ∧ x ≤ (hi : ℝ))
+    (hcell : ∀ x ∈ S, fieldTower fq' (poleF fq'.poles) 0 x ≤ (T : ℝ)) :
+    ∀ x ∈ S, fieldTower fq (poleF fq.poles) 0 x + lfieldTower ts 0 x ≤ ((T + δ + l0Err hi n ts : ℚ) : ℝ) := by
+  intro x hx
+  obtain ⟨hx0, hxh⟩ := hS x hx
+  have h1 := l0_series_le ts hi n h hc x hx0 hxh
+  have h2 := hcell x hx
+  have h3 := (polyTow_range (vecAdd (vecAdd fq.poly (l0P ts n)) (fq'.poly.map (fun t => (-1 : ℚ) * t)))
+    0 hi x (by rw [Rat.cast_zero, sub_zero, abs_of_pos hx0]; exact hxh)).2
+  have h4 : ((polyAB (vecAdd (vecAdd fq.poly (l0P ts n)) (fq'.poly.map (fun t => (-1 : ℚ) * t))) 0 hi : ℚ) : ℝ)
+      ≤ (δ : ℝ) := by exact_mod_cast hD
+  simp only [l0_vecAdd, l0_map_mul] at h3
+  have e : fieldTower fq' (poleF fq'.poles) 0 x =
+      polyTow fq'.poly 0 x + plogSumTower fq.plogs 0 x + poleTower fq.poles (poleF fq.poles) 0 x := by
+    unfold fieldTower; rw [hpl, hpo]
+  have e2 : fieldTower fq (poleF fq.poles) 0 x =
+      polyTow fq.poly 0 x + plogSumTower fq.plogs 0 x + poleTower fq.poles (poleF fq.poles) 0 x := rfl
+  rw [e] at h2
+  rw [e2]
+  have h5 := (abs_le.mp h3).2
+  push_cast at h5 ⊢
+  linarith
+
+/-! #### Merging Laurent terms with the same factor -/
+
+/-- insert a Laurent term: add its coefficient list to the first term with the same factor -/
+def insL (t : LTerm) : List LTerm → List LTerm
+  | [] => [t]
+  | s :: ss => if s.2 = t.2 then (vecAdd s.1 t.1, s.2) :: ss else s :: insL t ss
+
+def mergeAux : List LTerm → List LTerm → List LTerm
+  | acc, [] => acc
+  | acc, t :: ts => mergeAux (insL t acc) ts
+
+/-- the Laurent list with equal factors merged (order of first appearance) -/
+def mergeL (ts : List LTerm) : List LTerm := mergeAux [] ts
+
+theorem lf_cons (t : LTerm) (ts : List LTerm) (x : ℝ) :
+    lfieldTower (t :: ts) 0 x = polyTow t.1 0 x⁻¹ * lfTower t.2 0 x + lfieldTower ts 0 x := by
+  simp [lfieldTower, mulTower_zero, zTow_zero]
+
+theorem lf_insL (t : LTerm) (x : ℝ) : ∀ acc : List LTerm,
+    lfieldTower (insL t acc) 0 x = lfieldTower acc 0 x + polyTow t.1 0 x⁻¹ * lfTower t.2 0 x
+  | [] => by simp [insL, lf_cons, lfieldTower_nil_zero]
+  | s :: ss => by
+      by_cases h : s.2 = t.2
+      · have e : insL t (s :: ss) = (vecAdd s.1 t.1, s.2) :: ss := by simp [insL, h]
+        rw [e]
+        simp only [lf_cons, l0_vecAdd]
+        rw [← h]
+        ring
+      · have e : insL t (s :: ss) = s :: insL t ss := by simp [insL, h]
+        rw [e]
+        simp only [lf_cons]
+        rw [lf_insL t x ss]
+        ring
+
+theorem lf_mergeAux (x : ℝ) : ∀ (ts acc : List LTerm),
+    lfieldTower (mergeAux acc ts) 0 x = lfieldTower acc 0 x + lfieldTower ts 0 x
+  | [], acc => by simp [mergeAux, lfieldTower_nil_zero]
+  | t :: ts, acc => by
+      rw [mergeAux, lf_mergeAux x ts (insL t acc), lf_insL t x acc, lf_cons]
+      ring
+
+/-- **Merge lemma**: merging equal Laurent factors does not change the field (exact, all `x`). -/
+theorem lfieldTower_mergeL (ts : List LTerm) (x : ℝ) : lfieldTower (mergeL ts) 0 x = lfieldTower ts 0 x := by
+  unfold mergeL
+  rw [lf_mergeAux x ts [], lfieldTower_nil_zero]
+  ring
+
+#print axioms l0_rev_eval
+#print axioms l0_series_le
+#print axioms l0_series_sound
+#print axioms lfieldTower_mergeL
+
 #print axioms l0_laurent_le
 #print axioms endL0_sound
 #print axioms endL0U_sound

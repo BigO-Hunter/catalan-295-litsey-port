@@ -106,24 +106,23 @@ theorem curvQ_eq (DA DB : SignedData) (p : ℕ) (hc : InterpCompat DA DB) (rA : 
 upper bound of the `raBil` combination, `ubIM` of `ip(Δmpos, Δmpos)` (`ip_mposDiff_le`). -/
 theorem curvQ_ge (DA DB : SignedData) (p : ℕ) (hc : InterpCompat DA DB) (rA : SignedRegular DA)
     (rB : SignedRegular DB) (htA : DA.t = mneg DA.μ DA.τ) (htB : DB.t = mneg DB.μ DB.τ)
-    (hη1 : DA.η ≤ 1) (lbV lbA lbP lbRR lbRB ubRa ubIM : ℝ)
+    (hη1 : DA.η ≤ 1) (lbV lbA lbP lbRR lbRB lbB ubRa ubIM : ℝ)
     (hV : lbV ≤ barrierTrialNormSq (fun k => DA.v k - DB.v k))
     (hA : lbA ≤ barrierTrialNormSq (fun k => DA.a k - DB.a k))
     (hP : lbP ≤ barrierTrialNormSq (fun k => DA.p k - DB.p k))
     (hRR : lbRR ≤ ip (fun n => DA.R n - DB.R n) (fun n => DA.R n - DB.R n))
     (hRB : lbRB ≤ refBil DA.μ DA.μ - refBil DA.μ DB.μ - refBil DB.μ DA.μ + refBil DB.μ DB.μ)
+    (hBb : lbB ≤ ∑ i ∈ Finset.range DA.K, denW DA i * (DA.b (i + 1) - DB.b (i + 1)) ^ 2)
     (hRa : raBil DA.R DA.a - raBil DA.R DB.a - raBil DB.R DA.a + raBil DB.R DB.a ≤ ubRa)
     (hIM : ip (fun n => mpos DA.μ DA.τ n - mpos DB.μ DA.τ n)
         (fun n => mpos DA.μ DA.τ n - mpos DB.μ DA.τ n) ≤ ubIM) :
-    (1 / 2) * lbV + 2 * lbA + (1 - DA.η) * lbRB + 2 * DA.η * lbP - 2 * ubRa + (1 / 2) * lbRR -
+    (1 / 2) * lbV + 2 * lbA + (1 - DA.η) * lbRB + 2 * DA.η * lbP - 2 * ubRa + lbB + (1 / 2) * lbRR -
         (1 / 2) * ubIM ≤ curvQ DA DB p := by
   rw [curvQ_eq DA DB p hc rA rB htA htB]
-  have hsb : 0 ≤ ∑ i ∈ Finset.range DA.K, denW DA i * (DA.b (i + 1) - DB.b (i + 1)) ^ 2 :=
-    Finset.sum_nonneg (fun i _ => mul_nonneg (denW_nonneg DA i) (sq_nonneg _))
   have hη0 : 0 ≤ DA.η := rA.hη0
   have m1 := mul_le_mul_of_nonneg_left hRB (show 0 ≤ 1 - DA.η by linarith)
   have m2 := mul_le_mul_of_nonneg_left hP hη0
-  nlinarith [m1, m2, hV, hA, hRR, hRa, hIM, hsb]
+  nlinarith [m1, m2, hV, hA, hRR, hRa, hIM, hBb]
 
 /-- The four-term combination of enclosures (`refBil_enc` for the pairs `AA, AB, BA, BB`). -/
 theorem enc4 {x1 x2 x3 x4 : ℝ} {p1 p2 p3 p4 : ℚ × ℚ} (h1 : Enc x1 p1) (h2 : Enc x2 p2)

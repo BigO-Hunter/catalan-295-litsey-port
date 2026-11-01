@@ -1801,7 +1801,8 @@ theorem Phase2Data.hlink_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters} (
     (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
     (t0 c2 : ℝ) (hn : ∀ N, D.ncount N = P.n N)
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
-    (hNd : ∀ N m y, Nd N m y → MarkedCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
+    (hNd : ∀ N m y, (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → Nd N m y →
+      MarkedCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
     (L : LinkCert D P target residual nearCap cost G D0 δ e t0 c2) :
     SignedNearClassLinkNd P D.toBounds (nearOptCls P t0 c2 G) G Nd := by
   have hn0 : (0 : ℝ) < P.n0 := n0_pos hP
@@ -1838,7 +1839,7 @@ theorem Phase2Data.hlink_nearOpt {I : ℕ} (D : Phase2Data I) {P : Parameters} (
     have h1 := card_region_le hνpos (fun i => freeRowX P N D0.p D0.v (x i)) S hcap hS hbr
     rw [le_div_iff₀ hdd]
     exact h1.trans (mul_le_mul_of_nonneg_left hΔ hνpos.le)
-  have hM := hNd N m y hNdy
+  have hM := hNd N m y hy hNdy
   -- Lemma T
   have hfree : ∀ t ∈ Ioc (0 : ℝ) 1, 2 * (P.g N : ℝ) + 1 < ∑ i, (1 - slopeKernel t (x i)) := by
     refine free_slope_gt (ν := (P.n N : ℝ)) (e := e) (gg := (P.g N : ℝ)) hνpos he x hx hx0
@@ -1977,7 +1978,8 @@ theorem Phase2Data.signedSecondSheetNearNd_nearOpt_of_cert {I : ℕ} (D : Phase2
     (hB : D.B = -target0 + Real.log 2 / 2)
     (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
     (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
-    (hNd : ∀ N m y, Nd N m y → MarkedCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
+    (hNd : ∀ N m y, (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → Nd N m y →
+      MarkedCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
     {target residual nearCap cost : ℝ} (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G)
     {δ e : ℝ} (hδ : 0 < δ) (he : e ∈ Ioo (0 : ℝ) (1 / 8))
     (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
