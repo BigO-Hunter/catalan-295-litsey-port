@@ -37,7 +37,7 @@ $\operatorname{rev}_{C-1}U_{m-1}$ is at least $a+1$. Put
 so that, with $\Lambda=g+q+h$, $Q_c$ has its coefficients in $[a+1,\,L+\Lambda+p-1]$ and $\widehat D_c$ in
 $[a+1,\,L+\Lambda-1]$. Recall that a vector $c$ lies in the left kernel of $\cA^0_{N,p}$ as soon as the
 right side of \eqref{eq:filtered-digits} vanishes for every filtered column $k$ (for the columns with a
-carry among the $q+1$ raw columns one splits the sum over the raw columns at the carry; we shall not need
+carry among the $q+1$ raw columns one splits the sum over the raw columns at the carry. We shall not need
 this case).
 
 \subsection{Antisymmetric combinations of rows}
@@ -77,7 +77,7 @@ $Jp+\ell$ is therefore, by Lemma~\ref{lem:digits}, $\varrho_\ell(d)\,f_J(x)$ wit
  f_J(x)=x_0\beta_{3,J}+x_1(\alpha_{2,J}-\alpha_{4,J}+\beta_{2,J})+x_2(2\alpha_{1,J}-2\alpha_{3,J}+2\beta_{1,J}-\beta_{3,J}),
 \]
 which depends neither on $d$ nor on $\ell$. The raw columns with $J\ge3$ do not meet the support, since
-$3p+\ell\ge C-d\ge C-g=L$. Choose $x^*\ne0$ with $f_1(x^*)=f_2(x^*)=0$; this is two linear equations in three
+$3p+\ell\ge C-d\ge C-g=L$. Choose $x^*\ne0$ with $f_1(x^*)=f_2(x^*)=0$. This is two linear equations in three
 unknowns. For $c=\sum_ds_d\sum_kx^*_k\delta_k(d)$ the responses at the columns with $J=1,2$ vanish, and the
 columns with $J=0$, which have $\ell\ge b$, respond by $f_0(x^*)\sum_ds_d\varrho_\ell(d)$, the coefficient
 of $X^{3p+\ell}$ in $\sum_ds_dR_d$. These are at most $(H-3p-b)_+=(n+q+g+h-3p)_+$ linear conditions on
@@ -125,7 +125,7 @@ For $c\in V$ write $P_c=(1-X^2)^\nu Y$ and $\widetilde Q=XY$. Since $(1-X^2)^p=1
  XWP_c=(1-X^{2p})\,\widetilde Q .
 \]
 The polynomial $P_c$ has no coefficients below $X^{A^*}$, $A^*=C-n^*+g$, and none from $X^H$ on, so
-$\widetilde Q$ is supported in $[A^*+1,\,H-p-1]$; and dividing \eqref{eq:identityK} by the unit
+$\widetilde Q$ is supported in $[A^*+1,\,H-p-1]$. Dividing \eqref{eq:identityK} by the unit
 $(1-X^2)^\nu$ modulo $X^L$ gives $D_c[k]=\widetilde Q[k]$ for $k<L$.
 
 Now let $H-3p\le\ell<L-2p$. The inequality $L-2p\le A^*+1$ is equivalent to $n^*\le2p+2g+1$, and
@@ -137,7 +137,7 @@ Lemma~\ref{lem:digits}, the response at every raw column $Jp+\ell$ with such an 
 a constant depending on $J$ only: on $V$ these columns, which have $J\in\{0,1,2\}$, span a space of
 dimension at most one for each residue $\ell$.
 
-Put $\ell_0=H-3p$ and $\ell_1=L-2p$; the hypotheses give $\ell_0\le b\le\ell_1$. For $\ell_0\le\ell<b$ the raw
+Put $\ell_0=H-3p$ and $\ell_1=L-2p$. The hypotheses give $\ell_0\le b\le\ell_1$. For $\ell_0\le\ell<b$ the raw
 columns $j\in[b,L)$ with this residue have $J\in\{1,2\}$, and for $b\le\ell<\ell_1$ they have
 $J\in\{0,1,2\}$. So the saving is $2\ell_1-\ell_0-b$, and the number of linear conditions needed to make all
 responses on the $n+q=L-b$ raw columns vanish on $V$ is
@@ -172,15 +172,15 @@ recurrence in $k$ and agree for $k=0,1$. Take $m=2p$ and use \eqref{eq:cheb-p}:
 $T_{2p}=2X^{2p}-1$ and $U_{2p-1}=2T_pU_{p-1}=2X^p(X^2-1)^{(p-1)/2}$. Reflecting at degree $2p+C-1$, the first
 term becomes $2XW\operatorname{rev}_{C-1}T_k$, the second $(2-X^{2p})\operatorname{rev}_{C-1}U_{k-1}$, and the
 right side $X^{2p+C-1}U_{2p-k-1}(1/X)$. For $k=m_r\ge-g$ this is divisible by $X^{C+k}$, hence by $X^L$, if
-$2p-k-1\ge0$; and if $2p-k-1<0$ it has degree $k-2p-1$ and is divisible by $X^{4p+C-k}$, hence by $X^L$ when
+$2p-k-1\ge0$. If $2p-k-1<0$ it has degree $k-2p-1$ and is divisible by $X^{4p+C-k}$, hence by $X^L$ when
 $k\le4p+g$, which holds because $k\le n-1-g\le4p+g$. Summing with weights $c_r$ and multiplying by
 $(X-1)^q(1-X)^h$ gives \eqref{eq:K6}.
 \end{proof}
 
 \begin{proof}[Proof of Theorem~\ref{thm:U6}]
-Let $M=[\mu_0,\mu_1)$ and $w=\mu_1-\mu_0$; we may assume $w>e$. The block consists of the filtered columns
+Let $M=[\mu_0,\mu_1)$ and $w=\mu_1-\mu_0$. We may assume $w>e$. The block consists of the filtered columns
 $k(J,\mu)=Jp+\mu-(b+q)$ for $1\le J\le5$ and $\mu\in M$. These indices are non-negative by the hypothesis
-$b+q\le p+\mu_0$, and smaller than $n$ because $5p+\mu_1-1=L-1$; so there are $5w$ of them. As $\mu<p$, formula
+$b+q\le p+\mu_0$, and smaller than $n$ because $5p+\mu_1-1=L-1$. There are $5w$ of them. As $\mu<p$, formula
 \eqref{eq:filtered-digits} applies: the response of $c$ at $k(J,\mu)$ is
 $\sum_u\alpha_{u,J}Q_c[up+\mu]+\beta_{u,J}\widehat D_c[up+\mu]$.
 
@@ -227,8 +227,8 @@ where $a=b+q+2g$. Then $\nu_N(p)\ge m_1-m_0-e$.
 
 \begin{proof}
 Let $M=[m_0,m_1)$ and $w=m_1-m_0>e$. For $\mu\in M$ we have $\mu\le a$, so the digit $u=0$ of $Q_c$ and
-$\widehat D_c$ vanishes; $\mu\ge L+\Lambda-4p$ gives that the digits $u\ge4$ of $\widehat D_c$ and $u\ge5$ of
-$Q_c$ vanish; and $3p+\mu<L$, so that \eqref{eq:K6} gives, with $D_i=\widehat D_c[ip+\mu]$ and
+$\widehat D_c$ vanishes. The inequality $\mu\ge L+\Lambda-4p$ gives that the digits $u\ge4$ of $\widehat D_c$
+and $u\ge5$ of $Q_c$ vanish. Finally $3p+\mu<L$, so that \eqref{eq:K6} gives, with $D_i=\widehat D_c[ip+\mu]$ and
 $Q_i=Q_c[ip+\mu]$,
 \[
  Q_1=D_1,\qquad Q_2=D_2,\qquad Q_3=D_3-\tfrac12D_1 .
@@ -257,7 +257,7 @@ telescoping here is over all digits, so no vanishing of $Y_c$ at the ends is nee
 
 \subsection{The counting inequality}
 The four proofs above have one shape. A space of row combinations is chosen, a few linear conditions are
-imposed, and it is shown that the conditions make every response vanish; the dimension of the space minus
+imposed, and it is shown that the conditions make every response vanish. The dimension of the space minus
 the number of conditions is then a lower bound for the nullity. Theorem~\ref{thm:count} isolates this
 argument, and allows in addition filters longer than the prime.
 
@@ -270,7 +270,7 @@ $(1-T)^q$. Modulo $p$ we have $(1-T)^p=1-T^p$, hence
 \]
 which is the congruence of Lucas's theorem for the binomial coefficients $\binom qv$. So the response at
 $k$ equals $\sum_{u=0}^r(-1)^u\binom ru\,S_c(b+k+u)$, where
-$S_c(j)=\sum_{v=0}^a(-1)^v\binom av R_c(j+vp)$; the arguments satisfy $b\le j$ and $j+ap\le b+n-1+q=L-1$.
+$S_c(j)=\sum_{v=0}^a(-1)^v\binom av R_c(j+vp)$. The arguments satisfy $b\le j$ and $j+ap\le b+n-1+q=L-1$.
 For $c=\iota(x)$ with $x\in\ker\Phi$ we have $S_c(j)=\pm G_x(j)$, and the difference of order $r$ of a
 polynomial of degree less than $r$ vanishes identically. So $\iota(\ker\Phi)$ lies in the left kernel of
 $\cA^0_{N,p}$, and since $\iota$ is injective, $\nu_N(p)\ge\dim\ker\Phi=\dim\cV-\operatorname{rank}\Phi$.
@@ -286,7 +286,7 @@ columns in Theorems~\ref{thm:U6} and~\ref{thm:S}.
 Since $p\nmid\mathcal E$, the reductions of $v_1,\dots,v_d$ are linearly independent, so that $V_p$ is the
 reduction of $V$ in the coordinates of this basis. The kernel vectors of $B_j$ satisfy an integer identity,
 so their reductions lie in the kernel of $B_j|_{V_p}$, and they remain independent because their minor is a
-unit modulo $p$; hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map
+unit modulo $p$. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map
 $\Phi=(B_j\circ\varphi_{j,k})_{j,k}$ therefore has rank at most $\sum_jw_jr_j$, and its kernel has dimension at
 least $md-\sum_jw_jr_j$. Theorem~\ref{thm:count}, applied to $\ker\Phi$ with no further conditions, gives
 the bound.
@@ -298,7 +298,7 @@ subspace of admissible data, fixed polynomials $\lambda_1,\dots,\lambda_D\in\F_p
 $e_{\max}$, and two linear maps $\mathcal T,\mathcal G$ from $\F_p^K$ to $\F_p[Y]$, such that for every
 admissible $x$ the two row polynomials of $c(x)$ multiplied by $(X-1)^h$, respectively by
 $(X-1)^h(X^2-1)^{(p-1)/2}$, equal $\sum_d\lambda_d(X)\,\mathcal T(x_d)(X^p)$, respectively
-$\sum_d\lambda_d(X)\,\mathcal G(x_d)(X^p)$; this is the form in which \eqref{eq:cheb-p} and the relation
+$\sum_d\lambda_d(X)\,\mathcal G(x_d)(X^p)$. This is the form in which \eqref{eq:cheb-p} and the relation
 $(1-X)^p=1-X^p$ express the row polynomials modulo $p$. By the digit formula, the response of $c(x)$ at the
 raw column $Jp+\ell$ is
 \[
@@ -316,32 +316,32 @@ Theorem~\ref{thm:count}.
 The following lower bounds for $\nu_N(p)$ are proved, each for every admissible design, by explicit choices of
 the space, the conditions and the columns in Theorem~\ref{thm:count} or its variant above. Each is a
 piecewise linear function of $p$ and the parameters, positive on windows described by linear inequalities.
-We describe them in words; the statements are those of the formalization, cited in
+We describe them in words. The statements are those of the formalization, cited in
 Section~\ref{sec:formal}.
 \begin{enumerate}[label=(\roman*),wide]
 \item \emph{Frobenius products.} Row combinations whose polynomial is the product of a fixed factor, a
 free polynomial $P$ of bounded degree $d_P$ in the Chebyshev variable, and a polynomial $\Lambda(X^p)$ with
-exponents in a window of $K$ consecutive values; the conditions require $\Lambda$ to annihilate the
+exponents in a window of $K$ consecutive values. The conditions require $\Lambda$ to annihilate the
 functionals seen by the columns, and the bound is $(d_P+1)(K-\#\text{seen})$.
 For $D$ this gives $53N-2p-1$ on $(26N,53N/2)$, where $2p+2\le53N$.
 \item \emph{A truncated form of Theorem~\ref{thm:U6}.} Without the hypothesis $n\le4p+2g+1$, the bound
-$\mu_1-\mu_0-e_+-(n-4p-2g-1)_+$ holds whenever $L\le6p$ and $b+q\le p+\mu_0$; for $D$ it gives $5p-59N+1$ on
+$\mu_1-\mu_0-e_+-(n-4p-2g-1)_+$ holds whenever $L\le6p$ and $b+q\le p+\mu_0$. For $D$ it gives $5p-59N+1$ on
 $(59N/5,12N]$.
 \item \emph{A raw tail of the antisymmetric family.} With the four centres $g+kp$ ($0\le k\le3$) and
 $D_T'=n-1-g-3p$, the count is
-$p-1-(2g+q+h)$ under $4p\le L$, $b\le p$, $D_T'\le g$, $D_T'\le(p-1)/2$, $3p+1+g\le n$ and $4p+b\le H$; for
+$p-1-(2g+q+h)$ under $4p\le L$, $b\le p$, $D_T'\le g$, $D_T'\le(p-1)/2$, $3p+1+g\le n$ and $4p+b\le H$. For
 $D$ this is $p-16N-1$ on $(16N,118N/7]$.
 \item \emph{Two families of slot polynomials and their sum.} The first fixes a digit $s\le H/p$ and a range of
-blocks of rows, with slot polynomials divisible by a power of $X-1$; the second has slot polynomials
+blocks of rows, with slot polynomials divisible by a power of $X-1$. The second has slot polynomials
 $(X^p-1)P$ with $P$ supported in a window of degrees. Their kernels are independent when both apply,
 under a separation condition, at the same window $s$ or at the windows $s$ and $s-1$, and the sum of the
 two bounds is a lower bound. This is the one place where two bounds are added.
 \item \emph{Families with a constant profile on a cell.} Several families (the theorems called MT, M, Z, C
 and $\mathrm C'$ in the formalization) use slot polynomials whose coordinates satisfy finitely many
-rational linear equations, the \emph{cell} equations; a solution modulo $p$ exists for every $p$ prime to a
+rational linear equations, the \emph{cell} equations. A solution modulo $p$ exists for every $p$ prime to a
 fixed integer, the modulus of the cell, and the bound is the dimension of the slot space minus the number of
 conditions. In the families C and $\mathrm C'$ the responses depend only on the residue of the column modulo
-$p$, so that the filter costs $(p-q)_+$ conditions; in $\mathrm C'$, where $h\ge p$, one writes
+$p$, so that the filter costs $(p-q)_+$ conditions. In $\mathrm C'$, where $h\ge p$, one writes
 $(X-1)^h=(X^p-1)(X-1)^{h-p}$, and the factor $(X-1)^{h-p}$ costs $h-p$ more. The family C gives bounds on $(58N/17,59N/17]$ and
 $(29N/8,11N/3]$, and $\mathrm C'$ on $(16N/7,5N/2]$.
 \item \emph{Block decompositions for $h\ge p$ and $h<p$.} Writing a row index as $kp+d$ and $y=X^p$, the
@@ -350,7 +350,7 @@ identities
  (X-1)^hWT_{kp+d}=\bigl((X-1)T_k\bigr)(y)\,Q_1+\bigl((X-1)(X^2-1)U_{k-1}\bigr)(y)\,Q_2
 \]
 and its analogue for $U_{kp+d-1}$, with $Q_1=(X-1)^{h-p}WT_d$ and $Q_2=(X-1)^{h-p}U_{d-1}$, hold in $\F_p[X]$ for
-$h\ge p$; at a residue with a single live digit the responses of all rows of a block are proportional, and the
+$h\ge p$. At a residue with a single live digit the responses of all rows of a block are proportional, and the
 bound counts the blocks. For $h<p$ a difference of order $p-h$ of the coefficients plays the same role.
 For $D$ these give bounds on $(59N/21,3N]$, where $h\ge p$, and on $(3N,16N/5]$.
 \end{enumerate}
@@ -362,7 +362,7 @@ columns with the adjugate of the corresponding minor, and for each map $B_j$ its
 $r_j$, $d-r_j$ kernel vectors in the coordinates of $V$, and again a pivot set with an adjugate. A single
 Boolean function of these data, evaluated by the Lean kernel, checks the shapes, the identities
 $\mathrm{adj}\cdot v_{\mathrm{piv}}=\delta\cdot I$ and the products $B_j\bigl(\sum_ak_av_a\bigr)=0$ in
-integers; its soundness theorem gives the hypotheses of Theorem~\ref{thm:profile} on $V$ and the $B_j$, with
+integers. Its soundness theorem gives the hypotheses of Theorem~\ref{thm:profile} on $V$ and the $B_j$, with
 $\mathcal E$ the product of the minors. No prime enters this check.
 
 The hypotheses on the jets and on $\iota$ depend on $N$ and $p$. A window is described by finitely many
@@ -374,8 +374,8 @@ given on the joint kernel by a polynomial in the column of degree less than $q \
 Theorem~\ref{thm:count} applies), each required inequality in $N$ and $(p-1)/2$ being derived from the
 window inequalities by sums, nonnegative integer multiples, and division of the variable part by a common
 divisor with rounding of the constant, that is, by Chv\'atal--Gomory cuts. Its soundness theorem gives the
-hypotheses of Theorem~\ref{thm:profile} at every odd prime $p>59$ of the window with $p\nmid\mathcal E$;
-for large $N$ all primes of the window are of this kind. For $33$ of the $34$ windows the hypotheses are
+hypotheses of Theorem~\ref{thm:profile} at every odd prime $p>59$ of the window with $p\nmid\mathcal E$.
+For large $N$ all primes of the window are of this kind. For $33$ of the $34$ windows the hypotheses are
 established in this way, and for the remaining one by a direct proof of the same statement. The windows
 lie in $(3N,16.2N)$, where $p>q$, so $a=0$ in Theorem~\ref{thm:count}.
 
@@ -411,23 +411,23 @@ $(26,\,53/2]$ & $53-2x$ & Section~\ref{ssec:families}(i) \\
 The six rows on $(341/25,809/50]$ come from the family Z of Section~\ref{ssec:families}(v), in two forms, on
 $(341/25,711/50]$ and on $(30287/2000,809/50]$. The areas of the rows of the table add up to $21.02610\ldots$,
 and the $84$ intervals below $12$ contribute $1.03361\ldots$, so that
-the total is $\Chi\ldots$; the exact sum is computed in the formalization from the list of intervals.
+the total is $\Chi\ldots$. The exact sum is computed in the formalization from the list of intervals.
 
 For Theorem~\ref{thm:content} one checks the hypotheses on the intervals above. The hypotheses
-$e\ge0$ and $n\le4p+2g+1$ both read $x\ge12$, and $L\le6p$ reads $x\ge35/3$; so Theorems~\ref{thm:U6}
+$e\ge0$ and $n\le4p+2g+1$ both read $x\ge12$, and $L\le6p$ reads $x\ge35/3$. So Theorems~\ref{thm:U6}
 and~\ref{thm:S} apply for $x\ge12$. For $12\le x\le13$ one has $\mu_0=H+q-6p=81N-6p$, so the first branch
 of Theorem~\ref{thm:U6} applies, and for $x\ge13$ one has $\mu_0=3N$ and the second branch, which is positive
 until $x=146/11$. In Theorem~\ref{thm:S}, $m_1=p$ for $x\le35/2$ and $m_1=70N-3p$ above, and
-$m_0=81N-4p$ for $x\le69/4$ and $12N$ above; the value $m_1-m_0-e$ is $9x/2-75$, $x/2-6$ and
+$m_0=81N-4p$ for $x\le69/4$ and $12N$ above. The value $m_1-m_0-e$ is $9x/2-75$, $x/2-6$ and
 $64-7x/2$ on the three intervals $(50/3,69/4]$, $(69/4,35/2]$, $(35/2,128/7]$, and it is non-positive
 outside $(50/3,128/7)$. Theorem~\ref{thm:T} applies for $x>10$ and $x\ge39/2$, and
-$D_T=\min(5N,52N-1-2p,75N-3p)$; it gives $3p-(n+q+h)=3x-64$ up to $x=23$ and the cap $g=5N$ up to
+$D_T=\min(5N,52N-1-2p,75N-3p)$. It gives $3p-(n+q+h)=3x-64$ up to $x=23$ and the cap $g=5N$ up to
 $x=70/3$. From $x=70/3$ the hypotheses of Theorem~\ref{thm:U} hold up to $x=26$ (they read
 $3p\ge L$, $3p\le H$, $2p\le n+q$ and $2h\le p+1$), and give $\min(n,2p+2g+1)-g-2p-1$, which is $5N$ for
 $x\le24$ and $53N-2p-1$ above. In each case the value of the theorem is the value in the table minus at
 most one unit, from the integer rounding. The same kind of check, with linear inequalities in $N$, $p$
 and the parameters, gives the bounds of Section~\ref{ssec:families} on their intervals, and
-Section~\ref{ssec:packets} gives the others. This proves Theorem~\ref{thm:profile-D}; the loss of $2$ in its
+Section~\ref{ssec:packets} gives the others. This proves Theorem~\ref{thm:profile-D}. The loss of $2$ in its
 statement covers the integer rounding of all the bounds.
 
 \begin{remark}
@@ -439,7 +439,7 @@ for the nullity is not proved, and none is needed.
 
 \begin{remark}
 The subspaces $V$ of Section~\ref{ssec:packets} were found numerically, as optimal constant subspaces for the
-bound of Theorem~\ref{thm:profile} on each window; they are dense rational subspaces with no evident closed
+bound of Theorem~\ref{thm:profile} on each window. They are dense rational subspaces with no evident closed
 form, which is why they are stored. Only the stored integer identities and the checked window conditions
 enter the proof.
 \end{remark}

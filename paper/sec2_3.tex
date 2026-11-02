@@ -3,7 +3,7 @@
 We recall the construction of \cite{OpenAI2026} in the generality in which we use it, and we prove for an
 arbitrary design the degree bound, the bounds for the denominators at the finite places and the
 nonvanishing at the primes $N=p$. Carreira \cite{Carreira2026} checks that the argument of OpenAI goes
-through for designs satisfying a few conditions; we need the same for the finite places and, in addition,
+through for designs satisfying a few conditions. We need the same for the finite places and, in addition,
 for the entries modulo $p^2$.
 
 \subsection{The determinant}
@@ -72,7 +72,7 @@ that uses more than $n-e$ columns of $UV$ vanishes, and every other term has at 
 
 \subsection{The digit formula}
 The reduction of $p^2\cA^0_N$ modulo $p$ is described by the digits in base $p$ of the coefficients of the
-row polynomials. This is the one place where the arithmetic of the moments enters; it is design-free.
+row polynomials. This is the one place where the arithmetic of the moments enters. It is design-free.
 For an odd prime $p$ and $c\in\F_p^n$ put
 \[
  P_c=\sum_rc_rP_r,\qquad D_c=\sum_rc_rD_r,\qquad W=(1-X^2)^{(p-1)/2},
@@ -93,20 +93,20 @@ $c$, on $\ell$ or on the design.
 \begin{proof}
 Two facts about the numbers $M$ and $Z$ are needed, for $0\le i,j<p^2$. Write $j=Jp+\ell$ and let
 $\varrho\in[0,p)$ be the residue of $j-i-1$ modulo $p$, $u=(i+1+\varrho-\ell)/p$. First, $p^2M(i,j)$ is
-$p$-integral and $p^2M(i,j)\equiv W[\varrho]\,M(u-1,J)\pmod p$; this is the digit reduction of the moments in
+$p$-integral and $p^2M(i,j)\equiv W[\varrho]\,M(u-1,J)\pmod p$. This is the digit reduction of the moments in
 \cite[\S3]{OpenAI2026}, obtained from the $p$-adic analysis of their recursions, and it does not involve a design.
 Second, $p^2Z(i,j)$ is $p$-integral and is congruent to $Z(\lfloor i/p\rfloor,J)$ if $i\equiv j\pmod p$ and to
 $0$ otherwise. For the second, write $i'=\lfloor i/p\rfloor$. Since $i<p^2$, $H_i=p^{-1}H_{i'}+S_i$ and
 $H^{(2)}_i=p^{-2}H^{(2)}_{i'}+S'_i$ with $S_i,S'_i$ $p$-integral, which gives the case $i=j$. If $i\not\equiv j$,
 then $p^2Z(i,j)=p\cdot pZ(i,j)\equiv0$. If $i\equiv j$, $i\ne j$, then $i-j=(i'-J)p$, and the integers
 $k\in(j,i]$ prime to $p$ form $i'-J$ complete systems of residues modulo $p$, so that
-$\sum_k1/k\equiv(i'-J)\sum_{r=1}^{p-1}1/r\equiv0\pmod p$; hence $H_i-H_j\equiv(H_{i'}-H_J)/p$ and
+$\sum_k1/k\equiv(i'-J)\sum_{r=1}^{p-1}1/r\equiv0\pmod p$. Hence $H_i-H_j\equiv(H_{i'}-H_J)/p$ and
 $p^2Z(i,j)\equiv Z(i',J)$.
 
 Now use \eqref{eq:rational-part}. By the first fact the part $\sum_iF[i]\,p^2M(i,j)$ with $F=P_c$ is
 $\sum_iF[i]\,W[\varrho(i)]\,M(u(i)-1,J)$. For fixed $u$ the indices with $u(i)=u$ are those for which
 $\varrho=up+\ell-1-i$ lies in $[0,p-1]$, and $W$ has degree $p-1$, so the sum over these $i$ is
-$(XFW)[up+\ell]$; this gives the $\alpha$-terms. By the second fact the part with $D_c$ is
+$(XFW)[up+\ell]$. This gives the $\alpha$-terms. By the second fact the part with $D_c$ is
 $\sum_{i\equiv\ell}D_c[i]\,Z(\lfloor i/p\rfloor,J)=\sum_uZ(u,J)D_c[up+\ell]$, which gives the $\beta$-terms.
 The $p$-integrality of $M(u-1,J)$ and $Z(u,J)$ for $u,J<p$ is part of the first and second facts.
 \end{proof}
@@ -147,7 +147,7 @@ $P'=\min(A,L-p)-b$ and $E'=\min(b,H-p)-(L-p)$,
 \[
  \ell_N(p)=\min\bigl(2n,\ n+R,\ 2R+P'+E'\bigr).
 \]
-These are the exponents of the generic valuation theorems in the formalization; for the primes that
+These are the exponents of the generic valuation theorems in the formalization. For the primes that
 interest us they are the same as in OpenAI's paper for its design. For the design $D$ the function
 $\ell_N(p)=Nf(p/N)$ is piecewise linear in $x=p/N$ ($\lfloor\cdot\rfloor$ rounding aside):
 \[
@@ -165,7 +165,7 @@ $\ell_N(p)=Nf(p/N)$ is piecewise linear in $x=p/N$ ($\lfloor\cdot\rfloor$ roundi
 and $f=0$ for $x\ge78$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
 $[1,78]$ is $24269/4$, and $f=116=2\cdot58$ on $[0,1]$. Note that $f(x)=2n_0$ for $x\le59/2$, which
 contains all the primes in $(N,2N]$ and, in particular, the whole range $(16/7,53/2]$ of the rank
-deficiencies of Theorem~\ref{thm:profile-D}; there the bound of Proposition~\ref{prop:valuation} improves
+deficiencies of Theorem~\ref{thm:profile-D}. There the bound of Proposition~\ref{prop:valuation} improves
 $-\ell_N(p)=-2n$ to $\nu_N(p)-2n$.
 
 The primes $p\le\sqrt H$ are not covered by these bounds. For them we use the cruder bound
@@ -208,7 +208,7 @@ the weighted form
 \end{equation}
 for bounded, Riemann integrable, compactly supported $F$, equal to $N^2\int_0^{78}f(x)\,dx+o(N^2)$ with
 $\int_0^{78}f=116+24269/4$. The primes in the intervals of Theorem~\ref{thm:profile-D} lie in
-$(16N/7,53N/2]$ and have $\ell_N(p)=116N$, so their exponent is at most $116N-N\kappa(p/N)+2$; the sum of
+$(16N/7,53N/2]$ and have $\ell_N(p)=116N$, so their exponent is at most $116N-N\kappa(p/N)+2$. The sum of
 $(N\kappa(p/N)-2)\log p$ over these primes is $N^2\int\kappa+o(N^2)$ by \eqref{eq:weighted-pnt}. The $2$-adic part contributes
 $\mathsf A_2\log2\,N^2+o(N^2)$.
 \end{proof}
@@ -232,7 +232,7 @@ $q^{2n}$ divides $D_N$. The identity
 \[
  Q_N(X/q^2)=(d_0N)!\,\frac{D_N}{q^{2n}}\det\bigl(q^2\cA^0_N+X\cL_N\bigr)
 \]
-shows that $Q_N(X/q^2)$ has $q$-integral coefficients; its $j$-th coefficient is $c_{N,j}/q^{2j}$.
+shows that $Q_N(X/q^2)$ has $q$-integral coefficients. Its $j$-th coefficient is $c_{N,j}/q^{2j}$.
 \end{proof}
 
 \subsection{Nonvanishing}
@@ -253,7 +253,7 @@ Let $p>4H_0$, with $H_0=H/N=78$, so that $H=H_0p<p^2/4$, and let $p$ be prime to
 of the entries of $B$ and of the three determinants. In the construction at $N=p$ write the row index
 $r=pr_0+i$ with $0\le r_0<n_0$ and $0\le i<p$. Since $q=q_0p$, $C=C_0p$, $h=h_0p$, $g=g_0p$, the Frobenius
 relation $(1-t)^{p}\equiv1-t^p$ expresses the row polynomials modulo $p$ through those of the design at
-$N=1$ and the successor row $r_0+1$; this is where the auxiliary row enters, and it is valid for rows on
+$N=1$ and the successor row $r_0+1$. This is where the auxiliary row enters. It is valid for rows on
 both sides of $g$ because the polynomials are defined through $T_{r-g}$ and $U_{r-g-1}$ for signed
 indices. The filter satisfies $s^{b_0p+k}(1-s)^{q_0p}=s^{\ell}(s^p)^{b_0+k_0}(1-s^p)^{q_0}$ in $\F_p[s]$, so
 the filtered columns of one residue class use the raw columns $b_0+k_0,\dots,b_0+k_0+q_0$ of the design at
@@ -274,6 +274,6 @@ $v_p(\Delta_p(z))=-2n$. If $p^2\nmid b$, then $p(a/b)$ has denominator prime to 
 
 For the design $D$ the invertibility of $B_0$, $B_0+B_1$ and $B_0-B_1$ is certified by exhibiting their
 inverses modulo the prime $1009$, which exceeds $H_0=78$ so that every denominator of $B$ is a unit
-there; the three determinants are then nonzero rational numbers. The computation modulo $1009$ certifies
-the base matrices; the conclusion for all large primes is a theorem and not an extrapolation from
+there. The three determinants are then nonzero rational numbers. The computation modulo $1009$ certifies
+the base matrices. The conclusion for all large primes is a theorem and not an extrapolation from
 finitely many primes. Nothing in the proof uses the proportions of the design except $2g<n$, and $H<p^2/4$.

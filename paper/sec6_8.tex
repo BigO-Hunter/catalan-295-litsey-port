@@ -1,228 +1,193 @@
 \section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
 
 \subsection{The criterion}
-We prove Proposition~\ref{prop:criterion}. Its proof shows where each of the three properties of
-$Q_N$ enters: the nonvanishing and the smallness are used once at the end, and the divisibility by prime
-squares is what makes the choice of the prime free.
+We prove Proposition~\ref{prop:criterion}. The proof shows where each of the three properties of $Q_N$
+enters. The nonvanishing and the smallness are used once, at the end. The divisibility by squares of primes
+is what makes the choice of the prime free.
 
 \begin{proof}[Proof of Proposition~\ref{prop:criterion}]
-Let $a/b$ be a rational number with $b$ large, put $L=\log b$, $U=\kappa L$ and $V=(\kappa-\omega)L$, and
+Let $a/b$ be a rational number with $b$ large. Put $L=\log b$, $U=\kappa L$ and $V=(\kappa-\omega)L$, and
 suppose $|\xi-a/b|\le b^{-\rho\kappa}$. By the prime number theorem, $(1-\delta)t\le\theta(t)\le(1+\delta)t$
 for all large $t$, and $V\to\infty$ with $b$. If every prime $p\in(V,U]$ had $p^2\mid b$, then
-$2(\theta(U)-\theta(V))\le\log b=L$; but
+$2(\theta(U)-\theta(V))\le\log b=L$. But
 \[
  2\bigl(\theta(U)-\theta(V)\bigr)\ge2L\bigl((1-\delta)\kappa-(1+\delta)(\kappa-\omega)\bigr)
- =2L\bigl(\omega-\delta(2\kappa-\omega)\bigr)>L ,
+ =2L\bigl(\omega-\delta(2\kappa-\omega)\bigr)>L
 \]
 by the fourth hypothesis. So there are primes in $(V,U]$ whose squares do not divide $b$. Let $p$ be the
 \emph{largest} one. Every prime $q\in(p,U]$ has $q^2\mid b$, and $q\le U<2V<2p$ because $2\omega<\kappa$.
-Let $B$ be the product of these $q^2$; then $B\mid b$ and $\log B=2(\theta(U)-\theta(p))$.
+Let $B$ be the product of these $q^2$. Then $B\mid b$ and $\log B=2(\theta(U)-\theta(p))$.
 
-Every term $c_ia^ib^{dp-i}$ of the integer $b^{dp}Q_p(a/b)=\sum_ic_ia^ib^{dp-i}$ is divisible by $q^{2dp}$ for each
-of these $q$: $q^{2i}$ divides $c_i$ by hypothesis, and $q^2\mid b$ gives $q^{2(dp-i)}\mid b^{dp-i}$. So $B^{dp}$
-divides the integer. Since $Q_p(a/b)\ne0$ (as $p^2\nmid b$), $b^{dp}Q_p(a/b)/B^{dp}$ is a nonzero integer, and
+Consider the integer $b^{dp}Q_p(a/b)=\sum_ic_ia^ib^{dp-i}$. Each of its terms is divisible by $q^{2dp}$ for
+each of these $q$. Indeed $q^{2i}$ divides $c_i$ by hypothesis, and $q^2\mid b$ gives $q^{2(dp-i)}\mid b^{dp-i}$.
+So $B^{dp}$ divides the integer. Since $p^2\nmid b$, $Q_p(a/b)\ne0$. So $b^{dp}Q_p(a/b)/B^{dp}$ is a nonzero
+integer, and
 \begin{equation}\label{eq:recycled}
  1\le\Bigl(\frac bB\Bigr)^{dp}\,|Q_p(a/b)| .
 \end{equation}
-Since $\rho p\le\rho U=\rho\kappa L$, we have $|a/b-\xi|\le e^{-\rho p}$, so $|Q_p(a/b)|\le e^{-\eta p^2}$ and
-\eqref{eq:recycled} gives $\eta p^2\le dp\bigl(L-2(\theta(U)-\theta(p))\bigr)$, that is,
+Since $\rho p\le\rho U=\rho\kappa L$, we have $|a/b-\xi|\le e^{-\rho p}$. So $|Q_p(a/b)|\le e^{-\eta p^2}$, and
+\eqref{eq:recycled} gives $\eta p^2\le dp\bigl(L-2(\theta(U)-\theta(p))\bigr)$. With
+$\theta(U)-\theta(p)\ge U-p-2\delta U$ this is
 \[
- \eta p\le d\bigl(L-2(\theta(U)-\theta(p))\bigr)\le d\bigl(L-2U+2p+4\delta U\bigr),
+ \eta p\le d\bigl(L-2U+2p+4\delta U\bigr).
 \]
-using $\theta(U)\ge(1-\delta)U$ and $\theta(p)\le(1+\delta)p\le(1+\delta)U$ in the form
-$\theta(U)-\theta(p)\ge U-p-2\delta U$. Hence $(\eta-2d)p\le dL-2dU+4d\delta U$. As $\eta<2d$ and $p\le U$,
-the left side is at least $(\eta-2d)U$, so $\eta U\le dL+4d\delta U$, that is, $\eta\kappa\le d+4d\delta\kappa$,
-which contradicts the last hypothesis.
+Hence $(\eta-2d)p\le dL-2dU+4d\delta U$. As $\eta<2d$ and $p\le U$, the left side is at least $(\eta-2d)U$. So
+$\eta U\le dL+4d\delta U$, that is, $\eta\kappa\le d+4d\delta\kappa$. This contradicts the last hypothesis.
 \end{proof}
 
-The choice of the largest admissible prime is what makes the selection free: the primes of the window
-that are not admissible have their squares in $b$, and these squares are recovered from the coefficients
-through the divisibility hypothesis. A cruder choice, of any prime in a short interval that does not
-divide $b$, loses a factor. The free lower end $V=(\kappa-\omega)L$ is what allows $\kappa<2$: the condition $q\le U<2p$ for the recycled
-primes needs only $U<2V$.
+The largest admissible prime is the right choice. The primes of the window above it have their squares in
+$b$, and the divisibility hypothesis recovers these squares from the coefficients. A cruder choice, of any
+prime in a short interval that does not divide $b$, loses a factor. The free lower end $V=(\kappa-\omega)L$
+allows $\kappa<2$, because the condition $q\le U<2p$ for the recycled primes needs only $U<2V$.
 
 \subsection{The hypotheses for the design $D$}
-Take the design $D=(58,9,3,5,3)$ and $d=53$ (the degree of $Q_N$ is at most $53N$, and the polynomials
-$Q_p$ of the proposition are the $Q_N$ with $N=p$), and
+Take the design $D=(58,9,3,5,3)$ and $d=53$. The polynomials $Q_p$ of the proposition are the $Q_N$ with
+$N=p$. Let
 \begin{gather*}
- \rho=\Rho,\quad \eta=\EtaTot,\quad \omega=\tfrac34,\quad \delta=2.9\cdot10^{-7},\\
- \kappa=\frac{532}{\rho}=\Kappa\ldots
+ \rho=\Rho,\quad \eta=\EtaTot,\quad \omega=\tfrac35,\quad \delta=2.9\cdot10^{-7},\\
+ \kappa=\frac{410}{\rho}=\Kappa\ldots
 \end{gather*}
 We check the hypotheses.
 \begin{itemize}
 \item $\deg Q_N\le53N$ by \eqref{eq:QN} and Lemma~\ref{lem:degree}.
-\item The nonvanishing: by Proposition~\ref{prop:nonvanishing}, $\Delta_p(a/b)\ne0$ for large $p$ with
-$p^2\nmid b$, hence $Q_p(a/b)\ne0$.
-\item The divisibility: by Lemma~\ref{lem:recycling}, $q^{2i}$ divides the $i$-th coefficient of $Q_p$ for all
+\item The nonvanishing. By Proposition~\ref{prop:nonvanishing}, $\Delta_p(a/b)\ne0$ for large $p$ with
+$p^2\nmid b$. Hence $Q_p(a/b)\ne0$.
+\item The divisibility. By Lemma~\ref{lem:recycling}, $q^{2i}$ divides the $i$-th coefficient of $Q_p$ for all
 primes $p<q\le2p$.
-\item The smallness: by Theorem~\ref{thm:real}, Proposition~\ref{prop:denominators} and $\log(53N)!=o(N^2)$,
-for $|x-G|\le e^{-\rho N}$ and large $N$,
+\item The smallness. By Theorem~\ref{thm:real}, Proposition~\ref{prop:denominators} and
+$\log(53N)!=o(N^2)$, for $|x-G|\le e^{-\rho N}$ and large $N$,
 \[
- |Q_N(x)|\le\exp\bigl(-(\TDelta\ldots-\Aden\ldots-3\varepsilon)N^2\bigr)\le e^{-\eta N^2}
+ |Q_N(x)|\le\exp\bigl(-(\TDelta\ldots-\Aden\ldots-3\varepsilon)N^2\bigr)\le e^{-\eta N^2},
 \]
-since $\eta=\EtaTot<\EtaExact\ldots$ is rounded down. In the formal proof this is the inequality
-$\eta<\TDelta\ldots-\mathsf A$ with $\int\kappa$ replaced by its lower bound $\ChiLean$, which needs
-$\ChiLean\ge\eta-7.98775$.
-\item The numerical conditions: $\rho\kappa=532$; $0<\eta<2d=106$; $\omega=3/4\le1$ and $2\omega=1.5<\kappa=\Kappa\ldots$;
-$2(\omega-\delta(2\kappa-\omega))=1.49999\ldots>1$; and
-$d+4d\delta\kappa=\PayL\ldots<\eta\kappa=\PayR\ldots$.
+since $\eta=\EtaTot<\EtaExact\ldots$ In the formal proof this is the inequality
+$\eta<n_0^2(U_0-\frac12\log2)-\mathsf A$ with $\int\kappa$ replaced by its lower bound $\ChiLean$.
+\item The numerical conditions. $\rho\kappa=410$ and $0<\eta<2d=106$. Next $\omega=3/5\le1$ and
+$2\omega=1.2<\kappa$. Further $2(\omega-\delta(2\kappa-\omega))=1.199998\ldots>1$. Finally
+$d+4d\delta\kappa=\PayL\ldots<\eta\kappa=\PayR\ldots$
 \end{itemize}
-Proposition~\ref{prop:criterion} therefore gives $|G-a/b|>b^{-\rho\kappa}=b^{-532}$ for all integers
-$a$ and all sufficiently large $b$. This proves Theorem~\ref{thm:main}. The last condition is
-equivalent to $532>x=d\rho/(\eta-4d\delta)=\Bx\ldots$ With the exact gain in place of the rounded rate,
-the limit $\delta\to0$ of the argument is $d\rho/(\TDelta\ldots-\mathsf A)=\Blimit\ldots$; the integer $532$
-is the one for which all conditions are verified with rational constants.
+Proposition~\ref{prop:criterion} therefore gives $|G-a/b|>b^{-\rho\kappa}=b^{-410}$ for all integers $a$ and all
+sufficiently large $b$. This proves Theorem~\ref{thm:main}. The last condition is equivalent to
+$410>x=d\rho/(\eta-4d\delta)=\Bx\ldots$
 
 \section{Remarks on the method}\label{sec:remarks}
 
-The exponent $d\rho/\eta$ has three ingredients. The degree $d=n-g$ and the perturbation exponent
-$\rho=n_0c_2+w$ come from the construction and from the quadrature: of $\rho=\Rho$, the cost of fixed
-columns $n_0c_2$ is $\NCtwo$ and the logarithmic size of the weights is $52.79$. The decay rate $\eta$ is
-a small difference of two large numbers, the energy at the real place, $\TDelta$, and the exponent of the
-denominators, $\Aden$, and the rank deficiencies of Section~\ref{sec:content} contribute $22.06$ of the
-$\EtaTot$. Since the exponent is inversely proportional to $\eta$, an additional gain of $0.01$ in the area
-of $\kappa$ lowers it by about $0.18$.
+\subsection{The three ingredients}
+The exponent $d\rho/\eta$ has three ingredients. The degree $d=n-g$ comes from the construction. Of
+$\rho=\Rho$, the energy cost of the fixed columns $n_0c_2$ is $208.62$, and the weight and the binomial factor
+of one column contribute $\Psi_0=\PsiZero$. Bounding the two separately, by their maxima $52.79$ and
+$58\log2=40.20$, would give $\rho=\RhoOld$. The decay rate $\eta$ is a small difference of two large numbers.
+The rank deficiencies of Section~\ref{sec:content} contribute $22.05$ of $\eta=\EtaTot$, and the signed bound
+of Section~\ref{sec:signed} contributes $\Gain$. Since the exponent is inversely proportional to $\eta$, a further
+gain of $0.1$ in $\eta$ lowers it by about $1.1$.
 
-All the results of Section~\ref{sec:content} are lower bounds for the nullity, and the proofs give the
-kernel vectors explicitly. The closed formulas, the counting inequality and the families derived from it are
-proved for every design, and so are the other arguments of the paper; the stored subspaces of
-Section~\ref{ssec:packets} belong to the design $D$. A different design changes $d$, $\rho$ and $\eta$
-together, and we make no claim that $D$ is optimal. Except for one pair of families, the function $\kappa$
-does not use any relation between different families, and at a prime where windows overlap the exact
-nullity may be larger than each bound. An upper bound for the nullity is not needed; more independence
-between families, or larger stored subspaces, would increase $\eta$ without changing anything else.
+\subsection{The determinant of the row functions}
+The energy method bounds $|\det\mathsf L|$ by $6^n$, which is $e^{O(N)}$ and invisible at the scale $N^2$. At
+the extremal configuration, numerical evaluation for small $N$ suggests that $\log|\det\mathsf L|$ is about
+$-28N^2$, so most of the true size is not captured. The bound \eqref{eq:eleven} loses only $e^{O(N)}$, and
+Theorem~\ref{thm:heine} is an identity. The loss is in the log-gas bounds of \S\ref{ssec:loggas}, which use fixed
+trial measures, and in the requirement that the combined functional be bounded by its maximum over all
+configurations. A sharper treatment of the denominator $Z_s(\psi)$ would raise the gain. These numerical values
+are not part of the formal proof.
+
+\subsection{Designs}
+All the results of Section~\ref{sec:content} are lower bounds for the nullity, and the proofs give the kernel
+vectors explicitly. The closed formulas, the counting inequality and the families derived from it are proved
+for every design. So are the other arguments of the paper, except the stored subspaces of
+Section~\ref{ssec:packets} and the trials, which belong to the design $D$. A different design changes $d$,
+$\rho$ and $\eta$ together. We make no claim that $D$ is optimal. Except for one pair of families, the function
+$\kappa$ uses no relation between different families. At a prime where windows overlap the exact nullity may
+be larger than each bound. An upper bound for the nullity is not needed. More independence between families,
+or larger stored subspaces, would increase $\eta$ without changing anything else.
 
 \section{Formalization}\label{sec:formal}
 
-All results of this paper are formalized in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib}, on top of
-OpenAI's formalization of the irrationality of $G$ \cite{OpenAI2026}. The development is available at
+All results of this paper are formalized in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib}, on top of OpenAI's
+formalization of the irrationality of $G$ \cite{OpenAI2026}. The development is available at
 \begin{center}
 \FormalizationLink.
 \end{center}
 Theorem~\ref{thm:main} is the theorem
 \begin{center}
-{\small\texttt{CatalanMeasure.GenD.Uniform.Bank532.catalan\_irrationalityMeasure\_532}}
+{\small\texttt{CatalanMeasure.GenD.Signed.catalan\_irrationalityMeasure\_410}}
 \end{center}
-in \lean{CatalanMeasure/GenD/Uniform/Bank532/Hosts532Inst.lean}. It uses only Mathlib in its statement, with
-Catalan's constant written as the series $\sum_j(-1)^j/(2j+1)^2$ and the conclusion $|G-a/b|>b^{-532}$ for
-all integers $a$ and all sufficiently large $b$. The modules of the development contain no \lean{sorry} and no
-\lean{native\_decide}, and the command \lean{\#print axioms}, which ends the file above, is the check that
-only the three standard axioms \lean{propext}, \lean{Classical.choice} and \lean{Quot.sound} are used. The
-repository also contains a configuration \lean{comparator.json} for \lean{lake comparator}
-\cite{Comparator}, which checks that a solution file proves a challenge statement with these axioms only. The prime number theorem is taken from the PNT+ project \cite{PNTPlus}. The parts of OpenAI's
-formalization that are used were converted to Lean's module system and ported to a recent Lean release; the
-repository's \texttt{README} and \texttt{PORTING.md} describe the changes.
+in \lean{CatalanMeasure/GenD/Signed/Data/Assembly/CellsAll.lean}. Its statement uses only Mathlib. Catalan's
+constant is written as the series $\sum_j(-1)^j/(2j+1)^2$, and the conclusion is $|G-a/b|>b^{-410}$ for all
+integers $a$ and all sufficiently large $b$. The modules contain no \lean{sorry} and no \lean{native\_decide}.
+The command \lean{\#print axioms} checks that only the three standard axioms \lean{propext},
+\lean{Classical.choice} and \lean{Quot.sound} are used. The repository also contains a configuration
+\lean{comparator.json} for \lean{lake comparator} \cite{Comparator}. It checks that a solution file proves a
+challenge statement with these axioms only. The prime number theorem is taken from the PNT+ project
+\cite{PNTPlus}. The parts of OpenAI's formalization that are used were converted to Lean's module system and
+ported to a recent Lean release. The repository's \texttt{README} and \texttt{PORTING.md} describe the changes.
 
 \subsection{Module layout}
-The design-generic part of the development is in the directory \lean{GenD} of \lean{CatalanMeasure}. Its design is that of the paper:
-a design is data, the generic modules prove every statement for an arbitrary design, and the instance
-files contain numerals only.
-\begin{description}[leftmargin=1.5em,style=nextline]
-\item[Generic layer] \lean{PL} (piecewise linear profiles, their areas) and \lean{PrimeGrowth} (the
-weighted prime number theorem \eqref{eq:weighted-pnt} for ramp profiles; one exponent per prime);
-\lean{Budget} (the scalar inequalities of Lemma~\ref{lem:budget2} and its analogue for the first case, and the
-conditions of the criterion), \lean{PayW} and \lean{Recycled} (Proposition~\ref{prop:criterion} with the free
-window end); \lean{Final} (the structure \lean{DesignData} and the theorem \lean{measure\_of\_design}, which
-contain no numeral).
-\item[Denominators] \lean{OddProfile} (the valuations $\ell_N(p)$ for the lower and upper pools),
-\lean{TwoAdic} (the bound \eqref{eq:A2}), \lean{DenomExp}, \lean{DenomGrowth}, \lean{DenomGrowth2},
-\lean{Denominator} and \lean{Normalizer} (the common denominator, $Q_N$, the divisibility of
-Lemma~\ref{lem:recycling}); \lean{Uniform/Arithmetic} and \lean{Uniform/LedgerW} (the common denominator
-\lean{canonicalNormalizer} built from an arbitrary lower bound for the nullity, and the growth of its
-logarithm).
-\item[Closed formulas] \lean{Interface} (the nullity, the four families and \lean{famKap\_le\_nullity}),
-\lean{RankCommon}, \lean{RankK6}, \lean{RankDigits}, \lean{RankFam}, \lean{RankFilt}, \lean{RankSeq},
-\lean{RankBlock} (the shared layers: Chebyshev reflection, identity \eqref{eq:K6}, the digit formula in
-filtered form, the block framework), and \lean{RankT}, \lean{RankU}, \lean{RankUCore}, \lean{RankU6},
-\lean{RankS} for Theorems~\ref{thm:T}--\ref{thm:S}; \lean{KapHelpers} turns the comparison with a window list
-into linear arithmetic.
-\item[Counting inequality and families] \lean{Uniform/W/}: \lean{Core} (the counting inequality with a set of
-columns, \lean{w\_core}, \lean{w\_core\_all}), \lean{Profile} (its profile form), \lean{Lucas/PStep} and
-\lean{Charts3/PStepPoly} (the step of size $p$: \lean{gKill\_of\_pstep\_poly} and
-\lean{slot\_nullity\_pstep\_poly}),
-\lean{Charts3/Host} (Theorem~\ref{thm:profile} as \lean{host\_count} and the lower bound
-\lean{NullityLB.ofPacketHost}), \lean{Slots} (the slot systems), \lean{Uniform/Prefix} (the responses in
-digit form and the splitting $(X-1)^q=(X-1)^{q\bmod p}(X^p-1)^{\lfloor q/p\rfloor}$ of the filter,
-\lean{filter\_polynomial\_split}), and the families of
-Section~\ref{ssec:families} in \lean{Frob}, \lean{FrobInst}, \lean{Slots}, \lean{SlotsA}, \lean{SlotsT},
-\lean{MTGlue}, \lean{HYPlus}, \lean{ZoneZ}, \lean{ZoneZ2}, \lean{Tier3}, \lean{LStar}, \lean{LStar2},
-\lean{TheoremC} and \lean{Thin}.
-\item[Stored data] \lean{Uniform/W/Prof/Packet} (the stored subspaces, \lean{Packet.check} and its soundness
-\lean{Packet.check\_sound}) and \lean{Uniform/W/Charts6/Check} (the window conditions: affine forms and
-their derivations, \lean{checkHost} and its soundness \lean{physHost\_of\_checks}), with
-\lean{Uniform/W/Charts4} and \lean{Uniform/W/Charts5} (the slot systems of the stored subspaces, and the
-direct proof for the remaining window); the data of the $34$ windows are in
-\lean{Uniform/Bank532/Pk} and \lean{Uniform/Bank532/Host\_*}.
-\item[The profile of $D$] \lean{Uniform/Bank540}, \lean{Uniform/Bank535} and \lean{Uniform/Bank532}: the
-interval lists with their certificates (\lean{WinCert}), the growth of the denominator from any list of
-families (\lean{growth\_of\_families}), the list \lean{wins532} of the $102$ intervals with its area
-\lean{gain532} and the bound \lean{gain532\_ge}, the conditions of the criterion (\lean{Bank532/Gate}) and the
-final assembly \lean{Final532}.
-\item[Nonvanishing] \lean{Nonvanishing} (Proposition~\ref{prop:nonvanishing} from the three base matrices),
-and the residue-table certificates \lean{CertMod}, \lean{ResBase}, \lean{ResCheck}, \lean{ResInv},
-\lean{ResRec}.
-\item[Real place] \lean{Analytic/} (23 modules): the constants and fields of a design (\lean{Const},
-\lean{Fields}, \lean{CommonField}, and the numerals for $D$ in \lean{Instances}), the first-case and
-second-case contracts (\lean{First},
-\lean{FirstGlue}, \lean{Second}, \lean{Glue}), the grouped products over the fixed points (\lean{GroupedProduct},
-\lean{MarkedSheet}, \lean{MarkedSheetOn}, \lean{MarkedMixedMajorant}, \lean{MarkedSecond}), the prefactor,
-the perturbation by the quadrature nodes (\lean{Prefactor}, \lean{AtomBase}, \lean{WeightedAtom},
-\lean{DeltaSmall}, \lean{DeltaChain}), the quadrature formula \eqref{eq:quad} (\lean{FullInterval}), and the
-nodes and the weight bounds for any number of nodes
-(\lean{GapNodes}, \lean{GapNodal}, \lean{GapWeights}, \lean{GapCircleGen}).
-\lean{Cert/} (6 modules) is the generic cell machinery: the evaluator of logarithms
-(\lean{WLog}, \lean{WLogSpec}), the residual field with a weight (\lean{ResW}), the shifted tables
-(\lean{PolyShift}) and the assembly of cells and blocks (\lean{CellLoc}, \lean{Assembly}).
-\item[The design $D$] \lean{D58/} holds the instance at the real place and for the denominators: the
-constants of the certificate, \lean{Ramps}, \lean{OddProfile} (the profile $f$), \lean{Normalizer},
-\lean{Circle} (the 42-piece cover), \lean{FirstTrial},
-\lean{FirstTrialCert}, \lean{FirstBridge} and \lean{FirstCert/} (the first case), the second case (trial
-data, the covers of $X$, $Y$ and $R$ in blocks, the norms, the near-field cap) and \lean{C3/} (the three
-inverses modulo $1009$); the constant $\mathsf A_2=2673/8$ is evaluated from the generic bound in
-\lean{Uniform/Bank540/Ledger}. \lean{Uniform/Bank540/Decay} collects the constants $\rho$ and
-$n_0^2(U-\frac12\log2)$ and the smallness on the neighbourhood of $G$.
-The other modules of \lean{D58/} that the final assembly uses (the scalar budgets, the nullity bound
-\lean{Kap} and the block \lean{Final}) are used in the form in which they stand.
+The design-generic part of the development is in the directory \lean{GenD} of \lean{CatalanMeasure}. A design is
+data. The generic modules prove every statement for an arbitrary design, and the instance files contain
+numerals only.
+\begin{description}[leftmargin=1.5em,style=nextline]\sloppy
+\item[Generic layer] \lean{PL} (piecewise linear profiles and their areas), \lean{PrimeGrowth} (the weighted
+prime number theorem \eqref{eq:weighted-pnt}), \lean{Budget} (the scalar budgets), \lean{PayW} and
+\lean{Recycled} (Proposition~\ref{prop:criterion}), and \lean{Final} (the structure \lean{DesignData} and the
+theorem \lean{measure\_of\_design}, which contain no numeral).
+\item[Denominators] \lean{OddProfile}, \lean{TwoAdic}, \lean{DenomExp}, \lean{DenomGrowth},
+\lean{Denominator} and \lean{Normalizer}, with \lean{Uniform/Arithmetic} and \lean{Uniform/LedgerW} (the
+common denominator built from an arbitrary lower bound for the nullity, and the growth of its logarithm).
+\item[Rank deficiencies] \lean{RankT}, \lean{RankU}, \lean{RankU6}, \lean{RankS} and their shared layers for
+Theorem~\ref{thm:content}; \lean{Uniform/W/} for the counting inequality (\lean{Core}, \lean{Profile}),
+Lucas's step (\lean{Lucas/PStep}), the families of Section~\ref{ssec:families} and the stored data of
+Section~\ref{ssec:packets} (\lean{Prof/Packet}, \lean{Charts6/Check}); the profile of $D$ with its area
+\lean{gain532} and the bound \lean{gain532\_ge} in \lean{Uniform/Bank532}.
+\item[Nonvanishing] \lean{Nonvanishing}, with the residue-table certificates modulo $1009$.
+\item[Real place, perturbation] \lean{Analytic/} (the energy method with fixed points, the column expansion
+and the quadrature nodes); \lean{BinomVandermonde} (Lemma~\ref{lem:binomvand}) and \lean{Keyhole}
+(Lemma~\ref{lem:keyhole}) in \lean{GenD/Signed}; \lean{D58/Budget590} (the budgets at the rates $U$ and $U_0$,
+and $\rho=$ \lean{rhoEnd}); \lean{Signed/Data/S1} (the $14$ cells of the bound for $\Psi_0$).
+\item[Real place, signed bound] \lean{GenD/Signed}: \lean{PickDet} and \lean{RealPlace}
+(Lemma~\ref{lem:pick}, Theorem~\ref{thm:C3}, \eqref{eq:eleven}), \lean{LemmaT}, \lean{LemmaTFree} and
+\lean{HalfDisc} (Lemma~\ref{lem:T}), \lean{RatioIdentity} and \lean{BernsteinSzego}
+(Theorem~\ref{thm:heine}), \lean{TiltedTangent} and \lean{ArcsineDenominator} (Lemmas~\ref{lem:LGup}
+and~\ref{lem:LGlow}), \lean{Spike} and its companions (Theorem~\ref{thm:spike}), \lean{ReflectionEnergy}
+and \lean{ArcsinePhantom} (Theorem~\ref{thm:reflection}), \lean{MarkedExpansion}, \lean{SigmaCap} and
+\lean{EnergyNear} (\S\ref{ssec:fixedrows}), \lean{LemmaK} and \lean{Brackets} (\S\ref{ssec:class}),
+\lean{Interp} and \lean{Phase2Contract} (the interpolation of trials), and \lean{Gate} and \lean{Theorem410}
+(the assembly).
+\item[Trials and cells] \lean{Signed/Data/Trial} (the three trials), \lean{Signed/Data/Consts} (the constants
+of the trials, evaluated in exact arithmetic), \lean{Signed/Data/Cells} (the cell engine and the cells of the
+three trials) and \lean{Signed/Data/Assembly} (the records of the cell statements and the final theorem).
 \end{description}
-The modules of
-OpenAI's formalization, the generic valuation theorems of the construction
-(\lean{CatalanMeasure/Parametric}), the modules of \lean{CatalanMeasure} outside \lean{GenD} on which the
-argument rests (among them the identity of Andr\'eief type with fixed points, the bound
-\eqref{eq:genvand}, the column expansion of Lemma~\ref{lem:expansion}, integer-valued polynomials and the
-cell certificates), and two modules of linear algebra shared with the
-companion paper (\lean{CatalanCore/Uniform/Content}) are used as they are.
 
 \subsection{Certificates}
-The proof combines conventional formal proofs with numerical certificates checked by the Lean kernel:
-the inverses of the base matrices modulo $1009$, the cover of Lemma~\ref{lem:quadrature}, the trial
-sequences of Section~\ref{ssec:trials}, the covers of Section~\ref{ssec:cells}, and the stored subspaces,
-kernel vectors and window conditions of Section~\ref{ssec:packets}. All are exact rational or
-integer computations, decided by the kernel without compiled code. The interval arithmetic used to
-generate the trial data and the covers \cite{Arb} is not trusted: Lean rechecks every inequality. Four
-devices keep the certificates small enough for the kernel.
+The proof combines conventional formal proofs with numerical certificates checked by the Lean kernel. They
+are the inverses of the base matrices modulo $1009$, the trial sequences and covers of
+Sections~\ref{sec:real} and~\ref{sec:signed}, the cells of the bound for $\Psi_0$, and the stored subspaces,
+kernel vectors and window conditions of Section~\ref{ssec:packets}. All are exact rational or integer
+computations, decided by the kernel without compiled code. The interval arithmetic used to generate the trial
+data and the covers \cite{Arb} is not trusted. Lean rechecks every inequality. Five devices keep the
+certificates small enough for the kernel.
 \begin{itemize}
-\item \emph{Shared Taylor bounds.} The cells of a cover are grouped in blocks. For each block the
-derivatives of the polynomial part of the field are evaluated once, exactly, at the centre of the block,
-together with one bound for the remainder of the expansion; every cell of the block obtains its expansion
-by an exact shift, instead of repeating the evaluation of a polynomial with $\Kcoef$ coefficients.
-\item \emph{Accuracy per term from a shared table of nodes.} The logarithms are evaluated by the series
-$\log\frac{1+x}{1-x}=2x\sum_i x^{2i}/(2i+1)$ with an explicit geometric tail, and the number of terms is
-chosen for each logarithmic term separately from a table of nodes shared by all the cells, instead of
-one accuracy for the whole sum.
-\item \emph{Residue recurrences.} The tables of the moments $M(i,j)$ and $Z(i,j)$ modulo $1009$ are not
-computed from the rational numbers. They are generated by the one-step recurrences that define these
-numbers, once proved correct, and the kernel checks the recurrence, the filtered rows against the
-row polynomials and the products of the matrices with their claimed inverses, row by row, in natural
-numbers.
-\item \emph{$2$-adic normalisation.} Where a recurrence produces integers divisible by large powers of
-$2$, as the Chebyshev and Clenshaw recurrences do, the tables store the quotients by these powers, with
-one lemma relating the two; this also avoids integers that the kernel's hashing of literals treats as
-equal.
+\item \emph{Shared Taylor bounds.} The cells of a cover are grouped in blocks. For each block the derivatives of
+the polynomial part of the field are evaluated once, exactly, at the centre of the block, together with one
+bound for the remainder. Every cell of the block obtains its expansion by an exact shift.
+\item \emph{Split shifts.} In the covers of Section~\ref{sec:signed}, only the low-order coefficients of the
+shifted expansion are computed exactly. The others are bounded by one crude table per block.
+\item \emph{Accuracy per term.} The logarithms are evaluated by the series
+$\log\frac{1+x}{1-x}=2x\sum_ix^{2i}/(2i+1)$ with an explicit geometric tail. The number of terms is chosen for
+each logarithmic term separately, from a table of nodes shared by all the cells.
+\item \emph{Residue recurrences.} The tables of moments modulo $1009$ are generated by the one-step recurrences
+that define them, once proved correct. The kernel checks the recurrence and the products of the matrices with
+their claimed inverses, row by row, in natural numbers.
+\item \emph{$2$-adic normalisation.} Where a recurrence or a shift produces integers divisible by large powers
+of $2$, the tables store the quotients by these powers, with one lemma relating the two. This also avoids
+integers that the kernel's hashing of literals treats as equal.
 \end{itemize}
 
 \section*{Disclosure of AI use}
 
-The mathematics, the Lean formalization, the certificate generators and the text of this paper were produced by AI systems at the request of the author, who posed the problems, directed the work and is responsible for this paper: Claude Opus~5.5, Claude Sonnet~5.5 and Claude Haiku~5.5 (Anthropic), running in Claude Code, and GPT-6.1 Sol (OpenAI), running in Codex. The underlying irrationality proof for $G$ and its Lean formalization are OpenAI's \cite{OpenAI2026}.
+The mathematics, the Lean formalization, the certificate generators and the text of this paper were produced by
+AI systems at the request of the author, who posed the problems, directed the work and is responsible for this
+paper: Claude Opus~5.5, Claude Sonnet~5.5 and Claude Haiku~5.5 (Anthropic), running in Claude Code, and
+GPT-6.1 Sol (OpenAI), running in Codex. The underlying irrationality proof for $G$ and its Lean formalization are
+OpenAI's \cite{OpenAI2026}.
 
 \subsection*{Acknowledgements}
 We thank the authors of Mathlib and of the PNT+ project, and OpenAI for making its formalization available.
