@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Near
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Link
+public import CatalanMeasure.GenD.Signed.Data.Assembly.RowsInst
 public import CatalanMeasure.GenD.Signed.Data.S1.TrialEnd590
 public import CatalanMeasure.GenD.Signed.Gate
 public import CatalanMeasure.GenD.Uniform.Bank532.Hosts532Inst
@@ -16,7 +17,8 @@ set_option Elab.async false
 Theorem A decay side: `delta_small_410` (first case, large case, signed near case, S1 weights),
 `pay410_w35`, `gain_ok410`.
 `catalan_irrationalityMeasure_410_of_rows` takes the ingredient rows (`Rows410`) and the class-link
-data; the closed theorem `catalan_irrationalityMeasure_410` instantiates them with the row producers.
+data; `catalan_irrationalityMeasure_410_of_cells` instantiates them with the row producers, from the
+cell statements of the three trials (`CellsQ0`, `CellsQ1`, `CellsQ2`).
 -/
 
 namespace CatalanMeasure.GenD.Signed
@@ -77,7 +79,16 @@ theorem catalan_irrationalityMeasure_410_of_rows (R : Rows410)
       (hec410' _ hp rfl)
       (link410 R _ hp rfl rfl hCls))
 
+/-- **`μ(G) ≤ 410`** from the cell statements of the three endpoint trials. -/
+theorem catalan_irrationalityMeasure_410_of_cells (C0 : RowsQ0.CellsQ0) (C1 : RowsQ1.CellsQ1)
+    (C2 : RowsQ2.CellsQ2) :
+    ∀ᶠ b : ℕ in atTop, ∀ a : ℤ,
+      (b : ℝ) ^ (-(410 : ℝ)) <
+        |(∑' j : ℕ, (-1 : ℝ) ^ j / ((2 * j + 1 : ℕ) : ℝ) ^ 2) - a / b| :=
+  catalan_irrationalityMeasure_410_of_rows (rows410 C0 C1 C2) (fun _ _ _ _ _ _ _ _ _ h => h)
+
 end
 end CatalanMeasure.GenD.Signed
 #print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_near
 #print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_rows
+#print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_cells
