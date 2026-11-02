@@ -84,8 +84,8 @@ rational points. Among them are
 \]
 and $\mu(\psi'(\frac k5)-\pi^2/6)\le\MuFifthsU$ and $\mu(\psi'(\frac k7)-\pi^2/6)\le\MuSeventhsU$
 for $k$ prime to the denominator. For $L(2,\chi_{-3})$ and $L(2,\chi_{-3})\pm\pi^2/9$ the best bound known before
-was $24781$, due to Calegari, Dimitrov and Tang. For the other numbers we know of no earlier irrationality measure, and
-for $\psi'(\frac k5)-\pi^2/6$ and $\psi'(\frac k7)-\pi^2/6$ no earlier proof of irrationality.
+was $24781$, due to Calegari, Dimitrov and Tang. For $G\pm5\pi^2/48$, $\psi'(\frac k5)-\pi^2/6$ and
+$\psi'(\frac k7)-\pi^2/6$ we know of no earlier proof of irrationality.
 
 The approximations are determinants of rectangular L\"owner matrices built from the digamma function at
 integer nodes. We bound their denominators prime by prime, using the corank of the matrix modulo $p$ and
@@ -176,6 +176,12 @@ In particular $\Psi(s,t)$ and the number in the same row are irrational, with ir
 most $B$.
 \end{theorem}
 
+For $G\pm5\pi^2/48$, $\psi'(\frac k5)-\pi^2/6$ and $\psi'(\frac k7)-\pi^2/6$ we know of no earlier proof of
+irrationality. The irrationality of $G\pm5\pi^2/48$ does not follow from that of $G$, since it is not known whether $1$,
+$G$ and $\pi^2$ are linearly independent over $\Q$. For $L(2,\chi_{-3})$ and $L(2,\chi_{-3})\pm\pi^2/9$ irrationality
+was known \cite{CDT2024}, and the theorem improves the known measure. The bound for $\pi^2$ is weaker than the known
+ones and is included for completeness.
+
 One family of determinants, with the same three estimates, covers every row of Table~\ref{tab:main}.
 
 Theorem~\ref{thm:main} has been verified in the Lean~4 proof assistant, together with every theorem, proposition and
@@ -195,8 +201,7 @@ the arithmetic of $G$ and related values before these results see
 Eskandari, Murty and Nemoto \cite{EMN2025} construct a $2$-dimensional mixed motive over $\Q$ with period $G$. They use
 it to obtain linear forms in $1$ and $G$. Eskandari \cite{Eskandari2026} improves the approximation exponent of these
 forms of Rivoal--Zudilin type from $0.52$ to $0.62$. These are explicit approximations, not a lower bound for all
-rationals. Our searches found no irrationality result and no irrationality measure for $G-5\pi^2/48$ or
-$G+5\pi^2/48$.
+rationals. Our searches found no proof that $G-5\pi^2/48$ or $G+5\pi^2/48$ is irrational.
 
 \emph{The value $L(2,\chi_{-3})$.} Calegari, Dimitrov and Tang \cite{CDT2024} proved that $1$, $\pi^2$ and
 $L(2,\chi_{-3})$ are linearly independent over $\Q$. Their proof applies a new arithmetic holonomy bound to a
