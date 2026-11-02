@@ -30,7 +30,7 @@ the data `γ` is untrusted, only the final inequality is checked.
 
 namespace CatalanMeasure.GenD.Signed.Data.Cells
 open Set CatalanMeasure.CellCert CatalanMeasure.GenD.Signed.TaylorCell
-open CatalanMeasure.GenD.Signed.LogEval
+open CatalanMeasure.GenD.Signed.LogEval OAI.InternalCatalan
 
 /-! ### 1. The Chebyshev sequence -/
 
@@ -461,5 +461,501 @@ theorem cheb_toy_sound (u : ℝ) (hu : |u| ≤ 1) : u ^ 2 ≤ 1 := by
 #print axioms cheb_toy_exact
 #print axioms cheb_toy_rounded
 #print axioms cheb_toy_sound
+
+/-! ### 6. The Taylor-free field piece
+
+For a field `f = poly + Σ_t P_t log|x - e_t| + Σ_q Re[ρ_q log(x - p_q)]` on `[lo, hi]` there is no
+remainder term: every part is bounded exactly.
+
+* `poly` and each `P_t`: `polyUBc` / `polyLBc` (Chebyshev bound of the exact Taylor shift at the
+  centre, rescaled to `u ∈ [-1, 1]`, upper bound of the polynomial and of its negative).
+* `log|x - e|` and `log|x - p|`: `(x - a)² + b²` lies between its endpoint values on a piece that does
+  not straddle `a`, so `log` lies between the two endpoint logarithms (`logBand`, `logQ` enclosures).
+* `arg(x - p)`: monotone in `x` (`arg_between`), enclosed by its endpoint values (`argQ`).
+* products `P · log` and `w · arg`: sign-aware interval products (`iv4`, `mul_le_max2`).
+
+The conclusion is that of `cellV_sound`.  The checker needs `lo < hi`, each `e_t` outside `[lo, hi]`, each
+real pole outside `[lo, hi]` and each complex pole with `Re p ∉ (lo, hi)` (split the piece at `Re p`),
+and `ri = 0 ∨ pi ≠ 0`. -/
+
+theorem polyTow_shiftL (p : List ℚ) (c : ℚ) (y : ℝ) :
+    polyTow (shiftL c p.length p) 0 y = polyTow p 0 (y + c) := by
+  rw [polyTow_sum, shiftL_length, polyTow_taylor p c (y + c)]
+  simp only [add_sub_cancel_right]
+
+/-- Chebyshev upper bound of a polynomial on `[c - r, c + r]`. -/
+def polyUBc (p : List ℚ) (c r : ℚ) (γ : List ℚ) : ℚ :=
+  chebPolyUB (sclPow r 0 (shiftLK c p.length p)) γ
+
+theorem polyUBc_le (p : List ℚ) (c r : ℚ) (γ : List ℚ) (hr : 0 < (r : ℝ)) (x : ℝ)
+    (hx : |x - (c : ℝ)| ≤ (r : ℝ)) : polyTow p 0 x ≤ ((polyUBc p c r γ : ℚ) : ℝ) := by
+  have hu : |(x - (c : ℝ)) / (r : ℝ)| ≤ 1 := by
+    rw [abs_div, abs_of_pos hr, div_le_one hr]; exact hx
+  have h := chebPoly_le (sclPow r 0 (shiftLK c p.length p)) γ ((x - (c : ℝ)) / (r : ℝ)) hu
+  rw [polyTow_sclPow, shiftLK_eq'] at h
+  have e : (r : ℝ) * ((x - (c : ℝ)) / (r : ℝ)) = x - (c : ℝ) := by field_simp
+  rw [e, polyTow_shiftL, sub_add_cancel] at h
+  unfold polyUBc
+  rw [shiftLK_eq']
+  simpa using h
+
+/-- Chebyshev lower bound: minus the upper bound of the negated polynomial. -/
+def polyLBc (p : List ℚ) (c r : ℚ) (γ : List ℚ) : ℚ :=
+  -polyUBc (p.map (fun a => (-1 : ℚ) * a)) c r γ
+
+theorem polyLBc_le (p : List ℚ) (c r : ℚ) (γ : List ℚ) (hr : 0 < (r : ℝ)) (x : ℝ)
+    (hx : |x - (c : ℝ)| ≤ (r : ℝ)) : ((polyLBc p c r γ : ℚ) : ℝ) ≤ polyTow p 0 x := by
+  have h := polyUBc_le (p.map (fun a => (-1 : ℚ) * a)) c r γ hr x hx
+  rw [polyTow_smul] at h
+  unfold polyLBc
+  push_cast at h ⊢
+  linarith
+
+theorem mul_le_max2 {w L ll lu : ℝ} (h1 : ll ≤ L) (h2 : L ≤ lu) :
+    w * L ≤ max (w * ll) (w * lu) := by
+  rcases le_total 0 w with h | h
+  · exact le_max_of_le_right (mul_le_mul_of_nonneg_left h2 h)
+  · exact le_max_of_le_left (mul_le_mul_of_nonpos_left h1 h)
+
+def iv4 (pl pu ll lu : ℚ) : ℚ := max (max (pl * ll) (pl * lu)) (max (pu * ll) (pu * lu))
+
+theorem mul_le_iv4 {P L pl pu ll lu : ℝ} (hP1 : pl ≤ P) (hP2 : P ≤ pu) (hL1 : ll ≤ L)
+    (hL2 : L ≤ lu) : P * L ≤ max (max (pl * ll) (pl * lu)) (max (pu * ll) (pu * lu)) := by
+  have h1 : P * L ≤ max (P * ll) (P * lu) := mul_le_max2 hL1 hL2
+  have a1 : P * ll ≤ max (pl * ll) (pu * ll) := by
+    rcases le_total 0 ll with h | h
+    · exact le_max_of_le_right (mul_le_mul_of_nonneg_right hP2 h)
+    · exact le_max_of_le_left (mul_le_mul_of_nonpos_right hP1 h)
+  have a2 : P * lu ≤ max (pl * lu) (pu * lu) := by
+    rcases le_total 0 lu with h | h
+    · exact le_max_of_le_right (mul_le_mul_of_nonneg_right hP2 h)
+    · exact le_max_of_le_left (mul_le_mul_of_nonpos_right hP1 h)
+  refine h1.trans (max_le ?_ ?_)
+  · exact a1.trans (max_le (le_max_of_le_left (le_max_left _ _))
+      (le_max_of_le_right (le_max_left _ _)))
+  · exact a2.trans (max_le (le_max_of_le_left (le_max_right _ _))
+      (le_max_of_le_right (le_max_right _ _)))
+
+theorem mul_le_iv4_cast {P L : ℝ} {pl pu ll lu : ℚ} (hP1 : (pl : ℝ) ≤ P) (hP2 : P ≤ (pu : ℝ))
+    (hL1 : (ll : ℝ) ≤ L) (hL2 : L ≤ (lu : ℝ)) : P * L ≤ ((iv4 pl pu ll lu : ℚ) : ℝ) := by
+  have := mul_le_iv4 hP1 hP2 hL1 hL2
+  unfold iv4
+  push_cast
+  exact this
+
+/-! #### logarithm band -/
+
+/-- Enclosure `[LL, LU]` of `log ((x - a)² + b²)` on `[lo, hi]`, when the piece does not straddle `a`. -/
+def logBand (nL : ℕ) (a b lo hi : ℚ) : Option (ℚ × ℚ) :=
+  if hi ≤ a ∨ a ≤ lo then
+    match logQ nL (min ((lo - a) ^ 2 + b ^ 2) ((hi - a) ^ 2 + b ^ 2)),
+        logQ nL (max ((lo - a) ^ 2 + b ^ 2) ((hi - a) ^ 2 + b ^ 2)) with
+    | some (l1, e1), some (l2, e2) => some (l1 - e1, l2 + e2)
+    | _, _ => none
+  else none
+
+theorem logBand_spec {nL : ℕ} {a b lo hi LL LU : ℚ} (h : logBand nL a b lo hi = some (LL, LU))
+    (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    (LL : ℝ) ≤ Real.log ((x - (a : ℝ)) ^ 2 + (b : ℝ) ^ 2) ∧
+      Real.log ((x - (a : ℝ)) ^ 2 + (b : ℝ) ^ 2) ≤ (LU : ℝ) := by
+  unfold logBand at h
+  split_ifs at h with hs
+  · split at h
+    · rename_i l1 e1 l2 e2 h1 h2
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      obtain ⟨hp1, hE1⟩ := logQ_spec h1
+      obtain ⟨hp2, hE2⟩ := logQ_spec h2
+      have hp1' := (Rat.cast_pos (K := ℝ)).mpr hp1
+      have hs' : (hi : ℝ) ≤ (a : ℝ) ∨ (a : ℝ) ≤ (lo : ℝ) := by
+        rcases hs with h | h
+        · exact Or.inl (by exact_mod_cast h)
+        · exact Or.inr (by exact_mod_cast h)
+      have hlo := hx.1
+      have hhi := hx.2
+      have hD : (min (((lo : ℝ) - a) ^ 2 + (b : ℝ) ^ 2) (((hi : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)) ≤
+            (x - a) ^ 2 + (b : ℝ) ^ 2 ∧
+          (x - a) ^ 2 + (b : ℝ) ^ 2 ≤
+            max (((lo : ℝ) - a) ^ 2 + (b : ℝ) ^ 2) (((hi : ℝ) - a) ^ 2 + (b : ℝ) ^ 2) := by
+        rcases hs' with h | h
+        · have k1 : ((hi : ℝ) - a) ^ 2 ≤ (x - a) ^ 2 := by
+            nlinarith [mul_nonneg (sub_nonneg.2 hhi) (by linarith : (0 : ℝ) ≤ 2 * a - x - hi)]
+          have k2 : (x - a) ^ 2 ≤ ((lo : ℝ) - a) ^ 2 := by
+            nlinarith [mul_nonneg (sub_nonneg.2 hlo) (by linarith : (0 : ℝ) ≤ 2 * a - lo - x)]
+          have k3 := le_max_left (((lo : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)
+            (((hi : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)
+          exact ⟨(min_le_right _ _).trans (by linarith), by linarith⟩
+        · have k1 : ((lo : ℝ) - a) ^ 2 ≤ (x - a) ^ 2 := by
+            nlinarith [mul_nonneg (sub_nonneg.2 hlo) (by linarith : (0 : ℝ) ≤ x + lo - 2 * a)]
+          have k2 : (x - a) ^ 2 ≤ ((hi : ℝ) - a) ^ 2 := by
+            nlinarith [mul_nonneg (sub_nonneg.2 hhi) (by linarith : (0 : ℝ) ≤ hi + x - 2 * a)]
+          have k3 := le_max_right (((lo : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)
+            (((hi : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)
+          exact ⟨(min_le_left _ _).trans (by linarith), by linarith⟩
+      have hpos : (0 : ℝ) < (min (((lo : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)
+          (((hi : ℝ) - a) ^ 2 + (b : ℝ) ^ 2)) := by
+        have := hp1'
+        push_cast at this
+        exact this
+      have hl1 := Real.log_le_log hpos hD.1
+      have hl2 := Real.log_le_log (hpos.trans_le hD.1) hD.2
+      have e1' := Enc.ge_lower hE1
+      have e2' := Enc.le_upper hE2
+      push_cast at e1' e2' ⊢
+      constructor <;> linarith
+    · simp at h
+
+theorem logBand_spec0 {nL : ℕ} {a lo hi LL LU : ℚ} (h : logBand nL a 0 lo hi = some (LL, LU))
+    (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    (LL : ℝ) ≤ Real.log ((x - (a : ℝ)) ^ 2) ∧ Real.log ((x - (a : ℝ)) ^ 2) ≤ (LU : ℝ) := by
+  obtain ⟨h1, h2⟩ := logBand_spec h x hx
+  simp only [Rat.cast_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    add_zero] at h1 h2
+  exact ⟨h1, h2⟩
+
+/-! #### argument -/
+
+theorem sdiv_mono {b a1 a2 : ℝ} (hb : b ≠ 0) (h : a1 ≤ a2) :
+    a1 / Real.sqrt (a1 * a1 + b * b) ≤ a2 / Real.sqrt (a2 * a2 + b * b) := by
+  have hb2 : 0 < b * b := mul_self_pos.mpr hb
+  have p1 : 0 < a1 * a1 + b * b := by nlinarith [mul_self_nonneg a1]
+  have p2 : 0 < a2 * a2 + b * b := by nlinarith [mul_self_nonneg a2]
+  have r1 := Real.sqrt_pos.mpr p1
+  have r2 := Real.sqrt_pos.mpr p2
+  have s1 : Real.sqrt (a1 * a1 + b * b) ^ 2 = a1 * a1 + b * b := Real.sq_sqrt p1.le
+  have s2 : Real.sqrt (a2 * a2 + b * b) ^ 2 = a2 * a2 + b * b := Real.sq_sqrt p2.le
+  set R1 := Real.sqrt (a1 * a1 + b * b)
+  set R2 := Real.sqrt (a2 * a2 + b * b)
+  rw [div_le_div_iff₀ r1 r2]
+  have key : ∀ X Y : ℝ, 0 ≤ X → 0 ≤ Y → X ^ 2 ≤ Y ^ 2 → X ≤ Y := by
+    intro X Y hX hY hXY
+    by_contra hc
+    push_neg at hc
+    nlinarith [mul_pos (sub_pos.2 hc) (add_pos_of_pos_of_nonneg (lt_of_le_of_lt hY hc) hY)]
+  by_cases h1 : 0 ≤ a1
+  · have h2 : 0 ≤ a2 := h1.trans h
+    apply key _ _ (mul_nonneg h1 r2.le) (mul_nonneg h2 r1.le)
+    rw [mul_pow, mul_pow, s1, s2]
+    have hsq : a1 * a1 ≤ a2 * a2 := by nlinarith
+    nlinarith [mul_le_mul_of_nonneg_right hsq hb2.le]
+  · by_cases h2 : a2 ≤ 0
+    · have h1' : a1 ≤ 0 := by linarith
+      have := key ((-a2) * R1) ((-a1) * R2) (mul_nonneg (by linarith) r1.le)
+        (mul_nonneg (by linarith) r2.le) (by
+          rw [mul_pow, mul_pow, s1, s2]
+          have hsq : a2 * a2 ≤ a1 * a1 := by nlinarith
+          nlinarith [mul_le_mul_of_nonneg_right hsq hb2.le])
+      nlinarith
+    · push_neg at h1 h2
+      nlinarith [mul_pos h2 r1, mul_pos (neg_pos.2 h1) r2]
+
+theorem arg_between {b a1 a a2 : ℝ} (hb : b ≠ 0) (h1 : a1 ≤ a) (h2 : a ≤ a2) :
+    min (Complex.arg ⟨a1, b⟩) (Complex.arg ⟨a2, b⟩) ≤ Complex.arg ⟨a, b⟩ ∧
+      Complex.arg ⟨a, b⟩ ≤ max (Complex.arg ⟨a1, b⟩) (Complex.arg ⟨a2, b⟩) := by
+  have hn : ∀ t : ℝ, ‖(⟨t, b⟩ : ℂ)‖ = Real.sqrt (t * t + b * b) := by
+    intro t
+    rw [Complex.norm_def, Complex.normSq_apply]
+  rcases lt_or_gt_of_ne hb with hneg | hpos
+  · have e : ∀ t : ℝ, Complex.arg ⟨t, b⟩ = -Real.arccos (t / Real.sqrt (t * t + b * b)) := by
+      intro t
+      rw [Complex.arg_of_im_neg hneg, hn]
+    have m1 : Complex.arg ⟨a1, b⟩ ≤ Complex.arg ⟨a, b⟩ := by
+      rw [e, e]; exact neg_le_neg (Real.arccos_le_arccos (sdiv_mono hb h1))
+    have m2 : Complex.arg ⟨a, b⟩ ≤ Complex.arg ⟨a2, b⟩ := by
+      rw [e, e]; exact neg_le_neg (Real.arccos_le_arccos (sdiv_mono hb h2))
+    exact ⟨(min_le_left _ _).trans m1, m2.trans (le_max_right _ _)⟩
+  · have e : ∀ t : ℝ, Complex.arg ⟨t, b⟩ = Real.arccos (t / Real.sqrt (t * t + b * b)) := by
+      intro t
+      rw [Complex.arg_of_im_pos hpos, hn]
+    have m1 : Complex.arg ⟨a, b⟩ ≤ Complex.arg ⟨a1, b⟩ := by
+      rw [e, e]; exact Real.arccos_le_arccos (sdiv_mono hb h1)
+    have m2 : Complex.arg ⟨a2, b⟩ ≤ Complex.arg ⟨a, b⟩ := by
+      rw [e, e]; exact Real.arccos_le_arccos (sdiv_mono hb h2)
+    exact ⟨(min_le_right _ _).trans m2, m1.trans (le_max_left _ _)⟩
+
+/-! #### one pole -/
+
+/-- Upper bound of `Re[ρ log(x - p)]` on `[lo, hi]`:
+`(rr/2) log((x - pr)² + pi²) - ri · arg(x - pr - i pi)`. -/
+def poleUB (nL nA : ℕ) (q : PoleR) (lo hi : ℚ) : Option ℚ :=
+  match logBand nL q.pr q.pi lo hi with
+  | none => none
+  | some (LL, LU) =>
+    if q.ri = 0 then some (max (q.rr / 2 * LL) (q.rr / 2 * LU))
+    else if q.pi = 0 then none
+    else
+      match argQ nA (lo - q.pr) (-q.pi), argQ nA (hi - q.pr) (-q.pi) with
+      | some (v1, e1), some (v2, e2) =>
+        some (max (q.rr / 2 * LL) (q.rr / 2 * LU) +
+          max ((-q.ri) * min (v1 - e1) (v2 - e2)) ((-q.ri) * max (v1 + e1) (v2 + e2)))
+      | _, _ => none
+
+theorem pole_term_eq (q : PoleR) (x : ℝ) :
+    (q.rho * Complex.log ((x : ℂ) - q.pc)).re =
+      (q.rr : ℝ) * (Real.log ((x - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) / 2) -
+        (q.ri : ℝ) * Complex.arg ⟨x - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ := by
+  have hz : (x : ℂ) - q.pc = ⟨x - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ := by
+    apply Complex.ext <;> simp [PoleR.pc]
+  rw [hz, barrierComplexLog_weighted_re]
+  have e : (x - (q.pr : ℝ)) ^ 2 + (((-q.pi : ℚ) : ℝ)) ^ 2 = (x - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2 := by
+    push_cast; ring
+  simp only [PoleR.rho, e]
+
+theorem poleUB_le (nL nA : ℕ) (q : PoleR) (lo hi v : ℚ) (h : poleUB nL nA q lo hi = some v)
+    (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    (q.rho * Complex.log ((x : ℂ) - q.pc)).re ≤ (v : ℝ) := by
+  unfold poleUB at h
+  split at h
+  · simp at h
+  · rename_i LL LU hl
+    obtain ⟨hL1, hL2⟩ := logBand_spec hl x hx
+    rw [pole_term_eq]
+    have hA : (q.rr : ℝ) * (Real.log ((x - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) / 2) =
+        ((q.rr / 2 : ℚ) : ℝ) * Real.log ((x - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) := by
+      push_cast; ring
+    have hA' := mul_le_max2 (w := ((q.rr / 2 : ℚ) : ℝ)) hL1 hL2
+    split_ifs at h with hri hpi
+    · simp only [Option.some.injEq] at h
+      subst h
+      have hri' : (q.ri : ℝ) = 0 := by exact_mod_cast hri
+      rw [hri', hA]
+      push_cast at hA' ⊢
+      linarith
+    · split at h
+      · rename_i v1 e1 v2 e2 ha1 ha2
+        simp only [Option.some.injEq] at h
+        subst h
+        have hq : (q.pi : ℝ) ≠ 0 := by exact_mod_cast hpi
+        have hb : ((-q.pi : ℚ) : ℝ) ≠ 0 := by push_cast; exact neg_ne_zero.mpr hq
+        have hb1 := argQ_spec ha1
+        have hb2 := argQ_spec ha2
+        have hbt := arg_between (b := ((-q.pi : ℚ) : ℝ))
+          (a1 := ((lo - q.pr : ℚ) : ℝ)) (a := x - (q.pr : ℝ)) (a2 := ((hi - q.pr : ℚ) : ℝ)) hb
+          (by push_cast; linarith [hx.1]) (by push_cast; linarith [hx.2])
+        have hb1' := abs_le.mp hb1
+        have hb2' := abs_le.mp hb2
+        set A := Complex.arg ⟨x - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩
+        have hAL : (((min (v1 - e1) (v2 - e2) : ℚ)) : ℝ) ≤ A := by
+          push_cast
+          refine le_trans ?_ hbt.1
+          rcases min_cases (Complex.arg ⟨((lo - q.pr : ℚ) : ℝ), ((-q.pi : ℚ) : ℝ)⟩)
+            (Complex.arg ⟨((hi - q.pr : ℚ) : ℝ), ((-q.pi : ℚ) : ℝ)⟩) with ⟨hm, _⟩ | ⟨hm, _⟩
+          · rw [hm]; exact (min_le_left _ _).trans (by linarith [hb1'.1])
+          · rw [hm]; exact (min_le_right _ _).trans (by linarith [hb2'.1])
+        have hAU : A ≤ (((max (v1 + e1) (v2 + e2) : ℚ)) : ℝ) := by
+          push_cast
+          refine le_trans hbt.2 ?_
+          rcases max_cases (Complex.arg ⟨((lo - q.pr : ℚ) : ℝ), ((-q.pi : ℚ) : ℝ)⟩)
+            (Complex.arg ⟨((hi - q.pr : ℚ) : ℝ), ((-q.pi : ℚ) : ℝ)⟩) with ⟨hm, _⟩ | ⟨hm, _⟩
+          · rw [hm]; exact (le_max_left _ _).trans' (by linarith [hb1'.2])
+          · rw [hm]; exact (le_max_right _ _).trans' (by linarith [hb2'.2])
+        have hB := mul_le_max2 (w := ((-q.ri : ℚ) : ℝ)) hAL hAU
+        rw [hA]
+        push_cast at hA' hB ⊢
+        linarith
+      · simp at h
+
+/-! #### lists of terms and the piece -/
+
+/-- Bound of `P_t log|x - e_t|`; `g` holds the (upper, lower) Chebyshev data of `P_t`. -/
+def plogUB (nL : ℕ) (t : List ℚ × ℚ) (g : List ℚ × List ℚ) (lo hi : ℚ) : Option ℚ :=
+  match logBand nL t.2 0 lo hi with
+  | none => none
+  | some (LL, LU) =>
+    some (iv4 (polyLBc t.1 ((lo + hi) / 2) ((hi - lo) / 2) g.2)
+      (polyUBc t.1 ((lo + hi) / 2) ((hi - lo) / 2) g.1) (LL / 2) (LU / 2))
+
+theorem plogUB_le (nL : ℕ) (t : List ℚ × ℚ) (g : List ℚ × List ℚ) (lo hi v : ℚ) (hlo : lo < hi)
+    (h : plogUB nL t g lo hi = some v) (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)| ≤ (v : ℝ) := by
+  unfold plogUB at h
+  split at h
+  · simp at h
+  · rename_i LL LU hl
+    simp only [Option.some.injEq] at h
+    subst h
+    obtain ⟨hL1, hL2⟩ := logBand_spec0 hl x hx
+    have hr : (0 : ℝ) < (((hi - lo) / 2 : ℚ) : ℝ) := by
+      have : (lo : ℝ) < (hi : ℝ) := by exact_mod_cast hlo
+      push_cast; linarith
+    have hxc : |x - ((((lo + hi) / 2 : ℚ)) : ℝ)| ≤ (((hi - lo) / 2 : ℚ) : ℝ) := by
+      push_cast
+      exact abs_le.mpr ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    have hP1 := polyLBc_le t.1 ((lo + hi) / 2) ((hi - lo) / 2) g.2 hr x hxc
+    have hP2 := polyUBc_le t.1 ((lo + hi) / 2) ((hi - lo) / 2) g.1 hr x hxc
+    have hlg : Real.log |x - (t.2 : ℝ)| = Real.log ((x - (t.2 : ℝ)) ^ 2) / 2 := by
+      rw [Real.log_pow, Real.log_abs]
+      push_cast; ring
+    rw [hlg]
+    apply mul_le_iv4_cast hP1 hP2
+    · have e : ((LL / 2 : ℚ) : ℝ) = (LL : ℝ) / 2 := by push_cast; ring
+      rw [e]; linarith
+    · have e : ((LU / 2 : ℚ) : ℝ) = (LU : ℝ) / 2 := by push_cast; ring
+      rw [e]; linarith
+
+def plogsUB (nL : ℕ) (lo hi : ℚ) :
+    List (List ℚ × ℚ) → List (List ℚ × List ℚ) → Option ℚ
+  | [], [] => some 0
+  | t :: ts, g :: gs =>
+    match plogUB nL t g lo hi, plogsUB nL lo hi ts gs with
+    | some a, some b => some (a + b)
+    | _, _ => none
+  | _, _ => none
+
+theorem plogsUB_le (nL : ℕ) (lo hi : ℚ) (hlo : lo < hi) :
+    ∀ (ts : List (List ℚ × ℚ)) (gs : List (List ℚ × List ℚ)) (v : ℚ),
+      plogsUB nL lo hi ts gs = some v → ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+        (ts.map (fun t => polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)|)).sum ≤ (v : ℝ) := by
+  intro ts
+  induction ts with
+  | nil =>
+    intro gs v h x _
+    cases gs with
+    | nil => simp only [plogsUB, Option.some.injEq] at h; subst h; simp
+    | cons g gs => simp [plogsUB] at h
+  | cons t ts ih =>
+    intro gs v h x hx
+    cases gs with
+    | nil => simp [plogsUB] at h
+    | cons g gs =>
+      unfold plogsUB at h
+      split at h
+      · rename_i a b ha hb
+        simp only [Option.some.injEq] at h
+        subst h
+        simp only [List.map_cons, List.sum_cons]
+        have h1 := plogUB_le nL t g lo hi a hlo ha x hx
+        have h2 := ih gs b hb x hx
+        push_cast
+        linarith
+      · simp at h
+
+def polesUB (nL nA : ℕ) (lo hi : ℚ) : List PoleR → Option ℚ
+  | [] => some 0
+  | q :: qs =>
+    match poleUB nL nA q lo hi, polesUB nL nA lo hi qs with
+    | some a, some b => some (a + b)
+    | _, _ => none
+
+theorem polesUB_le (nL nA : ℕ) (lo hi : ℚ) :
+    ∀ (qs : List PoleR) (v : ℚ), polesUB nL nA lo hi qs = some v →
+      ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), poleF qs x ≤ (v : ℝ) := by
+  intro qs
+  induction qs with
+  | nil =>
+    intro v h x _
+    simp only [polesUB, Option.some.injEq] at h
+    subst h
+    simp [poleF]
+  | cons q qs ih =>
+    intro v h x hx
+    unfold polesUB at h
+    split at h
+    · rename_i a b ha hb
+      simp only [Option.some.injEq] at h
+      subst h
+      have h1 := poleUB_le nL nA q lo hi a ha x hx
+      have h2 := ih b hb x hx
+      have e : poleF (q :: qs) x = (q.rho * Complex.log ((x : ℂ) - q.pc)).re + poleF qs x := by
+        simp [poleF]
+      rw [e]
+      push_cast
+      linarith
+    · simp at h
+
+theorem fieldTower_zero (fq : FieldQ) (F : ℝ → ℝ) (x : ℝ) :
+    fieldTower fq F 0 x = polyTow fq.poly 0 x +
+      (fq.plogs.map (fun t => polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)|)).sum + F x := by
+  simp [fieldTower, plogSumTower, poleTower_zero, mulTower_zero, logTower]
+
+/-- Bound of a field on `[lo, hi]`, or `none` when a check fails. -/
+def fieldPieceUB (fq : FieldQ) (nL nA : ℕ) (lo hi : ℚ) (γ0 : List ℚ)
+    (γs : List (List ℚ × List ℚ)) : Option ℚ :=
+  if lo < hi then
+    match plogsUB nL lo hi fq.plogs γs, polesUB nL nA lo hi fq.poles with
+    | some a, some b =>
+      some (polyUBc fq.poly ((lo + hi) / 2) ((hi - lo) / 2) γ0 + a + b)
+    | _, _ => none
+  else none
+
+/-- The Boolean checker of a Taylor-free piece. -/
+def chebFieldPiece (fq : FieldQ) (nL nA : ℕ) (lo hi : ℚ) (γ0 : List ℚ)
+    (γs : List (List ℚ × List ℚ)) (T : ℚ) : Bool :=
+  match fieldPieceUB fq nL nA lo hi γ0 γs with
+  | some v => decide (v ≤ T)
+  | none => false
+
+/-- **Taylor-free piece soundness**: same conclusion as `cellV_sound`, no `BlockFacts`, no Taylor
+radius.  The data `γ0`, `γs` (Chebyshev coefficients) are untrusted. -/
+theorem chebFieldPiece_sound (fq : FieldQ) (nL nA : ℕ) (lo hi : ℚ) (γ0 : List ℚ)
+    (γs : List (List ℚ × List ℚ)) (T : ℚ)
+    (hchk : chebFieldPiece fq nL nA lo hi γ0 γs T = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
+  unfold chebFieldPiece at hchk
+  split at hchk
+  · rename_i v hv
+    simp only [decide_eq_true_eq] at hchk
+    unfold fieldPieceUB at hv
+    split_ifs at hv with hlo
+    · split at hv
+      · rename_i a b ha hb
+        simp only [Option.some.injEq] at hv
+        subst hv
+        intro x hx
+        have hr : (0 : ℝ) < (((hi - lo) / 2 : ℚ) : ℝ) := by
+          have : (lo : ℝ) < (hi : ℝ) := by exact_mod_cast hlo
+          push_cast; linarith
+        have hxc : |x - ((((lo + hi) / 2 : ℚ)) : ℝ)| ≤ (((hi - lo) / 2 : ℚ) : ℝ) := by
+          push_cast
+          exact abs_le.mpr ⟨by linarith [hx.1], by linarith [hx.2]⟩
+        have h1 := polyUBc_le fq.poly ((lo + hi) / 2) ((hi - lo) / 2) γ0 hr x hxc
+        have h2 := plogsUB_le nL lo hi hlo fq.plogs γs a ha x hx
+        have h3 := polesUB_le nL nA lo hi fq.poles b hb x hx
+        have hT : ((polyUBc fq.poly ((lo + hi) / 2) ((hi - lo) / 2) γ0 + a + b : ℚ) : ℝ) ≤
+            (T : ℝ) := by
+          exact_mod_cast hchk
+        rw [fieldTower_zero]
+        push_cast at hT
+        linarith
+      · simp at hv
+  · simp at hchk
+
+/-! ### 7. Regression: a piece wider than the Taylor model allows
+
+`f(x) = 1 + x²/2 + x log|x| + ½ log|x + 1/50| + Re[(1 - i/2) log(x - (1 + i)/100)]` on `[1/100, 1]`
+(centre `101/200`, half-width `99/200`).  The complex pole `(1+i)/100` is at distance `0.49510` from
+the centre, so `r/d = 0.9998`: the Taylor remainder `BM r^(n+1)` does not decay with the order and no
+Taylor cell of this width can close at any order.  The logarithmic singularity `0` is at distance
+`0.505` (`r/d = 0.980`), the real pole `-1/50` at `0.525`.  The piece ends at `Re p = 1/100`.
+
+kcost: `shiftLK` of three coefficients, 8 `logQ` (table, series order 12), 2 `argQ` (order 24),
+three Chebyshev bounds of 1 to 3 terms: about 3000 reduction steps, 1 s (estimated); a real piece
+costs one degree-`d` shift (`shiftLK`, about 1 s at `d = 400`), `5 m²` rational operations per
+Chebyshev bound of `m` terms, and one `logQ`/`argQ` per endpoint and term. -/
+
+def toyFQ : FieldQ where
+  poly := [1, 0, 1 / 2]
+  plogs := [([0, 1], 0)]
+  poles := [⟨1 / 2, 0, -1 / 50, 0⟩, ⟨1, -1 / 2, 1 / 100, 1 / 100⟩]
+
+def toyG0 : List ℚ := [190203 / 160000, 9999 / 40000, 9801 / 160000]
+
+def toyGs : List (List ℚ × List ℚ) := [([101 / 200, 99 / 200], [-101 / 200, -99 / 200])]
+
+theorem toy_piece_check : chebFieldPiece toyFQ 12 24 (1 / 100) 1 toyG0 toyGs (3 / 2) = true := by
+  decide +kernel
+
+theorem toy_piece_sound : ∀ x ∈ Icc (((1 / 100 : ℚ)) : ℝ) (((1 : ℚ)) : ℝ),
+    fieldTower toyFQ (poleF toyFQ.poles) 0 x ≤ (((3 / 2 : ℚ)) : ℝ) :=
+  chebFieldPiece_sound toyFQ 12 24 (1 / 100) 1 toyG0 toyGs (3 / 2) toy_piece_check
+
+/-- the same piece with a tighter threshold fails (the checker is not vacuous) -/
+theorem toy_piece_tight :
+    chebFieldPiece toyFQ 12 24 (1 / 100) 1 toyG0 toyGs (1 / 2) = false := by
+  decide +kernel
+
+#print axioms chebFieldPiece_sound
+#print axioms toy_piece_check
+#print axioms toy_piece_sound
 
 end CatalanMeasure.GenD.Signed.Data.Cells
