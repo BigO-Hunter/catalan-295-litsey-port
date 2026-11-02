@@ -187,7 +187,12 @@ Bojnal \cite{Bojnal2026} instantiated Carreira's general theorem at the paramete
 obtained $\mu(G)<2401.74$. The search and certification were carried out with Claude Fable~5.1. Xu
 \cite{Xu2026} reported $\mu(G)\le727.03$ for the parameters $(20,3,1,2,1)$, with an improved trial
 potential in the energy estimate. His certificate is numerical, in ball arithmetic, and is not
-formalized. Sun's preprint \cite{Sun2026} had claimed a proof of the irrationality of $G$. Wachs
+formalized. Davis \cite{Davis2026} obtained $\mu(G)\le528.23288$ with the design of this paper and the
+arithmetic estimates of its formalization. The gain comes from new quadrature nodes. They are the
+solutions of $T_K(P(t))=0$ for a fixed rational polynomial $P$ of degree $130$, on a support trimmed on
+one side. This result is formalized in Lean. Arkhipov \cite{Arkhipov2026} modified that development and
+reported $\mu(G)\le528.2327$. These node constructions are independent of the new ideas below, and we
+have not combined them with ours. Sun's preprint \cite{Sun2026} had claimed a proof of the irrationality of $G$. Wachs
 \cite{Wachs2026} reports that its main estimate is not justified.
 
 Since September 2026 a series of new results in this area has appeared, several of them obtained with AI
@@ -2140,6 +2145,11 @@ We thank the authors of Mathlib and of the PNT+ project, and OpenAI for making i
 Roger Ap\'ery, \emph{Irrationalit\'e de {$\zeta(2)$} et {$\zeta(3)$}},
   Ast\'erisque \textbf{61} (1979), 11--13.
 
+\bibitem{Arkhipov2026}
+Dmitri~I. Arkhipov, \emph{Catalan: {$\mu(G)\le528.2327$}}, GitHub repository,
+  \url{https://github.com/darkhipo/catalan-constant-gen5}; verifier submission
+  \url{https://github.com/bigospeedrun/verifier/issues/95}, November 1, 2026.
+
 \bibitem{Beukers79}
 Frits Beukers, \emph{A note on the irrationality of {$\zeta(2)$} and
   {$\zeta(3)$}}, Bull. London Math. Soc. \textbf{11} (1979), no.~3, 268--272.
@@ -2171,6 +2181,12 @@ Marcos Costa Santos~Carreira, \emph{Determinant constructions for the
   constant}, Preprint, 9 October 2026, revised 21 October 2026,
   \href{https://doi.org/10.5281/zenodo.23532239}{doi:10.5281/zenodo.23532239};
   sources at \url{https://github.com/MarcosCarreira/catalan-designs}, 2026.
+
+\bibitem{Davis2026}
+Cinna Davis, \emph{Catalan's constant: irrationality exponent research}, GitHub
+  repository, \url{https://github.com/1337isnot1337/catalan-constant}; Lean
+  verification at \url{https://github.com/bigospeedrun/verifier/issues/87},
+  October 31, 2026.
 
 \bibitem{Lean4}
 Leonardo de~Moura and Sebastian Ullrich, \emph{The {L}ean 4 theorem prover and
