@@ -5,28 +5,27 @@ project:
   name: "An irrationality measure for Catalan's constant"
   description: >-
     For Catalan's constant G = sum_{j >= 0} (-1)^j / (2j+1)^2, we prove
-    |G-a/b| > b^(-532) for every integer a and all sufficiently large b, so the
-    irrationality exponent of G is at most 532. The proof uses OpenAI's
+    |G-a/b| > b^(-410) for every integer a and all sufficiently large b, so the
+    irrationality exponent of G is at most 410. The proof uses OpenAI's
     determinant construction for an arbitrary design of five integer parameters,
     here (58,9,3,5,3), with a determinant of size 58N whose value is a polynomial
     of degree 53N in the constant. At a prime p the denominator of the
     determinant is smaller by the dimension of the kernel of the reduction modulo
-    p of the matrix of rational parts. This dimension is bounded below by four
-    closed formulas, proved for every design with antisymmetric row
-    combinations, a reflection of Chebyshev polynomials modulo p and Frobenius
-    relations, for the primes 12N < p <= 26N. Below 12N further kernel vectors
-    come from a counting inequality for the nullity, which on 34 windows of
-    primes between 3N and 16.2N is applied to fixed rational subspaces whose
-    ranks are certified by stored integer kernel vectors. The resulting piecewise linear profile has 102 pieces on
-    (16/7, 53/2] and area 22.05972... in units of N^2. A Gauss quadrature
-    formula with 53N nodes and an identity of Andreief type with fixed points
-    bound the determinant on an interval of length exp(-rho N) around G, with
-    rho = 301.54258... The energy estimate uses trial sequences with 160
-    Chebyshev coefficients and 75 geometric terms, 41 of them complex, verified
-    on cells with an exact local Taylor expansion. The decay rate is
-    eta = 30.041, and a criterion with a free lower end of the window of primes
-    gives the exponent 532: its last condition reads
-    532 > d rho / (eta - 4 d delta) = 531.99924... with d = 53 and
+    p of the matrix of rational parts. Four closed formulas and a counting
+    inequality for the nullity, applied on 34 windows of primes to fixed rational
+    subspaces with stored integer kernel vectors, give a piecewise linear profile
+    of area at least 22.05325 in units of N^2. At the real place a signed bound
+    for the determinant of the row functions (a Pick matrix argument, a Schur
+    complement, Heine's formula for the negative block and an energy inequality
+    for signed measures) adds 8.29824 to the decay rate. A Gauss quadrature
+    formula with 53N nodes, with a binomial bound for generalized Vandermonde
+    determinants and a contour bound for each column weight, extends the bound to
+    an interval of length exp(-rho N) around G, with rho = 296.586... The energy
+    estimates use trial sequences given by logarithmic potentials of point
+    charges, verified on cells with an exact local Taylor expansion. The decay
+    rate is eta = 38.33924, and a criterion with a free lower end of the window
+    of primes gives the exponent 410: its last condition reads
+    410 > d rho / (eta - 4 d delta) = 409.99999... with d = 53 and
     delta = 2.9e-7. Denominator and content asymptotics and the choice of the
     prime use the prime number theorem. All numerical bounds are ordinary
     kernel-checked rational proofs.
@@ -109,12 +108,13 @@ status:
   scope: >-
     The statement in Challenge.lean, with Catalan's constant written as a series,
     is fully proved in Solution.lean by
-    CatalanMeasure.GenD.Uniform.Bank532.catalan_irrationalityMeasure_532.
+    CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410.
     Every result of the companion paper is formalized, including the degree and
     denominator bounds, the nonvanishing, the closed formulas and the counting
     inequality for the rank deficiencies with the stored kernel vectors, the
-    divisibility of the coefficients, the quadrature perturbation estimate, the
-    energy bounds and their numerical certificates, and the criterion with the
+    divisibility of the coefficients, the signed bound for the determinant of the
+    row functions, the quadrature perturbation estimate, the energy bounds and
+    their numerical certificates, and the criterion with the
     choice of the prime. The prime number theorem comes from the PNT+ project
     through OpenAI's vendored formalization. The paper's remarks on the method
     are not formalized. The solution has no sorry and no native_decide;
@@ -162,10 +162,10 @@ alignment:
   namespace: "CatalanIrrationalityMeasure"
   statements:
     - source: "Litsey (2026), Theorem 1.1"
-      lean: "CatalanIrrationalityMeasure.catalan_irrationalityMeasure_532"
+      lean: "CatalanIrrationalityMeasure.catalan_irrationalityMeasure_410"
       module: "Challenge"
       status: proved
-      note: "For all large b and all integers a, b^(-532) < |G - a/b|."
+      note: "For all large b and all integers a, b^(-410) < |G - a/b|."
 
 acknowledgements: >-
   OpenAI's formalization of the irrationality of Catalan's constant; the

@@ -16,8 +16,8 @@ project:
     mu(L(2, chi_{-3})) <= 13.7046; mu(L(2, chi_{-3}) + pi^2/9) <= 9.4998 and
     mu(L(2, chi_{-3}) - pi^2/9) <= 9.4998; mu(psi'(a/5) - pi^2/6) <= 23.8272
     for a = 1, 2, 3, 4; mu(psi'(a/7) - pi^2/6) <= 2207.8697 for a = 1, ..., 6; and mu(pi^2) <= 6.5253.
-    Each statement says: for every e > 0 there is q0 such that
-    |x - p/q| > q^(-(B+e)) for all integers p, q with q >= q0. The
+    Each statement says: |x - a/b| > b^(-mu) for every integer a and every
+    sufficiently large integer b, where mu is the exponent above. The
     approximations come from determinants of rectangular Loewner matrices of
     digamma differences at integer nodes, with a long common block and an
     interleaved border whose length is the only parameter of the geometry. The
@@ -141,8 +141,8 @@ fidelity:
     and psi'(a/q) - zeta(2) as sum_{n>=0} 1/(n + a/q)^2 - pi^2/6. The paper's
     Theorem 1.1 is stated for Psi(s,t); each Lean statement is its form for the
     number in the same row of the paper's Table 1, which differs from Psi(s,t)
-    by a rational affine map. The measure is stated for all integers p and
-    all q >= q0, with the exponents 78219/2500,
+    by a rational affine map. The bound is stated for all integers a and all
+    sufficiently large b, with the exponents 78219/2500,
     137046/10000, 47499/5000, 14892/625, 22078697/10000 and 65253/10000 as rationals cast to R.
 
 review:
