@@ -1,0 +1,357 @@
+\section{A signed bound for the row determinant}\label{sec:signed}
+
+This section proves Proposition~\ref{prop:signed-goal}, which completes the proof of Theorem~\ref{thm:real}.
+In the case with doubled interaction OpenAI's integrand contains a determinant $\det\mathsf L$ of size $n$
+that the energy method bounds by $6^n$. We prove a bound for it that is exponentially small in $N^2$ on
+the near-extremal configurations. The argument is the chain
+\begin{equation}\label{eq:chain}
+ |\det\mathsf L|\le11^{k_+}\det\mathsf L_{--}
+ =11^{k_+}\prod_{b<c}(1-x_bx_c)\prod_{b,p}(1-x_bx_p)^{-1}\cdot\frac{Z_s(\Pi_-\Pi_+)}{Z_s(\Pi_+)} .
+\end{equation}
+The inequality comes from a Pick matrix, a Schur complement and a contour bound
+(\S\ref{ssec:pick}--\ref{ssec:T}). The identity is Heine's formula (\S\ref{ssec:heine}). The last factor is a
+ratio of two log-gas integrals. We bound the numerator from above and the denominator from below
+(\S\ref{ssec:loggas}). Positive nodes close to $1$ need a separate argument (\S\ref{ssec:near1}). An
+inequality for the logarithmic energy of signed measures keeps the combined estimate concave
+(\S\ref{ssec:reflection}). Prescribed columns add prescribed rows (\S\ref{ssec:fixedrows}). The hypotheses of
+the reduction hold on all near-extremal configurations (\S\ref{ssec:class}). The section ends with the trial
+measures (\S\ref{ssec:signedcert}).
+
+\subsection{The determinant of the row functions}\label{ssec:pick}
+In the case with doubled interaction OpenAI's integrand contains the determinant of the row functions at
+points $x_1,\ldots,x_n\in(-1,1)\setminus\{0\}$, which we call the nodes \cite[Prop.~5.3]{OpenAI2026}. With
+$\mathsf e=n-1-2g$ it factors as
+\begin{equation}\label{eq:detphi}
+ \det\varphi(x)=C_{n,g}\,V(x)\prod_a|x_a|^{-(n-1-g)}\det\mathsf L(x),
+\end{equation}
+where $C_{n,g}$ depends only on $n$ and $g$, and $V(x)=\prod_{a<b}(x_b-x_a)$. To describe $\mathsf L$ let
+\[
+ B(z)=\prod_a\frac{z-x_a}{1-x_az},\qquad \cK_{ab}=\frac1{1-x_ax_b},
+\]
+be the Blaschke product of the nodes and the Pick matrix of the Szeg\H{o} kernels $k_a(z)=1/(1-x_az)$. Put
+$w_a=1$ at a negative node and $w_a=-5$ at a positive node. The value $-5=1-6$ comes from the factor
+$\frac32$ in the row functions $A_r$. With $E=\operatorname{diag}(w_aB'(x_a)x_a^{\mathsf e})$ one has
+$\det\mathsf L=\det(\cK+E)/\det\cK$. In the basis $k_a$ the operator $\mathsf L$ acts on the model space
+$\cK_B=H^2\ominus BH^2$, which has dimension $n$. OpenAI's argument uses only $\|\mathsf L\|\le6$, that is
+$|\det\mathsf L|\le6^n$, which is negligible at the scale $e^{N^2}$. Numerical evaluation suggests that
+$\log|\det\mathsf L|$ is of order $-N^2$ near the extremal configuration (Remark~\ref{rem:L}). We now prove a
+bound of this order.
+
+Let $k_-$ and $k_+$ be the numbers of negative and positive nodes. For a weight $w\in\R$ let
+$F(w)=\cK+\operatorname{diag}(E_-,wE_+)$, where $E_-$ and $E_+$ are the diagonal blocks of
+$\operatorname{diag}(B'(x_a)x_a^{\mathsf e})$ at the negative and the positive nodes. So
+$\det\mathsf L=\det F(-5)/\det\cK$. The case $w=1$ is a Pick matrix.
+
+\begin{lemma}\label{lem:pick}
+For every configuration $0\le F(1)\le2\cK$.
+\end{lemma}
+
+\begin{proof}
+For a real vector $c$ put $\phi(z)=B(z)\sum_ac_a/(z-x_a)$. This is the function of $\cK_B$ with node values
+$\phi(x_a)=c_aB'(x_a)$, and $\|\phi\|_{H^2}^2=c^{\mathsf T}\cK c$. By the residue theorem on the unit disc
+\[
+ c^{\mathsf T}(F(1)-\cK)c=\sum_a\frac{x_a^{\mathsf e}\phi(x_a)^2}{B'(x_a)}=\frac1{2\pi i}\oint_{|z|=1}\frac{z^{\mathsf e}\phi(z)^2}{B(z)}\,dz .
+\]
+On the unit circle $|z^{\mathsf e}\phi^2/B|=|\phi|^2$, so the right side lies in
+$[-c^{\mathsf T}\cK c,\,c^{\mathsf T}\cK c]$.
+\end{proof}
+
+\subsection{A Schur complement bound}\label{ssec:schur}
+The determinant $\det F(-5)=\det(F(1)-6\operatorname{diag}(0,E_+))$ is a perturbation of a Pick matrix in the
+positive block only. The following inequality bounds it by the negative block.
+
+\begin{theorem}\label{thm:C3}
+Let $M=\begin{pmatrix}M_1&R^*\\R&M_2\end{pmatrix}$ be a Hermitian block matrix with $0\le M\le\beta$ and
+$M_1>0$. Let $T$ be Hermitian of the size of $M_2$, with $-\tau\le T\le\tau$, and let $\gamma\ge0$. Then
+\[
+ \Bigl|\det\begin{pmatrix}M_1&R^*\\R&M_2-\gamma T\end{pmatrix}\Bigr|\le(\beta+\gamma\tau)^{\dim M_2}\det M_1 .
+\]
+\end{theorem}
+
+\begin{proof}
+The determinant equals $\det M_1\cdot\det(S-\gamma T)$, where $S=M_2-RM_1^{-1}R^*$ is the Schur complement.
+Since $M\ge0$, we have $S\ge0$, and $S\le M_2\le\beta$. So $-\gamma\tau\le S-\gamma T\le\beta+\gamma\tau$, and
+every eigenvalue of $S-\gamma T$ has modulus at most $\beta+\gamma\tau$.
+\end{proof}
+
+We apply this in the metric of $\cK$, that is, after the congruence by a Cholesky factor of $\cK$. By
+Lemma~\ref{lem:pick} the hypotheses hold with $\beta=2$ and $\gamma=6$, provided that $\pm E_+\le\tau\cK$ as
+quadratic forms. The result is
+\begin{equation}\label{eq:C3}
+ |\det\mathsf L|\le(2+6\tau)^{k_+}\,\det\mathsf L_{--},\qquad
+ \det\mathsf L_{--}=\frac{\det(\cK_{--}+E_-)}{\det\cK_{--}},
+\end{equation}
+where $\cK_{--}$ is the block of $\cK$ at the negative nodes. The factor $(2+6\tau)^{k_+}$ is $e^{O(N)}$. All
+the information of order $N^2$ is in $\det\mathsf L_{--}$, which depends on the positive nodes only through
+the values $B_+(x_b)$ of their Blaschke product at the negative nodes.
+
+\subsection{A contour bound}\label{ssec:T}
+It remains to bound $\tau$. The quadratic form of $E_+$ is the sum of the residues of $z^{\mathsf e}\phi^2/B$ at
+the positive nodes, which lie in the right half of the disc. So we integrate over the boundary of the right
+half-disc instead of the circle.
+
+\begin{lemma}\label{lem:T}
+Let $M_*=\sup_{-1<y<1}|y|^{\mathsf e}/|B(iy)|$. For every real vector $c$
+\[
+ \Bigl|\sum_{x_a>0}B'(x_a)x_a^{\mathsf e}c_a^2\Bigr|\le\Bigl(1+\frac{M_*}2\Bigr)c^{\mathsf T}\cK c .
+\]
+If $\frac{\mathsf e}n-\frac1n\sum_a\Bigl(\frac{t^2}{t^2+x_a^2}-\frac{x_a^2t^2}{1+x_a^2t^2}\Bigr)>0$ for every
+$t\in(0,1]$, then $M_*=1$, and the bound is $\frac32c^{\mathsf T}\cK c$.
+\end{lemma}
+
+\begin{proof}
+With $\phi$ as in the proof of Lemma~\ref{lem:pick}, the sum is the contour integral of $z^{\mathsf e}\phi^2/B$
+over the boundary of the right half-disc, divided by $2\pi i$. No node lies on this boundary. On the arc the
+integrand has modulus $|\phi|^2$, so the arc contributes at most $\|\phi\|^2$. On the diameter $z=iy$ the
+modulus is at most $M_*|\phi(iy)|^2$. By the Fej\'er--Riesz inequality on a diameter,
+$\int_{-1}^1|\phi(iy)|^2dy\le\pi\|\phi\|^2$. So the diameter contributes at most $\frac12M_*\|\phi\|^2$.
+
+For the second statement write $\log(|y|^{\mathsf e}/|B(iy)|)=nv(y)$. Then
+$v(y)=\frac{\mathsf e}n\log|y|+\frac1{2n}\sum_a\log\frac{1+x_a^2y^2}{y^2+x_a^2}$, and $v(1)=0$ because $|B(i)|=1$.
+Differentiation gives $tv'(t)=\frac{\mathsf e}n-\frac1n\sum_a(\frac{t^2}{t^2+x_a^2}-\frac{x_a^2t^2}{1+x_a^2t^2})$.
+If this is positive on $(0,1]$, then $v<0$ on $(0,1)$. Since $v$ is even, $M_*=1$.
+\end{proof}
+
+The formal proof avoids the residue theorem. It subtracts the poles with divided differences, integrates the
+remaining holomorphic function over the half-disc with primitives, and proves the Fej\'er--Riesz step by the
+same device on the upper half-disc. With $\tau=\frac32$, \eqref{eq:C3} becomes
+\begin{equation}\label{eq:eleven}
+ |\det\mathsf L|\le11^{k_+}\det\mathsf L_{--}.
+\end{equation}
+The condition on $t$ asks that the nodes are not too concentrated near $0$ at any scale. At the extremal
+measure its left side is at least $0.33$ for every $t$.
+
+\subsection{Heine's formula for the negative block}\label{ssec:heine}
+For $s\ge1$ and a positive continuous function $f$ on $[-1,1]$ put
+\[
+ Z_s(f)=\int_{[0,\pi]^s}\prod_{l<l'}(\cos\theta_l-\cos\theta_{l'})^2\prod_lf(\cos\theta_l)\,d\theta .
+\]
+By Heine's formula $Z_s(f)$ is $s!$ times the Hankel determinant of the moments of $f(u)(1-u^2)^{-1/2}du$.
+Let
+\[
+ \Pi_-(u)=\prod_{x_b<0}(1+x_b^2+2x_bu),\qquad \Pi_+(u)=\prod_{x_p>0}(1+x_p^2+2x_pu)^{-1}.
+\]
+
+\begin{theorem}\label{thm:heine}
+Let $s=k_+-g$. If $s\ge1$ and $k_-\le\mathsf e+1$, then
+\[
+ \det\mathsf L_{--}=\prod_{b<c}(1-x_bx_c)\prod_{b,p}(1-x_bx_p)^{-1}\cdot\frac{Z_s(\Pi_-\Pi_+)}{Z_s(\Pi_+)},
+\]
+where $b,c$ run over the negative nodes and $p$ over the positive nodes.
+\end{theorem}
+
+\begin{proof}[Sketch]
+The full proof is formalized. We sketch it for orientation. One first writes
+$\det\mathsf L_{--}=\det[x_b^j+B_+(x_b)x_b^{m'-j}]_{b,j<k_-}/V(x_-)$ with $m'=\mathsf e+k_--1$, by Lagrange
+interpolation at the negative nodes. Since $1+x^2+2xu=x\bigl(x+x^{-1}+2u\bigr)$, the factor $\Pi_-$ is a
+polynomial in $u$ with roots $-\frac12(x_b+x_b^{-1})$. By Christoffel's formula, $Z_s(\Pi_-\Pi_+)/Z_s(\Pi_+)$
+is a determinant of the monic orthogonal polynomials of the weight $\Pi_+(u)(1-u^2)^{-1/2}$ at these roots,
+divided by a Vandermonde determinant. That weight is of Bernstein--Szeg\H{o} type: $\Pi_+$ is the reciprocal
+of $|P_+(e^{i\theta})|^2$ for the polynomial $P_+(z)=\prod_p(1+x_pz)$. Its orthogonal polynomials of degree at
+least $k_+$ are explicit. At $u=-\frac12(x+x^{-1})$ they are Laurent expressions in $x$ built from $P_+$. Since
+$P_+(z)/z^{k_+}\overline{P_+}(1/z)$ evaluated at $-x_b$ is $B_+(x_b)$ up to sign, the two determinants agree
+after the products of Cauchy type are collected.
+\end{proof}
+
+The formal proof works with the angle variables throughout. It needs Heine's formula, Andr\'eief's identity
+and the Bernstein--Szeg\H{o} polynomials, but no integration over orthogonal groups. Both integrals in
+Theorem~\ref{thm:heine} are log-gas integrals. There are $s$ particles $u_l=\cos\theta_l$ on $[-1,1]$ with
+logarithmic repulsion, in the external field $\log\Pi_-+\log\Pi_+$ or $\log\Pi_+$. Each field is a sum of
+logarithmic potentials $l(x,u)=\log(1+x^2+2xu)$ of the nodes.
+
+\subsection{Bounds for the two integrals}\label{ssec:loggas}
+The numerator is bounded from above by the method of OpenAI's energy estimate, now with one population. The
+key identity is $\log|u-v|=-\log2-\sum_{k\ge1}\frac2kT_k(u)T_k(v)$ for $u\ne v$ in $[-1,1]$. With the moments
+$M_k=\sum_lT_k(u_l)$ the pair sum is $-\binom s2\log2-\sum_k\frac1k(M_k^2-\sum_lT_k(u_l)^2)$. For any sequence
+$a$ and any $\bar s>0$ one has $-M_k^2\le-2\bar sa_kM_k+\bar s^2a_k^2$, which completes the square against $a$.
+
+\begin{lemma}\label{lem:LGup}
+Let $\bar s\ge s$ and let $a$ be a summable sequence. With $\mathsf T(a,u)=\sum_ka_kT_k(u)/k$ and
+$\|a\|^2=\sum_ka_k^2/k$,
+\[
+ \log Z_s(f)\le-s^2\log2+2\bar s^2\|a\|^2+s\sup_{[-1,1]}\bigl(\log f-4\bar s\,\mathsf T(a,\cdot)\bigr)+o(\bar s^2).
+\]
+\end{lemma}
+
+The diagonal terms $\sum_lT_k(u_l)^2/k$ diverge when summed over $k$. They are regularized by a damping factor
+$(1-\varepsilon_N)^k$ as in \cite[Prop.~6.1]{OpenAI2026}, which changes the bound by $o(\bar s^2)$. The completed
+squares $(M_k-\bar sa_k)^2/k$ are dropped in this lemma. They are kept in \S\ref{ssec:class}.
+
+The denominator is bounded from below by Jensen's inequality. Let $\mathsf m$ be a probability measure on
+$[0,\pi]$ of the form $\mathsf m=\bigl(1+2\sum_{k\le K}\gamma_k\cos k\theta\bigr)\frac{d\theta}\pi$, with a positive
+density. In the variable $u=\cos\theta$ it is a polynomial multiple of the arcsine law.
+
+\begin{lemma}\label{lem:LGlow}
+For every bounded measurable $Q$,
+\[
+ \log Z_s(e^Q)\ge s(s-1)\Bigl(-\log2-\sum_k\frac{2\gamma_k^2}k\Bigr)+s\int Q(\cos\theta)\,d\mathsf m(\theta)+s\,\mathrm{Ent}(\mathsf m),
+\]
+where $\mathrm{Ent}(\mathsf m)$ is the entropy of the density of $\mathsf m$ with respect to $d\theta$.
+\end{lemma}
+
+\begin{proof}
+Apply Jensen's inequality to the product density $\prod_l\frac{d\mathsf m}{d\theta}(\theta_l)$. The logarithmic
+energy of $\mathsf m$ in the variable $u$ is $-\log2-\sum_k2\gamma_k^2/k$, by the expansion of $\log|u-v|$
+above.
+\end{proof}
+
+The fields of the nodes integrate against $\mathsf m$ in closed form. For $|x|<1$ one has
+$\int l(x,\cos\theta)\,d\mathsf m=-2\sum_k(-x)^k\gamma_k/k$, a polynomial in $x$. The arcsine part contributes
+$0$, because the logarithmic potential of the arcsine law is constant on $[-1,1]$.
+
+\subsection{Positive nodes near $1$}\label{ssec:near1}
+A positive node $x_p=1-\epsilon$ puts into $\Pi_+$ a factor $(1+x_p^2+2x_pu)^{-1}$ of size $\epsilon^{-2}$ near
+$u=-1$. Lemma~\ref{lem:LGup} applies the supremum of the field to all $s$ particles. So a single such node
+would change the bound by about $N\log(1/\epsilon)$, while the true change of $\det\mathsf L_{--}$ is bounded.
+The following reduction removes such nodes from the log gas.
+
+\begin{theorem}\label{thm:near1}
+Let $f$ be positive and nonincreasing on $[-1,1]$, and let $w=w_r\prod_{p\in P}k_p$ with $w_r>0$,
+$k_p(u)=(1+2y_pu+y_p^2)^{-1}$ and $y_p\in(0,1)$. If $|P|=2m'$ or $|P|=2m'-1$, then
+\[
+ \log\frac{Z_s(fw)}{Z_s(w)}\le m'\log f(-1)+\log\frac{Z_{s-m'}(fw_r)}{Z_{s-m'}(w_r)} .
+\]
+\end{theorem}
+
+\begin{proof}[Sketch]
+The full proof is formalized. We sketch it for orientation. For an odd number of factors add one more
+factor, at a point to be chosen. Write both integrals as Hankel determinants. Moving all $y_p$ to a common
+value changes the ratio monotonically. This uses a one-point comparison for the weight
+$(1+2yu+y^2)^{-1}$, whose Chebyshev moments form the geometric sequence $(-y)^k$. For a common value $y$ the
+$2m'$ factors behave like $m'$ particles pinned near $u=-1$. Fischer's inequality bounds the numerator by
+$f(-1)^{m'}$ times the determinant of the remaining block. As $y\to1$ the Schur complement of the pinned block
+in the denominator converges to the Hankel matrix of the remaining $s-m'$ particles.
+\end{proof}
+
+We apply the theorem to the positive nodes with $1-x_p<10^{-3}$. Since
+$\Pi_-(-1)=\prod_b(1-x_b)^2\le4^{k_-}$, each pair of such nodes changes the bound by a factor $e^{O(N)}$. In
+OpenAI's energy each such node contributes $-\beta_hn\log10^3$, which is much more. Hence a near-extremal
+configuration has only $O(N)$ such nodes, and their total effect is $e^{O(N^2)}$ with a constant smaller than
+the margin of the final inequality (\S\ref{ssec:signedcert}).
+
+\subsection{Concavity: an inequality for signed logarithmic energy}\label{ssec:reflection}
+We now combine OpenAI's energy with \eqref{eq:eleven}, Theorem~\ref{thm:heine} and Lemmas~\ref{lem:LGup}
+and~\ref{lem:LGlow}. The total is a functional of the node measure $\sigma$, split into its negative part
+$\sigma_-$ and its positive part $\sigma_+$, and of the column measure. Its quadratic part is not obviously
+negative. Theorem~\ref{thm:heine} contributes the term $-\iint\log(1-xy)\,d\sigma_-(x)d\sigma_+(y)$, and
+Lemma~\ref{lem:LGup} applied with a trial sequence that depends on $\sigma$ contributes a convex term. Write
+\[
+ I(\zeta)=-\iint\log|x-y|\,d\zeta(x)d\zeta(y),\qquad L(\zeta)=-\iint\log(1-xy)\,d\zeta(x)d\zeta(y)
+\]
+for real measures on $[-1,1]$ and on $[0,1]$ respectively. The second is a sum of squares of moments,
+$L(\zeta)=\sum_k\frac1k\bigl(\int x^kd\zeta\bigr)^2$. The quadratic part of the combined functional is
+$-\frac12I-\frac12\sum_k(B_k-2C_k)^2/k+\frac12L(\sigma_+)$, where $B_k$ and $C_k$ are the power moments of the
+nodes and the columns. The term $\frac12L(\sigma_+)$ is absorbed by the following theorem.
+
+\begin{theorem}\label{thm:reflection}
+Let $\zeta=\zeta_-+\zeta_+$ be a real measure of finite logarithmic energy and total mass $0$, with $\zeta_-$ on
+$[-1,0]$ and $\zeta_+$ on $[0,1]$. Let $\mathsf R$ be the reflection $x\mapsto-x$. Then
+\[
+ I(\zeta)\ge L(\zeta_+)+L(\mathsf R\zeta_-)\ge L(\zeta_+).
+\]
+\end{theorem}
+
+\begin{proof}
+Put $\zeta_1=\zeta_+$ and $\zeta_2=\mathsf R\zeta_-$, both on $[0,1]$, and let $K_1(a,b)=-\log|a-b|$ and
+$K_2(a,b)=-\log(a+b)$. Since $|x-y|=a+b$ for points of opposite signs,
+$I(\zeta)=K_1(\zeta_1)+K_1(\zeta_2)+2K_2(\zeta_1,\zeta_2)$, which equals
+$\frac12(K_1+K_2)(\zeta_1+\zeta_2)+\frac12(K_1-K_2)(\zeta_1-\zeta_2)$.
+
+First, $\zeta_1+\zeta_2$ has mass $0$. One has $K_1=G_{\mathbb D}+L$, where
+$G_{\mathbb D}(a,b)=\log|(1-ab)/(a-b)|$ is the Green function of the unit disc, whose energy is nonnegative.
+By Frullani's integral $-\log(a+b)=\int_0^\infty(e^{-(a+b)t}-e^{-t})\frac{dt}t$, so
+$K_2(\zeta')=\int_0^\infty(\int e^{-at}d\zeta'(a))^2\frac{dt}t\ge0$ for $\zeta'$ of mass $0$. Hence
+$(K_1+K_2)(\zeta_1+\zeta_2)\ge L(\zeta_1+\zeta_2)$.
+
+Second, $K_1-K_2=\log\frac{a+b}{|a-b|}$ satisfies $(K_1-K_2)(\zeta')\ge L(\zeta')$ for every real $\zeta'$ on
+$[0,1]$. Indeed, with $a=e^{-x}$ and $b=e^{-y}$ one has $\log\frac{a+b}{|a-b|}=\log\coth\frac{|x-y|}2
+=\sum_{j\text{ odd}}\frac2je^{-j|x-y|}$. For $x,y\ge0$,
+$e^{-j|x-y|}=e^{-j(x+y)}+2j\int_0^{\min(x,y)}e^{-j(x+y-2v)}dv$. Put $\Phi_j(v)=\int_{x\ge v}e^{-j(x-v)}d\zeta'$.
+Then $(K_1-K_2)(\zeta')=\sum_{j\text{ odd}}\bigl(\frac2j\Phi_j(0)^2+4\int_0^\infty\Phi_j(v)^2dv\bigr)$. In
+$L(\zeta')=\sum_k\frac1k(\int e^{-kx}d\zeta')^2$ the terms with odd $k$ are $\Phi_k(0)^2/k$. For even $k=j+1$,
+integration by parts gives $\int e^{-(j+1)x}d\zeta'=\Phi_j(0)-\int_0^\infty e^{-(j+1)v}\Phi_j(v)\,dv$. The
+Cauchy--Schwarz inequality with weights $1+\frac1j$ and $1+j$ gives
+$(\int e^{-(j+1)x}d\zeta')^2\le(1+\frac1j)\Phi_j(0)^2+\frac12\int\Phi_j^2$. Summing, $L(\zeta')\le(K_1-K_2)(\zeta')$.
+
+Together, $I(\zeta)\ge\frac12L(\zeta_1+\zeta_2)+\frac12L(\zeta_1-\zeta_2)=L(\zeta_1)+L(\zeta_2)$.
+\end{proof}
+
+By Theorem~\ref{thm:reflection} the quadratic part is at most $-\frac14I-\frac12\sum_k(B_k-2C_k)^2/k\le0$ on
+differences of admissible measures. So the combined functional is concave. Its maximum is bounded by the
+value at a trial measure plus the supremum of a linear functional, that is, by a constant plus the suprema
+of fields of one variable. The formal proof uses a discrete form of Theorem~\ref{thm:reflection} for weighted
+point configurations against a reference measure with bounded density. The prescribed rows of the next
+subsection change the masses of the two kinds of nodes. To compensate, we add further points distributed by
+the arcsine law, whose potential is constant on $[-1,1]$.
+
+\subsection{Prescribed rows}\label{ssec:fixedrows}
+With $m$ prescribed columns the row determinant is evaluated at the free points and at the prescribed
+points. The prescribed points enter $\det\mathsf L$ as nodes but are not integrated over. Lemma~\ref{lem:T}
+must then be modified. Its constant $\frac32$ need not hold when the sum runs only over the free positive
+nodes while the Blaschke product and the Gram matrix contain all nodes. Already two positive nodes can
+require a larger constant. We therefore keep the residues at the prescribed positive nodes as a separate
+term
+\[
+ \mathsf W=\sum_{a\ \text{prescribed},\,x_a>0}\frac{x_a^{\mathsf e}}{(1-x_a^2)|B'(x_a)|},
+\]
+and bound each of its terms by the reproducing kernel estimate
+$(c_aB'(x_a))^2(1-x_a^2)\le c^{\mathsf T}\cK c$.
+
+Instead of absorbing $\mathsf W$ into $\tau$, we expand. Write $\det(F(1)+\operatorname{diag}(\cdot))$ as a sum of
+principal minors over subsets $\mathcal S$ of the prescribed positive nodes. This gives
+\begin{equation}\label{eq:expandS}
+ |\det\mathsf L|\le11^{k_+}\sum_{\mathcal S}\Bigl(\frac6{11}\Bigr)^{|\mathcal S|}\det\mathsf L_{--}^{(\mathcal S)}\,\mathsf W_{\mathcal S},
+\end{equation}
+where in the term for $\mathcal S$ the nodes of $\mathcal S$ interact with the other nodes through $\log(1-xy)$
+instead of $\log|x-y|$. The energy then has three prescribed populations: prescribed negative nodes,
+prescribed positive nodes, and the nodes of $\mathcal S$ in \eqref{eq:expandS}. Their fields are bounded on
+their domains like the field $F_1$ of Section~\ref{sec:energy}. The prescribed nodes are images of quadrature
+nodes, so the mass of their measure $\sigma'$ near $1$ is limited by the spacing of the quadrature nodes:
+$\sigma'([x,1])\le C_1(1-x)$ for $x\ge x_c=0.999$. For such a measure of mass $\alpha$ and a field $V$ with
+$V\le M_1$ on $[0,x_c]$ and $V(x)\le c_0+r\log\frac1{1-x^2}$ on $[x_c,1)$,
+\[
+ \int V\,d\sigma'\le\alpha M_1+C_1\int_0^{1-x_c}\bigl(c_0+r\log(1/u)-M_1\bigr)_+\,du .
+\]
+The integral has a closed form. This bounds the prescribed rows without a finite optimization over their
+positions.
+
+\subsection{Near-extremal configurations}\label{ssec:class}
+The reduction above needs three hypotheses on the configuration. These are the condition of
+Lemma~\ref{lem:T}, a bound $O(N)$ on the number of positive nodes within $10^{-3}$ of $1$, and a fixed range for
+the proportion of negative nodes. We do not need them everywhere. If OpenAI's bound at the rate $U_0$ holds
+for a configuration, there is nothing to prove. Otherwise the energy of the configuration is within
+$\Gamma_0N^2$ of its maximum, and we show that such configurations satisfy the three hypotheses.
+
+For such a configuration, keep the completed squares and the nonnegative differences between the fields and
+their suprema in the proof of OpenAI's estimate. Their sum is at most the deficit, a constant times
+$\Gamma_0N^2$. This bounds the fraction of nodes on which a field is far below its supremum, by Chebyshev's
+inequality. It also bounds every linear statistic $\sum_kF_k(M_k-\bar sa_k)/k$ of the moments, by the
+Cauchy--Schwarz inequality. The condition of Lemma~\ref{lem:T} is a family of such linear statistics in $t$. It
+is checked on a grid of $24$ values of $t$, with a polynomial lower bound between the grid points. The count
+of nodes near $1$ follows from the field of the positive nodes near $x=1$, which lies below its supremum by a
+fixed amount. The range for the proportion of negative nodes follows from polynomial minorants of the
+indicator functions of the two signs.
+
+\subsection{The trial measures}\label{ssec:signedcert}
+The concave majorant of \S\ref{ssec:reflection} is bounded at a trial measure. This consists of a reference
+measure for the free nodes, with a piecewise polynomial density, trial sequences for the rows, the columns
+and the numerator of Theorem~\ref{thm:heine}, and the measure $\mathsf m$ of Lemma~\ref{lem:LGlow}. The bound
+reads
+\begin{multline*}
+ \text{constant}+\alpha\sup\text{(fields of the prescribed rows)}\\
+ +\sup\text{(fields of the free nodes)}\\
+ +\sup\text{(column field)}\le-U_0+\tfrac12\log2+c_2\alpha .
+\end{multline*}
+The constant is the value at the trial measure. It consists of logarithmic energies and moments of the
+reference measure, the norms of the trial sequences and the entropy of $\mathsf m$, all of which have closed
+forms.
+
+The fraction $\alpha$ of prescribed columns ranges over $[0,\frac1{16}]$. We use trial measures at $\alpha=0$,
+$\frac1{200}$ and $\frac1{16}$, and interpolate linearly between consecutive ones. Every field is affine in the
+interpolation parameter, so its supremum on an interval is at most the chord through its suprema at the
+ends. The constant term is a quadratic polynomial in the parameter, whose curvature is an explicit
+combination of the cross energies of the two end measures. It remains to bound, at each of the three trial
+measures, the suprema of six fields of one variable. Appendix~\ref{app:trials} lists them and describes the
+verification. The smallest margin of the resulting inequality is $0.037$ per unit of $N^2$.
+
+This proves Proposition~\ref{prop:signed-goal}, and with \S\ref{ssec:cases} it proves Theorem~\ref{thm:real}.

@@ -1,0 +1,267 @@
+\section{Denominators and nonvanishing}\label{sec:setup}
+
+This section proves the arithmetic properties of $\Delta_N$: the denominators of its coefficients and its
+nonvanishing at rational points. Carreira \cite{Carreira2026} checked that OpenAI's argument goes through
+for parameters satisfying a few conditions. We need more. The entries must be controlled modulo $p^2$,
+since the corank bounds of Section~\ref{sec:content} work there. And nonvanishing is needed at every
+rational point $a/b$ with $p^2\nmid b$, not only at $G$.
+
+\subsection{Corank and valuation}
+We use repeatedly the following elementary fact.
+
+\begin{lemma}\label{lem:rank-valuation}
+Let $M$ be an $n\times n$ matrix with entries in $\Z_{(p)}$ whose reduction modulo $p$ has rank at most
+$n-e$. Then $v_p(\det M)\ge e$.
+\end{lemma}
+
+\begin{proof}
+Factor the reduction through $\F_p^{n-e}$ and lift the two factors to integral matrices $U,V$, so that
+$M=UV+pE$ with $E$ integral at $p$. Expand the determinant multilinearly in the columns. Every term that
+uses more than $n-e$ columns of $UV$ vanishes, and every other term has at least $e$ factors $p$.
+\end{proof}
+
+\subsection{The digit formula}
+The reduction of $p^2\cA^0_N$ modulo $p$ is described by the base-$p$ digits of the coefficients of the
+row polynomials. This is the one place where the arithmetic of the moments enters, and it does not depend
+on the parameters. For an odd prime $p$ and $c\in\F_p^n$ put
+\[
+ P_c=\sum_rc_rP_r,\qquad D_c=\sum_rc_rD_r,\qquad W=(1-X^2)^{(p-1)/2},
+\]
+reading the $P_r,D_r$ as polynomials in $X$.
+
+\begin{lemma}[digit formula]\label{lem:digits}
+Let $p$ be an odd prime with $H<p^2$, let $0\le j<H$, and write $j=Jp+\ell$ with $0\le\ell<p$. Then
+$p^2R(r,j)$ is $p$-integral for every row $r$, and for every $c\in\Z^n$
+\[
+ p^2\sum_rc_rR(r,j)\equiv\sum_{u\ge0}\Bigl(\alpha_{u,J}\,(XWP_c)[up+\ell]+\beta_{u,J}\,D_c[up+\ell]\Bigr)
+ \pmod p ,
+\]
+where $\alpha_{u,J}=M(u-1,J)$ and $\beta_{u,J}=-\tfrac32Z(u,J)$ are $p$-integral numbers that depend neither
+on $c$ nor on $\ell$.
+\end{lemma}
+
+\begin{proof}
+Two facts about the numbers $M$ and $Z$ are needed, for $0\le i,j<p^2$. Write $j=Jp+\ell$, let
+$\varrho\in[0,p)$ be the residue of $j-i-1$ modulo $p$, and put $u=(i+1+\varrho-\ell)/p$.
+
+First, $p^2M(i,j)$ is $p$-integral and $p^2M(i,j)\equiv W[\varrho]\,M(u-1,J)\pmod p$. This is the digit
+reduction of the moments in \cite[\S3]{OpenAI2026}. It is obtained from the $p$-adic analysis of their
+recursions and does not involve the parameters.
+
+Second, $p^2Z(i,j)$ is $p$-integral. It is congruent to $Z(\lfloor i/p\rfloor,J)$ if $i\equiv j\pmod p$ and
+to $0$ otherwise. To see this, write $i'=\lfloor i/p\rfloor$. Since $i<p^2$, we have $H_i=p^{-1}H_{i'}+S_i$
+and $H^{(2)}_i=p^{-2}H^{(2)}_{i'}+S'_i$ with $S_i,S'_i$ $p$-integral, which gives the case $i=j$. If
+$i\not\equiv j$, then $p^2Z(i,j)=p\cdot pZ(i,j)\equiv0$. If $i\equiv j$ and $i\ne j$, then $i-j=(i'-J)p$. The
+integers $k\in(j,i]$ prime to $p$ form $i'-J$ complete systems of residues modulo $p$, so
+$\sum_k1/k\equiv(i'-J)\sum_{r=1}^{p-1}1/r\equiv0\pmod p$. Hence $H_i-H_j\equiv(H_{i'}-H_J)/p$ and
+$p^2Z(i,j)\equiv Z(i',J)$.
+
+Now use \eqref{eq:rational-part}. By the first fact, the part $\sum_iF[i]\,p^2M(i,j)$ with $F=P_c$ is
+$\sum_iF[i]\,W[\varrho(i)]\,M(u(i)-1,J)$. For fixed $u$ the indices with $u(i)=u$ are those for which
+$\varrho=up+\ell-1-i$ lies in $[0,p-1]$. Since $W$ has degree $p-1$, the sum over these $i$ is
+$(XFW)[up+\ell]$. This gives the $\alpha$-terms. By the second fact the part with $D_c$ is
+$\sum_{i\equiv\ell}D_c[i]\,Z(\lfloor i/p\rfloor,J)=\sum_uZ(u,J)D_c[up+\ell]$, which gives the $\beta$-terms.
+The $p$-integrality of $M(u-1,J)$ and $Z(u,J)$ for $u,J<p$ is part of the two facts.
+\end{proof}
+
+For a row combination $c\in\F_p^n$ and a moment column $j\in[b,L)$ let $R_c(j)$ be the reduction modulo
+$p$ of $p^2\sum_rc_rR(r,j)$. We call it the \emph{value of $c$ at the moment column $j$}. The columns of
+$\cA^0_N$ are differences of order $q$ of the moment columns, so $c$ lies in the left kernel of the
+reduction as soon as the corresponding differences of the $R_c(j)$ vanish.
+
+We use the digit formula in the following form. Let $0\le k<n$, $s=b+k$, $J=\lfloor s/p\rfloor$ and
+$\varsigma=(s\bmod p)+q$. If $\varsigma<p$, the $q+1$ moment columns $s,\dots,s+q$ that enter column $k$ have
+the same digit $J$ and residues $(s\bmod p)+v<p$. Since
+$\sum_{v=0}^q(-1)^v\binom qvF[t+v]=[X^{t+q}]\bigl((X-1)^qF\bigr)$ for every polynomial $F$,
+Lemma~\ref{lem:digits} gives
+\begin{equation}\label{eq:column-digits}
+ p^2\sum_rc_r\cA^0_N(r,k)\equiv\sum_{u\ge0}\Bigl(\alpha_{u,J}\,Q_c[up+\varsigma]+\beta_{u,J}\,\widehat D_c[up+\varsigma]\Bigr),
+\end{equation}
+where
+\begin{equation}\label{eq:Qc}
+ Q_c=(X-1)^q\,XWP_c,\qquad \widehat D_c=(X-1)^qD_c .
+\end{equation}
+
+\subsection{The valuation at $p$}
+For an odd prime $p$ with $H<p^2$ the entries of $p^2\cA^0_N$ are $p$-integral by Lemma~\ref{lem:digits}.
+Let $\cA^0_{N,p}$ be its reduction modulo $p$. Let $\nu_N(p)$ be the corank of $\cA^0_{N,p}$, that is, $n$
+minus its rank. The corank enters through the following statement.
+
+\begin{proposition}\label{prop:valuation}
+Let $p$ be an odd prime with $H<p^2$ and let $z\in\Q$ have denominator prime to $p$. Then
+$p^2(\cA^0_N+z\cL_N)$ has $p$-integral entries, its reduction modulo $p$ equals $\cA^0_{N,p}$, and
+\[
+ v_p\bigl(\Delta_N(z)\bigr)\ge\nu_N(p)-2n .
+\]
+\end{proposition}
+
+\begin{proof}
+The entries of $p^2\cA^0_N$ are $p$-integral, since each column of $\cA^0_N$ is an integer combination of
+moment columns with $j<L\le H$. The entries of $\cL_N$ are $p$-integral for odd $p$, since $P_r[i]\in\Z$
+and $c_l\in\Z[1/2]$. So $p^2\cL_N\equiv0\pmod{p^2}$. Hence, for $z$ with denominator prime to $p$,
+$p^2(\cA^0_N+z\cL_N)$ has $p$-integral entries with the same reduction as $p^2\cA^0_N$. By
+Lemma~\ref{lem:rank-valuation} its determinant has valuation at least $\nu_N(p)$, and
+$\det\bigl(p^2(\cA^0_N+z\cL_N)\bigr)=p^{2n}\Delta_N(z)$.
+\end{proof}
+
+\subsection{Pole counts}
+Let $p$ be an odd prime with $\sqrt H<p\le H$. OpenAI's method \cite[\S3]{OpenAI2026} bounds the valuation
+of the entries prime by prime. For any choice of the parameters it gives $v_p(\Delta_N(z))\ge-\ell_N(p)$
+for every $z$ with denominator prime to $p$. Here $\ell_N(p)$ is the number of columns whose entries can
+have a pole at $p$. It is computed by grouping the coefficients of the row polynomials by their base-$p$
+digits. All differences below are truncated at $0$. For $2p\le H$,
+\[
+ \ell_N(p)=2n-\Bigl(\min\bigl(p,\,L-p,\,A\bigr)-\max\bigl(b,\,H-2p\bigr)-q\Bigr).
+\]
+For $H<2p\le2H$, with $R=(L-b)-(\min(A,L-p)-b)-(\min(p,L)-\max(b,H-p))$, $P'=\min(A,L-p)-b$ and
+$E'=\min(b,H-p)-(L-p)$,
+\[
+ \ell_N(p)=\min\bigl(2n,\ n+R,\ 2R+P'+E'\bigr).
+\]
+These are the exponents of the valuation theorems of the formalization, which hold for all parameters. For
+the primes that interest us they agree with OpenAI's. For our parameters $\ell_N(p)=Nf(p/N)$ up to integer
+rounding, with a piecewise linear function $f$ of $\theta=p/N$:
+\[
+ f(\theta)=\begin{cases}
+ 116&\theta\le59/2,\\
+ 175-2\theta&59/2\le \theta\le69/2,\\
+ 106&69/2\le \theta\le39,\\
+ 184-2\theta&39\le \theta\le81/2,\\
+ 265-4\theta&81/2\le \theta\le48,\\
+ 217-3\theta&48\le \theta\le69,\\
+ 148-2\theta&69\le \theta\le70,\\
+ 78-\theta&70\le \theta\le78,
+ \end{cases}
+\]
+and $f=0$ for $\theta\ge78$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
+$[1,78]$ is $24269/4$, and $f=116=2n_0$ on $[0,1]$. Since $f(\theta)=2n_0$ for $\theta\le59/2$, every prime of
+the range $(\frac{16}7N,\frac{53}2N]$ of the corank bounds of Section~\ref{sec:content} has
+$\ell_N(p)=2n$. There Proposition~\ref{prop:valuation} improves the bound $-2n$ to $\nu_N(p)-2n$.
+
+The primes $p\le\sqrt H$ are not covered by these bounds. For them we use the cruder bound $6n\log_pH$ for
+the exponent, which contributes $O(\sqrt N\,N\log N)=o(N^2)$ in total.
+
+\subsection{The prime $2$}
+At $p=2$ the entries are not integral, and the bound comes from the expansion of the determinant into
+minors, as in \cite[\S3]{OpenAI2026}. Its exponent is governed by a quadratic form in the numbers $m,\ell$
+of columns of two exceptional types,
+\[
+ \tfrac32m^2+\tfrac12\ell^2-(H+C-b)\,m-C\,\ell+Cn .
+\]
+The following identity shows that it is at least $-\Lambda_2$ whenever $m,\ell\ge0$, $m+\ell\le n$ and
+$C\ge n$, where
+\begin{equation}\label{eq:A2}
+ \Lambda_2=\frac{(n+H-b)^2}8-\frac{n^2}2 .
+\end{equation}
+With $s=n-m-\ell$ and $m_*=(n+H-b)/4$,
+\[
+ \tfrac32m^2+\tfrac12\ell^2-(H+C-b)m-C\ell+Cn+\Lambda_2
+ =2(m-m_*)^2+s\,(C-n+m)+\tfrac12s^2\ge0 .
+\]
+This gives a $2$-adic bound $v_2(\Delta_N(i))\ge-\Lambda_2-O(N\log N)$, uniform in the integer $i$. For our
+parameters $\Lambda_2=(58+78-9)^2/8-58^2/2=2673/8$ in units of $N^2$.
+
+\subsection{The common denominator}
+The corank bounds of Section~\ref{sec:content} give a function $\kappa$ of $\theta=p/N$
+(Theorem~\ref{thm:profile-D}). We use it here as an input.
+
+\begin{proposition}\label{prop:denominators}
+For the parameters $(58,9,3,5,3)$ there are positive integers $\cD_N$ with the following properties.
+$\cD_N\Delta_N(i)\in\Z$ for every integer $i$, and $p'^{2n}\mid\cD_N$ for every prime $N<p'\le2N$. For every
+$\varepsilon>0$ and all large $N$
+\begin{gather*}
+ \log\cD_N\le(\Lambda+\varepsilon)N^2,\\
+ \Lambda=\frac{2673}8\log2+116+\frac{24269}4-\int_0^\infty\kappa(\theta)\,d\theta=\LamDen\ldots
+\end{gather*}
+\end{proposition}
+
+Here $\frac{2673}8\log2$ comes from the prime $2$, and $116+\frac{24269}4$ is the area of $f$. The last term
+is the gain from the corank.
+
+\begin{proof}
+For primes $p\le H$ with $H<p^2$, let $\nu^*_N(p)$ be the largest of the lower bounds for $\nu_N(p)$ of
+Section~\ref{sec:content} that apply at $p$, and $0$ if none applies. Put
+$e_N(p)=\min\bigl(\ell_N(p),\,2n-\nu^*_N(p)\bigr)$. For the primes with $p^2\le H$ use the crude bound
+above, and for $p=2$ the $2$-adic bound. Let $\cD_N$ be the product of $p^{e_N(p)}$ over $p\le H$. By
+Proposition~\ref{prop:valuation} and the bounds of this section, $v_p(\Delta_N(i))\ge-e_N(p)$ for every
+integer $i\ge0$ and every $p$. For $p>H$ the matrix is $p$-integral. So $\cD_N\Delta_N(i)\in\Z$. A prime
+$p'\in(N,2N]$ has $\nu^*_N(p')=0$, since no interval of Theorem~\ref{thm:profile-D} contains it, and
+$\ell_N(p')=2n$. So $p'^{2n}\mid\cD_N$. Here $N\ge79$ guarantees $p'>\sqrt H$.
+
+For the size of $\cD_N$ we use the prime number theorem in the weighted form
+\begin{equation}\label{eq:weighted-pnt}
+ \frac1N\sum_{p}F(p/N)\log p\longrightarrow\int_0^\infty F(\theta)\,d\theta\qquad(N\to\infty),
+\end{equation}
+for bounded, Riemann integrable, compactly supported $F$. By \eqref{eq:weighted-pnt} the sum of
+$\ell_N(p)\log p$ over the odd primes is $N^2\int_0^{78}f+o(N^2)$, with $\int_0^{78}f=116+24269/4$. The primes in
+the intervals of Theorem~\ref{thm:profile-D} lie in $(16N/7,53N/2]$ and have $\ell_N(p)=116N$. So their
+exponent is at most $116N-N\kappa(p/N)+2$. The sum of $(N\kappa(p/N)-2)\log p$ over these primes is
+$N^2\int\kappa+o(N^2)$, again by \eqref{eq:weighted-pnt}. The $2$-adic part contributes
+$\Lambda_2\log2\,N^2+o(N^2)$.
+\end{proof}
+
+The polynomial $\Delta_N$ has degree at most $n-g=d_0N$ and takes values in $\cD_N^{-1}\Z$ at the integers.
+An integer-valued polynomial of degree $m$ has coefficients in $\frac1{m!}\Z$, by Newton's interpolation
+formula. So
+\begin{equation}\label{eq:QN}
+ Q_N=(d_0N)!\,\cD_N\,\Delta_N(X)\in\Z[X],\qquad \deg Q_N\le d_0N,
+\end{equation}
+and $\log(d_0N)!=o(N^2)$. In this way the gain from the corank enters through the integer polynomial
+itself, not through a separate common factor of its coefficients.
+
+The criterion needs the squares of the primes in $(N,2N]$ to divide the coefficients of $Q_N$ in a graded
+way.
+
+\begin{lemma}\label{lem:squares}
+For all large $N$ and every prime $N<p'\le2N$, the $j$-th coefficient of $Q_N$ is divisible by $p'^{2j}$.
+\end{lemma}
+
+\begin{proof}
+For these primes the matrices $p'^2\cA^0_N$ and $\cL_N$ are $p'$-integral by Lemma~\ref{lem:digits}, and
+$p'^{2n}$ divides $\cD_N$. The identity
+\[
+ Q_N(X/p'^2)=(d_0N)!\,\frac{\cD_N}{p'^{2n}}\det\bigl(p'^2\cA^0_N+X\cL_N\bigr)
+\]
+shows that $Q_N(X/p'^2)$ has $p'$-integral coefficients. Its $j$-th coefficient is $c_{N,j}/p'^{2j}$, where
+$c_{N,j}$ is the $j$-th coefficient of $Q_N$.
+\end{proof}
+
+\subsection{Nonvanishing}
+\begin{proposition}\label{prop:nonvanishing}
+Suppose that the three $n_0\times n_0$ matrices $B_\sigma$, $\sigma\in\{0,1,-1\}$, defined below, are
+invertible. Then for all large primes $p$ and every rational $z$ such that $pz$ has denominator prime to
+$p$, $\Delta_p(z)\ne0$. In particular $\Delta_p(a/b)\ne0$ whenever $a\in\Z$, $b\ge1$ and $p^2\nmid b$.
+\end{proposition}
+
+The matrices are those of OpenAI's reduction modulo $p$ at $N=p$, with general parameters in place of
+OpenAI's. Let $B$ be the rational $(n_0+1)\times n_0$ matrix of the entries of $\cA^0_1$, the rational part at
+$N=1$, for the rows $0,\dots,n_0$. The row $n_0$ is an auxiliary row. Let $B_\sigma$ have rows
+$B_r+\sigma B_{r+1}$, $0\le r<n_0$. For our parameters $B$ has $59$ rows and $58$ columns.
+
+\begin{proof}
+Let $p>4H_0$, with $H_0=H/N$, so that $H=H_0p<p^2/4$. Let $p$ also be prime to the numerators and
+denominators of the entries of $B$ and of the three determinants. In the construction at $N=p$ write the
+row index $r=pr_0+i$ with $0\le r_0<n_0$ and $0\le i<p$. Since $q=q_0p$, $C=C_0p$, $h=h_0p$ and $g=g_0p$,
+the relation $(1-t)^{p}\equiv1-t^p$ expresses the row polynomials modulo $p$ through those at $N=1$ and the
+successor row $r_0+1$. This is where the auxiliary row enters. It is valid for rows on both sides of $g$,
+because the polynomials are defined through $T_{r-g}$ and $U_{r-g-1}$ for signed indices. The column
+functions satisfy $s^{b_0p+k}(1-s)^{q_0p}=s^{\ell}(s^p)^{b_0+k_0}(1-s^p)^{q_0}$ in $\F_p[s]$. So the
+columns of one residue class use the moment columns $b_0+k_0,\dots,b_0+k_0+q_0$ at $N=1$ and never change
+the residue. By \cite[Lemma~3.1 and eqs.~(31), (35), (36)]{OpenAI2026}, which need only $H<p^2/4$, the
+reduction of $p^2\cA^0_p$ modulo $p$ is then, after ordering the rows by $(i,r_0)$ and the columns by
+$(\ell,k_0)$, the matrix $a^{\mathsf T}\otimes B_0+b^{\mathsf T}\otimes B_1$. Here $a,b$ are the fixed
+$p\times p$ matrices of OpenAI's identity (51), with $\det a=2^{-p(p-1)/2}$. The permutation matrix in this
+decomposition has the eigenvalue $0$ once and $\pm1$ each $(p-1)/2$ times. Therefore
+\[
+ \det=(\det a)^{n_0}\,\det B_0\;\det(B_0+B_1)^{(p-1)/2}\det(B_0-B_1)^{(p-1)/2}\ne0
+\]
+in $\F_p$. Hence $p^{2n}\Delta_p(0)$ is a $p$-adic unit. Let $z$ be such that $pz$ has denominator prime to
+$p$. The entries of $\cL_p$ are $p$-integral, so the difference $p^2z\cL_p=p\,(pz)\,\cL_p$ is $p$-integral
+with zero reduction. So the reduction of $p^2(\cA^0_p+z\cL_p)$ is the same invertible matrix, and
+$v_p(\Delta_p(z))=-2n$. Finally, if $p^2\nmid b$, then $p(a/b)$ has denominator prime to $p$.
+\end{proof}
+
+For the parameters $(58,9,3,5,3)$ we verify that $B_0$, $B_0+B_1$ and $B_0-B_1$ are invertible by exhibiting
+their inverses modulo $1009$. This prime exceeds every denominator of $B$, so the three determinants are
+nonzero rational numbers. Proposition~\ref{prop:nonvanishing} then applies to all large primes. The proof
+uses only $2g<n$ and $H<p^2/4$.

@@ -11,44 +11,36 @@
 \newcommand{\FormalizationURL}{https://github.com/slitsey/catalan-irrationality-measure}
 \newcommand{\FormalizationLink}{\url{\FormalizationURL}}
 
-% ---------------------------------------------------------------------------
-% Numerical constants. Each is the decimal truncation (or outward rounding) of a rational
-% number of the Lean proof; the Lean names are in the comments.
-\newcommand{\Bx}{409.99999}                             % 53 rho'/(eta - 212 delta)
-\newcommand{\Rho}{296.586094}                           % rho' = K590.rhoEnd (879663/10000)
-\newcommand{\RhoOld}{301.54258}                         % 58 c_2 + w (used only in the remark on rho)
-\newcommand{\Ctwo}{3.596893}                            % secondCost'
-\newcommand{\Cone}{3.549542}                            % firstCost'
-\newcommand{\PsiZero}{87.9663}                          % Psi_0, weight plus binomial per column
-\newcommand{\Utarget}{2.255858836}                      % K590.target
-\newcommand{\Gain}{8.29824}                             % 58^2 (target0 - target)
-\newcommand{\Uzero}{2.2583256}                          % target0
-\newcommand{\NormCap}{0.7736205195}                     % normCap
+% Numerical constants: decimal truncations (or outward roundings) of rational numbers of the formal proof.
+\newcommand{\Bstar}{409.99999}
+\newcommand{\Rho}{296.586094}
+\newcommand{\Ctwo}{3.596893}
+\newcommand{\Cone}{3.549542}
+\newcommand{\WZero}{87.9663}
+\newcommand{\Utarget}{2.255858836}
+\newcommand{\Gain}{8.29824}
+\newcommand{\Uzero}{2.2583256}
+\newcommand{\NormCap}{0.77363}
 \newcommand{\SupX}{-0.96450499}
 \newcommand{\SupY}{-1.57499400}
-\newcommand{\FieldCap}{-2.53949899}                     % fieldCap
-\newcommand{\ResCap}{-0.0631062}                        % residualCap
-\newcommand{\EtaInf}{7.98775}                           % real place (old) minus denominators, no gain
-\newcommand{\EtaTot}{38.33924}                          % eta of the criterion
-\newcommand{\Kappa}{1.382397}                           % 410/rho'
+\newcommand{\FieldCap}{-2.53949899}
+\newcommand{\ResCap}{-0.0631062}
+\newcommand{\EtaTot}{38.33924}
+\newcommand{\LamCrit}{1.382397}
 \newcommand{\Kcoef}{160}
 \newcommand{\Ngeo}{75}
 \newcommand{\Ncomplex}{41}
 \newcommand{\Nblocks}{47, 38 and 23}
 \newcommand{\Ncells}{373, 302 and 176}
 \newcommand{\Mmargin}{2.986\cdot10^{-6}}
-\newcommand{\TDelta}{6431.1338}                         % 58^2 (target0 - log 2 / 2)
-\newcommand{\TDeltaOld}{6422.8355}                      % 58^2 (target - log 2 / 2)
-\newcommand{\EtaExact}{38.34580}                        % TDelta minus the denominator exponent
-\newcommand{\PayL}{53.0000849}                          % d + 4 d delta kappa
-\newcommand{\PayR}{53.0000857}                          % eta kappa
-\newcommand{\Digest}{ff307ca0287dc5224e268202cb0b09776e933652acd2f2f879492af28d3e381d}
-\newcommand{\Chi}{22.05972}                             % area of the rank-deficiency profile
-\newcommand{\ChiLean}{22.05325}                         % gain532_ge
-\newcommand{\Aden}{6392.7880}                           % exponent of the denominators
-\newcommand{\Wcap}{52.788}
-\newcommand{\NcellsSigned}{\textbf{??}}                 % filled in after the cell build
-% ---------------------------------------------------------------------------
+\newcommand{\Decay}{6431.1338}
+\newcommand{\DecayOA}{6422.8355}
+\newcommand{\EtaExact}{38.34580}
+\newcommand{\PayL}{53.0000849}
+\newcommand{\PayR}{53.0000857}
+\newcommand{\Chi}{22.05972}
+\newcommand{\ChiLean}{22.05325}
+\newcommand{\LamDen}{6392.7880}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -74,6 +66,7 @@
 \newcommand{\cA}{\mathcal A}
 \newcommand{\cL}{\mathcal L}
 \newcommand{\cK}{\mathcal K}
+\newcommand{\cD}{\mathcal D}
 \newcommand{\rev}{\operatorname{rev}}
 \newcommand{\lean}[1]{\texttt{#1}}
 
@@ -88,22 +81,20 @@
 
 \subjclass[2020]{Primary 11J82; Secondary 11J72, 15A15, 31A15, 68V20}
 
-\keywords{Catalan's constant, irrationality measure, determinants, rank of reductions modulo p,
-logarithmic potentials, Pick matrices, Heine's formula, Gauss quadrature, formal verification}
+\keywords{Catalan's constant, irrationality measure, determinants, corank modulo $p$, Andr\'eief's identity,
+logarithmic energy, Pick matrices, Heine's formula, Gauss quadrature, Lean}
 
 \begin{abstract}
-Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-410}$ for
-every integer $a$ and every sufficiently large integer $b$. Thus the irrationality exponent of $G$ is
-at most $410$. The proof builds on OpenAI's proof that $G$ is irrational. That proof compares two
-bounds for a determinant whose entries are linear forms in $1$ and $G$. The lower bound comes from
-the denominators, and the upper bound from an integral representation. We improve both sides and add
-the uniformity a measure needs. At the finite places we bound the rank of the reduction modulo $p$ of
-the matrix of rational parts. This lowers the denominator at every prime in an explicit window. At the
-real place we bound the determinant of the row functions by a signed estimate. A Pick matrix argument
-reduces it to the block of the negative nodes. Heine's formula writes that block as a ratio of two
-log-gas integrals, and both are bounded by logarithmic energy. A Gauss quadrature formula extends the
-bound to an exponentially small neighbourhood of $G$, at a cost paid column by column. All steps are
-formalized in the Lean proof assistant, with only the standard axioms.
+Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-410}$ for all
+integers $a$ and all sufficiently large integers $b$. Hence the irrationality exponent of $G$ is at most
+$410$. The proof refines OpenAI's recent proof that $G$ is irrational. That proof compares two bounds for
+a large determinant whose entries are linear forms in $1$ and $G$. The lower bound comes from the
+denominators of the entries, and the upper bound from an integral representation. We improve both. On the
+arithmetic side we show that the matrix of rational parts has large corank modulo $p$ for every prime in
+an explicit range, which lowers the denominators. On the analytic side we bound a determinant that the
+energy method treats trivially, using Pick matrices, Heine's formula and an inequality for the
+logarithmic energy of signed measures. A quadrature formula extends the upper bound to an exponentially
+small neighbourhood of $G$, as a measure requires. The proof is formalized in the Lean proof assistant.
 \end{abstract}
 
 \maketitle
@@ -117,18 +108,22 @@ Catalan's constant
 \[
  G=\sum_{j=0}^\infty\frac{(-1)^j}{(2j+1)^2}=L(2,\chi_{-4})=0.91596\,55941\,77219\ldots
 \]
-is the value at $s=2$ of the Dirichlet $L$-function of the nontrivial character modulo $4$. Its
-arithmetic has long been studied by analogy with $\zeta(2)$ and $\zeta(3)$. Until recently it was not
-known to be irrational. In October 2026 OpenAI \cite{OpenAI2026} proved that $G$ is irrational and
-verified the proof in Lean.
+is the value at $s=2$ of the Dirichlet $L$-function of the nontrivial character modulo $4$. Values of
+$L$-functions at integers where no formula in terms of $\pi$ is available are notoriously hard to study.
+Ap\'ery proved $\zeta(3)$ irrational in 1978 \cite{Apery79}, and Calegari, Dimitrov and Tang proved
+$L(2,\chi_{-3})$ irrational in 2024 \cite{CDT2024}. For $G$ the classical methods produce linear forms
+that do not decay fast enough, and its irrationality remained open. In October 2026 OpenAI
+\cite{OpenAI2026} proved that $G$ is irrational, with a new argument based on a large determinant, and
+verified the proof in Lean. The present paper turns that argument into an irrationality measure.
 
-The \emph{irrationality exponent} $\mu(\xi)$ of a real number $\xi$ is the infimum of the real
-numbers $\mu$ such that $|\xi-a/b|>b^{-\mu}$ for all integers $a$ and all sufficiently large
-integers $b$. Every irrational number has $\mu(\xi)\ge2$, and almost every real number has
-$\mu(\xi)=2$. An \emph{irrationality measure} is an explicit upper bound for $\mu(\xi)$.
+The \emph{irrationality exponent} $\mu(\xi)$ of a real number $\xi$ is the infimum of the real numbers
+$\mu$ such that $|\xi-a/b|>b^{-\mu}$ for all integers $a$ and all sufficiently large integers $b$. Every
+irrational number has $\mu(\xi)\ge2$, and almost every real number has $\mu(\xi)=2$. An
+\emph{irrationality measure} is an explicit upper bound for $\mu(\xi)$. The exponent does not change under
+$\xi\mapsto r\xi+r'$ with $r,r'\in\Q$ and $r\ne0$.
 
 \begin{theorem}\label{thm:main}
-For every integer $a$ and every sufficiently large integer $b$,
+For all integers $a$ and all sufficiently large integers $b$,
 \[
  \left|G-\frac ab\right|>b^{-410}.
 \]
@@ -141,411 +136,358 @@ and uses only the standard axioms (Section~\ref{sec:formal}). The use of AI in t
 the end of the paper.
 
 \subsection{Background}
-Irrationality proofs for values of $L$-functions at integers almost always follow the pattern of
-Ap\'ery's proof for $\zeta(3)$ \cite{Apery79}. One constructs integer linear forms $q_n\xi-p_n$ that
-tend to zero, with $q_n\ne0$, faster than the growth of their coefficients would allow for a rational
-$\xi$. If $|q_n\xi-p_n|=e^{-\alpha n+o(n)}$ and $|q_n|=e^{\beta n+o(n)}$, then $\xi$ is irrational as
-soon as $\alpha>0$, and $\mu(\xi)\le1+\beta/\alpha$. Beukers \cite{Beukers79} gave the linear forms for
-$\zeta(2)$ and $\zeta(3)$ as integrals of Legendre-type polynomials. Hata \cite{Hata93} refined such
-integrals. He used systematically the primes that divide all the coefficients of the forms, an idea that
-goes back to Chudnovsky. Rhin and Viola \cite{RhinViola96,RhinViola01} found that families of
-integrals for $\zeta(2)$ and $\zeta(3)$ are permuted by a finite group. The invariance of the integrals
-lets one divide all their coefficients by a large common factor. This \emph{arithmetic method} gave
-the sharpest measures for $\zeta(2)$ and $\zeta(3)$ for many years. Marcovecchio \cite{Marcovecchio09}
-applied it to $\log2$. Zeilberger and Zudilin \cite{ZeilbergerZudilin20} obtained
-$\mu(\pi)\le7.1032\ldots$ from Salikhov's integrals \cite{Salikhov08} with an additional arithmetic
-saving.
+\emph{Catalan's constant.} Irrationality proofs for values of $L$-functions at integers usually follow
+Ap\'ery's proof for $\zeta(3)$. One constructs linear forms $q_n\xi-p_n$ with integer coefficients that
+tend to zero faster than the coefficients grow. If $|q_n\xi-p_n|=e^{-\alpha n+o(n)}$ and
+$|q_n|=e^{\beta n+o(n)}$ with $\alpha>0$, then $\xi$ is irrational and $\mu(\xi)\le1+\beta/\alpha$.
+Beukers \cite{Beukers79} obtained Ap\'ery's forms for $\zeta(2)$ and $\zeta(3)$ as integrals of
+Legendre-type polynomials. Hata \cite{Hata93} showed how much is gained by dividing the forms by the
+primes that divide all their coefficients, an idea that goes back to Chudnovsky. Rhin and Viola
+\cite{RhinViola96,RhinViola01} found finite groups acting on families of such integrals. The invariance
+yields a large common factor of the coefficients, and this \emph{arithmetic method} gave the best
+measures for $\zeta(2)$ and $\zeta(3)$ for many years. Marcovecchio \cite{Marcovecchio09} applied it to
+$\log2$, and Zeilberger and Zudilin \cite{ZeilbergerZudilin20} to $\pi$, using integrals of Salikhov
+\cite{Salikhov08}. For Catalan's constant the analogous linear forms exist but do not decay fast enough.
+Rivoal and Zudilin \cite{RivoalZudilin2003} proved that one of the numbers $\beta(2),\beta(4),\ldots,\beta(2m)$
+is irrational for suitable $m$, where $\beta$ is the Dirichlet beta function. This does not single out
+$G=\beta(2)$. Zudilin \cite{Zudilin2003} found an Ap\'ery-like recurrence for $G$, whose solutions give
+linear forms that tend to zero too slowly. Related constructions and their limits are described in
+\cite{Zudilin02Cheb,KrattRivoal08,KrattZudilin19,Zudilin19Survey}. Eskandari, Murty and Nemoto
+\cite{EMN2025} construct a mixed motive with period $G$ and obtain linear forms in $1$ and $G$ from it, and
+Eskandari \cite{Eskandari2026} improves their approximation exponent.
 
-For Catalan's constant the analogous linear forms exist but do not decay fast enough. Rivoal and Zudilin
-\cite{RivoalZudilin2003} proved that one of the numbers $\beta(2),\beta(4),\ldots,\beta(2m)$ is
-irrational for suitable $m$, where $\beta$ is the Dirichlet beta function. This does not single out
-$G=\beta(2)$. Zudilin \cite{Zudilin2003} found an Ap\'ery-like recurrence for $G$. Its solutions give
-linear forms that tend to zero, but too slowly to prove irrationality. Related constructions and their
-limits are described in \cite{Zudilin02Cheb,KrattRivoal08,KrattZudilin19,Zudilin19Survey}. Eskandari,
-Murty and Nemoto \cite{EMN2025} construct a mixed motive with period $G$ and obtain linear forms in $1$
-and $G$ from it. Eskandari \cite{Eskandari2026} improves the approximation exponent of these forms. Leibtag
-et al.\ \cite{LBKWSK26} found further Ap\'ery-like approximations to $G$ in conservative matrix fields.
-Numerically the best of them still has a negative approximation exponent.
+\emph{Recent results.} Since September 2026 a series of new results in this area has appeared, several of
+them obtained with AI systems. OpenAI proved $\mu(\pi)=2$, with a Lean formalization \cite{OpenAIPi2026}.
+Liu, Jiang and Zhang proved $\mu(\log r)=2$ for every rational $r>0$ with $r\ne1$ \cite{LiuJiangZhang26}.
+Giraudin lowered the bound for $\mu(\pi^2)$ to $5.0193784$ with two hypergeometric constructions of Zudilin
+\cite{Zudilin14} at new parameters \cite{Giraudin26}, and the bound for $\mu(\zeta(3))$ to $5.5138800$
+\cite{Giraudin26z3}. Leibtag, Barkan, Kalisch, Weinbaum, Shalyt and Kaminer \cite{LBKWSK26} showed that the
+classical constructions are one-dimensional trajectories in conservative matrix fields. Searching over other
+trajectories, they obtained $\mu(\pi^2)<4.62675$ and $\mu(\zeta(3))<5.4197$, and further Ap\'ery-like
+approximations to $G$, the best of which still has a negative approximation exponent. Prellberg
+\cite{Prellberg26} proved that $\mathrm{Li}_2(-1/4)$, $\mathrm{Li}_2(1/5)$ and $\mathrm{Li}_2(-1/3)$ are
+irrational. Fauzan announced a proof that $\zeta(5)$ is irrational, using Hankel determinants
+\cite{Fauzan2026}. Lai combined this method with simultaneous approximations to show that $1$, $\zeta(3)$ and
+$\zeta(4)$ are linearly independent over $\Q$ \cite{Lai2026}. For $L(2,\chi_{-3})$ the effective holonomy
+bounds of Calegari, Dimitrov and Tang give $\mu(L(2,\chi_{-3}))\le24781$ \cite[Thm.~5.1]{CDT2025}.
 
-OpenAI's argument \cite{OpenAI2026} has a different shape. It uses a determinant $\Delta$ of size $48N$
-instead of a sequence of linear forms. The entries of $\Delta$ are rational linear combinations of $1$
-and $G$, given by double integrals against the Cauchy kernel $1/(1-ts)$. If $G$ were rational, the
-denominators of the entries would give a lower bound $|\Delta|\ge e^{-(\mathsf A+o(1))n^2}$ with $n=48N$.
-An integral representation gives the upper bound $|\Delta|\le e^{-(\mathsf U+o(1))n^2}$. It rests on
-Andr\'eief's identity \cite{Forrester2018Andreief}, familiar from random matrix theory, and an energy
-estimate shows $\mathsf U>\mathsf A$. The margin is small, about $1.3\cdot10^{-4}$. The nonvanishing of
-$\Delta$ along the primes $N=p$ is proved separately by reduction modulo $p$. Determinants of linear forms
-were used for irrationality before, in Zudilin's determinantal criterion with Hankel determinants
-\cite{Zudilin}.
+\emph{Determinant methods.} OpenAI's argument \cite{OpenAI2026} has a different shape. Instead of a
+sequence of linear forms it uses one determinant $\Delta_N$ of size $n=48N$, whose entries are rational
+linear combinations of $1$ and $G$. The entries are double integrals against the Cauchy kernel
+$1/(1-ts)$. If $G$ were rational, the denominators of the entries would force a lower bound
+$|\Delta_N|\ge e^{-(\Lambda+o(1))N^2}$ along $N=p$ prime. On the other hand, Andr\'eief's identity
+\cite{Forrester2018Andreief} writes $\Delta_N$ as an integral of a product of determinants, and an estimate
+for a discrete logarithmic energy gives $|\Delta_N|\le e^{-(D+o(1))N^2}$. OpenAI proves $D>\Lambda$, with a
+margin of about $10^{-4}$ per unit of $n^2$, and proves that $\Delta_p\ne0$ by reduction modulo $p$.
+Determinants of linear forms had been used for irrationality before, in Zudilin's criterion with Hankel
+determinants \cite{Zudilin}.
 
-The first irrationality measure for $G$ was obtained by Jha \cite{Jha2026}, who proved
-$\mu(G)\le10^8$. Carreira \cite{Carreira2026} treated the five integer parameters of the construction
-as free. He stated conditions under which OpenAI's argument goes through for general parameters and
-obtained $\mu(G)<2294$. He also formulated the best real-place constant of the method as an equilibrium
-problem for two measures. In \cite{Carreira2026b} he records attempts to carry the method to $\beta(4)$.
-Bojnal \cite{Bojnal2026} instantiated Carreira's general theorem at the parameters $(36,6,2,3,2)$ and
-obtained $\mu(G)<2401.74$. The search and certification were carried out with Claude Fable~5.1. Xu
-\cite{Xu2026} reported $\mu(G)\le727.03$ for the parameters $(20,3,1,2,1)$, with an improved trial
-potential in the energy estimate. His certificate is numerical, in ball arithmetic, and is not
-formalized. Davis \cite{Davis2026} obtained $\mu(G)\le528.23288$ with the design of this paper and the
-arithmetic estimates of its formalization. The gain comes from new quadrature nodes. They are the
-solutions of $T_K(P(t))=0$ for a fixed rational polynomial $P$ of degree $130$, on a support trimmed on
-one side. This result is formalized in Lean. Arkhipov \cite{Arkhipov2026} modified that development and
-reported $\mu(G)\le528.2327$. These node constructions are independent of the new ideas below, and we
-have not combined them with ours. Sun's preprint \cite{Sun2026} had claimed a proof of the irrationality of $G$. Wachs
-\cite{Wachs2026} reports that its main estimate is not justified.
-
-Since September 2026 a series of new results in this area has appeared, several of them obtained with AI
-systems. OpenAI proved $\mu(\pi)=2$, with a Lean formalization \cite{OpenAIPi2026}. Liu, Jiang and
-Zhang proved $\mu(\log r)=2$ for every rational $r>0$ with $r\ne1$ \cite{LiuJiangZhang26}. Giraudin
-lowered the bound for $\mu(\pi^2)$ to $5.0193784$ with two hypergeometric constructions of Zudilin
-\cite{Zudilin14} at new parameters \cite{Giraudin26}. He also lowered the bound for $\mu(\zeta(3))$ to
-$5.5138800$ \cite{Giraudin26z3}. Leibtag, Barkan, Kalisch, Weinbaum, Shalyt and Kaminer \cite{LBKWSK26}
-showed that the classical constructions are one-dimensional trajectories in conservative matrix fields.
-Searching over other trajectories, they obtained $\mu(\pi^2)<4.62675$ and $\mu(\zeta(3))<5.4197$.
-Prellberg \cite{Prellberg26} proved that $\mathrm{Li}_2(-1/4)$, $\mathrm{Li}_2(1/5)$ and
-$\mathrm{Li}_2(-1/3)$ are irrational. Fauzan announced a proof that $\zeta(5)$ is irrational, using
-Hankel determinants \cite{Fauzan2026}. Lai combined this method with simultaneous approximations to show
-that $1$, $\zeta(3)$ and $\zeta(4)$ are linearly independent over $\Q$ \cite{Lai2026}. For
-$L(2,\chi_{-3})$, Calegari, Dimitrov and Tang proved that $1$, $\pi^2$ and $L(2,\chi_{-3})$ are linearly
-independent over $\Q$ \cite{CDT2024}. Their effective holonomy bounds give $\mu(L(2,\chi_{-3}))\le24781$
-\cite[Thm.~5.1]{CDT2025}.
+The first irrationality measure for $G$ was obtained by Jha \cite{Jha2026}, who proved $\mu(G)\le10^8$.
+Carreira \cite{Carreira2026} treated the five integer parameters of the construction as free, stated
+conditions under which OpenAI's argument goes through, and proved $\mu(G)<2294$. He also expressed the best
+constant of the energy estimate as the value of an equilibrium problem for two measures, and in
+\cite{Carreira2026b} he records attempts to carry the method to $\beta(4)$. Bojnal \cite{Bojnal2026} and Xu
+\cite{Xu2026} obtained $\mu(G)<2402$ and $\mu(G)\le727.03$ at other parameters. Xu's certificate is
+numerical and not formalized. Davis \cite{Davis2026} and Arkhipov \cite{Arkhipov2026} reached
+$\mu(G)\le528.24$ with new quadrature nodes, the zeros of $T_K(P(t))$ for a fixed polynomial $P$, and
+Davis's result is formalized in Lean. These constructions are independent of the ideas of the present
+paper. An earlier preprint of Sun \cite{Sun2026} claimed the irrationality of $G$, but Wachs
+\cite{Wachs2026} showed that its main estimate is not justified.
 
 \subsection{The companion paper}
-Catalan's constant is a difference of two values of the trigamma function $\psi'$. For $0<s<t\le1$ put
+Catalan's constant is a difference of two values of the trigamma function $\psi'$. With
 \[
- \Psi(s,t)=\psi'(s)-\psi'(t)=\sum_{n=0}^\infty\Bigl(\frac1{(n+s)^2}-\frac1{(n+t)^2}\Bigr).
+ \Psi(s,t)=\psi'(s)-\psi'(t)=\sum_{n\ge0}\Bigl(\frac1{(n+s)^2}-\frac1{(n+t)^2}\Bigr)\qquad(0<s<t\le1)
 \]
-Then $G=\frac1{16}\Psi(\frac14,\frac34)$, and also $L(2,\chi_{-3})=\frac19\Psi(\frac13,\frac23)$ and
-$\pi^2=3\Psi(\frac12,1)$. The irrationality exponent does not change under $\xi\mapsto r\xi+r'$ with
-$r,r'\in\Q$ and $r\ne0$. So a measure for $G$ is a measure for $\Psi(\frac14,\frac34)$. The companion
-paper \cite{Litsey2026b} proves irrationality measures for the values $\Psi(s,1)$ with $s\in\{\frac14,
-\frac34,\frac13,\frac23,\frac12\}$ and $s=\frac k5$, $\frac k7$, and for $\Psi(\frac13,\frac23)$. Among
-them are $\mu(G\pm5\pi^2/48)$ and $\mu(L(2,\chi_{-3}))$. Its determinants are L\"owner matrices of digamma
-differences. That method covers the pair $(\frac14,\frac34)$ as well, but its bound for this pair is too
-weak to give a measure. The present paper therefore refines OpenAI's construction instead. The two papers
-share their notation, their literature and the formalization repository.
+one has $G=\frac1{16}\Psi(\frac14,\frac34)$. The companion paper \cite{Litsey2026b} proves irrationality
+measures for $\Psi(s,1)$ with $s=\frac k4,\frac k3,\frac k5,\frac k7,\frac12$, and for
+$\Psi(\frac13,\frac23)=9L(2,\chi_{-3})$. Its determinants are L\"owner matrices of digamma differences,
+which are much smaller than OpenAI's. That method also applies to $(\frac14,\frac34)$, but there its
+denominators outgrow its decay, so it gives no measure for $G$. The present paper therefore refines
+OpenAI's construction. The two papers use the same criterion, the same names for the denominator exponent
+$\Lambda$, the decay rate $D$ and the neighbourhood exponent $\rho$, and one formalization.
 
 \subsection{What a measure requires}\label{sec:intro-need}
-Write $\Delta_N(X)$ for the determinant regarded as a polynomial in the constant, so that $\Delta_N(G)$
-is OpenAI's determinant. Let $Q_N$ be the integer polynomial obtained from $\Delta_N$ by clearing
-denominators. Three properties of $Q_N$ turn OpenAI's comparison into a measure.
+Write $\Delta_N(X)=\det(\cA^0_N+X\cL_N)$, so that OpenAI's determinant is $\Delta_N(G)$, and let $Q_N$ be
+the integer polynomial obtained by clearing denominators. Suppose $|G-a/b|$ is small. Three properties of
+$Q_N$ turn OpenAI's comparison into a contradiction.
 \begin{enumerate}[label=(\roman*)]
-\item \emph{Smallness on a neighbourhood of $G$.} The upper bound must hold not only at $X=G$. It must
-hold for all $X$ with $|X-G|\le e^{-\rho N}$, and the exponent $\rho$ enters the final bound linearly.
-\item \emph{Uniform nonvanishing.} One needs $Q_p(a/b)\ne0$ for primes $p$ with $p^2\nmid b$, in place of
-$Q_p(G)\ne0$.
-\item \emph{Arithmetic.} The integer $b^{\deg Q_N}Q_N(a/b)$ is nonzero, so it is at least $1$ in absolute
-value. The smaller the denominator of $\Delta_N$ and its degree, the stronger the conclusion. The prime
-$p$ must be chosen not to divide $b$, and a naive choice costs a factor.
+\item \emph{Denominators.} The coefficients of $\Delta_N$ have a common denominator of size
+ $e^{(\Lambda+o(1))N^2}$, and $\deg Q_N\le dN$.
+\item \emph{Smallness on a neighbourhood.} $|\Delta_N(x)|\le e^{-(D+o(1))N^2}$ for every $x$ with
+ $|x-G|\le e^{-\rho N}$, not only at $x=G$.
+\item \emph{Nonvanishing at the point.} $Q_p(a/b)\ne0$ for a prime $p$ of size about $\log b$.
 \end{enumerate}
-Let $d$ be the degree of $Q_N$ divided by $N$ and $\eta$ the decay rate of $Q_N$ normalised by $N^2$.
-Then the conclusion is $\mu(G)\le d\rho/\eta$ (Proposition~\ref{prop:criterion}). The work is to make $d$
-and $\rho$ small and $\eta$ large. Since $\eta$ is a small difference of two large numbers, the gains in
-$\eta$ matter most.
+OpenAI's proof gives nonvanishing only at $X=G$. We need it at every $a/b$ with $p^2\nmid b$, and we must
+find such a prime without losing a power of $b$. Section~\ref{ssec:criterion} shows that the squares of
+the larger primes can be recovered from the coefficients of $Q_p$.
+
+\subsection{Outline of the proof}\label{sec:outline}
+Suppose that $|G-a/b|<b^{-\mu}$ with $b$ large, and take a prime $p\approx\mu\log b/\rho$. Then
+$|a/b-G|\le e^{-\rho p}$, so by (ii) $|\Delta_p(a/b)|\le e^{-(D+o(1))p^2}$. By (i) the number
+$b^{dp}Q_p(a/b)$ is an integer, and by (iii) it is nonzero. Hence
+\begin{align*}
+ 1\le\bigl|b^{dp}Q_p(a/b)\bigr|&\le b^{dp}\,e^{(\Lambda-D+o(1))p^2}\\
+ &=\exp\bigl(dp\log b-(\eta+o(1))p^2\bigr),\qquad \eta=D-\Lambda .
+\end{align*}
+The right side is less than $1$ as soon as $\mu>d\rho/\eta$. So $\mu(G)\le d\rho/\eta$
+(Proposition~\ref{prop:criterion} gives the precise form).
+
+The three numbers come from different places. The degree $d$ comes from the construction
+(Lemma~\ref{lem:degree}). The neighbourhood exponent $\rho$ comes from a quadrature formula for the
+coefficient of $G$ (Section~\ref{sec:real}). The difference $\eta$ is a small difference of two large
+numbers, $D\approx6431$ and $\Lambda\approx6393$ (Figure~\ref{fig:balance}). For OpenAI's construction with
+our parameters, $D$ and $\Lambda$ differ by about $8$. We lower $\Lambda$ by $22.06$ through the corank of
+a matrix modulo $p$ (Section~\ref{sec:content}), and raise $D$ by $8.30$ through a signed bound for a
+determinant of row functions (Section~\ref{sec:signed}). The result is $\eta\approx38.3$, which is what
+makes $d\rho/\eta$ as small as $410$.
+
+\begin{figure}[ht]
+\centering
+\setlength{\unitlength}{0.17cm}
+\begin{picture}(66,24)(-14,-6)
+ \put(0,-1){\line(1,0){60}}
+ \multiput(0,-1)(10,0){7}{\line(0,-1){0.8}}
+ \put(0,-3.5){\makebox(0,0){$6380$}}
+ \put(20,-3.5){\makebox(0,0){$6400$}}
+ \put(40,-3.5){\makebox(0,0){$6420$}}
+ \put(60,-3.5){\makebox(0,0){$6440$}}
+ \qbezier(-1.5,-1.4)(-1,-0.9)(-0.5,-0.4)\qbezier(-0.9,-1.4)(-0.4,-0.9)(0.1,-0.4)
+ \put(0,14){\framebox(42.8,3){}}
+ \put(42.8,14){\framebox(8.3,3){$+8.3$}}
+ \put(-1,15.5){\makebox(0,0)[r]{decay rate $D$}}
+ \put(0,6){\framebox(12.8,3){}}
+ \put(12.8,6){\dashbox{0.5}(22.1,3){$-22.1$}}
+ \put(-1,7.5){\makebox(0,0)[r]{denominators $\Lambda$}}
+ \put(12.8,3){\line(0,1){11}}
+ \put(51.1,3){\line(0,1){11}}
+ \qbezier(12.8,3.6)(31.95,3.6)(51.1,3.6)
+ \qbezier(12.8,3.6)(13.4,3.85)(14.0,4.1)\qbezier(12.8,3.6)(13.4,3.35)(14.0,3.1)
+ \qbezier(51.1,3.6)(50.5,3.85)(49.9,4.1)\qbezier(51.1,3.6)(50.5,3.35)(49.9,3.1)
+ \put(32,1.6){\makebox(0,0){$\eta=D-\Lambda\approx38.3$}}
+ \put(42.8,19.2){\makebox(0,0){$D_0=6422.8$}}
+ \put(34.9,11.2){\makebox(0,0){$\Lambda_0=6414.8$}}
+\end{picture}
+\caption{The exponent balance for the parameters $(58,9,3,5,3)$, per unit of $N^2$. The axis is broken at
+$6380$. OpenAI's estimates give the decay rate $D_0$ and the denominator exponent $\Lambda_0$, which
+differ by about $8$. The signed bound of Section~\ref{sec:signed} adds $8.3$ to $D_0$, and the corank bounds
+of Section~\ref{sec:content} remove $22.1$ from $\Lambda_0$.}\label{fig:balance}
+\end{figure}
 
 \subsection{New ideas}\label{sec:intro-ideas}
 \begin{enumerate}[label=\arabic*.,wide]
-\item \emph{All parameters at once.} The determinant has five integer parameters
-$(n_0,b_0,q_0,g_0,h_0)$, which we call a \emph{design}. Every argument below is carried out for an
-arbitrary design, with the parameters as symbols. This covers the degree, the denominators at all
-primes, the rank deficiencies, the nonvanishing and the estimates at the real place. A design is then
-data. We use $(58,9,3,5,3)$, so that $n=58N$ and the degree is $53N$.
+\item \emph{Large corank modulo $p$.} Let $\nu_N(p)$ be the corank modulo $p$ of $p^2$ times the matrix of
+rational parts. Each unit of corank lowers the denominator by a factor $p$
+(Proposition~\ref{prop:valuation}). We show that the corank is of order $N$ for every prime in
+$(\frac{16}7N,\frac{53}2N]$. The kernel vectors are explicit. They come from antisymmetric combinations of
+rows, a reflection formula for Chebyshev polynomials modulo $p$, and the relation $(1-X)^p=1-X^p$.
+Together these lower the denominator exponent by $22.05$.
 
-\item \emph{Rank of the reduction modulo $p$, in closed form.} Let $\nu_N(p)$ be the dimension of the left
-kernel of the reduction modulo $p$ of $p^2$ times the matrix of rational parts. At a prime $p$ the
-valuation of $\Delta_N$ gains $\nu_N(p)$. We prove four lower bounds for $\nu_N(p)$
-(Theorem~\ref{thm:content}). Each is a piecewise linear function of $p$, with coefficients linear in the
-five parameters, on its own window of primes. They come from antisymmetric combinations of rows, a
-reflection of Chebyshev polynomials modulo $p$, and the Frobenius relation $(1-X)^p=1-X^p$. All four are
-proved from one digit formula for the entries modulo $p$.
+\item \emph{One counting principle.} All these kernels arise in the same way. One takes a space of row
+combinations and imposes a few linear conditions that make every entry of the combined row vanish modulo
+$p$. Then the corank is at least the dimension minus the number of conditions (Theorem~\ref{thm:count}).
+The four closed formulas are instances. A form of the principle with a fixed rational subspace treats the
+remaining windows of primes, with explicit kernel vectors listed in the formalization.
 
-\item \emph{A counting inequality for the nullity.} The four proofs share one shape. A space $\cV$ of row
-combinations is given, with a few linear conditions on $\cV$, and the conditions force all column
-responses to vanish. We prove this once (Theorem~\ref{thm:count}). Then $\nu_N(p)\ge\dim\cV-\rank\Phi$,
-where $\Phi$ is the map of conditions. A congruence from Lucas's theorem lets the inequality apply when
-the column filter is longer than the prime. Further families of kernel vectors are instances of it.
+\item \emph{A perturbation bound column by column.} For the neighbourhood of $G$ we write the coefficient of
+$G$ by a quadrature formula with $53N$ nodes. The perturbed determinant is then a sum of determinants in
+which some columns are replaced by values of the row functions at the nodes. We bound the weight of each
+replaced column and its generalized Vandermonde factor separately. The two bounds peak at different
+columns, which lowers $\rho$ by about $5$.
 
-\item \emph{A fixed rational subspace with stored kernel vectors.} In one form of the inequality the
-space is a tensor product of polynomial coordinates with a fixed subspace $V\subset\Q^s$
-(Theorem~\ref{thm:profile}). The required ranks are certified by integer vectors in the kernels of fixed
-matrices, stored once. This treats $34$ windows of primes between $3N$ and $16.2N$.
+\item \emph{A signed bound for the row determinant.} OpenAI's integrand contains a determinant $\det\mathsf L$
+of size $n$ that the energy method bounds by $6^n$. We write it with a Pick matrix and reduce it, by a Schur
+complement and a contour bound, to the block of the negative nodes. Heine's formula writes that block as a
+ratio of two log-gas integrals. We bound the numerator from above and the denominator from below. An
+inequality for the logarithmic energy of signed measures (Theorem~\ref{thm:reflection}) keeps the combined
+estimate concave. This raises the decay rate by $8.3$.
 
-\item \emph{Paying for the perturbation column by column.} The smallness near $G$ comes from a Gauss-type
-quadrature formula for the coefficient of $G$, with $53N$ nodes. A perturbed determinant is a sum of
-determinants in which some columns are replaced by point values. We bound each replaced column separately.
-A binomial bound for generalized Vandermonde determinants (Lemma~\ref{lem:binomvand}) and a contour bound
-for the weight of each column (Lemma~\ref{lem:keyhole}) give costs that peak at different columns. Their
-sum peaks lower than the sum of their peaks.
-
-\item \emph{A signed bound for the determinant of the row functions.} OpenAI's integrand contains a
-determinant $\det\mathsf L$ that the energy method bounds only by $6^n$. We bound it on the configurations
-that matter (Section~\ref{sec:signed}). A Pick matrix argument and a Schur complement reduce
-$|\det\mathsf L|$ to the block of the negative nodes, at a cost of $11$ per positive node. The key input is
-a contour bound for a quadratic form on the model space of a Blaschke product (Lemma~\ref{lem:T}).
-Heine's formula and the Christoffel formula write the negative block as a ratio of two log-gas
-integrals. We bound the numerator from above by completing squares in Chebyshev moments, and the
-denominator from below by Jensen's inequality. An inequality for the logarithmic energy of signed
-measures (Theorem~\ref{thm:reflection}) keeps the combined bound concave. A separate argument treats
-positive nodes close to $1$.
-
-\item \emph{Near-optimal configurations.} The signed bound needs hypotheses on the configuration. They hold
-on every configuration whose energy is within the gain of the maximum. On the other configurations OpenAI's
-bound is already strong enough. So the improved bound holds everywhere.
-
-\item \emph{Trial potentials with complex poles, interpolated in the number of fixed columns.} The energy
-estimates use trial sequences whose generating functions are logarithmic potentials of point charges near
-the edges of the support of the extremal measure. The signed bound uses three trials, at fractions
-$0$, $1/200$ and $1/16$ of fixed columns. Between them the fields are affine in the fraction, and the
-remaining constant is an explicit quadratic.
-
-\item \emph{A criterion with a free lower end of the window.} In the choice of the prime, the window of
-candidates is $(V,U]$ with $U=\kappa\log b$ and $V=(\kappa-\omega)\log b$. We prove the criterion for every
-$\omega\in(0,1]$ with the hypothesis $\kappa>2\omega$ (Proposition~\ref{prop:criterion}). We use
-$\omega=3/5$.
+\item \emph{Near-extremal configurations.} The signed bound needs hypotheses on the configuration. We show
+that they hold whenever the configuration comes close to the maximum of OpenAI's energy. On all other
+configurations OpenAI's bound already suffices.
 \end{enumerate}
+The parameters of OpenAI's construction are kept symbolic throughout, so every statement except the final
+numerical verifications holds for an arbitrary choice of them. We use $(58,9,3,5,3)$.
 
 \subsection{The constants}
-For the design $(58,9,3,5,3)$ the degree of $Q_N$ is $d=53N$. The perturbation exponent is
-$\rho=\Rho$. The decay rate at the real place is $\TDelta\ldots$, and the denominators cost
-$\mathsf A=\Aden\ldots$, after a gain of $\int\kappa\ge\ChiLean$ from the rank deficiencies. The signed
-bound contributes $\Gain$ to the decay rate. The criterion uses $\eta=\EtaTot$, $\omega=3/5$,
-$\delta=2.9\cdot10^{-7}$ and $\kappa=410/\rho=\Kappa\ldots$ Its last condition reads $B>\Bx\ldots$, and
-$410$ is the least integer above it. Decimals are truncated. The constants of the formal proof are the
-exact rational numbers.
+Table~\ref{tab:constants} lists the constants for the parameters $(58,9,3,5,3)$, per unit of $N$ or $N^2$.
+\begin{table}[ht]\centering
+\begin{tabular}{@{}llr@{}}\toprule
+degree & $d$ & $53$\\
+neighbourhood exponent & $\rho=58c_2+W_0$ & $296.59$\\
+decay rate (OpenAI's estimate) & $D_0$ & $6422.84$\\
+decay rate (with the signed bound) & $D$ & $6431.13$\\
+denominator exponent (with the corank gain) & $\Lambda$ & $6392.79$\\
+difference & $\eta=D-\Lambda$ & $38.34$\\
+\midrule
+bound & $d\rho/\eta$ & $409.99\ldots$\\\bottomrule
+\end{tabular}
+\caption{The constants of the proof, truncated. The formal proof uses exact rational numbers.}
+\label{tab:constants}\end{table}
+Without the corank gain and the signed bound, $\eta$ would be about $8$, and the method would give an
+exponent near $2000$.
 
-\subsection{Organization and notation}
-Section~\ref{sec:overview} sets up designs and states the rank deficiencies, the valuations, the
-denominators, the bound at the real place and the criterion. Section~\ref{sec:setup} recalls OpenAI's
-construction for a design and proves the degree, the denominators and the nonvanishing.
-Section~\ref{sec:content} proves the rank deficiencies. Section~\ref{sec:real} reduces the bound near
-$G$ to determinants with fixed columns and recalls the energy method. Section~\ref{sec:signed} proves the
-signed bound. Section~\ref{sec:proof} proves Theorem~\ref{thm:main}. Section~\ref{sec:remarks} makes
-remarks on the method, and Section~\ref{sec:formal} describes the formalization.
+\subsection{Organization}
+Section~\ref{sec:overview} recalls OpenAI's construction for general parameters and proves the criterion
+that turns the three properties of \S\ref{sec:intro-need} into a measure. Section~\ref{sec:setup} bounds the
+denominators and proves nonvanishing at every rational point. Section~\ref{sec:content} proves the corank
+bounds, which give the arithmetic gain. Sections~\ref{sec:real}--\ref{sec:signed} treat the analytic side.
+Section~\ref{sec:real} extends OpenAI's estimate to a neighbourhood of $G$. Section~\ref{sec:energy} recalls
+the energy method with prescribed columns, and Section~\ref{sec:signed} proves the signed bound for the row
+determinant. Section~\ref{sec:proof} assembles the proof, and Section~\ref{sec:remarks} discusses the
+method. The certified numerical inequalities are collected in the appendices, and
+Section~\ref{sec:formal} describes the formalization.
 
+\subsection{Notation}
 We use the notation of OpenAI's paper \cite{OpenAI2026} for the construction and refer to it for details.
 Citations of the form \cite[Prop.~2.1]{OpenAI2026} point to its numbered statements. We write $\log$ for
-the natural logarithm, $v_p$ for the $p$-adic valuation and $\theta(x)=\sum_{p\le x}\log p$ for
+the natural logarithm, $v_p$ for the $p$-adic valuation and $\vartheta(x)=\sum_{p\le x}\log p$ for
 Chebyshev's function. $T_k$ and $U_k$ are the Chebyshev polynomials of the first and second kind, with
 $U_{-1}=0$, $T_{-k}=T_k$ and $U_{-k-1}=-U_{k-1}$. We write $[X^k]F$ or $F[k]$ for the coefficient of $X^k$
 in a polynomial $F$, $y_+=\max(y,0)$, and $\operatorname{rev}_EF(X)=X^EF(1/X)$ for the reversal of a
 polynomial of degree at most $E$.
 
-\section{Designs, rank deficiencies and the exponent}\label{sec:overview}
+\section{The construction and the criterion}\label{sec:overview}
 
 \subsection{Designs}
-A \emph{design} is a quintuple $(n_0,b_0,q_0,g_0,h_0)$ of integers with $n_0,b_0,q_0,h_0\ge1$,
-$g_0\ge0$ and $2g_0<n_0$. For $N\ge1$ we write
+OpenAI's determinant depends on five integer parameters. Following Carreira \cite{Carreira2026} we call a
+quintuple $(n_0,b_0,q_0,g_0,h_0)$ of integers with $n_0,b_0,q_0,h_0\ge1$, $g_0\ge0$ and $2g_0<n_0$ a
+\emph{design}. For $N\ge1$ we write
 \begin{gather*}
  n=n_0N,\quad b=b_0N,\quad q=q_0N,\quad g=g_0N,\quad h=h_0N,\\
  L=n+b+q,\quad C=L+g,\quad H=C+h,\quad A=b+q+2g ,
 \end{gather*}
-and $d_0=n_0-g_0$. OpenAI's choice is the design $(48,7,4,4,2)$. We work throughout with
+and $d_0=n_0-g_0$. OpenAI's choice is $(48,7,4,4,2)$. We work throughout with the design $(58,9,3,5,3)$,
+for which
 \begin{gather*}
- D=(58,9,3,5,3):\quad n=58N,\quad b=9N,\quad q=3N,\quad g=5N,\quad h=3N,\\
+ n=58N,\quad b=9N,\quad q=3N,\quad g=5N,\quad h=3N,\\
  L=70N,\quad C=75N,\quad H=78N,\quad A=22N,
 \end{gather*}
-and $d_0=53$. Section~\ref{sec:setup} recalls the construction of OpenAI's determinant for a design. It
-yields an $n\times n$ matrix $\cA_N=\cA^0_N+G\cL_N$ with rational matrices $\cA^0_N$ and $\cL_N$. The
-polynomial $\Delta_N(X)=\det(\cA^0_N+X\cL_N)$ has degree at most $n-g$ (Lemma~\ref{lem:degree}). The search
-that led to $D$ is not part of the proof.
+and $d_0=53$. The search that led to this design is not part of the proof.
 
-\subsection{Rank deficiencies}
-For an odd prime $p$ with $H<p^2$ the entries of $p^2\cA^0_N$ are $p$-integral (Lemma~\ref{lem:digits}).
-Let $\cA^0_{N,p}$ be its reduction modulo $p$, and let $\nu_N(p)$ be the dimension of its left kernel, that
-is, $n$ minus its rank. Write $\Lambda=g+q+h$ and $e=(p+1)/2-q-h$.
-
-\begin{theorem}\label{thm:content}
-Let $D$ be a design, $N\ge1$, and $p$ an odd prime with $H<p^2$. Then $\nu_N(p)$ is at least each of the
-following quantities whenever the stated conditions hold. Negative values are replaced by $0$.
-\begin{enumerate}[label=(\alph*)]
-\item (Theorem~\ref{thm:T}) If $2g<p$, $H\le4p$ and $D_T=\min(g,\,n-1-g-2p,\,C-3p)\ge1$:
-\[
- D_T-(n+q+g+h-3p)_+ .
-\]
-\item (Theorem~\ref{thm:U}) If $2h\le p+1$, $L\le3p\le H$, $n+q+g+h\le3p$ and $2p\le n+q$:
-\[
- \min(n,\,2p+2g+1)-g-2p-1 .
-\]
-\item (Theorem~\ref{thm:U6}) If $e\ge0$, $n\le4p+2g+1$, $L\le6p$ and $b+q\le p+\mu_0$, with
-$\mu_0=\max(q,H+q-6p)$:
-\[
- \min\Bigl(\frac{p-1}2-g,\ n+b+q+h-\frac{11p+1}2\Bigr).
-\]
-\item (Theorem~\ref{thm:S}) If $e\ge0$ and $n\le4p+2g+1$: $m_1-m_0-e$, with
-\[
- m_0=\max(b+q,\,L+\Lambda-4p),\qquad m_1=\min(p,\,L-3p,\,b+q+2g+1).
-\]
-\end{enumerate}
-\end{theorem}
-
-These are the Lean theorems \lean{t\_rank}, \lean{u\_rank}, \lean{u6\_rank\_closed} and \lean{s\_rank},
-proved for every admissible design. For $D$ they apply for $12N<p\le26N$, where they give most of the gain
-(Section~\ref{ssec:kappa}).
-
-Below $12N$ the closed formulas give nothing. Further kernel vectors come from a single counting
-inequality, of which the proofs of Theorem~\ref{thm:content} are special cases. For $c\in\F_p^n$ and a raw
-column $j\in[b,L)$ let $R_c(j)$ be the reduction modulo $p$ of $p^2\sum_rc_rR(r,j)$, with $R$ as in
-\eqref{eq:rational-part}. These are the responses of Lemma~\ref{lem:digits}.
-
-\begin{theorem}\label{thm:count}
-Let $D$ be a design, $N\ge1$, $p$ an odd prime with $H<p^2$, and write $q=ap+r$ with $0\le r<p$. Let
-$\cV$ be a finite-dimensional vector space over $\F_p$, $\iota\colon\cV\to\F_p^n$ an injective linear map and
-$\Phi$ a linear map on $\cV$. Suppose that for every $x\in\ker\Phi$ there is a polynomial $G_x\in\F_p[X]$ of
-degree less than $r$ with
-\[
- \sum_{v=0}^a(-1)^{a-v}\binom av\,R_{\iota(x)}(j+vp)=G_x(j)\qquad(b\le j<L-ap).
-\]
-Then $\nu_N(p)\ge\dim\cV-\operatorname{rank}\Phi$.
-\end{theorem}
-
-For $q<p$ the hypothesis says that the conditions $\Phi$ force all raw responses to vanish. The case used
-for the counting is the \emph{profile form}. There the space is a tensor product of a space of polynomial
-coordinates with a fixed rational subspace, and the conditions are jets composed with fixed linear maps.
-
-\begin{theorem}\label{thm:profile}
-Let $v_1,\dots,v_d\in\Z^s$ span a subspace $V\subset\Q^s$ of dimension $d$. For $j$ in a finite set $J$ let
-$B_j$ be an integer matrix with $s$ columns and $r_j\le d$ an integer such that there are $d-r_j$ linearly
-independent vectors $k\in\Z^d$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be the product of a
-nonzero $d\times d$ minor of $(v_1,\dots,v_d)$ and, for each $j$, of a nonzero maximal minor of these kernel
-vectors. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ as above, let $V_p=\F_p^d$ be the
-space of coordinates of $V$ modulo $p$, and let $m$ and $w_j$ ($j\in J$) be integers $\ge0$. Suppose that there
-are linear maps $\varphi_{j,k}\colon V_p^m\to V_p$ ($k<w_j$) and $\iota\colon V_p^m\to\F_p^n$ such that, on the joint
-kernel of the maps $B_j\circ\varphi_{j,k}$, the map $\iota$ is injective and satisfies the hypothesis of
-Theorem~\ref{thm:count}. Then
-\[
- \nu_N(p)\ge m\,d-\sum_{j\in J}w_j\,r_j .
-\]
-\end{theorem}
-
-In the applications $m$ and the $w_j$ are affine functions of $N$ and $p$ on a window of primes, while $V$
-and the $B_j$ are fixed. So the bound is linear on the window. The data to be stored are the vectors $v_a$,
-the matrices $B_j$ and the kernel vectors. For the design $D$ these bounds, the closed formulas and the
-further families of Section~\ref{sec:content} combine into the following.
-
-\begin{theorem}\label{thm:profile-D}
-For the design $D$ there are $102$ intervals $(a_i,b_i]$, with $16/7=a_1<b_1\le a_2<\dots<b_{102}=53/2$, and a
-function $\kappa$, linear on each interval and $0$ outside their union, with the following property. For all
-large $N$ and every prime $p$ with $a_iN<p\le b_iN$ for some $i$,
-\[
- \nu_N(p)\ge N\kappa(p/N)-2 .
-\]
-On each interval the bound is given by one of the families of Section~\ref{sec:content}. The area of
-$\kappa$ is a rational number,
-\[
- \int_0^\infty\kappa(x)\,dx=\frac{36235515874601938601596598}{1642609663271115992578125}=\Chi\ldots\ \ge\ \ChiLean .
-\]
-\end{theorem}
-
-The contributions by ranges of $x=p/N$ are as follows. The third column counts the intervals on which the
-bound is that of Theorem~\ref{thm:profile} with stored data.
-\begin{center}
-\begin{tabular}{@{}lrrl@{}}
-\toprule
-range of $x$ & intervals & with stored data & area \\
-\midrule
-$(16/7,\,3]$ & $11$ & $0$ & $0.06259$ \\
-$(3,\,6]$ & $46$ & $23$ & $0.25136$ \\
-$(6,\,12]$ & $27$ & $9$ & $0.71965$ \\
-$(12,\,53/2]$ & $18$ & $2$ & $21.02610$ \\
-\midrule
-total & $102$ & $34$ & $\Chi$ \\
-\bottomrule
-\end{tabular}
-\end{center}
-The intervals in $(12,53/2]$ are listed in Section~\ref{ssec:kappa}. The full list is part of the
-formalization. On each interval one bound is used. The families come from different arguments. Except for one
-pair (Section~\ref{ssec:families}) their kernels are not shown to be independent, so at a prime the bounds are
-not added.
-
-\subsection{Valuations, denominators and the exponent}
-The rank deficiencies enter through the following statement.
-
-\begin{proposition}\label{prop:valuation}
-Let $p$ be an odd prime with $H<p^2$ and let $z\in\Q$ have denominator prime to $p$. Then
-$p^2(\cA^0_N+z\cL_N)$ has $p$-integral entries, its reduction modulo $p$ equals $\cA^0_{N,p}$, and
-\[
- v_p\bigl(\Delta_N(z)\bigr)\ge\nu_N(p)-2n .
-\]
-\end{proposition}
-
-At the other primes there are the valuation bounds of OpenAI's method (Section~\ref{sec:setup}). At $2$
-there is a bound from the expansion into minors. Together they give the denominators.
-
-\begin{proposition}\label{prop:denominators}
-For the design $D$ there are positive integers $D_N$ with the following properties. $D_N\Delta_N(i)\in\Z$ for
-every integer $i$, and $q^{2n}\mid D_N$ for every prime $N<q\le2N$. For every $\varepsilon>0$ and all large $N$
-\begin{gather*}
- \log D_N\le(\mathsf A+\varepsilon)N^2,\\
- \mathsf A=\frac{2673}8\log2+116+\frac{24269}4-\int_0^\infty\kappa(x)\,dx=\Aden\ldots
-\end{gather*}
-\end{proposition}
-
-Here $\frac{2673}8\log2$ is the contribution of the prime $2$. The number $116+\frac{24269}4$ is the area of
-the piecewise linear function that bounds the poles at the odd primes (Section~\ref{sec:setup}). The last
-term is the gain of Theorem~\ref{thm:profile-D}.
-
-At the real place we prove the following in Sections~\ref{sec:real} and~\ref{sec:signed}. Put
-\begin{equation}\label{eq:rho-def}
- \rho=n_0c_2+\Psi_0=\Rho,\qquad c_2=\Ctwo,\quad \Psi_0=\PsiZero .
+\subsection{The determinant}
+For $0\le r<n$ the row polynomials are
+\begin{equation}\label{eq:rows}
+ P_r(t)=(1-t)^ht^{C-1}T_{|r-g|}(1/t),\qquad \deg P_r<H,
 \end{equation}
-Here $c_2$ is the energy cost of one fixed column and $\Psi_0$ bounds the logarithmic size of the weight
-and the binomial factor of one column, per unit of $N$.
-
-\begin{theorem}\label{thm:real}
-Let $U_0=U+\Gain/n_0^2=\Uzero\ldots$, with $U=\Utarget$ and $n_0=58$. For every $\varepsilon>0$, all large
-$N$ and all real $x$ with $|x-G|\le e^{-\rho N}$,
+together with companion polynomials $D_r$ built from $U_{|r-g|-1}$ \cite[(3)]{OpenAI2026}. Thus $P_r$
+depends only on $|r-g|$. Put $f(t)=\sqrt{1-t^2}$ and $dm(t)=|t|\,dt/f(t)$ on $(-1,1)$, and
 \[
- |\Delta_N(x)|\le\exp\bigl(-(n_0^2(U_0-\tfrac12\log2)-\varepsilon)N^2\bigr).
+ A_r(t)=P_r(t)-\frac32\,\mathbf 1_{\{t>0\}}\frac{f(t)}{t}D_r(t),\qquad
+ \varphi_k(s)=s^{b+k}(1-s)^q .
 \]
-\end{theorem}
+The determinant studied by OpenAI is that of the $n\times n$ matrix
+\begin{equation}\label{eq:matrix}
+ \cA_N(r,k)=\int_{-1}^1\int_0^1 A_r(t)\,\frac{\varphi_k(s)}{1-ts}\,ds\,dm(t)
+ \qquad(0\le r,k<n).
+\end{equation}
+The factor $(1-s)^q$ in $\varphi_k$ amounts to a finite difference of order $q$ applied to the columns. The
+entries are rational linear combinations of $1$ and $G$. There are rational matrices $\cA^0_N$ and $\cL_N$
+with
+\begin{equation}\label{eq:L}
+ \cA_N=\cA^0_N+G\,\cL_N,\qquad
+ \cL_N(r,k)=\sum_{v=0}^{q}(-1)^v\binom qv\sum_{i}[t^i]P_r\cdot4\,c_{(i-b-k-v)/2},
+\end{equation}
+where $c_l=4^{-l}\binom{2l}{l}$ for integers $l\ge0$ and $c_z=0$ otherwise
+\cite[Prop.~2.1 and (20)]{OpenAI2026}. The rational part is
+\begin{equation}\label{eq:rational-part}
+ \begin{gathered}
+ \cA^0_N(r,k)=\sum_{v=0}^q(-1)^v\binom qv R(r,b+k+v),\\
+ R(r,j)=\sum_{i<H}P_r[i]\,M(i,j)-\frac32\sum_{i<H}D_r[i]\,Z(i,j)
+ \end{gathered}
+\end{equation}
+with rational numbers $M(i,j)$, the moments of $m$ against the Cauchy kernel, and $Z(i,j)$, where
+$Z(i,i)=-\sum_{k\le i}k^{-2}$ and $Z(i,j)=(H_i-H_j)/(i-j)$ for $i\ne j$, $H_i=\sum_{k\le i}1/k$
+\cite[Prop.~2.1]{OpenAI2026}. We call the vectors $R(\cdot,j)$, $b\le j<L$, the \emph{moment columns}. The
+columns of $\cA^0_N$ are their differences of order $q$. The design enters \eqref{eq:rational-part} only
+through the integer coefficients $P_r[i],D_r[i]$ and the range of $j$. Put
+$\Delta_N(X)=\det(\cA^0_N+X\cL_N)\in\Q[X]$, so that $\Delta_N(G)=\det\cA_N$.
 
-The number $n_0^2(U-\frac12\log2)=\TDeltaOld\ldots$ is the decay rate that OpenAI's energy method gives
-for the design $D$. The signed bound adds $\Gain$, so $n_0^2(U_0-\frac12\log2)=\TDelta\ldots$ Since
-$\mathsf A=\Aden\ldots$, the polynomial $Q_N=(d_0N)!\,D_N\Delta_N$ has integer coefficients, degree at
-most $d_0N$, and
-\[
- |Q_N(x)|\le e^{-\eta N^2}\qquad(|x-G|\le e^{-\rho N}),\qquad \eta=\EtaTot .
-\]
-The exact difference is $\EtaExact\ldots$, and $\eta$ is a rational number just below it. The remaining
-properties of Section~\ref{sec:intro-need} are the nonvanishing of $Q_p(a/b)$ for $p^2\nmid b$
-(Proposition~\ref{prop:nonvanishing}) and the divisibility of the $i$-th coefficient of $Q_N$ by $q^{2i}$
-for $N<q\le2N$ (Lemma~\ref{lem:recycling}). They are used to choose the prime. The criterion is the
-following.
+\subsection{The degree}
+\begin{lemma}\label{lem:degree}
+$\deg\Delta_N\le n-g$.
+\end{lemma}
+
+\begin{proof}
+By \eqref{eq:L} the row $r$ of $\cL_N$ depends only on $P_r$, and hence only on $|r-g|$. So the rows $r$
+and $2g-r$ of $\cL_N$ agree for $0\le r<g$, and $2g-r\le n-1$ because $2g<n$. Subtracting row $r$ from row
+$2g-r$ for each $r<g$ does not change the determinant and makes $g$ rows of the new coefficient of $X$
+vanish. A determinant $\det(B+XL')$ in which $L'$ has $n-g$ nonzero rows has degree at most $n-g$ in $X$.
+\end{proof}
+
+\subsection{The criterion}\label{ssec:criterion}
+The following criterion turns the three properties of \S\ref{sec:intro-need} into a measure. It is the
+reason for every later estimate, so we state and prove it first.
 
 \begin{proposition}\label{prop:criterion}
-Let $\xi\in\R$, $d\in\N$, and let $\eta,\rho,\kappa,\delta,\omega>0$ satisfy
+Let $\xi\in\R$, $d\in\N$, and let $\eta,\rho,\lambda,\delta,\omega>0$ satisfy
 \[
- \omega\le1,\quad 2\omega<\kappa,\quad \eta<2d,\quad 1<2\bigl(\omega-\delta(2\kappa-\omega)\bigr),\quad
- d+4d\delta\kappa<\eta\kappa .
+ \omega\le1,\quad 2\omega<\lambda,\quad \eta<2d,\quad 1<2\bigl(\omega-\delta(2\lambda-\omega)\bigr),\quad
+ d+4d\delta\lambda<\eta\lambda .
 \]
-Let $Q_p\in\Z[X]$ ($p$ prime) satisfy the following for all large $p$. $\deg Q_p\le dp$. $Q_p(a/b)\ne0$
-whenever $a\in\Z$, $b\ge1$ and $p^2\nmid b$. For all primes $p<q\le2p$ and $i\le dp$, $q^{2i}$ divides the
-$i$-th coefficient of $Q_p$. Finally $|Q_p(x)|\le e^{-\eta p^2}$ for $|x-\xi|\le e^{-\rho p}$. Then
-\[
- |\xi-a/b|>b^{-\rho\kappa}
-\]
-for all integers $a$ and all sufficiently large $b$.
+For each prime $p$ let $Q_p\in\Z[X]$, and suppose that the following hold for all large $p$.
+\begin{enumerate}[label=(\alph*)]
+\item $\deg Q_p\le dp$.
+\item $Q_p(a/b)\ne0$ whenever $a\in\Z$, $b\ge1$ and $p^2\nmid b$.
+\item For all primes $p<p'\le2p$ and all $i\le dp$, $p'^{2i}$ divides the $i$-th coefficient of $Q_p$.
+\item $|Q_p(x)|\le e^{-\eta p^2}$ for $|x-\xi|\le e^{-\rho p}$.
+\end{enumerate}
+Then $|\xi-a/b|>b^{-\rho\lambda}$ for all integers $a$ and all sufficiently large $b$.
 \end{proposition}
 
-The conditions say, in the order of the proof in Section~\ref{sec:proof}, three things. The window of primes
-contains a prime not dividing $b$. The primes of the window above the chosen one are recycled. The final
-inequality is contradictory. For the design $D$ one takes $d=53$, $\omega=3/5$, $\delta=2.9\cdot10^{-7}$
-and $\kappa=B/\rho$ with $B=410$. The last condition then reads $B>x:=d\rho/(\eta-4d\delta)=\Bx\ldots$
+\begin{proof}
+Let $a/b$ be a rational number with $b$ large. Put $u_1=\lambda\log b$ and $u_0=(\lambda-\omega)\log b$,
+and suppose $|\xi-a/b|\le b^{-\rho\lambda}$. By the prime number theorem,
+$(1-\delta)t\le\vartheta(t)\le(1+\delta)t$ for all large $t$, and $u_0\to\infty$ with $b$. If every prime
+$p\in(u_0,u_1]$ had $p^2\mid b$, then $2(\vartheta(u_1)-\vartheta(u_0))\le\log b$. But
+\begin{align*}
+ 2\bigl(\vartheta(u_1)-\vartheta(u_0)\bigr)&\ge2\log b\,\bigl((1-\delta)\lambda-(1+\delta)(\lambda-\omega)\bigr)\\
+ &=2\log b\,\bigl(\omega-\delta(2\lambda-\omega)\bigr)>\log b
+\end{align*}
+by the fourth hypothesis. So there are primes in $(u_0,u_1]$ whose squares do not divide $b$. Let $p$ be
+the \emph{largest} one. Every prime $p'\in(p,u_1]$ has $p'^2\mid b$, and $p'\le u_1<2u_0<2p$ because
+$2\omega<\lambda$. Let $\Pi$ be the product of these $p'^2$. Then $\Pi\mid b$ and
+$\log\Pi=2(\vartheta(u_1)-\vartheta(p))$.
 
-\subsection{A reading of the exponent}
-For a fixed design the bound is $d\rho/\eta$ in the limit. Its three ingredients come from three
-different places. The degree $d=n-g$ comes from the construction. The perturbation exponent $\rho$ comes
-from the quadrature and the energy cost of a column. The decay rate $\eta$ is the difference of the real
-place and the denominators, $\TDelta$ and $\Aden$. Both large numbers are improved here: the rank
-deficiencies lower the second by $22.05$, and the signed bound raises the first by $\Gain$. Without either,
-$\eta$ would be $\EtaInf$.
+Consider the integer $b^{dp}Q_p(a/b)=\sum_ic_ia^ib^{dp-i}$. Each of its terms is divisible by $p'^{2dp}$
+for each of these $p'$. Indeed $p'^{2i}$ divides $c_i$ by (c), and $p'^2\mid b$ gives
+$p'^{2(dp-i)}\mid b^{dp-i}$. So $\Pi^{dp}$ divides the integer. Since $p^2\nmid b$, $Q_p(a/b)\ne0$ by (b).
+So $b^{dp}Q_p(a/b)/\Pi^{dp}$ is a nonzero integer, and
+\begin{equation}\label{eq:recovered}
+ 1\le\Bigl(\frac b\Pi\Bigr)^{dp}\,|Q_p(a/b)| .
+\end{equation}
+Since $\rho p\le\rho u_1=\rho\lambda\log b$, we have $|a/b-\xi|\le e^{-\rho p}$. So
+$|Q_p(a/b)|\le e^{-\eta p^2}$, and \eqref{eq:recovered} gives
+$\eta p^2\le dp\bigl(\log b-2(\vartheta(u_1)-\vartheta(p))\bigr)$. With
+$\vartheta(u_1)-\vartheta(p)\ge u_1-p-2\delta u_1$ this is
+\[
+ \eta p\le d\bigl(\log b-2u_1+2p+4\delta u_1\bigr).
+\]
+Hence $(\eta-2d)p\le d\log b-2du_1+4d\delta u_1$. As $\eta<2d$ and $p\le u_1$, the left side is at least
+$(\eta-2d)u_1$. So $\eta u_1\le d\log b+4d\delta u_1$, that is, $\eta\lambda\le d+4d\delta\lambda$. This
+contradicts the last hypothesis.
+\end{proof}
 
-\input{sec2_3}
+The hypotheses have the following roles. The fourth ensures that the interval $(u_0,u_1]$ contains a prime
+whose square does not divide $b$. The second ensures that the larger primes of the interval lie below twice
+the chosen one, so that their squares can be recovered from the coefficients of $Q_p$. The last makes the
+final inequality contradictory. The proof takes the largest prime of the interval whose square does not
+divide $b$. The squares of the larger primes then divide $b$, and (c) recovers them. Choosing any prime of
+the interval would lose a power of $b$. Taking the lower end $u_0=(\lambda-\omega)\log b$ as a free
+parameter allows $\lambda<2$, since the recovery needs only $u_1<2u_0$.
+
+For Catalan's constant we take $d=53$, $\omega=\frac35$, $\delta=2.9\cdot10^{-7}$ and $\lambda=410/\rho$.
+The last hypothesis then reads $410>B_*$ with $B_*=d\rho/(\eta-4d\delta)=\Bstar\ldots$
+
+\input{sec3}
 \input{sec4}
 \input{sec5}
 \input{sec6}
-\input{sec6_8}
+\input{sec7}
+\input{sec8}
+
+\appendix
+\input{appendix}
 
 \bibliographystyle{amsplain}
 \bibliography{refs}

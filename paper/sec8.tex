@@ -1,0 +1,108 @@
+\section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
+
+OpenAI's energy method gives the decay rate $D_0=n_0^2(U-\frac12\log2)=\DecayOA\ldots$ for our parameters.
+Section~\ref{sec:signed} raises it to $D=\Decay\ldots$ With $\Lambda=\LamDen\ldots$ the polynomial
+$Q_N=(d_0N)!\,\cD_N\Delta_N$ has integer coefficients, degree at most $53N$, and
+\[
+ |Q_N(x)|\le e^{-\eta N^2}\qquad(|x-G|\le e^{-\rho N}),\qquad \eta=\EtaTot .
+\]
+Two further properties are needed to choose the prime in the criterion: nonvanishing of $Q_p(a/b)$ when
+$p^2\nmid b$ (Proposition~\ref{prop:nonvanishing}), and divisibility of the $i$-th coefficient of $Q_N$ by
+$p'^{2i}$ for every prime $N<p'\le2N$ (Lemma~\ref{lem:squares}). We now check the hypotheses of
+Proposition~\ref{prop:criterion}.
+
+Take $d=53$, and let the polynomials $Q_p$ of the proposition be the $Q_N$ with $N=p$. Let
+\begin{gather*}
+ \rho=\Rho,\quad \eta=\EtaTot,\quad \omega=\tfrac35,\quad \delta=2.9\cdot10^{-7},\\
+ \lambda=\frac{410}{\rho}=\LamCrit\ldots
+\end{gather*}
+\begin{enumerate}[label=(\alph*)]
+\item $\deg Q_N\le53N$ by \eqref{eq:QN} and Lemma~\ref{lem:degree}.
+\item By Proposition~\ref{prop:nonvanishing}, $\Delta_p(a/b)\ne0$ for large $p$ with $p^2\nmid b$. Hence
+$Q_p(a/b)\ne0$.
+\item By Lemma~\ref{lem:squares}, $p'^{2i}$ divides the $i$-th coefficient of $Q_p$ for all primes
+$p<p'\le2p$.
+\item By Theorem~\ref{thm:real}, Proposition~\ref{prop:denominators} and $\log(53N)!=o(N^2)$, for
+$|x-G|\le e^{-\rho N}$ and large $N$,
+\[
+ |Q_N(x)|\le\exp\bigl(-(D-\Lambda+o(1))N^2\bigr)\le e^{-\eta N^2},
+\]
+since $\eta=\EtaTot<D-\Lambda=\EtaExact\ldots$ In the formal proof this is the inequality $\eta<D-\Lambda$ with
+$\int\kappa$ replaced by its lower bound $\ChiLean$.
+\end{enumerate}
+The numerical conditions hold as well. We have $\rho\lambda=410$ and $0<\eta<2d=106$. Next $\omega=\frac35\le1$ and
+$2\omega=1.2<\lambda$. Further $2(\omega-\delta(2\lambda-\omega))=1.199998\ldots>1$. Finally
+$d+4d\delta\lambda=\PayL\ldots<\eta\lambda=\PayR\ldots$ So Proposition~\ref{prop:criterion} gives
+$|G-a/b|>b^{-\rho\lambda}=b^{-410}$ for all integers $a$ and all sufficiently large $b$. This proves
+Theorem~\ref{thm:main}.
+
+\section{Remarks on the method}\label{sec:remarks}
+
+\subsection{The three ingredients}
+For fixed parameters the method gives the exponent $d\rho/\eta$, and its three ingredients come from
+different places. The degree $d=n-g$ comes from the construction. Of $\rho=\Rho$, the prescribed columns
+contribute $n_0c_2\approx208.6$ through the energy, and the weight and the binomial factor of one column
+contribute $W_0\approx88.0$. Bounding these two factors separately, by their maxima, would add about $5$ to
+$\rho$. The number $\eta$ is a small difference of two large numbers, $D\approx6.4\cdot10^3$ and
+$\Lambda\approx6.4\cdot10^3$. The corank bounds of Section~\ref{sec:content} contribute about $22$ to it, and the
+signed bound of Section~\ref{sec:signed} about $8$. Without them $\eta$ would be about $8$. Since the exponent
+is inversely proportional to $\eta$, a further gain of $0.1$ in $\eta$ would lower it by about $1$.
+
+\subsection{The row determinant}
+\begin{remark}\label{rem:L}
+The energy method bounds $|\det\mathsf L|$ by $6^n$, which is $e^{O(N)}$ and invisible at the scale $N^2$.
+At the extremal configuration, numerical evaluation for small $N$ suggests that $\log|\det\mathsf L|$ is about
+$-28N^2$. So most of its true size is not captured by our bound either. The bound \eqref{eq:eleven} loses only
+$e^{O(N)}$, and Theorem~\ref{thm:heine} is an identity. The loss is in the log-gas bounds of
+\S\ref{ssec:loggas}, which use fixed trial measures, and in the requirement that the combined functional be
+bounded by its maximum over all configurations. A sharper treatment of the denominator $Z_s(\Pi_+)$ would
+raise $\Gamma_0$. These numerical values are not part of the formal proof.
+\end{remark}
+
+\subsection{Other parameters}
+All the results of Section~\ref{sec:content} are lower bounds for the corank, and the proofs give the kernel
+vectors explicitly. The closed formulas, the counting inequality and the families derived from it are
+proved for all parameters. So are the other arguments of the paper, except the explicit subspaces of
+Appendix~\ref{app:windows} and the trial measures, which belong to $(58,9,3,5,3)$. A different choice of
+parameters changes $d$, $\rho$ and $\eta$ together, and we make no claim that ours is optimal. Except for the
+pair (F4), the function $\kappa$ uses no relation between different families. So at a prime where intervals
+overlap the exact corank may be larger than each bound. An upper bound for the corank is not needed. More
+independence between families, or larger explicit subspaces, would increase $\eta$ without changing
+anything else.
+
+\section{Formalization}\label{sec:formal}
+
+All results of this paper are formalized in Lean~4 \cite{Lean4} with Mathlib \cite{Mathlib}, on top of OpenAI's
+formalization of the irrationality of $G$ \cite{OpenAI2026}. The development is available at
+\begin{center}
+\FormalizationLink.
+\end{center}
+Theorem~\ref{thm:main} is the theorem
+\begin{center}
+{\small\texttt{CatalanIrrationalityMeasure.catalan\_irrationalityMeasure\_410}}
+\end{center}
+in \lean{Solution.lean}. Its statement, in \lean{Challenge.lean}, uses only Mathlib. Catalan's constant is
+written as the series $\sum_j(-1)^j/(2j+1)^2$, and the conclusion is $|G-a/b|>b^{-410}$ for all integers $a$
+and all sufficiently large $b$. The modules contain no \lean{sorry} and no \lean{native\_decide}. The command
+\lean{\#print axioms} shows that only the three standard axioms \lean{propext}, \lean{Classical.choice} and
+\lean{Quot.sound} are used. The repository also contains a configuration \lean{comparator.json} for
+\lean{lake comparator} \cite{Comparator}, which checks that the solution file proves the challenge statement
+with these axioms only. The prime number theorem is taken from the PNT+ project \cite{PNTPlus}. The parts of
+OpenAI's formalization that are used were converted to Lean's module system and ported to Lean
+4.35.0-rc2. The repository's \texttt{README} describes the changes and the layout of the modules.
+
+The proof combines conventional formal proofs with numerical certificates. These are the inverses of the base
+matrices modulo $1009$, the trial sequences and the covers of Appendices~\ref{app:field} and~\ref{app:trials},
+and the subspaces, kernel vectors and interval conditions of Appendix~\ref{app:windows}. The certificates are
+exact rational and integer computations checked by the Lean kernel without compiled code. The interval
+arithmetic used to generate them \cite{Arb} is not trusted.
+
+\section*{Disclosure of AI use}
+The mathematics, the Lean formalization, the certificate generators and the text of this paper were produced
+by AI systems at the request of the author. The author posed the problems, directed the work and is
+responsible for the paper. The systems were Claude Opus~5.5, Claude Sonnet~5.5 and Claude Haiku~5.5
+(Anthropic), running in Claude Code, and GPT-6.1 Sol (OpenAI), running in Codex. The underlying
+irrationality proof for Catalan's constant and its Lean formalization are due to OpenAI \cite{OpenAI2026}.
+
+\subsection*{Acknowledgements}
+We thank the authors of Mathlib and of the PNT+ project, and OpenAI for making its formalization available.
