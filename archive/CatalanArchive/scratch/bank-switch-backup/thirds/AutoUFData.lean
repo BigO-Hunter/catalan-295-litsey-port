@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.Check.Bank
 import CatalanCore.Uniform.Content.BankShared.Check.UF
 import CatalanCore.Uniform.Content.BankShared.Check.Test

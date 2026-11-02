@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Tools.PotentialReal
 import CatalanCore.Uniform.Decay.Tools.BernsteinList
 import CatalanCore.Uniform.Decay.Tools.EvalSound

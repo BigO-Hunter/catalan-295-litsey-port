@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.CommonMinorRealize
 import CatalanCore.Uniform.Content.RankProducer.Boundary
 import CatalanCore.Uniform.Bank.Sevenths.Band

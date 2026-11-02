@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.NearCells2.Mix
 import CatalanCore.Uniform.Decay.NearCells.PilotData
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Geom
 import CatalanCore.Uniform.Bank.Sevenths.Frame
 import CatalanCore.Uniform.Content.BankShared.AltCrude

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PoleData
 import CatalanCore.Uniform.Content.BankShared.PoleTropical
 set_option Elab.async false

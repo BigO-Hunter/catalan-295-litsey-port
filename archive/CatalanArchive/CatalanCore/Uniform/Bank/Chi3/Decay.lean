@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Check
 set_option Elab.async false
 

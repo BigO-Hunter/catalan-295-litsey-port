@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Tools.LogJet
 import CatalanCore.Uniform.Decay.Tools.Bernstein
 import CatalanCore.Uniform.Decay.Tools.Enclosures

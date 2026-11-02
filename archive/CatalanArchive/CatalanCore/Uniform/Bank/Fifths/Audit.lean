@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Fifths.Members
 #print axioms CatalanCore.Uniform.Bank.Fifths.fifths_measureLB
 #print axioms CatalanCore.Uniform.Bank.Fifths.fifths_measure_of_const

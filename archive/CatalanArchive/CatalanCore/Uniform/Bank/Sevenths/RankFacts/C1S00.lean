@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.RankFibre.C1S00
 import CatalanCore.Uniform.Bank.Sevenths.RankLoads.C1
 import CatalanCore.Uniform.Bank.Sevenths.RankLoads.C1

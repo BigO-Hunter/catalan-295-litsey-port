@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Content.Final
 
 #print axioms CatalanCore.Uniform.Bank.Chi3Content.chi3PoleData

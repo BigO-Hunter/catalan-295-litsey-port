@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Closed
 import CatalanCore.Uniform.Bank.ThirdsContent.TwoTerm
 import CatalanCore.Uniform.Bank.Thirds.Geom

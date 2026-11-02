@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.PolePalette
 import CatalanCore.Uniform.Bank.Lambda.RankTools
 import CatalanCore.Uniform.Bank.Lambda.RankData.C1T20

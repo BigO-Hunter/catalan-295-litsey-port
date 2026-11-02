@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Tube.Edge0
 import CatalanCore.Uniform.Bank.Chi3.Tube.Edge1
 import CatalanCore.Uniform.Bank.Chi3.Tube.Edge2

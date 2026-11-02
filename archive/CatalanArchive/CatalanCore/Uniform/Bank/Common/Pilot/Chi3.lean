@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Common.Data.Chi3.Data
 
 /-! Pilot (lane B, B0), generated: D5's elementary checker `basicOk` on the Chi3 bank data, timed per declaration. -/

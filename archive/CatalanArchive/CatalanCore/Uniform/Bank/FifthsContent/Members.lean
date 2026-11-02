@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Content5
 import CatalanCore.Uniform.Bank.FifthsContent.NoUF
 import CatalanCore.Uniform.Bank.Fifths.Frame

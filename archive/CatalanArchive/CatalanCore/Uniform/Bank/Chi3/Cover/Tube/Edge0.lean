@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.E0B00
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.E0B01
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.E0B02

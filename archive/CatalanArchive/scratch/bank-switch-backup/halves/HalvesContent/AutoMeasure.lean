@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.HalvesContent.Auto
 import CatalanCore.Uniform.Bank.Halves.Final
 import CatalanCore.Uniform.Bank.Halves.Frame

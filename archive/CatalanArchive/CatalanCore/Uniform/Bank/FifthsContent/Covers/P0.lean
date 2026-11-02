@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Cov
 import CatalanCore.Uniform.Bank.FifthsContent.Prefix.P0
 set_option Elab.async false

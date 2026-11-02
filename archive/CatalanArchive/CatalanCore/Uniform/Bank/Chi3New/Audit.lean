@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3New.Final
 
 #print axioms CatalanCore.Uniform.Bank.Chi3New.Inu_le_nodeEnergy

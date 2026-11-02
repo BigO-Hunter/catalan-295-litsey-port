@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyWire3.Regress.Chi3.Env0
 import CatalanCore.Uniform.Decay.PolyWire3.Decode
 

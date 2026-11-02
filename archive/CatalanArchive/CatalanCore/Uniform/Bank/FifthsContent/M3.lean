@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Smith.TwoTerm
 import CatalanCore.Uniform.Bank.FifthsContent.OfBounds
 import CatalanCore.Uniform.Bank.Fifths.Geom

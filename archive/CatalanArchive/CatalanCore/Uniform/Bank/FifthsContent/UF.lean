@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Cov
 import CatalanCore.Uniform.Bank.FifthsContent.LP
 import CatalanCore.Uniform.Content.UFSimple.Audit

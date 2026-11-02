@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Geom
 import CatalanCore.Uniform.Bank.Sevenths.TwoTerm
 import CatalanCore.Uniform.Content.UFSimple.Closed

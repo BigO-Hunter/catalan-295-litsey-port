@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Smith.TwoTerm
 import CatalanCore.Uniform.Content.Wire.M3D
 set_option Elab.async false

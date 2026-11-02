@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Glob
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.Top
 import CatalanCore.Uniform.Bank.Chi3.Cover.Line.Top

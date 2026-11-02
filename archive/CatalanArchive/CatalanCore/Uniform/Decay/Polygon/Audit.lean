@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Polygon.Data
 import CatalanCore.Uniform.Decay.Polygon.Rules
 

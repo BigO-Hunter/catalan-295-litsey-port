@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Common.Schema
 
 namespace CatalanCore.Uniform.Bank.Common.Data.Chi3

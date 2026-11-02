@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Line.B00
 import CatalanCore.Uniform.Bank.Chi3.Cover.Line.B01
 import CatalanCore.Uniform.Bank.Chi3.Cover.Line.B02

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Cover.Check
 set_option Elab.async false
 

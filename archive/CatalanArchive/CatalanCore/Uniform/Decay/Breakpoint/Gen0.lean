@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Tube.Top
 import CatalanCore.Uniform.Decay.Breakpoint.Cell
 set_option Elab.async false

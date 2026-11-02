@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyChain.CheckMain
 
 /-!

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.SeventhsContent.AutoData.U1
 import CatalanCore.Uniform.Bank.SeventhsContent.AutoData.U2
 import CatalanCore.Uniform.Bank.SeventhsContent.AutoData.U3

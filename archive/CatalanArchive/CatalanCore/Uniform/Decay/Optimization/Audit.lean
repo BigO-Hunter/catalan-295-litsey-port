@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.TablesSound
 import CatalanCore.Uniform.Decay.Optimization.Chi3FinalStream
 import CatalanCore.Uniform.Decay.Optimization.ThirdsFinalStream

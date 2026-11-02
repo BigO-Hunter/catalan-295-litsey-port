@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankTools
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.Lambda.RankTools

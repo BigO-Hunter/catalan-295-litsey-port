@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PairEnergy.Enc
 import CatalanCore.Uniform.Decay.Cells.Energy
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.Tables
 set_option Elab.async false
 set_option profiler true

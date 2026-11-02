@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Decay
 import CatalanCore.Uniform.Bank.Chi3New.Energy
 import CatalanFrames.P6.Contour

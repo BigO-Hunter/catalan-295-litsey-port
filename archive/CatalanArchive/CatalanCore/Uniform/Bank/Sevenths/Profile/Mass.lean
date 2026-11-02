@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Profile.C1
 import CatalanCore.Uniform.Bank.Sevenths.Profile.C5
 import CatalanCore.Uniform.Bank.Sevenths.Profile.C3

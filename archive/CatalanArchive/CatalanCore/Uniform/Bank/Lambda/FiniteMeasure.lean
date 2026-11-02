@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.NoUFMembers
 import CatalanCore.Uniform.Bank.Lambda.FiniteRate
 set_option Elab.async false

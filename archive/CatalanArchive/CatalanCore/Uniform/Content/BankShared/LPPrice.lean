@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Wire.LP
 set_option Elab.async false
 set_option maxHeartbeats 2000000

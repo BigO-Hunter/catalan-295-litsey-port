@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Cov
 import CatalanCore.Uniform.Bank.FifthsContent.ProfileUF.J3
 import CatalanCore.Uniform.Bank.FifthsContent.LP

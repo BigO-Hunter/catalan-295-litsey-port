@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Price
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.Lambda

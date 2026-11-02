@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Rounding
 import CatalanCore.Uniform.Bank.Lambda.TwoTerm
 set_option Elab.async false

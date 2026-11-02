@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PolePalette
 import CatalanCore.Uniform.Content.RankProducer.Denominators
 import CatalanCore.Uniform.Bank.Sevenths.RankData.C9T37

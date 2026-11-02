@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.TwoTerm
 import CatalanCore.Uniform.Bank.Lambda.PrimeNormalisation
 import CatalanCore.Uniform.Content.Wire.M3Windows

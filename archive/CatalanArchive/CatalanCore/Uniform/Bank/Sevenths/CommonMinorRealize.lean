@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Realize
 import CatalanCore.Uniform.Bank.Sevenths.DigitShape
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Energy.R00
 import CatalanCore.Uniform.Bank.Chi3.Cover.Energy.R03
 import CatalanCore.Uniform.Bank.Chi3.Cover.Energy.R06

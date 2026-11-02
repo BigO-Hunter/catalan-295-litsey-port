@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.SeventhsContent.Auto
 import CatalanCore.Uniform.Bank.Sevenths.Final
 import CatalanCore.Uniform.Bank.Sevenths.Frame

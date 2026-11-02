@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Member.Template
 import CatalanCore.Arith.Hybrid.PieceTools
 set_option Elab.async false

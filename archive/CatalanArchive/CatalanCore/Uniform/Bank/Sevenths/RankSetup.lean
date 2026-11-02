@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Normalisation
 import CatalanCore.Uniform.Bank.Sevenths.Band
 import CatalanCore.Uniform.Content.RankProducer.BalancedGeometry

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.SmallPrimes
 import CatalanCore.Uniform.Content.BankShared.LeastPrice
 set_option Elab.async false

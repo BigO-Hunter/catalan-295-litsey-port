@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Thirds.Energy
 import CatalanCore.Uniform.Bank.Thirds.Final
 import CatalanCore.Uniform.Decay.PolyChain.CheckMain

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Geometry
 import Mathlib.Tactic
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.AltCrude
 import CatalanCore.Uniform.Bank.Fifths.Geom
 set_option Elab.async false

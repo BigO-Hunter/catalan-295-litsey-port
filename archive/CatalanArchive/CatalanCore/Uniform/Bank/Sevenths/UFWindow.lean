@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.UF
 import CatalanCore.Uniform.Bank.Sevenths.Roots
 import CatalanCore.Uniform.Bank.Sevenths.Rounding

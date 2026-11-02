@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Env
 import CatalanCore.Uniform.Decay.FarField.PLKinds
 import CatalanCore.Uniform.Decay.NearCells.PilotData

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PairEnergy.Oracle
 import CatalanCore.Uniform.Decay.PolyChain.Check
 set_option Elab.async false

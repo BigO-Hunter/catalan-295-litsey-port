@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.ThirdsFinalData
 set_option Elab.async false
 set_option profiler true

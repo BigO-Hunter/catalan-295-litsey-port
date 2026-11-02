@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Breakpoint.Cell
 import CatalanCore.Uniform.Decay.PolyWire2.Kinds
 set_option Elab.async false

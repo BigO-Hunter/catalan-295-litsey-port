@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.Inst.Sevenths
 import CatalanFrames.Fifths.Instance
 set_option Elab.async false

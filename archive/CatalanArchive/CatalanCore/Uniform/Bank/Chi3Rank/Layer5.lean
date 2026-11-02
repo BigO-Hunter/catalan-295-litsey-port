@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.Layer1
 set_option Elab.async false
 

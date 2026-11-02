@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Breakpoint.GenBp
 set_option Elab.async false
 set_option maxRecDepth 100000

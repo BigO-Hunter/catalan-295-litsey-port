@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Common.Data.Sev1.Data
 
 /-! Pilot (lane B, B0), generated: D5's elementary checker `basicOk` on the Sev1 bank data, timed per declaration. -/

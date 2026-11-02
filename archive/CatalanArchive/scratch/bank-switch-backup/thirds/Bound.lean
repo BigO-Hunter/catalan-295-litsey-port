@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Thirds.Cover.Check
 import CatalanCore.Uniform.Decay.AltDecay
 import CatalanCore.Uniform.Bank.ThirdsContent.MeasureUF

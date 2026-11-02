@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.LPWindows
 import CatalanCore.Uniform.Content.Wire.LP
 import CatalanCore.Uniform.Content.BankShared.Reindex

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.RankSum
 import CatalanCore.Uniform.Bank.Chi3New.Final
 set_option Elab.async false

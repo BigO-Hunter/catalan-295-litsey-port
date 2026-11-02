@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Cover.Check
 import CatalanCore.Uniform.Decay.AltDecay
 import CatalanCore.Uniform.Bank.LambdaContent.AutoMeasure

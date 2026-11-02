@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankCount.C1S03
 import CatalanCore.Uniform.Content.RankProducer.RationalMatches
 set_option Elab.async false

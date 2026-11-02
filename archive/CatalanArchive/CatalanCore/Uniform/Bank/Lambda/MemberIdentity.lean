@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Geom
 import CatalanCore.Uniform.Content.BankShared.Reindex
 set_option Elab.async false

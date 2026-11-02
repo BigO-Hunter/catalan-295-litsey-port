@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.NearCells2.Pilot2W
 import CatalanCore.Uniform.Decay.NearCells2.Pilot2E
 import CatalanCore.Uniform.Decay.NearCells2.Pilot2L1

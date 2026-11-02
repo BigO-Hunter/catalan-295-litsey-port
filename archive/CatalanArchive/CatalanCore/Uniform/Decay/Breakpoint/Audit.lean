@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Breakpoint.Tables
 set_option Elab.async false
 

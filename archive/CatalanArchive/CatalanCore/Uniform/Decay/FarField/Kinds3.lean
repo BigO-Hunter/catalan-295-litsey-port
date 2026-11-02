@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyWire2.Top2
 import CatalanCore.Uniform.Decay.FarField.Cell
 set_option Elab.async false

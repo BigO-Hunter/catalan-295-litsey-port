@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Rounding
 import CatalanCore.Uniform.Bank.Sevenths.PoleData
 import CatalanCore.Uniform.Content.Smith.LP1Table

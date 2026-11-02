@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Frame.Block
 set_option Elab.async false
 

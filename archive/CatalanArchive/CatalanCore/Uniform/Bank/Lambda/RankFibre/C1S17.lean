@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.CommonMinorRealize
 import CatalanCore.Uniform.Bank.Lambda.Boundary
 import CatalanCore.Uniform.Bank.Lambda.Band

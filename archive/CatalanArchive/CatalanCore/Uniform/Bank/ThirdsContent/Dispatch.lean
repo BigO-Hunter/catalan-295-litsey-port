@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.Cov.Prefix
 import CatalanCore.Uniform.Bank.ThirdsContent.Cov.A1C1
 import CatalanCore.Uniform.Bank.ThirdsContent.Cov.A1C5

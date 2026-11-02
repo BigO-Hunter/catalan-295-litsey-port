@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Env0
 import CatalanCore.Uniform.Decay.PolyFull.Full
 

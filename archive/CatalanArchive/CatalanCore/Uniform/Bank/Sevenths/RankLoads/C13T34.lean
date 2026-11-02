@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.RankPalette.C13T34
 import CatalanCore.Uniform.Bank.Sevenths.RankUnits
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Assembly.LogModulus
 import CatalanCore.Uniform.Decay.Assembly.LogModulusAbs
 import CatalanCore.Uniform.Decay.Assembly.SegmentModulus

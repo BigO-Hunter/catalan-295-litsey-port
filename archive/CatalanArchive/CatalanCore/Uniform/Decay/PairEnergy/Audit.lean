@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PairEnergy.Pilot
 import CatalanCore.Uniform.Decay.PairEnergy.PolyEnergy
 

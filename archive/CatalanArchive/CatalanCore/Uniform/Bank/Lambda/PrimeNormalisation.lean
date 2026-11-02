@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Normalisation
 import CatalanCore.Uniform.Content.BankShared.NormaliseGLE
 set_option Elab.async false

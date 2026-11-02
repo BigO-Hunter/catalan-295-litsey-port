@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.RankFinal
 
 #print axioms CatalanCore.Uniform.Bank.Chi3Rank.lfE_c1

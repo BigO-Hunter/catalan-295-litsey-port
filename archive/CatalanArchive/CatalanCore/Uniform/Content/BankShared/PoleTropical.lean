@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Arith.Hybrid.PeriodicEntries
 import CatalanCore.Arith.Hybrid.Dual
 import CatalanCore.Uniform.Content.Member.Entries

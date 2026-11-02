@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.Count
 import CatalanCore.Uniform.Bank.Chi3Rank.Certs
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.TwoTerm
 import CatalanCore.Uniform.Bank.Sevenths.Roots
 set_option Elab.async false

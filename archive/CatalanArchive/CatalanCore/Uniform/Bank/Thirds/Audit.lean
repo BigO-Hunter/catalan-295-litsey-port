@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Thirds.Decay
 set_option Elab.async false
 

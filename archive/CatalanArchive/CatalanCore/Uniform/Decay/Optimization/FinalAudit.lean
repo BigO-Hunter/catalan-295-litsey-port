@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.Audit
 import CatalanCore.Uniform.Decay.Optimization.Lambda24FinalStream
 import CatalanCore.Uniform.Decay.Optimization.Chi3Moments

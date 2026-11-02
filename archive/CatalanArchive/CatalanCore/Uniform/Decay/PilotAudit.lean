@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PilotCorner
 import CatalanCore.Uniform.Decay.PilotPotential
 import CatalanCore.Uniform.Decay.PilotEnergy

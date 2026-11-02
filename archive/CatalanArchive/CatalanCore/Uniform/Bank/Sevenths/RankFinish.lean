@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.RankSetup
 import CatalanCore.Uniform.Content.RankProducer.LineTrim
 import CatalanCore.Uniform.Content.RankProducer.LineCost

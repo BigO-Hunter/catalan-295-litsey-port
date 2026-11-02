@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Cover.Check
 import CatalanCore.Uniform.Decay.AltDecay
 import CatalanCore.Uniform.Bank.SeventhsContent.AutoMeasure

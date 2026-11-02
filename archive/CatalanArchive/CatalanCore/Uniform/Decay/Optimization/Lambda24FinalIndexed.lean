@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.Lambda24FinalData
 set_option Elab.async false
 set_option profiler true

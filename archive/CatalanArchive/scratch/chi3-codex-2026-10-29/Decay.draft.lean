@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Env
 import CatalanCore.Uniform.Bank.Chi3.Cover.Check
 import CatalanCore.Uniform.Decay.AltDecay

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Geometry
 import CatalanCore.Uniform.Bank.Sevenths.Rounding
 set_option Elab.async false

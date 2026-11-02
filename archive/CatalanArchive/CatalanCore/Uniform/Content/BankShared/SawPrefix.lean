@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Member.Template
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 set_option Elab.async false

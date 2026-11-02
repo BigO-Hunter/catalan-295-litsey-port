@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.RankFinal
 #print axioms CatalanCore.Uniform.Bank.Chi3New.chi3_decay
 #print axioms CatalanCore.Uniform.Bank.Chi3Rank.chi3_measure_L2_rank

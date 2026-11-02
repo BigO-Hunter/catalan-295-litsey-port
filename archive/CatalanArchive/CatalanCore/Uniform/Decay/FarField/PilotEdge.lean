@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.FarField.PilotGlobal
 import CatalanCore.Uniform.Decay.FarField.PilotCell0
 import CatalanCore.Uniform.Decay.FarField.PilotCell1

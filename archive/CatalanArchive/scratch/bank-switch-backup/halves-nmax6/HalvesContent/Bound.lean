@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Halves.Cover.Check
 import CatalanCore.Uniform.Decay.AltDecay
 import CatalanCore.Uniform.Bank.HalvesContent.AutoMeasure

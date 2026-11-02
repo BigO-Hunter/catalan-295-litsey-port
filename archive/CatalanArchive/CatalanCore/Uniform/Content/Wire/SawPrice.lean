@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Layers.SawCount
 set_option Elab.async false
 namespace CatalanCore.Uniform.Content.Wire

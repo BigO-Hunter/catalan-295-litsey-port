@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.RankCount.C1S00
 import CatalanCore.Uniform.Bank.Sevenths.RankFacts.C1S00
 import CatalanCore.Uniform.Bank.Sevenths.RankFinish

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Restriction
 import CatalanCore.Uniform.Content.RankProducer.Block
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PrimeBound
 import CatalanCore.Uniform.Bank.Sevenths.Tropical
 import CatalanCore.Uniform.Content.BankShared.FixedBudget

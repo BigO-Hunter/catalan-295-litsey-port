@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Common.Data.Thirds.Data
 
 /-! Pilot (lane B, B0), generated: D5's elementary checker `basicOk` on the Thirds bank data, timed per declaration. -/

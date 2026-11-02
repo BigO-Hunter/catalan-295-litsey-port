@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.TwoTerm.LP
 import CatalanCore.Uniform.Content.BankShared.TwoTerm.M3D
 import CatalanCore.Uniform.Content.BankShared.TwoTerm.UF

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PrimeBound
 import CatalanCore.Uniform.Content.RankProducer.RationalLoads
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankBalance
 import CatalanCore.Uniform.Bank.Chi3Rank.Fibre
 import CatalanCore.Uniform.Content.RankProducer.Assignment

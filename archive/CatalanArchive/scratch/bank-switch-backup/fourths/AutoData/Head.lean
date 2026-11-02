@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.Check.Split
 import CatalanCore.Uniform.Content.BankShared.Check.UF
 set_option Elab.async false

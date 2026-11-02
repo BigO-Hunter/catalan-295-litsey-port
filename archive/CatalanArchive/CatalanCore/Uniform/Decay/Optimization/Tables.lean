@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Optimization.Arithmetic
 set_option Elab.async false
 set_option profiler true

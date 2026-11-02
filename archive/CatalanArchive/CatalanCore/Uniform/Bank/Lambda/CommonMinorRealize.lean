@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Realize
 import CatalanCore.Uniform.Bank.Lambda.DigitShape
 set_option Elab.async false

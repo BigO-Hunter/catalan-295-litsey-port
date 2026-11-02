@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.OfDebit
 import CatalanCore.Uniform.Content.BankShared.NormaliseFamily
 import CatalanFrames.Thirds.TargetConstants

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.NoUF
 import CatalanCore.Uniform.Content.SmallPrimes.Layers
 set_option Elab.async false

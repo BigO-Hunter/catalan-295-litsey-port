@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.TwoTerm
 import CatalanCore.Uniform.Bank.ThirdsContent.CovDefs
 import CatalanCore.Uniform.Content.Wire.M3D

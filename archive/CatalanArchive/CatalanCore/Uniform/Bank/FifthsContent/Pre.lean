@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Cov
 import CatalanCore.Uniform.Content.BankShared.BudgetAdd
 import CatalanFrames.HybGen.TableSum

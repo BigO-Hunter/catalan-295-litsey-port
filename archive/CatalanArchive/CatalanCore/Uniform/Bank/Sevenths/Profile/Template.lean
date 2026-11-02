@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Profile.Mass
 import CatalanCore.Uniform.Bank.Sevenths.Classes
 import CatalanCore.Uniform.Content.BankShared.SawTemplate

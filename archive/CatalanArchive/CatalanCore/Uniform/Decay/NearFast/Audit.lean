@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.NearFast.PilotF
 
 /-! Axiom audit for package D12 (fast Gaussian-integer evaluation of the near-cell model). -/

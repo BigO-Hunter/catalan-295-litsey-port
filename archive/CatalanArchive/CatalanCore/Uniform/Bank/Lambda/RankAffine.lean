@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankFinish
 import CatalanCore.Uniform.Content.RankProducer.AffineCost
 set_option Elab.async false

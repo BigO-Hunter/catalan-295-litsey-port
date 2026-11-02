@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankFibre.C1S18
 import CatalanCore.Uniform.Bank.Lambda.RankLoads.C1T26
 import CatalanCore.Uniform.Bank.Lambda.RankLoads.C1T29

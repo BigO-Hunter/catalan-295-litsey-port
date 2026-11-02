@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Tube.E6B00
 set_option Elab.async false
 set_option maxRecDepth 100000

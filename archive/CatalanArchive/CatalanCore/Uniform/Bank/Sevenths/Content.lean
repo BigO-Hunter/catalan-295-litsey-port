@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Final
 import CatalanCore.Uniform.Content.BankShared.BudgetedOne
 import CatalanCore.Uniform.Content.BankShared.Budgeted

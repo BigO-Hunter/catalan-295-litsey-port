@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.LambdaContent.AutoData.Head
 set_option Elab.async false
 set_option maxRecDepth 100000

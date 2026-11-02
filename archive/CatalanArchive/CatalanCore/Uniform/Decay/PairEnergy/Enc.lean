@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PairEnergy.PairSound
 import CatalanCore.Uniform.Decay.NearCells.Eval
 set_option Elab.async false

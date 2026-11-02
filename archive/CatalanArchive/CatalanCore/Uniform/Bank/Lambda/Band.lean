@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.PolePalette
 import CatalanCore.Uniform.Bank.Lambda.Roots
 set_option Elab.async false

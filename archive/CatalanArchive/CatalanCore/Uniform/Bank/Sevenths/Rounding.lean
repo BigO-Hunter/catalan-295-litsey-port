@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Geom
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.Sevenths

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Assemble
 import CatalanCore.Uniform.Bank.FifthsContent.Members
 import CatalanCore.Uniform.Bank.FifthsContent.MembersUF

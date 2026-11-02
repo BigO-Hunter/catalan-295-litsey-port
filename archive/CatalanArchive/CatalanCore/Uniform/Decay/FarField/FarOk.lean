@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.FarField.Kinds3
 set_option Elab.async false
 

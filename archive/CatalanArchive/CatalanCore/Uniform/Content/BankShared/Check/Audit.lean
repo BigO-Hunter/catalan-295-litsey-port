@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.Check.Rank
 import CatalanCore.Uniform.Content.BankShared.Check.Test
 set_option Elab.async false

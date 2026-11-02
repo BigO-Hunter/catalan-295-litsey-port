@@ -1,3 +1,5 @@
+module
+
 import Mathlib.Tactic
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.Sevenths

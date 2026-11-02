@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Members
 import CatalanCore.Uniform.Bank.Lambda.Content
 import CatalanCore.Uniform.Bank.Lambda.MemberIdentity

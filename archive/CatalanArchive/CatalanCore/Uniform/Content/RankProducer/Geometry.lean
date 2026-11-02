@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Cert
 import CatalanCore.Uniform.Content.Member.Transfer
 set_option Elab.async false

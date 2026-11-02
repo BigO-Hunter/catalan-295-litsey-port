@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Measure.NV0
 set_option Elab.async false
 

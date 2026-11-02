@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankCount.C3S04
 import CatalanCore.Uniform.Bank.Lambda.RankMatch.C3S04
 import CatalanCore.Uniform.Bank.Lambda.RankFacts.C3S04

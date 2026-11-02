@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankPalette.C1T03
 import CatalanCore.Uniform.Bank.Lambda.RankUnits
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import Lake
 open Lake
 

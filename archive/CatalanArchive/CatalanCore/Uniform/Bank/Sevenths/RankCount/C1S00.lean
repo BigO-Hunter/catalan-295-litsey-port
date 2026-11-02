@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.RankFibre.C1S00
 import CatalanCore.Uniform.Content.RankProducer.RunFibres
 set_option Elab.async false

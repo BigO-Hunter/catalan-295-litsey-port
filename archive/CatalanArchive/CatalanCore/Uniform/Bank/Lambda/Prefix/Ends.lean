@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Prefix.P0
 import CatalanCore.Uniform.Bank.Lambda.Prefix.P1
 import CatalanCore.Uniform.Bank.Lambda.Prefix.P2

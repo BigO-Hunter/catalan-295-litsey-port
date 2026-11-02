@@ -1,3 +1,5 @@
+module
+
 import Lean
 import CatalanMeasure.CellCert.RawInts
 set_option Elab.async false

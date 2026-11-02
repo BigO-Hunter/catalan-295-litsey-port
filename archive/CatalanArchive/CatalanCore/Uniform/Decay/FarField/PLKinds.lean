@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.FarField.LinJet
 import CatalanCore.Uniform.Decay.FarField.CapPL
 import CatalanCore.Uniform.Decay.PolyWire2.Top2

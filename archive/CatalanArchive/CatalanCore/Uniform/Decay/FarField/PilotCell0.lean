@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.FarField.PilotData
 set_option Elab.async false
 set_option maxRecDepth 100000

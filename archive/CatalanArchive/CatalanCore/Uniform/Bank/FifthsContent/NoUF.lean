@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Full
 import CatalanCore.Uniform.Bank.Fifths.Final
 set_option Elab.async false

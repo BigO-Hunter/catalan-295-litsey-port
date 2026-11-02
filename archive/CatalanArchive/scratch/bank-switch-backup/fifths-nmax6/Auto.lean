@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.AutoData
 import CatalanCore.Uniform.Content.BankShared.TwoTerm.Trop
 import CatalanFrames.Fifths.ContentHyb

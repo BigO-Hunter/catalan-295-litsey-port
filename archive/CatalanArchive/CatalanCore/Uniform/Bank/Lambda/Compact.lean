@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.CompactBudget
 import CatalanCore.Uniform.Bank.Lambda.Price
 import CatalanCore.Uniform.Bank.Lambda.PrimeBound

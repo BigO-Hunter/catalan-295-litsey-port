@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.SmallPrimes.Budget
 import CatalanCore.Uniform.Content.BankShared.ExceptionSmall
 set_option Elab.async false

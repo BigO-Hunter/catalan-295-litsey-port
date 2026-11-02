@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.NearCells.Rules
 import CatalanCore.Uniform.Decay.NearCells.Pilot
 

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Breakpoint.Kind
 import CatalanCore.Uniform.Decay.PolyWire2.Energy2
 import CatalanCore.Uniform.Decay.PolyWire2.Kinds

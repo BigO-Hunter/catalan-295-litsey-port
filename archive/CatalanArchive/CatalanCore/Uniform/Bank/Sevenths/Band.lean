@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PolePalette
 set_option Elab.async false
 namespace CatalanCore.Uniform.Bank.Sevenths

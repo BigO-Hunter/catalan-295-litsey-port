@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Arith.Hybrid.PieceTools
 set_option Elab.async false
 set_option maxRecDepth 10000

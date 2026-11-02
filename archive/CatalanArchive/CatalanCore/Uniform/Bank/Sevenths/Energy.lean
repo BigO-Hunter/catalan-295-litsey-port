@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.Geom
 import CatalanLambda.Cert.LogBounds
 set_option Elab.async false

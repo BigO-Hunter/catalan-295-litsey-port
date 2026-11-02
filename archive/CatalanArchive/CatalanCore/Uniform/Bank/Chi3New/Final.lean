@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3New.Decay
 import CatalanCore.Uniform.Bank.Chi3New.Content
 import CatalanCore.Uniform.Bank.Chi3New.Reindex4

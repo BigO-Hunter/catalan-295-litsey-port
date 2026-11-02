@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Tbridge
 import CatalanCore.Uniform.Bank.FifthsContent.M3Gen
 import CatalanCore.Arith.Hybrid.PieceTools

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.M3
 import CatalanCore.Uniform.Bank.Fifths.Frame
 import CatalanFrames.Fifths.ContentHyb

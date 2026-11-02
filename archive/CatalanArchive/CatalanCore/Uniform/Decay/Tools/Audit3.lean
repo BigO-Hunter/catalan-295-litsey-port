@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.Tools.BoundaryEnergy
 import CatalanCore.Uniform.Decay.Tools.LogModulusLemmas
 

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Wire.LP
 import CatalanCore.Arith.Hybrid.DefC5Entries
 import CatalanCore.Arith.Hybrid.LamEntries

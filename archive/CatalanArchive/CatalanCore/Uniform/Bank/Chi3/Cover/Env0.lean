@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Common.Data.Chi3.Data
 import CatalanCore.Uniform.Bank.Common.Data.Chi3.Frame
 import CatalanCore.Uniform.Decay.PolyWire3.Decode

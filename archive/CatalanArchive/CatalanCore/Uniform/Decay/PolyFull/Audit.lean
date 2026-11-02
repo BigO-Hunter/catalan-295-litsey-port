@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyFull.FullLb
 
 /-! Axiom audit for lane D, package D10 (`Uniform/Decay/PolyFull`). -/

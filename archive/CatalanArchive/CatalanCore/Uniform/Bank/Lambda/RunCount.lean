@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Boundary
 import Mathlib.Tactic
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Prefix.P0
 import CatalanCore.Uniform.Bank.FifthsContent.Prefix.P1
 import CatalanCore.Uniform.Bank.FifthsContent.Prefix.P2

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.LambdaContent.Auto
 import CatalanCore.Uniform.Bank.Lambda.Final
 import CatalanCore.Uniform.Bank.Lambda.Frame

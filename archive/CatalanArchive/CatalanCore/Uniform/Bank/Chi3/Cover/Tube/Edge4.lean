@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.E4B00
 import CatalanCore.Uniform.Bank.Chi3.Cover.Tube.E4B01
 set_option Elab.async false

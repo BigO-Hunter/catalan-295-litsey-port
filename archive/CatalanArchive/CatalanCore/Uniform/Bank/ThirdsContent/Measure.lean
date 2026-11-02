@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.Final
 import CatalanCore.Uniform.Bank.Thirds.Final
 set_option Elab.async false

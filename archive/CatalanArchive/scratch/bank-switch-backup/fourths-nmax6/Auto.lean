@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.LambdaContent.Mu
 import CatalanCore.Uniform.Content.BankShared.Check.Normalise
 import CatalanCore.Uniform.Content.BankShared.TwoTerm.Trop

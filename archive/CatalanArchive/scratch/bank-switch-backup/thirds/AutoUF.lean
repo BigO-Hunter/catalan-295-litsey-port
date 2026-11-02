@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.AutoUFData
 import CatalanCore.Uniform.Bank.ThirdsContent.Auto
 import CatalanCore.Uniform.Bank.Thirds.Numerics

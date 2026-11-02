@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Balance
 import CatalanCore.Uniform.Content.RankProducer.Geometry
 import CatalanCore.Uniform.Content.RankProducer.Assignment

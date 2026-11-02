@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3.Cover.Env0
 set_option Elab.async false
 set_option maxRecDepth 100000

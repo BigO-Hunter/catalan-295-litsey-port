@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PoleData
 import CatalanCore.Uniform.Bank.Sevenths.Price
 import CatalanCore.Uniform.Bank.Sevenths.Rounding

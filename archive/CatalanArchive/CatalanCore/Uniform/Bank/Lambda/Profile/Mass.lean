@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Profile.C1
 import CatalanCore.Uniform.Bank.Lambda.Profile.C3
 import CatalanCore.Uniform.Bank.Lambda.NoUF

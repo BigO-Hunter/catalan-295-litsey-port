@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Prefix.Ends
 import CatalanCore.Uniform.Bank.Lambda.FiniteRate
 set_option Elab.async false

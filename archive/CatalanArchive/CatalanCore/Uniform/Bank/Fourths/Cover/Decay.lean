@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Fourths.Cover.Check
 set_option Elab.async false
 

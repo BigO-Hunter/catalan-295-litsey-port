@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyWire.Top
 import CatalanCore.Uniform.Decay.PolyWire.PilotData
 set_option Elab.async false

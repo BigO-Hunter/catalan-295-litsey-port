@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.LineScores
 import CatalanCore.Uniform.Content.RankProducer.TrimCost
 import CatalanCore.Uniform.Content.RankProducer.Balance

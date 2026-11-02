@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.PolePalette
 import CatalanCore.Uniform.Content.RankProducer.Geometry
 set_option Elab.async false

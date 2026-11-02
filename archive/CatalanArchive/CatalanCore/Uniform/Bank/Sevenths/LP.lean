@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Sevenths.LPWindows
 import CatalanCore.Uniform.Bank.Sevenths.Price
 import CatalanCore.Uniform.Content.BankShared.LPPrice

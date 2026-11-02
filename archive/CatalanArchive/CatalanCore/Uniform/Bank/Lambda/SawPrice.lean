@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.Wire.SawPrice
 import CatalanCore.Arith.Hybrid.D1Exact
 set_option Elab.async false

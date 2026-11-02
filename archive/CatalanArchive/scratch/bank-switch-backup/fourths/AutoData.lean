@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.LambdaContent.AutoData.U1
 import CatalanCore.Uniform.Bank.LambdaContent.AutoData.U3
 set_option Elab.async false

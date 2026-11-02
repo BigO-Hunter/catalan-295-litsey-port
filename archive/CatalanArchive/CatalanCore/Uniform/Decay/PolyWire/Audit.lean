@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyWire.Pilot
 
 /-! Axiom audit for lane D, package D11 (`Uniform/Decay/PolyWire`). -/

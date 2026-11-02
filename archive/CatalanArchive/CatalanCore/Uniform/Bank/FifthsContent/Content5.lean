@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.Full
 import CatalanCore.Uniform.Bank.FifthsContent.Covers.J1
 import CatalanCore.Uniform.Bank.FifthsContent.Covers.J2

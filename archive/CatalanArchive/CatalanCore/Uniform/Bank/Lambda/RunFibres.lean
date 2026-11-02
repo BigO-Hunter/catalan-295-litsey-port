@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RunCount
 import CatalanCore.Uniform.Content.RankProducer.Counts
 set_option Elab.async false

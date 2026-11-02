@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Thirds.Cover.Env0
 import CatalanCore.Uniform.Decay.PolyWire3.Decode
 

@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.ContentAt
 import CatalanCore.Uniform.Content.ClearMin
 set_option Elab.async false

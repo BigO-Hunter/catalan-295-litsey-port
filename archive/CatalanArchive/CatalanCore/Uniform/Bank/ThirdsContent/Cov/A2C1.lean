@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.Pre
 import CatalanCore.Uniform.Bank.ThirdsContent.M3
 import CatalanFrames.HybGen.TableSum

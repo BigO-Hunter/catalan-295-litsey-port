@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.NoUF
 import CatalanCore.Uniform.Bank.Lambda.Frame
 set_option Elab.async false

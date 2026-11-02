@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.ThirdsContent.Dispatch
 import CatalanCore.Uniform.Bank.ThirdsContent.Edge
 set_option Elab.async false

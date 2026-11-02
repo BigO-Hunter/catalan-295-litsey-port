@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.ClearMin
 set_option Elab.async false
 namespace CatalanCore.Uniform.Content.BankShared

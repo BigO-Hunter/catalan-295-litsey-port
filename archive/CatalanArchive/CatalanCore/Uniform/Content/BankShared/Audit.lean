@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.BankShared.Reindex
 import CatalanCore.Uniform.Content.BankShared.NormaliseFamily
 import CatalanCore.Uniform.Content.BankShared.ExceptionSmall

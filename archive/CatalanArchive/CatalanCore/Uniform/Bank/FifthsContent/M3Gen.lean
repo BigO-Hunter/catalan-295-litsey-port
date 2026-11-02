@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.FifthsContent.M3
 set_option Elab.async false
 set_option maxHeartbeats 1600000

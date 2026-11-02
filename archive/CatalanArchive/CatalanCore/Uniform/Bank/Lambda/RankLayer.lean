@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankSetup
 import CatalanCore.Uniform.Bank.Lambda.PrimeNormalisation
 import CatalanCore.Uniform.Bank.Lambda.MemberIdentity

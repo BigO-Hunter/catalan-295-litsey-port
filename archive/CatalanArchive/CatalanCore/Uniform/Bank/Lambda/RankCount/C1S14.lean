@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.RankFibre.C1S14
 import CatalanCore.Uniform.Bank.Lambda.RunFibres
 set_option Elab.async false

@@ -1,3 +1,5 @@
+module
+
 import CatalanFrames.LambdaMirrorHybrid.MirTrop
 import CatalanCore.Uniform.Bank.Lambda.TwoTerm
 import CatalanCore.Uniform.Bank.Lambda.Layers

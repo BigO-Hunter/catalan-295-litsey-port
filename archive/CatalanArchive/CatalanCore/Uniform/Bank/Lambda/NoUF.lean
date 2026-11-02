@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Final
 import CatalanCore.Uniform.Content.Shape.Reindex
 import CatalanCore.Measure.Scaling

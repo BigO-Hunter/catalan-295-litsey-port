@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Chi3Rank.Layer5
 import CatalanCore.Rect.CommonMinor
 import CatalanCore.Uniform.Content.ClearMin

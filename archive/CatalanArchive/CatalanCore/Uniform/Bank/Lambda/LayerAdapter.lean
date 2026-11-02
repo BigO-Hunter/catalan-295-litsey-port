@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Layers
 import CatalanCore.Uniform.Content.Wire.LP
 import CatalanCore.Uniform.Content.Wire.M3D

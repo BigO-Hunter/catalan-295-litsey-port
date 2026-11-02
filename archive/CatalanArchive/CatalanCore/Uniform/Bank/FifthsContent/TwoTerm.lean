@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Fifths.Frame
 import CatalanFrames.Thirds.Frame
 import CatalanCore.Uniform.Content.Smith.TwoTerm

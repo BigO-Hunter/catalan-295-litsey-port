@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.PolyFull.CapG
 import CatalanCore.Uniform.Decay.Cert.PilotSevenths
 set_option Elab.async false

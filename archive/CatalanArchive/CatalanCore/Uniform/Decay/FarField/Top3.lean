@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Decay.FarField.Kinds3
 import CatalanCore.Uniform.Decay.FarField.PLKinds
 import CatalanCore.Uniform.Decay.PolyWire2.Top2

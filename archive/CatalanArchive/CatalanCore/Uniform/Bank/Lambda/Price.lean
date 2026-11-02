@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Bank.Lambda.Frame
 import CatalanCore.Uniform.Bank.Lambda.Crude
 import CatalanCore.Uniform.Content.BankShared.LeastPrice

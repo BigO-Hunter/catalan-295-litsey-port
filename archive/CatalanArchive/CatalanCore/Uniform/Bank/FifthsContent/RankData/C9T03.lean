@@ -1,3 +1,5 @@
+module
+
 import CatalanCore.Uniform.Content.RankProducer.Loads
 set_option Elab.async false
 set_option maxRecDepth 10000
