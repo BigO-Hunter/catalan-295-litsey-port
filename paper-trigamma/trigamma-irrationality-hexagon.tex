@@ -119,26 +119,26 @@ $\xi$, and it shows that $\xi$ is irrational.
 
 \begin{table}[ht]
 \centering
-\begin{tabular}{@{}cccll@{}}
+\begin{tabular}{@{}ccll@{}}
 \toprule
-$q$ & $(s,t)$ & $k$ & classical form & $\mu(\Psi(s,t))\le$ \\
+$(s,t)$ & $k$ & classical form & $\mu$ \\
 \midrule
-$2$ & $(\frac k2,1)$ & $1$ & $\pi^2$ & $\MuHalvesU$ \\
+$(\frac k2,1)$ & $1$ & $\pi^2$ & $\MuHalvesU$ \\
 \addlinespace
-$3$ & $(\frac k3,1)$ & $1$ & $L(2,\chi_{-3})+\frac{\pi^2}9$ & $\MuThirdsU$ \\
- & & $2$ & $L(2,\chi_{-3})-\frac{\pi^2}9$ & $\MuThirdsU$ \\
-$3$ & $(\frac13,\frac23)$ & -- & $L(2,\chi_{-3})$ & $\MuChi$ \\
+$(\frac k3,1)$ & $1$ & $L(2,\chi_{-3})+\frac{\pi^2}9$ & $\MuThirdsU$ \\
+& $2$ & $L(2,\chi_{-3})-\frac{\pi^2}9$ & $\MuThirdsU$ \\
+$(\frac13,\frac23)$ & -- & $L(2,\chi_{-3})$ & $\MuChi$ \\
 \addlinespace
-$4$ & $(\frac k4,1)$ & $1$ & $G+\frac{5\pi^2}{48}$ & $\MuLamU$ \\
- & & $3$ & $G-\frac{5\pi^2}{48}$ & $\MuLamU$ \\
+$(\frac k4,1)$ & $1$ & $G+\frac{5\pi^2}{48}$ & $\MuLamU$ \\
+& $3$ & $G-\frac{5\pi^2}{48}$ & $\MuLamU$ \\
 \addlinespace
-$5$ & $(\frac k5,1)$ & $1,2,3,4$ & -- & $\MuFifthsU$ \\
+$(\frac k5,1)$ & $1,2,3,4$ & -- & $\MuFifthsU$ \\
 \addlinespace
-$7$ & $(\frac k7,1)$ & $1,\dots,6$ & -- & $\MuSeventhsU$ \\
+$(\frac k7,1)$ & $1,\dots,6$ & -- & $\MuSeventhsU$ \\
 \bottomrule
 \end{tabular}
-\caption{The pairs of Theorem~\ref{thm:main}, ordered by the denominator $q$. The classical form is a number in
-common notation that differs from $\Psi(s,t)$ by a rational affine map. A dash means that there is none.}\label{tab:main}
+\caption{The pairs of Theorem~\ref{thm:main}, grouped by the denominator of $s$. The classical form is a number in
+common notation that differs from $\Psi(s,t)$ by a rational affine map. A dash means that there is none. The last column is an upper bound for $\mu(\Psi(s,t))$.}\label{tab:main}
 \end{table}
 
 The classical forms come from the values
@@ -168,12 +168,12 @@ since
 \]
 
 \begin{theorem}\label{thm:main}\label{thm:thirds}\label{thm:fifths}
-Let $(s,t)$ be a pair in Table~\ref{tab:main}, and let $B$ be the entry in the last column of its row. For every
-$\varepsilon>0$ there is $b_0$ such that for all integers $a$ and $b$ with $b\ge b_0$,
+Let $(s,t)$ be a pair in Table~\ref{tab:main}, and let $\mu_{s,t}$ be the entry in the last column of its row. For all
+integers $a$ and all sufficiently large integers $b$,
 \[
- \Bigl|\Psi(s,t)-\frac ab\Bigr|>b^{-B-\varepsilon}.
+ \Bigl|\Psi(s,t)-\frac ab\Bigr|>b^{-\mu_{s,t}}.
 \]
-In particular $\Psi(s,t)$ is irrational and $\mu(\Psi(s,t))\le B$. The same bound holds for the classical form in
+In particular $\Psi(s,t)$ is irrational and $\mu(\Psi(s,t))\le\mu_{s,t}$. The same bound holds for the classical form in
 the same row.
 \end{theorem}
 
@@ -1407,13 +1407,13 @@ in Arb \cite{Arb}. Lean checks them with rational arithmetic only. The data play
 checks.
 
 \begin{remark}[how good a certificate can be]\label{rem:certlimit}
-For an exponent $B$ the certificate meets $B$ exactly when $B(D-\Lambda)-\rho\ge0$. This quantity is a concave function
+For an exponent $\mu_0$ the certificate meets $\mu_0$ exactly when $\mu_0(D-\Lambda)-\rho\ge0$. This quantity is a concave function
 of $\sigma$. Its maximum over all probability measures on $\Gamma\cup[-r_0,0]\cup[0,1]$ is attained at a measure
 $\sigma^*$. For this measure $|\nu_c|\sigma^*$ is the weighted equilibrium measure of the constrained energy problem on
 this set, with the external field $(1-\varepsilon_0)\pi|\Im z|-U^{\nu_c}$ and the upper constraint $|\mathcal T|\,dx$ on
 the segment \cite{SaffTotik}. Weak duality expresses the deficit of any certificate as a sum of nonnegative terms. The
-first is the energy of $2B|\nu_c|(\sigma-\sigma^*)$. This is the difference between $2B|\nu_c|\sigma$ and the optimal
-dual measure $2B|\nu_c|\sigma^*$. So a certificate close to the best possible one must be close to $\sigma^*$ in energy.
+first is the energy of $2\mu_0|\nu_c|(\sigma-\sigma^*)$. This is the difference between $2\mu_0|\nu_c|\sigma$ and the optimal
+dual measure $2\mu_0|\nu_c|\sigma^*$. So a certificate close to the best possible one must be close to $\sigma^*$ in energy.
 Then $\Upsilon-\Upsilon_\Gamma$ is a small ripple on the support of $\sigma^*$. This is why a pointwise verification on a
 cover is needed. This remark is not used in the proof of Theorem~\ref{thm:main} and is not part of the formalization.
 \end{remark}
@@ -1561,9 +1561,11 @@ $\mu_1\eta/\rho>1$. This is a contradiction for large $b$.
 For each row of Table~\ref{tab:main} the function, the geometry parameter and the constants are those of
 Table~\ref{tab:data}. The denominator exponent is given by Theorem~\ref{thm:content} with the table for $\Lambda$ of the formal
 proof. For the pair $(\frac13,\frac23)$ it is given by Section~\ref{sec:chi3-quarter}. The decay rates are given by
-Proposition~\ref{prop:cert}, and nonvanishing by Theorem~\ref{thm:selection}. In every row $\rho/(D-\Lambda)<B$.
-Theorem~\ref{thm:deduction}, applied at the even scales, gives $\mu(\xi)\le B$. By \eqref{eq:frames}, $\xi$ is a nonzero
-rational multiple of $\Psi(s,t)$. This proves Theorem~\ref{thm:main}.
+Proposition~\ref{prop:cert}, and nonvanishing by Theorem~\ref{thm:selection}. Theorem~\ref{thm:deduction}, applied at the even scales, gives
+$\mu(\xi)\le\rho/(D-\Lambda)$, and in every row $\rho/(D-\Lambda)<\mu_{s,t}$. By \eqref{eq:frames}, $\xi$ is a
+nonzero rational multiple of $\Psi(s,t)$, so $\mu(\Psi(s,t))<\mu_{s,t}$. Since this inequality is strict, the
+definition of $\mu$ gives $|\Psi(s,t)-a/b|>b^{-\mu_{s,t}}$ for all integers $a$ and all sufficiently large $b$. This
+proves Theorem~\ref{thm:main}.
 \end{proof}
 
 \begin{table}[ht]
@@ -1571,7 +1573,7 @@ rational multiple of $\Psi(s,t)$. This proves Theorem~\ref{thm:main}.
 {\setlength{\tabcolsep}{2pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
-$(s,t)$ & $c$ & $\Lambda$ & $D$ & $\rho$ & $\rho/\eta$ & $\mu\le$\\
+$(s,t)$ & $c$ & $\Lambda$ & $D$ & $\rho$ & $\rho/\eta$ & $\mu$\\
 \midrule
 $(\frac12,1)$ & $\frac3{10}$ & $\LamHalf$ & $\DHalf$ & $\gHalf$ & $\ExpHalf$ & $\MuHalvesU$\\
 $(\frac k3,1)$ & $\frac3{10}$ & $\LamThree$ & $\DThree$ & $\gThree$ & $\ExpThree$ & $\MuThirdsU$\\
@@ -1646,20 +1648,20 @@ used as proof.
 The statements of Theorem~\ref{thm:main} are in the file \lean{ChallengeHybrid.lean}. Their proofs are in
 \lean{SolutionHybrid.lean}, in the namespace \lean{TrigammaDifferences}. Each final theorem concerns one row of
 Table~\ref{tab:main}. Its number $\xi$ is written as a series: the classical form where there is one, and
-$\Psi(s,t)$ otherwise. The theorem states that for every
-$\varepsilon>0$ there is $b_0$ such that $b^{-(B+\varepsilon)}<|\xi-a/b|$ for all $b\ge b_0$ and all $a\in\Z$. The theorems
+$\Psi(s,t)$ otherwise. The theorem states that
+$b^{-\mu_{s,t}}<|\xi-a/b|$ for all $a\in\Z$ and all sufficiently large $b$. The theorems
 are the following.
 \begin{itemize}
 \item \lean{lambda_plus_measure} and \lean{lambda_minus_measure}: the pairs $(\frac14,1)$ and $(\frac34,1)$,
- with $B=\MuLamU$.
-\item \lean{chi3_measure}: the pair $(\frac13,\frac23)$, with $B=\MuChi$.
+ with $\mu_{s,t}=\MuLamU$.
+\item \lean{chi3_measure}: the pair $(\frac13,\frac23)$, with $\mu_{s,t}=\MuChi$.
 \item \lean{chi3_plus_pi2_measure} and \lean{chi3_minus_pi2_measure}: the pairs $(\frac13,1)$ and $(\frac23,1)$, with
- $B=\MuThirdsU$.
+ $\mu_{s,t}=\MuThirdsU$.
 \item \lean{fifths1_measure}, \dots, \lean{fifths4_measure}: the pairs $(\frac k5,1)$ for $k=1,\dots,4$, with
- $B=\MuFifthsU$.
+ $\mu_{s,t}=\MuFifthsU$.
 \item \lean{sevenths1_measure}, \dots, \lean{sevenths6_measure}: the pairs $(\frac k7,1)$ for $k=1,\dots,6$, with
- $B=\MuSeventhsU$.
-\item \lean{pi2_measure}: the pair $(\frac12,1)$, with $B=\MuHalvesU$.
+ $\mu_{s,t}=\MuSeventhsU$.
+\item \lean{pi2_measure}: the pair $(\frac12,1)$, with $\mu_{s,t}=\MuHalvesU$.
 \end{itemize}
 The shared results are in the namespace \lean{CatalanCore.Uniform}.
 \begin{itemize}
