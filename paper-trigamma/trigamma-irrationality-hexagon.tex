@@ -105,84 +105,83 @@ The values $\psi'(s)=\sum_{n\ge0}(n+s)^{-2}$ of the trigamma function at rationa
 simplest constants of analysis. Each is a rational linear combination of $\pi^2$ and the values $L(2,\chi)$ for the
 Dirichlet characters $\chi$ modulo $q$. For $q\le2$ they are rational multiples of $\pi^2$. Already for $q=3$ and
 $q=4$ they involve $L(2,\chi_{-3})$ and Catalan's constant $G=L(2,\chi_{-4})$, whose irrationality was proved only in
-2024 and 2026 \cite{CDT2024,OpenAI2026}. In this paper we prove irrationality measures for differences
-$\Psi(s,t)=\psi'(s)-\psi'(t)$ with $s,t\in\{\frac k3,\frac k4,\frac k5,\frac k7,\frac12,1\}$, by a single determinant
+2024 and 2026 \cite{CDT2024,OpenAI2026}. Throughout the paper we work with the differences
+\[
+ \Psi(s,t)=\psi'(s)-\psi'(t)=\sum_{n=0}^\infty\Bigl(\frac1{(n+s)^2}-\frac1{(n+t)^2}\Bigr)\qquad(0<s<t\le1).
+\]
+We prove irrationality measures for $\Psi(s,t)$ for the pairs of Table~\ref{tab:main}, by a single determinant
 construction.
 
 The \emph{irrationality exponent} $\mu(\xi)$ of a real number $\xi$ is the infimum of the real numbers $\mu$ such that
 $|\xi-a/b|>b^{-\mu}$ for all integers $a$ and all sufficiently large integers $b$. It does not change under
 $\xi\mapsto r\xi+r'$ with $r,r'\in\Q$ and $r\ne0$. A finite bound for $\mu(\xi)$ is an irrationality measure for
-$\xi$, and it shows that $\xi$ is irrational. We prove
-\begin{equation}\label{eq:headline}
-\begin{gathered}
- \mu\Bigl(G\pm\frac{5\pi^2}{48}\Bigr)\le \MuLamU,\qquad
- \mu\bigl(L(2,\chi_{-3})\bigr)\le \MuChi,\\
- \mu\Bigl(L(2,\chi_{-3})\pm\frac{\pi^2}9\Bigr)\le \MuThirdsU,\qquad
- \mu(\pi^2)\le\MuHalvesU,\\
- \mu\Bigl(\psi'(\tfrac k5)-\frac{\pi^2}6\Bigr)\le\MuFifthsU\quad(1\le k\le4),\\
- \mu\Bigl(\psi'(\tfrac k7)-\frac{\pi^2}6\Bigr)\le\MuSeventhsU\quad(1\le k\le6).
-\end{gathered}
-\end{equation}
-Here
+$\xi$, and it shows that $\xi$ is irrational.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{@{}cccll@{}}
+\toprule
+$q$ & $(s,t)$ & $k$ & classical form & $\mu(\Psi(s,t))\le$ \\
+\midrule
+$2$ & $(\frac k2,1)$ & $1$ & $\pi^2$ & $\MuHalvesU$ \\
+\addlinespace
+$3$ & $(\frac k3,1)$ & $1$ & $L(2,\chi_{-3})+\frac{\pi^2}9$ & $\MuThirdsU$ \\
+ & & $2$ & $L(2,\chi_{-3})-\frac{\pi^2}9$ & $\MuThirdsU$ \\
+$3$ & $(\frac13,\frac23)$ & -- & $L(2,\chi_{-3})$ & $\MuChi$ \\
+\addlinespace
+$4$ & $(\frac k4,1)$ & $1$ & $G+\frac{5\pi^2}{48}$ & $\MuLamU$ \\
+ & & $3$ & $G-\frac{5\pi^2}{48}$ & $\MuLamU$ \\
+\addlinespace
+$5$ & $(\frac k5,1)$ & $1,2,3,4$ & -- & $\MuFifthsU$ \\
+\addlinespace
+$7$ & $(\frac k7,1)$ & $1,\dots,6$ & -- & $\MuSeventhsU$ \\
+\bottomrule
+\end{tabular}
+\caption{The pairs of Theorem~\ref{thm:main}, ordered by the denominator $q$. The classical form is a number in
+common notation that differs from $\Psi(s,t)$ by a rational affine map. A dash means that there is none.}\label{tab:main}
+\end{table}
+
+The classical forms come from the values
+\begin{gather*}
+ \psi'(\tfrac14)=\pi^2+8G,\qquad \psi'(\tfrac34)=\pi^2-8G,\\
+ \psi'(\tfrac13)=\frac{2\pi^2}3+\frac92L(2,\chi_{-3}),\qquad \psi'(\tfrac23)=\frac{2\pi^2}3-\frac92L(2,\chi_{-3}),
+\end{gather*}
+together with $\psi'(\frac12)=\frac{\pi^2}2$ and $\psi'(1)=\frac{\pi^2}6$. Here
 \begin{gather*}
  G=L(2,\chi_{-4})=\sum_{n\ge0}\Bigl(\frac1{(4n+1)^2}-\frac1{(4n+3)^2}\Bigr)=0.91596\,55941\ldots,\\
  L(2,\chi_{-3})=\sum_{n\ge0}\Bigl(\frac1{(3n+1)^2}-\frac1{(3n+2)^2}\Bigr)=0.78130\,24128\ldots
 \end{gather*}
-are Catalan's constant and the value at $2$ of the Dirichlet $L$-function of the nontrivial character modulo $3$. Thus
-$G$ is the value at $2$ of the $L$-function of the nontrivial character $\chi_{-4}$ modulo $4$, and the two numbers are
-the first two cases of the same family.
-
-All these numbers are differences of values of the trigamma function $\psi'$. For $0<s<t\le1$ put
-\[
- \Psi(s,t)=\psi'(s)-\psi'(t)=\sum_{n=0}^\infty\Bigl(\frac1{(n+s)^2}-\frac1{(n+t)^2}\Bigr).
-\]
-From $\psi'(\frac14)=\pi^2+8G$, $\psi'(\frac34)=\pi^2-8G$, $\psi'(\frac13)=\frac{2\pi^2}3+\frac92L(2,\chi_{-3})$,
-$\psi'(\frac23)=\frac{2\pi^2}3-\frac92L(2,\chi_{-3})$, $\psi'(\frac12)=\frac{\pi^2}2$ and $\psi'(1)=\frac{\pi^2}6$ one gets
+are the values at $2$ of the Dirichlet $L$-functions of the nontrivial characters modulo $4$ and modulo $3$. So
+Catalan's constant and $L(2,\chi_{-3})$ are the first two cases of the same family. In the notation of this paper
 \begin{gather*}
- \Psi(\tfrac14,1)=8\Bigl(G+\frac{5\pi^2}{48}\Bigr),\qquad \Psi(\tfrac34,1)=-8\Bigl(G-\frac{5\pi^2}{48}\Bigr),\\
+ \Psi(\tfrac14,1)=8\Bigl(G+\frac{5\pi^2}{48}\Bigr),\qquad \Psi(\tfrac34,1)=-8\Bigl(G-\frac{5\pi^2}{48}\Bigr),
+ \qquad \Psi(\tfrac14,\tfrac34)=16G,\\
  \Psi(\tfrac13,1)=\frac92\Bigl(L(2,\chi_{-3})+\frac{\pi^2}9\Bigr),\qquad
  \Psi(\tfrac23,1)=-\frac92\Bigl(L(2,\chi_{-3})-\frac{\pi^2}9\Bigr),\\
  \Psi(\tfrac13,\tfrac23)=9L(2,\chi_{-3}),\qquad \Psi(\tfrac12,1)=\frac{\pi^2}3 .
 \end{gather*}
-For $q=5$ and $q=7$ and $\gcd(k,q)=1$ the number $\Psi(\frac kq,1)=\psi'(\frac kq)-\frac{\pi^2}6$ is a rational linear
-combination of $\pi^2$ and the values $L(2,\chi)$ for the Dirichlet characters $\chi$ modulo $q$. Indeed
+For $q=5$ and $q=7$ there is no single classical constant. For $\gcd(k,q)=1$ the number $\Psi(\frac kq,1)$ is a
+rational linear combination of $\pi^2$ and the values $L(2,\chi)$ for the Dirichlet characters $\chi$ modulo $q$,
+since
 \[
  \psi'(\tfrac kq)=q^2\sum_{n\equiv k\ (q)}\frac1{n^2}=\frac{q^2}{\varphi(q)}\sum_{\chi\bmod q}\bar\chi(k)L(2,\chi).
 \]
-Since $\mu$ is invariant under rational affine maps, the bounds \eqref{eq:headline} are the following theorem.
-
-\begin{table}[ht]
-\centering
-\begin{tabular}{@{}lll@{}}
-\toprule
-$(s,t)$ & the number, up to a rational affine map & $B$ \\
-\midrule
-$(\frac14,1)$, $(\frac34,1)$ & $G+\frac{5\pi^2}{48}$, $G-\frac{5\pi^2}{48}$ & $\MuLamU$ \\
-$(\frac13,\frac23)$ & $L(2,\chi_{-3})$ & $\MuChi$ \\
-$(\frac13,1)$, $(\frac23,1)$ & $L(2,\chi_{-3})+\frac{\pi^2}9$, $L(2,\chi_{-3})-\frac{\pi^2}9$ & $\MuThirdsU$ \\
-$(\frac k5,1)$, $k=1,2,3,4$ & $\psi'(\frac k5)-\frac{\pi^2}6$ & $\MuFifthsU$ \\
-$(\frac k7,1)$, $k=1,\dots,6$ & $\psi'(\frac k7)-\frac{\pi^2}6$ & $\MuSeventhsU$ \\
-$(\frac12,1)$ & $\pi^2$ & $\MuHalvesU$ \\
-\bottomrule
-\end{tabular}
-\caption{The pairs of shifts and the exponents of Theorem~\ref{thm:main}.}\label{tab:main}
-\end{table}
 
 \begin{theorem}\label{thm:main}\label{thm:thirds}\label{thm:fifths}
-Let $(s,t)$ and $B$ be in one row of Table~\ref{tab:main}. For every $\varepsilon>0$ there is $b_0$ such
-that for all integers $a$ and $b$ with $b\ge b_0$,
+Let $(s,t)$ be a pair in Table~\ref{tab:main}, and let $B$ be the entry in the last column of its row. For every
+$\varepsilon>0$ there is $b_0$ such that for all integers $a$ and $b$ with $b\ge b_0$,
 \[
  \Bigl|\Psi(s,t)-\frac ab\Bigr|>b^{-B-\varepsilon}.
 \]
-In particular $\Psi(s,t)$ and the number in the same row are irrational, with irrationality exponent at
-most $B$.
+In particular $\Psi(s,t)$ is irrational and $\mu(\Psi(s,t))\le B$. The same bound holds for the classical form in
+the same row.
 \end{theorem}
 
-For $G\pm5\pi^2/48$, $\psi'(\frac k5)-\pi^2/6$ and $\psi'(\frac k7)-\pi^2/6$ we know of no earlier proof of
-irrationality. The irrationality of $G\pm5\pi^2/48$ does not follow from that of $G$, since it is not known whether $1$,
-$G$ and $\pi^2$ are linearly independent over $\Q$. For $L(2,\chi_{-3})$ and $L(2,\chi_{-3})\pm\pi^2/9$ irrationality
-was known \cite{CDT2024}, and the theorem improves the known measure. The bound for $\pi^2$ is weaker than the known
-ones and is included for completeness.
+For $q=4$, $5$ and $7$ we know of no earlier proof that $\Psi(\frac kq,1)$ is irrational. For $q=4$ this does not
+follow from the irrationality of $G=\frac1{16}\Psi(\frac14,\frac34)$, since it is not known whether $1$, $G$ and
+$\pi^2$ are linearly independent over $\Q$. For $q=3$ irrationality was known \cite{CDT2024}, and the theorem
+improves the known measures. The bound for $q=2$ is weaker than the known bounds for $\pi^2$ and is included for
+completeness.
 
 One family of determinants, with the same three estimates, covers every row of Table~\ref{tab:main}.
 
@@ -367,22 +366,22 @@ numerically to minimise $\rho/(D-\Lambda)$. Its value for each constant is given
 \begin{figure}[ht]
 \centering
 \setlength{\unitlength}{0.42cm}
-\begin{picture}(18,13)(-6,-1)
- \put(0,0){\framebox(11,11){}}
+\begin{picture}(20,13)(-6,-1)
+ \put(0,0){\framebox(13,11){}}
  \put(8,0){\line(0,1){11}}
- \put(0,3){\line(1,0){11}}
+ \put(0,3){\line(1,0){13}}
  \multiput(0.5,10.5)(1,-1){8}{\makebox(0,0){$\scriptstyle x$}}
  \put(4,11.6){\makebox(0,0){$\scriptstyle 0,1,\dots,r-1$}}
- \put(9.5,11.6){\makebox(0,0){$\scriptstyle r+1,\,r+3,\,r+5$}}
+ \put(10.5,11.6){\makebox(0,0){$\scriptstyle r+1,\,r+3,\,r+5$}}
  \put(-0.3,7){\makebox(0,0)[r]{$\scriptstyle 0,\dots,r-1$}}
  \put(-0.3,1.5){\makebox(0,0)[r]{$\scriptstyle r,\,r+2,\,r+4$}}
  \put(4,12.5){\makebox(0,0){$C$}}
- \put(9.5,12.5){\makebox(0,0){$Y'$}}
+ \put(10.5,12.5){\makebox(0,0){$Y'$}}
  \put(-4.8,7){\makebox(0,0)[r]{$C$}}
  \put(-4.8,1.5){\makebox(0,0)[r]{$X'$}}
  \put(4,1.5){\makebox(0,0){$M[X',C]$}}
- \put(9.5,7){\makebox(0,0){$M[C,Y']$}}
- \put(9.5,1.5){\makebox(0,0){$M[X',Y']$}}
+ \put(10.5,7){\makebox(0,0){$M[C,Y']$}}
+ \put(10.5,1.5){\makebox(0,0){$M[X',Y']$}}
 \end{picture}
 \caption{The geometry for $r=8$ and $m=3$. Rows are indexed by $C\sqcup X'$ and columns by $C\sqcup Y'$. The variable
 $x$ occurs only on the diagonal of the common block. The border rows $X'=\{r,r+2,r+4\}$ and border columns
@@ -1572,14 +1571,14 @@ rational multiple of $\Psi(s,t)$. This proves Theorem~\ref{thm:main}.
 {\setlength{\tabcolsep}{2pt}
 \begin{tabular}{@{}lcccccc@{}}
 \toprule
-$(s,t)$ & $c$ & $\Lambda$ & $D$ & $\rho$ & $\rho/\eta$ & $B$\\
+$(s,t)$ & $c$ & $\Lambda$ & $D$ & $\rho$ & $\rho/\eta$ & $\mu\le$\\
 \midrule
-$(\frac k4,1)$ & $\frac15$ & $\LamFour$ & $\DFour$ & $\gFour$ & $\ExpFour$ & $\MuLamU$\\
+$(\frac12,1)$ & $\frac3{10}$ & $\LamHalf$ & $\DHalf$ & $\gHalf$ & $\ExpHalf$ & $\MuHalvesU$\\
 $(\frac k3,1)$ & $\frac3{10}$ & $\LamThree$ & $\DThree$ & $\gThree$ & $\ExpThree$ & $\MuThirdsU$\\
+$(\frac13,\frac23)$ & $\frac12$ & $\LamChi$ & $\DChi$ & $\gChi$ & $\ExpChi$ & $\MuChi$\\
+$(\frac k4,1)$ & $\frac15$ & $\LamFour$ & $\DFour$ & $\gFour$ & $\ExpFour$ & $\MuLamU$\\
 $(\frac k5,1)$ & $\frac29$ & $\LamFive$ & $\DFive$ & $\gFive$ & $\ExpFive$ & $\MuFifthsU$\\
 $(\frac k7,1)$ & $\frac16$ & $\LamSeven$ & $\DSeven$ & $\gSeven$ & $\ExpSeven$ & $\MuSeventhsU$\\
-$(\frac12,1)$ & $\frac3{10}$ & $\LamHalf$ & $\DHalf$ & $\gHalf$ & $\ExpHalf$ & $\MuHalvesU$\\
-$(\frac13,\frac23)$ & $\frac12$ & $\LamChi$ & $\DChi$ & $\gChi$ & $\ExpChi$ & $\MuChi$\\
 \bottomrule
 \end{tabular}}
 \caption{The data of the proof of Theorem~\ref{thm:main}, with $k$ prime to the denominator. For each pair of shifts the table gives the geometry parameter
@@ -1645,8 +1644,9 @@ Section~\ref{sec:content} and the decay certificates of Section~\ref{sec:decay}.
 used as proof.
 
 The statements of Theorem~\ref{thm:main} are in the file \lean{ChallengeHybrid.lean}. Their proofs are in
-\lean{SolutionHybrid.lean}, in the namespace \lean{TrigammaDifferences}. Each final theorem concerns the classical
-number of one row of Table~\ref{tab:main}, written as a series as in Section~\ref{sec:intro}. It states that for every
+\lean{SolutionHybrid.lean}, in the namespace \lean{TrigammaDifferences}. Each final theorem concerns one row of
+Table~\ref{tab:main}. Its number $\xi$ is written as a series: the classical form where there is one, and
+$\Psi(s,t)$ otherwise. The theorem states that for every
 $\varepsilon>0$ there is $b_0$ such that $b^{-(B+\varepsilon)}<|\xi-a/b|$ for all $b\ge b_0$ and all $a\in\Z$. The theorems
 are the following.
 \begin{itemize}
