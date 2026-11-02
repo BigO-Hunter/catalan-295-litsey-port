@@ -19,4 +19,11 @@ def PayW (w d0 ρ η κ δ B : ℝ) : Prop :=
   ρ * κ = B ∧ 0 < η ∧ 0 < ρ ∧ 0 < w ∧ 2 * w < κ ∧ 0 < δ ∧
     1 < 2 * (w - δ * (2 * κ - w)) ∧ η < 2 * d0 ∧ d0 + 4 * d0 * δ * κ < η * κ
 
+/-- Hypotheses of `irrationality_measure_of_recycled_polynomials_window'` (saving S2): `2 w < κ`
+is replaced by `w < κ` and `d0 ≤ (κ - w) (η + 2 d0 (1 - 3 δ))`, which removes the floor `B > ρ`. -/
+def PayW' (w d0 ρ η κ δ B : ℝ) : Prop :=
+  ρ * κ = B ∧ 0 < η ∧ 0 < ρ ∧ 0 < w ∧ w < κ ∧ 0 < δ ∧ δ < 1 / 3 ∧
+    d0 ≤ (κ - w) * (η + 2 * d0 * (1 - 3 * δ)) ∧
+    1 < 2 * (w - δ * (2 * κ - w)) ∧ η < 2 * d0 ∧ d0 + 4 * d0 * δ * κ < η * κ
+
 end CatalanMeasure.GenD
