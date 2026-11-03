@@ -158,6 +158,63 @@ theorem le_rbQ (X Y : FamPar) (hY : ∀ x ∈ Y.T.a.tail, x.zi = 0) (L : ℚ)
 
 theorem raQ_eq_rbQ (X : FamPar) : raQ X = rbQ X X := rfl
 
+/-! ### Shared geometric-tail table consumer
+
+The numeric table can be tested independently of the held FamPar assembly.
+The bridge here preserves the existing rbQ statement and exact checker.
+-/
+
+def rbIvCached (r : List ℚ) (u : SeqQ) (ts : List Iv) : Iv :=
+  cachedLoop ivS (fun k I => mulC I (wt r k)) 0 u.f ts zero
+
+theorem rbIvCached_eq (r : List ℚ) (u : SeqQ) (ts : List Iv)
+    (ht : ts = tailTable (polesP u.tail) r.length (initIv ivS (polesP u.tail))) :
+    rbIvCached r u ts = rbIv r u := by
+  rw [rbIvCached, ht, cachedLoop_tailTable]
+  rfl
+
+theorem le_rbQ_cached (X Y : FamPar) (hY : ∀ x ∈ Y.T.a.tail, x.zi = 0)
+    (ts : List Iv)
+    (ht : ts = tailTable (polesP Y.T.a.tail) X.T.R.f.length (initIv ivS (polesP Y.T.a.tail)))
+    (L : ℚ) (hc : L.num * (ivS : ℤ) ≤ (rbIvCached X.T.R.f Y.T.a ts).lo * L.den) :
+    L ≤ rbQ X Y := by
+  apply le_rbQ X Y hY L
+  rwa [rbIvCached_eq _ _ _ ht] at hc
+
+/-- Reuse the same two individual tail tables for an A-difference norm. -/
+def normIvCached (s t : SeqQ) (a b : List Iv) : Iv :=
+  cachedLoop ivS sqDiv 0 (dl s.f t.f) (diffTable a b) zero
+
+theorem enc_normIvCached (s t : SeqQ) (K : ℕ) (a b : List Iv)
+    (ha : a = tailTable (polesP s.tail) K (initIv ivS (polesP s.tail)))
+    (hb : b = tailTable (polesP t.tail) K (initIv ivS (polesP t.tail))) :
+    Enc ((ivS * ivS : ℕ) : ℚ) (normIvCached s t a b) (lbNormR s t K) := by
+  have hA : TableEnc (ivS : ℚ) (fun j => pv (polesP s.tail) (j + 1)) 0 a := by
+    rw [ha]; exact tailTable_enc _ K 0 _ (polesEnc_init ivS _)
+  have hB : TableEnc (ivS : ℚ) (fun j => pv (polesP t.tail) (j + 1)) 0 b := by
+    rw [hb]; exact tailTable_enc _ K 0 _ (polesEnc_init ivS _)
+  have hlA : a.length = K := by rw [ha, tailTable_length]
+  have hlB : b.length = K := by rw [hb, tailTable_length]
+  have hl : (diffTable a b).length = K :=
+    (diffTable_length a b (hlA.trans hlB.symm)).trans hlA
+  have h := cachedLoop_tableEnc (S := ivS) (S' := (ivS : ℚ) * (ivS : ℚ)) sqDiv
+    (fun k x => x ^ 2 / ((k : ℚ) + 1)) enc_sqDiv (dl s.f t.f)
+    (fun j => pv (polesP s.tail) (j + 1) - pv (polesP t.tail) (j + 1))
+    (diffTable a b) 0 zero 0 (tableEnc_diff _ _ a b 0 hA hB) (enc_zero _)
+  rw [hl] at h
+  rw [ivS2_cast, lbNormR_eq]
+  simpa only [normIvCached, useq, pdiff, pv_append, pv_polesP, pv_polesN,
+    sub_eq_add_neg, zero_add, Nat.zero_add, List.drop_zero] using h
+
+theorem lbNorm_ge_cached {s t : SeqQ} (hs : ∀ x ∈ s.tail, x.zi = 0)
+    (ht : ∀ x ∈ t.tail, x.zi = 0) (K : ℕ) (a b : List Iv)
+    (ha : a = tailTable (polesP s.tail) K (initIv ivS (polesP s.tail)))
+    (hb : b = tailTable (polesP t.tail) K (initIv ivS (polesP t.tail)))
+    (L : ℚ) (hc : L.num * ((ivS * ivS : ℕ) : ℤ) ≤ (normIvCached s t a b).lo * L.den) :
+    L ≤ lbNorm s t K := by
+  rw [lbNorm_real hs ht]
+  exact le_of_enc ivS2_pos (enc_normIvCached s t K a b ha hb) L hc
+
 /-! ### Moments of a single-piece reference -/
 
 theorem momAux_one_zero (k : ℕ) : ∀ (l : List ℚ) (j : ℕ), momAux 1 0 k j l = mom1 l (j + k + 1)
