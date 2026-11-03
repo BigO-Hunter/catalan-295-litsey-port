@@ -181,23 +181,23 @@ theorem resFieldS_eq {Pc : List ℤ} {P : List TailQ} (hP : tailsInDisk P = true
 ~10^200000 over the ~60 terms of a field.  `sumLogsR` rounds each term to the `2^-128` grid
 (`encDiv`) before adding, at an extra error of `2^-128` per term. -/
 
-def sumLogsR : List LogTerm → Option (ℚ × ℚ)
+def sumLogsRLegacy : List LogTerm → Option (ℚ × ℚ)
   | [] => some (0, 0)
   | t :: l =>
-    match cLog t.c t.d t.a t.b, sumLogsR l with
+    match cLog t.c t.d t.a t.b, sumLogsRLegacy l with
     | some q, some (v, e) => some ((encDiv q.num q.den).1 + v,
         (wPieces t.c t.d : ℚ) / 1000000000000 + (encDiv q.num q.den).2 + e)
     | _, _ => none
 
-theorem sumLogsR_spec {l : List LogTerm} {v e : ℚ} (h : sumLogsR l = some (v, e)) :
+theorem sumLogsRLegacy_spec {l : List LogTerm} {v e : ℚ} (h : sumLogsRLegacy l = some (v, e)) :
     |(l.map LogTerm.val).sum - (v : ℝ)| ≤ (e : ℝ) := by
   induction l generalizing v e with
   | nil =>
-    simp only [sumLogsR, Option.some.injEq, Prod.mk.injEq] at h
+    simp only [sumLogsRLegacy, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨rfl, rfl⟩ := h
     simp
   | cons t l ih =>
-    simp only [sumLogsR] at h
+    simp only [sumLogsRLegacy] at h
     split at h
     · rename_i q v' e' hq hl
       simp only [Option.some.injEq, Prod.mk.injEq] at h
@@ -215,6 +215,12 @@ theorem sumLogsR_spec {l : List LogTerm} {v e : ℚ} (h : sumLogsR l = some (v, 
       rw [abs_le] at h1 h2 h3 ⊢
       constructor <;> linarith [h1.1, h1.2, h2.1, h2.2, h3.1, h3.2]
     · simp at h
+
+/-- Default field-log summation uses the shared adaptive node evaluator. -/
+def sumLogsR : List LogTerm → Option (ℚ × ℚ) := sumLogs
+
+theorem sumLogsR_spec {l : List LogTerm} {v e : ℚ} (h : sumLogsR l = some (v, e)) :
+    |(l.map LogTerm.val).sum - (v : ℝ)| ≤ (e : ℝ) := sumLogs_spec h
 
 /-! ### enclosures -/
 
