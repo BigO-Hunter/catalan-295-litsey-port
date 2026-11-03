@@ -136,6 +136,83 @@ theorem nodal_weight_joint_le_of_scaled_phi (P : Parameters) (hg : P.g0 ≤ P.n0
   exact (restrictedWeight_joint_le_functional P N k τ i).trans
     (nodal_functional_le_of_scaled_phi P hg hτ k i g hr0 hr1 hB hHQ hcard hcirc hseg)
 
+def nodalPhi (P : Parameters) (g : ℂ → ℝ) (κ : ℝ) (z : ℂ) : ℝ :=
+  (2 * (P.g0 : ℝ) - (P.n0 : ℝ) * κ) * Real.log ‖z‖ +
+    ((P.h0 + P.q0 : ℕ) : ℝ) * Real.log ‖(1 : ℂ) - z‖ +
+    ((P.n0 - P.g0 : ℕ) : ℝ) * g z
+
+theorem scaledNodalPhi_eq (P : Parameters) (g : ℂ → ℝ) (hn0 : 0 < P.n0)
+    {N : ℕ} (hN : 0 < N) (k : ℕ) (z : ℂ) :
+    scaledNodalPhi P N k g z = (N : ℝ) * nodalPhi P g ((k : ℝ) / P.n N) z := by
+  have hnR : (0 : ℝ) < P.n0 := by exact_mod_cast hn0
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  unfold scaledNodalPhi nodalPhi Parameters.n Parameters.g Parameters.h Parameters.q
+  push_cast
+  field_simp
+  <;> ring
+
+/-- Exact hW producer for the accepted unscaled Phi contour inputs. -/
+theorem nodal_hW_of_cardinal_and_phi (P : Parameters) (hg : P.g0 ≤ P.n0) (hn0 : 0 < P.n0)
+    (τ : ∀ N : ℕ, Fin ((P.n0 - P.g0) * N) → ℝ) (g : ℂ → ℝ)
+    {r C : ℝ} (hr0 : 0 < r) (hr1 : r ≤ 1) (hC : 0 ≤ C) (power : ℕ) (ω : ℝ → ℝ)
+    (hdata : ∀ᶠ N : ℕ in Filter.atTop,
+      Function.Injective (τ N) ∧ 0 < P.h N + P.q N ∧
+      ∀ i z, ‖z‖ ≤ 1 → ‖((quadBasis (τ N) i).map (algebraMap ℝ ℂ)).eval z‖ ≤
+        (C * (N : ℝ) ^ power) * Real.exp ((((P.n0 - P.g0) * N : ℕ) : ℝ) * g z))
+    (hcirc : ∀ κ ∈ Set.Icc (0 : ℝ) 1, ∀ z : ℂ, ‖z‖ = r →
+      nodalPhi P g κ z ≤ (P.n0 : ℝ) * ω κ)
+    (hseg : ∀ κ ∈ Set.Icc (0 : ℝ) 1, ∀ x : ℝ, r ≤ |x| → |x| ≤ 1 →
+      nodalPhi P g κ (x : ℂ) ≤ (P.n0 : ℝ) * ω κ) :
+    ∃ C0 : ℝ, 0 ≤ C0 ∧ ∀ᶠ N : ℕ in Filter.atTop,
+      ∀ k : ℕ, k < P.n N → ∀ i : Fin ((P.n0 - P.g0) * N),
+        |(rowCommonFactor P N).eval (τ N i)| * |restrictedWeight P N k (τ N) i| ≤
+          C0 * (N : ℝ) ^ (power + 1) *
+            Real.exp ((P.n N : ℝ) * ω ((k : ℝ) / P.n N)) := by
+  let D : ℕ := 1 + P.b0 + P.n0 + P.q0
+  let C0 : ℝ := 4 * (D : ℝ) * C
+  refine ⟨C0, by dsimp [C0]; positivity, ?_⟩
+  filter_upwards [hdata, Filter.eventually_gt_atTop (0 : ℕ)] with N hdataN hN k hk i
+  obtain ⟨hτ, hHQ, hcard⟩ := hdataN
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hn : (0 : ℝ) < P.n N := by
+    exact_mod_cast Nat.mul_pos hn0 hN
+  have hκ : (k : ℝ) / P.n N ∈ Set.Icc (0 : ℝ) 1 :=
+    ⟨by positivity, (div_le_one hn).mpr (by exact_mod_cast hk.le)⟩
+  have he : (N : ℝ) * ((P.n0 : ℝ) * ω ((k : ℝ) / P.n N)) =
+      (P.n N : ℝ) * ω ((k : ℝ) / P.n N) := by
+    simp only [Parameters.n, Nat.cast_mul]
+    ring
+  have hcircle : ∀ z : ℂ, ‖z‖ = r →
+      scaledNodalPhi P N k g z ≤ (P.n N : ℝ) * ω ((k : ℝ) / P.n N) := by
+    intro z hz
+    rw [scaledNodalPhi_eq P g hn0 hN k z, ← he]
+    exact mul_le_mul_of_nonneg_left (hcirc _ hκ z hz) hNR.le
+  have hsegment : ∀ x : ℝ, r ≤ |x| → |x| ≤ 1 →
+      scaledNodalPhi P N k g (x : ℂ) ≤ (P.n N : ℝ) * ω ((k : ℝ) / P.n N) := by
+    intro x hx hx1
+    rw [scaledNodalPhi_eq P g hn0 hN k (x : ℂ), ← he]
+    exact mul_le_mul_of_nonneg_left (hseg _ hκ x hx hx1) hNR.le
+  have hweight := nodal_weight_joint_le_of_scaled_phi P hg hτ k i g hr0 hr1
+    (show 0 ≤ C * (N : ℝ) ^ power by positivity) hHQ (hcard i) hcircle hsegment
+  have hcount : 1 + (P.b N + k + P.q N - P.A N) ≤ D * N := by
+    have hsub := Nat.sub_le (P.b N + k + P.q N) (P.A N)
+    dsimp [D]
+    simp only [Nat.add_mul, Nat.one_mul]
+    simp only [Parameters.b, Parameters.q, Parameters.n] at hk hsub ⊢
+    omega
+  have hcountR : 4 * (1 + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ)) ≤
+      4 * (D : ℝ) * N := by
+    have ht : (1 : ℝ) + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ) ≤ (D : ℝ) * N := by
+      exact_mod_cast hcount
+    nlinarith
+  calc
+    _ ≤ 4 * (1 + ((P.b N + k + P.q N - P.A N : ℕ) : ℝ)) *
+        (C * (N : ℝ) ^ power * Real.exp ((P.n N : ℝ) * ω ((k : ℝ) / P.n N))) := hweight
+    _ ≤ (4 * (D : ℝ) * N) *
+        (C * (N : ℝ) ^ power * Real.exp ((P.n N : ℝ) * ω ((k : ℝ) / P.n N))) :=
+      mul_le_mul_of_nonneg_right hcountR (by positivity)
+    _ = _ := by rw [pow_succ]; dsimp [C0]; ring
+
 end
 end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.scaledNodalPhi
@@ -150,3 +227,9 @@ end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.restrictedWeight_joint_le_functional
 
 #print axioms CatalanMeasure.GenD.Analytic.nodal_weight_joint_le_of_scaled_phi
+
+#print axioms CatalanMeasure.GenD.Analytic.nodalPhi
+
+#print axioms CatalanMeasure.GenD.Analytic.scaledNodalPhi_eq
+
+#print axioms CatalanMeasure.GenD.Analytic.nodal_hW_of_cardinal_and_phi
