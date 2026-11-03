@@ -291,6 +291,22 @@ theorem series_refined_tail_error (f c d : ℕ → ℝ) (F D : ℝ) (M K : ℕ)
 
 /-! ## Laurent analytic identity at a nonzero centre -/
 
+/-- Rescaling the already-defined normalized inverse-power coefficient. -/
+theorem monoInv_scaled_eq (s k : ℕ) (c : ℚ) (hc : c ≠ 0) (y : ℝ) :
+    monoInv s k (c : ℝ)/(k.factorial : ℝ)*y^k =
+      (invBinom s k : ℝ)/(c : ℝ)^s * (-y/(c : ℝ))^k := by
+  have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+  have hb : (invBinom s k : ℝ) = (s.ascFactorial k : ℝ)/(k.factorial : ℝ) := by
+    have h := congrArg (fun v : ℚ => (v : ℝ)) (invBinom_asc s k)
+    push_cast at h
+    exact h
+  have hpow : (-y/(c : ℝ))^k = (-1 : ℝ)^k*y^k/(c : ℝ)^k := by
+    rw [div_pow, neg_pow]
+  rw [hb, hpow]
+  simp only [monoInv, pow_add]
+  field_simp [hc']
+  <;> ring
+
 theorem monoInvSeries (s : ℕ) (c : ℚ) (hc : c ≠ 0) (y : ℝ)
     (hy : |y| < |(c : ℝ)|) :
     HasSum (fun k : ℕ => monoInv s k (c : ℝ) / (k.factorial : ℝ) * y^k)
@@ -307,16 +323,8 @@ theorem monoInvSeries (s : ℕ) (c : ℚ) (hc : c ≠ 0) (y : ℝ)
   have hs := (invPowerSeries s (-y/(c : ℝ)) hu).mul_left (1/(c : ℝ)^s)
   convert hs using 1
   · funext k
-    have hb : (invBinom s k : ℝ) = (s.ascFactorial k : ℝ) / (k.factorial : ℝ) := by
-      have h := congrArg (fun v : ℚ => (v : ℝ)) (invBinom_asc s k)
-      push_cast at h
-      exact h
-    have hpow : (-y/(c : ℝ))^k = (-1 : ℝ)^k*y^k/(c : ℝ)^k := by
-      rw [div_pow, neg_pow]
-    rw [hb, hpow]
-    simp only [monoInv, pow_add]
-    field_simp [hc']
-    <;> ring
+    rw [monoInv_scaled_eq s k c hc y]
+    ring
   · have he : 1-(-y/(c : ℝ)) = ((c : ℝ)+y)/(c : ℝ) := by
       field_simp
       <;> ring
@@ -420,6 +428,120 @@ theorem laurentTaylor_ident (t : LTerm) (c : ℚ) (hc : c ≠ 0) (y : ℝ)
     rw [← hp]
     ring
   · rw [mulTower_zero]
+
+/-! ## The inverse-polynomial majorant U_k and its exact finite remainder -/
+
+def invMajAux (c q : ℚ) : ℕ → List ℚ → ℕ → ℚ
+  | _, [], _ => 0
+  | s, a :: as, k => qabs' a / (qabs' c)^s * (invBinom s k : ℚ) * q^k +
+      invMajAux c q (s+1) as k
+
+def invMajTotal (c q : ℚ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | s, a :: as => qabs' a / (qabs' c)^s / (1-q)^s + invMajTotal c q (s+1) as
+
+def invMajTail (c q : ℚ) (K : ℕ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | s, a :: as => qabs' a / (qabs' c)^s * invTailPosQ K q s + invMajTail c q K (s+1) as
+
+theorem monoInv_scaled_bound (s k : ℕ) (c q : ℚ) (hc : c ≠ 0) (hq : 0 ≤ q) (y : ℝ)
+    (hy : |y| ≤ (q : ℝ)*|(c : ℝ)|) :
+    |monoInv s k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+      (invBinom s k : ℝ)/|(c : ℝ)|^s*(q : ℝ)^k := by
+  rw [monoInv_scaled_eq s k c hc y]
+  have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+  have hcp : 0 < |(c : ℝ)| := abs_pos.mpr hc'
+  have hb : (0 : ℝ) ≤ invBinom s k := Nat.cast_nonneg _
+  simp only [abs_mul, abs_div, abs_pow, abs_neg, abs_of_nonneg hb]
+  have hp := pow_le_pow_left₀ (div_nonneg (abs_nonneg y) hcp.le)
+    ((div_le_iff₀ hcp).mpr hy) k
+  exact mul_le_mul_of_nonneg_left hp (div_nonneg hb (pow_nonneg hcp.le _))
+
+theorem invMajAux_bound (c q : ℚ) (hc : c ≠ 0) (hq : 0 ≤ q) (y : ℝ)
+    (hy : |y| ≤ (q : ℝ)*|(c : ℝ)|) : ∀ (a : List ℚ) (s k : ℕ),
+    |zTowAux s a k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤ (invMajAux c q s a k : ℝ) := by
+  intro a
+  induction a with
+  | nil => intro s k; simp [zTowAux, invMajAux]
+  | cons a as ih =>
+      intro s k
+      have ht := monoInv_scaled_bound s k c q hc hq y hy
+      have hr := ih (s+1) k
+      have he : zTowAux s (a :: as) k (c : ℝ)/(k.factorial : ℝ)*y^k =
+          (a : ℝ)*(monoInv s k (c : ℝ)/(k.factorial : ℝ)*y^k) +
+            zTowAux (s+1) as k (c : ℝ)/(k.factorial : ℝ)*y^k := by
+        simp only [zTowAux]
+        ring
+      rw [he]
+      have hm : |(a : ℝ)*(monoInv s k (c : ℝ)/(k.factorial : ℝ)*y^k)| ≤
+          |(a : ℝ)| *((invBinom s k : ℝ)/|(c : ℝ)|^s*(q : ℝ)^k) := by
+        rw [abs_mul]
+        exact mul_le_mul_of_nonneg_left ht (abs_nonneg (a : ℝ))
+      have hs : |(a : ℝ)*(monoInv s k (c : ℝ)/(k.factorial : ℝ)*y^k) +
+          zTowAux (s+1) as k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+          |(a : ℝ)| *((invBinom s k : ℝ)/|(c : ℝ)|^s*(q : ℝ)^k) +
+            (invMajAux c q (s+1) as k : ℝ) :=
+        (abs_add_le _ _).trans (add_le_add hm hr)
+      simp only [invMajAux, Rat.cast_add, Rat.cast_mul, Rat.cast_div, Rat.cast_pow, Rat.cast_natCast,
+        qabs'_cast]
+      convert hs using 1 <;> ring
+
+theorem invMajAux_nonneg (c q : ℚ) (hq : 0 ≤ q) : ∀ (a : List ℚ) (s k : ℕ),
+    0 ≤ invMajAux c q s a k := by
+  intro a
+  induction a with
+  | nil => intro s k; simp [invMajAux]
+  | cons a as ih =>
+      intro s k
+      simp only [invMajAux]
+      exact add_nonneg (mul_nonneg (mul_nonneg (div_nonneg (show 0 ≤ qabs' a by rw [qabs'_eq_abs]; exact abs_nonneg _) (pow_nonneg (show 0 ≤ qabs' c by rw [qabs'_eq_abs]; exact abs_nonneg _) _))
+        (Nat.cast_nonneg _)) (pow_nonneg hq _)) (ih (s+1) k)
+
+theorem invMajAuxSeries (c q : ℚ) (hq0 : 0 ≤ q) (hq1 : q < 1) : ∀ (a : List ℚ) (s : ℕ),
+    HasSum (fun k : ℕ => (invMajAux c q s a k : ℝ)) (invMajTotal c q s a : ℝ) := by
+  have hq : |(q : ℝ)| < 1 := by
+    rw [abs_of_nonneg (by exact_mod_cast hq0)]
+    exact_mod_cast hq1
+  intro a
+  induction a with
+  | nil => intro s; simpa [invMajAux, invMajTotal] using (hasSum_zero : HasSum (fun _ : ℕ => (0 : ℝ)) 0)
+  | cons a as ih =>
+      intro s
+      have ht := (invPowerSeries s (q : ℝ) hq).mul_left ((qabs' a / (qabs' c)^s : ℚ) : ℝ)
+      convert ht.add (ih (s+1)) using 1
+      · funext k
+        simp only [invMajAux]
+        push_cast <;> ring
+      · simp only [invMajTotal]
+        push_cast <;> ring
+
+theorem invMajTail_eq (c q : ℚ) (K : ℕ) (hq : q ≠ 1) : ∀ (a : List ℚ) (s : ℕ),
+    invMajTotal c q s a - (∑ k ∈ Finset.range (K+1), invMajAux c q s a k) =
+      invMajTail c q K s a := by
+  intro a
+  induction a with
+  | nil => intro s; simp [invMajTotal, invMajAux, invMajTail]
+  | cons a as ih =>
+      intro s
+      have hp : (∑ k ∈ Finset.range (K+1), invMajAux c q s (a :: as) k) =
+          qabs' a/(qabs' c)^s * (∑ k ∈ Finset.range (K+1), (invBinom s k : ℚ)*q^k) +
+            ∑ k ∈ Finset.range (K+1), invMajAux c q (s+1) as k := by
+        simp only [invMajAux, Finset.sum_add_distrib]
+        congr 1
+        rw [Finset.mul_sum]
+        apply Finset.sum_congr rfl
+        intro k _
+        ring
+      rw [hp, invMajTotal, invMajTail, invTailPosQ_eq K q hq]
+      unfold invTailQ
+      linear_combination ih (s+1)
+
+#print axioms monoInv_scaled_eq
+#print axioms monoInv_scaled_bound
+#print axioms invMajAux_bound
+#print axioms invMajAux_nonneg
+#print axioms invMajAuxSeries
+#print axioms invMajTail_eq
 
 #print axioms monoInvSeries
 #print axioms zTowAuxSeries
