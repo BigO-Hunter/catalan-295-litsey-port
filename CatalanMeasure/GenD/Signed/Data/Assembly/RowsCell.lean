@@ -29,209 +29,6 @@ noncomputable section
 
 /-- **Columns (`hSy`) from SC cells.**  `Ft` is the trial field (`hFt` is `hidSC` with `cfLim_eq`),
 `Fc` the rounded cell field; `hsup` is the cell `Sup` on `(0,1)`, `hend` the log-form end window at `1`. -/
-theorem rowSC_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
-    (Ft Fc : FieldQ) {K : ℝ}
-    (hFt : ∀ s, cfLim P410 s + 2 * X.T.form.v.Tform s = fieldTower Ft (poleF Ft.poles) 0 s + K)
-    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
-    {T TR c lo : ℝ}
-    (hsup : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
-    (hlo0 : 0 < lo) (hlo1 : lo < 1)
-    (hend : ∀ x ∈ Icc lo 1, x ≠ 1 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 1|)
-    (hc : 0 < c) (hcmp : TR + c * Real.log (1 - lo) ≤ T) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ s ∈ Ioo (0 : ℝ) 1,
-      (famD X N).fCol s ≤ T + δ + K + ε := by
-  have hbr : ∀ s ∈ Ioo (0 : ℝ) 1, cfLim P410 s + 2 * X.T.form.v.Tform s ≤
-      fieldTower Fc (poleF Fc.poles) 0 s + δ + K := by
-    intro s hs
-    have hs1 : |s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
-    have := fieldTower_le_cell Ft Fc hpl hpo hδ hs1 poleF
-    rw [hFt s]; linarith
-  refine rowSC X hok (r := lo) (T0 := T + δ + K) (lo := lo) (T1 := TR + δ + K) (c1 := c)
-    (a := lo / 2) (b := lo) (Sm := T + δ + K) hlo0 hlo1 ?_ hlo0 hlo1 hc ?_ (by linarith) (by linarith)
-    hlo1 (by linarith) le_rfl ?_ le_rfl ?_ le_rfl
-  · intro s hs
-    have h1 := hbr s ⟨hs.1, by linarith [hs.2]⟩
-    have h2 := hsup s ⟨hs.1, by linarith [hs.2]⟩
-    linarith
-  · intro s hs
-    have h1 := hbr s ⟨by linarith [hs.1], hs.2⟩
-    have h2 := hend s ⟨hs.1.le, hs.2.le⟩ (ne_of_lt hs.2)
-    have habs : |s - 1| = 1 - s := by rw [abs_of_neg (by linarith [hs.2])]; ring
-    rw [habs] at h2
-    linarith
-  · intro s hs
-    have h1 := hbr s ⟨by linarith [hs.1], by linarith [hs.2]⟩
-    have h2 := hsup s ⟨by linarith [hs.1], by linarith [hs.2]⟩
-    linarith
-  · linarith
-
-/-- **Negative free rows (`hSn`) from SN cells.**  `hsup` is the cell `Sup` on `(-1,0)`, `hend` the
-log-form end window at `0` (`fNeg_cell_zero`'s `c log|x|`). -/
-theorem rowSN_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (Ft Fc : FieldQ) {K : ℝ}
-    (hFt : ∀ x, fNegLim X.T.form (rfLim P410) x = fieldTower Ft (poleF Ft.poles) 0 x + K)
-    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
-    {T TR c lo : ℝ}
-    (hsup : ∀ x ∈ Ioo (-1 : ℝ) 0, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
-    (hlo0 : -1 < lo) (hlo1 : lo < 0)
-    (hend : ∀ x ∈ Icc lo 0, x ≠ 0 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 0|)
-    (hc : 0 < c) (hcmp : TR + c * Real.log (-lo) ≤ T) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0,
-      (famD X N).fNeg x ≤ T + δ + K + ε := by
-  have hbr : ∀ x ∈ Ioo (-1 : ℝ) 0, fNegLim X.T.form (rfLim P410) x ≤
-      fieldTower Fc (poleF Fc.poles) 0 x + δ + K := by
-    intro x hx
-    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]
-    have := fieldTower_le_cell Ft Fc hpl hpo hδ hx1 poleF
-    rw [hFt x]; linarith
-  refine rowSN X hok hRt (r := -lo) (Tr := TR + δ + K) (c := c) (hi := lo) (T := T + δ + K)
-    (a := lo) (b := lo) (Sm := T + δ + K) (by linarith) (by linarith) hc ?_ hlo1 ?_ hlo0 le_rfl hlo1
-    le_rfl (by linarith) ?_ ?_ le_rfl le_rfl
-  · intro x hx
-    have h1 := hbr x ⟨by linarith [hx.1], hx.2⟩
-    have h2 := hend x ⟨by linarith [hx.1], hx.2.le⟩ (ne_of_lt hx.2)
-    rw [sub_zero] at h2
-    linarith
-  · intro x hx
-    have h1 := hbr x ⟨hx.1, by linarith [hx.2]⟩
-    have h2 := hsup x ⟨hx.1, by linarith [hx.2]⟩
-    linarith
-  · intro x hx
-    have h1 := hbr x ⟨by linarith [hx.1], by linarith [hx.2]⟩
-    have h2 := hsup x ⟨by linarith [hx.1], by linarith [hx.2]⟩
-    linarith
-  · linarith
-
-/-- **Positive free rows (`hSp`) from SP cells.**  Five regions of `(0,1)`: the log-form end window at `0`
-(`hR0`, rounded interior field `F2`), the gap (`hR1`, the trial field `Ft` itself), the interior (`hR2`, `F2`),
-the jump region (`hR3`, rounded field `F3`) and the log-form end window at `1` (`hR4`, `F3`).  The spike cost
-`csL` is paid on `(1 - θ, 1)`, which lies inside the jump region. -/
-theorem rowSP_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (Ft F2 F3 : FieldQ) (Ts : List LTerm) {K : ℝ}
-    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, fPosLim X.T.form (rfLim P410) (20 / 58) (bSeq X.bs) X.bs.length
-      ((X.CSP : ℝ) / 58) (1 / 1024) x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
-        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
-    (hcs : (0 : ℝ) ≤ X.CSP)
-    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
-    (hpl3 : Ft.plogs = F3.plogs) (hpo3 : Ft.poles = F3.poles) {δ3 : ℚ} (hδ3 : l1Q Ft.poly F3.poly ≤ δ3)
-    {h0 m1 j lo1 TR0 c0 T1 T2 T3 TR4 c4 S : ℝ}
-    (hh0 : 0 < h0) (hh0m : h0 < m1) (hm1j : m1 ≤ j) (hj : j = 1 - 1 / 1024) (hjlo : j < lo1) (hlo1 : lo1 < 1)
-    (hR0 : ∀ x ∈ Ioc 0 h0, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ TR0 + c0 * Real.log |x|)
-    (hc0 : 0 < c0)
-    (hR1 : ∀ x ∈ Ioo h0 m1, fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
-    (hR2 : ∀ x ∈ Icc m1 j, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
-    (hR3 : ∀ x ∈ Ico j 1, fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ T3)
-    (hR4 : ∀ x ∈ Icc lo1 1, x ≠ 1 →
-      fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ TR4 + c4 * Real.log |x - 1|)
-    (hc4 : 0 < c4)
-    (hS0 : TR0 + δ2 + K + c0 * Real.log h0 ≤ S) (hS1 : T1 + K ≤ S) (hS2 : T2 + δ2 + K ≤ S)
-    (hS3 : T3 + δ3 + K + (X.CSP : ℝ) / 58 ≤ S)
-    (hS4 : TR4 + δ3 + K + (X.CSP : ℝ) / 58 + c4 * Real.log (1 - lo1) ≤ S) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, (famD X N).fPosS x ≤ S + ε := by
-  have hcs58 : (0 : ℝ) ≤ (X.CSP : ℝ) / 58 := by positivity
-  have br2 : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Ft (poleF Ft.poles) 0 x ≤ fieldTower F2 (poleF F2.poles) 0 x + δ2 :=
-    fun x hx => fieldTower_le_cell Ft F2 hpl2 hpo2 hδ2
-      (by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]) poleF
-  have br3 : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Ft (poleF Ft.poles) 0 x ≤ fieldTower F3 (poleF F3.poles) 0 x + δ3 :=
-    fun x hx => fieldTower_le_cell Ft F3 hpl3 hpo3 hδ3
-      (by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]) poleF
-  have ind0 : ∀ x : ℝ, x ≤ j → (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) = 0 := by
-    intro x hx; rw [if_neg]; rw [← hj]; linarith
-  have ind1 : ∀ x : ℝ, (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) ≤ 1 := by
-    intro x; split_ifs <;> norm_num
-  have hlogh0 : ∀ x ∈ Ioc 0 h0, Real.log |x| ≤ Real.log h0 := by
-    intro x hx; rw [abs_of_pos hx.1]; exact Real.log_le_log hx.1 hx.2
-  refine rowSP X hok hRt (r := h0) (Tr := TR0 + δ2 + K) (c := c0) (lo := lo1)
-    (T1 := TR4 + δ3 + K + (X.CSP : ℝ) / 58) (c1 := c4) (a := h0) (b := lo1) (Sm := S)
-    hh0 (by linarith) hc0 ?_ (by linarith) hlo1 hc4 ?_ hh0 (by linarith) hlo1 le_rfl le_rfl ?_ hS0 hS4 le_rfl
-  · intro x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨hx.1, by linarith [hx.2]⟩
-    rw [hFt x hx01, ind0 x (by linarith [hx.2])]
-    have := hR0 x ⟨hx.1, hx.2.le⟩
-    have := br2 x hx01
-    linarith
-  · intro x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], hx.2⟩
-    rw [hFt x hx01]
-    have h4 := hR4 x ⟨hx.1.le, hx.2.le⟩ (ne_of_lt hx.2)
-    have habs : |x - 1| = 1 - x := by rw [abs_of_neg (by linarith [hx.2])]; ring
-    rw [habs] at h4
-    have := br3 x hx01
-    have := ind1 x
-    have : (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0) ≤ (X.CSP : ℝ) / 58 := by
-      calc _ ≤ (X.CSP : ℝ) / 58 * 1 := mul_le_mul_of_nonneg_left (ind1 x) hcs58
-        _ = _ := mul_one _
-    linarith
-  · intro x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith [hx.2]⟩
-    rw [hFt x hx01]
-    rcases eq_or_lt_of_le hx.1 with hxe | hxg
-    · -- the left end point of the interior: the end window at `0`
-      subst hxe
-      rw [ind0 _ (by linarith)]
-      have := hR0 h0 ⟨hh0, le_rfl⟩
-      have := br2 h0 hx01
-      rw [abs_of_pos hh0] at *
-      linarith
-    by_cases h1 : x < m1
-    · rw [ind0 x (by linarith)]
-      have := hR1 x ⟨hxg, h1⟩
-      linarith
-    push_neg at h1
-    by_cases h2 : x ≤ j
-    · rw [ind0 x h2]
-      have := hR2 x ⟨h1, h2⟩
-      have := br2 x hx01
-      linarith
-    push_neg at h2
-    have := hR3 x ⟨h2.le, by linarith [hx.2]⟩
-    have := br3 x hx01
-    have : (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0) ≤ (X.CSP : ℝ) / 58 := by
-      calc _ ≤ (X.CSP : ℝ) / 58 * 1 := mul_le_mul_of_nonneg_left (ind1 x) hcs58
-        _ = _ := mul_one _
-    linarith
-
-
-/-- **σ⁻ rows (`hneg`) from SM cells.**  The SM `Sup` covers `(-1, g]` with `g = -gs`; on `x ≤ g` the finite-`N`
-error `(-log|x|)/(2ν)` of `fNegM_le_lim` is at most `(-log (-g))/(2ν) → 0`. -/
-theorem rowNeg_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (Ft Fc : FieldQ) {K : ℝ}
-    (hFt : ∀ x, fNegMLim X.T.form (fun y => -((53 : ℝ) / 58) * Real.log (1 + y ^ 2)) x =
-      fieldTower Ft (poleF Ft.poles) 0 x + K)
-    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
-    {g T : ℝ} (hg1 : -1 < g) (hg0 : g < 0)
-    (hsup : ∀ x ∈ Ioc (-1 : ℝ) g, fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ g →
-      (famD X N).fNegM (groupedMarkedField P410 N) x ≤ T + δ + K + ε := by
-  intro ε hε
-  have hf := famD_family X hok
-  have hP : Admissible P410 := D58.Odd.design_admissible
-  have hRm := Glue410.hRm_neg hP (c := (53 : ℝ) / 58) (by norm_num [P410, D58.Odd.design])
-    (Rm := fun N => groupedMarkedField P410 N) (fun N => rfl)
-  have hL := fNegM_le_lim hf (famD_R_tail X hRt) (by norm_num) le_rfl hRm (ε / 2) (by linarith)
-  have hlog : 0 ≤ -Real.log (-g) := by
-    have : Real.log (-g) ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
-    linarith
-  have h2 : ∀ᶠ N in atTop, (-Real.log (-g)) / (2 * (famD X N).ν) ≤ ε / 2 :=
-    (tendsto_const_nhds.div_atTop (hf.hν.const_mul_atTop (by norm_num : (0 : ℝ) < 2))).eventually
-      (ge_mem_nhds (by linarith))
-  filter_upwards [hL, h2, hf.hν.eventually_gt_atTop 0] with N hN h2N hνN x hx hxg
-  have e1 := hN x hx
-  have hlx : -Real.log |x| ≤ -Real.log (-g) := by
-    have hax : |x| = -x := abs_of_neg hx.2
-    rw [hax]
-    have := Real.log_le_log (by linarith) (by linarith : -g ≤ -x)
-    linarith
-  have e2 : (-Real.log |x|) / (2 * (famD X N).ν) ≤ (-Real.log (-g)) / (2 * (famD X N).ν) :=
-    div_le_div_of_nonneg_right hlx (by positivity)
-  have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]
-  have e3 := fieldTower_le_cell Ft Fc hpl hpo hδ hx1 poleF
-  have e4 := hsup x ⟨hx.1, hxg⟩
-  have e5 := hFt x
-  have e6 : (groupedMarkedField P410 N) = (fun N => groupedMarkedField P410 N) N := rfl
-  linarith
-
-/-- `fPosMS_cell` on the half-open cell `[lo, hi)` (the proof uses the cell only pointwise). -/
 theorem fPosMS_cell_Ico {D : ℕ → SignedData} {F : TrialForm} (hf : Family D F) {Rm : ℕ → ℝ → ℝ}
     {RmL : ℝ → ℝ} {ω : ℝ} (hωR : ∀ wr ∈ F.R.tail, ‖wr.1‖ ≤ ω) (hω1 : ω < 1) (hω0 : 0 ≤ ω) {σ csL θL : ℝ}
     {bL : ℕ → ℝ} {KL : ℕ}
@@ -350,163 +147,6 @@ theorem fPosMS_cell_Ico {D : ℕ → SignedData} {F : TrialForm} (hf : Family D 
 
 
 /-- The σ⁺ limit field of a family member, with `RmL = -(53/58) log (1 + y²)` and the family's spike data. -/
-abbrev posLim (X : FamPar) (x : ℝ) : ℝ :=
-  fPosMSLim X.T.form (fun y => -((53 : ℝ) / 58) * Real.log (1 + y ^ 2)) (20 / 58) (bSeq X.bs) X.bs.length
-    ((X.CSP : ℝ) / 58) (1 / 1024) x
-
-/-- `fPosMS ≤ Tf + ε` on `[lo, hi)` for a member of the family, from the limit bound (`fPosMS_cell_Ico` with the
-family's data). -/
-theorem posMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {lo hi : ℝ} {Tf : ℝ → ℝ} (hlo : 0 < lo) (hhi : hi ≤ 1)
-    (hlim : ∀ x ∈ Ico lo hi, posLim X x ≤ Tf x) :
-    ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ico lo hi, (famD X N).fPosMS (groupedMarkedField P410 N) x ≤ Tf x + ε := by
-  have hf := famD_family X hok
-  have hP : Admissible P410 := D58.Odd.design_admissible
-  have hRm := Glue410.hRm_pos hP (c := (53 : ℝ) / 58) (by norm_num [P410, D58.Odd.design])
-    (Rm := fun N => groupedMarkedField P410 N) (fun N => rfl)
-  have hcs : Tendsto (fun N => (famD X N).cs) atTop (𝓝 ((X.CSP : ℝ) / 58)) := tendsto_const_nhds
-  exact fPosMS_cell_Ico hf (famD_R_tail X hRt) (by norm_num) le_rfl (fun _ => rfl) (fun _ => rfl)
-    (fun _ => rfl) (famD_sigma_tendsto X) hcs hRm hlo hhi hlim
-
-/-- **σ⁺ top rows (`hposTop`) from the top cells.**  On `[xc, 1)`: the top cell `Sup` on `[xc, m]` (field `F1`) and
-the jump region `[m, 1)` (field `F2`, spike cost paid there, `m = 1 - 1/1024`). -/
-theorem rowPosTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (Ft F1 F2 : FieldQ) (Ts : List LTerm) {K : ℝ}
-    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
-        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
-    (hcs : (0 : ℝ) ≤ X.CSP)
-    (hpl1 : Ft.plogs = F1.plogs) (hpo1 : Ft.poles = F1.poles) {δ1 : ℚ} (hδ1 : l1Q Ft.poly F1.poly ≤ δ1)
-    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
-    {xc m T1 T2 S : ℝ} (hxc : 0 < xc) (hxcm : xc ≤ m) (hm : m = 1 - 1 / 1024)
-    (hR1 : ∀ x ∈ Icc xc m, fieldTower F1 (poleF F1.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
-    (hR2 : ∀ x ∈ Ico m 1, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
-    (hS1 : T1 + δ1 + K ≤ S) (hS2 : T2 + δ2 + K + (X.CSP : ℝ) / 58 ≤ S) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
-      (famD X N).fPosMS (groupedMarkedField P410 N) x ≤ S + ε := by
-  have hcs58 : (0 : ℝ) ≤ (X.CSP : ℝ) / 58 := by positivity
-  have hlim : ∀ x ∈ Ico xc 1, posLim X x ≤ S := by
-    intro x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], hx.2⟩
-    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
-    rw [hFt x hx01]
-    by_cases h : x ≤ m
-    · have hi0 : (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; rw [← hm]; linarith
-      rw [hi0]
-      have := hR1 x ⟨hx.1, h⟩
-      have := fieldTower_le_cell Ft F1 hpl1 hpo1 hδ1 hx1 poleF
-      linarith
-    · push_neg at h
-      have := hR2 x ⟨h.le, hx.2⟩
-      have := fieldTower_le_cell Ft F2 hpl2 hpo2 hδ2 hx1 poleF
-      have : (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0) ≤ (X.CSP : ℝ) / 58 := by
-        split_ifs <;> linarith
-      linarith
-  intro ε hε
-  filter_upwards [posMS_fam X hok hRt (Tf := fun _ => S) hxc le_rfl hlim ε hε] with N hN x hx hxx
-  exact hN x ⟨hxx, hx.2⟩
-
-/-- **σ⁺ rows (`hpos`) from the R cells at two corners `α₁ ≤ α₂`.**  `fPosMR α = fPosMS + rc α L` is affine in
-`α`; the corner cells bound `posLim + rc αₖ L` on `[g, xc)`, so every `α ∈ [α₁, α₂]` gets the chord of the corner
-thresholds. -/
-theorem rowPos_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {rc : ℝ} (hrc : 0 ≤ rc) {α₁ α₂ : ℝ} (hα : α₁ < α₂) (hα₁ : 0 ≤ α₁)
-    (Ft₁ Ft₂ F₁ F₂ : FieldQ) (Ts : List LTerm) {K : ℝ}
-    (hFt₁ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₁ * (-Real.log (1 - x ^ 2)) =
-      fieldTower Ft₁ (poleF Ft₁.poles) 0 x + lfieldTower Ts 0 x + K +
-        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
-    (hFt₂ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
-      fieldTower Ft₂ (poleF Ft₂.poles) 0 x + lfieldTower Ts 0 x + K +
-        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
-    (hpl₁ : Ft₁.plogs = F₁.plogs) (hpo₁ : Ft₁.poles = F₁.poles) {δ₁ : ℚ} (hδ₁ : l1Q Ft₁.poly F₁.poly ≤ δ₁)
-    (hpl₂ : Ft₂.plogs = F₂.plogs) (hpo₂ : Ft₂.poles = F₂.poles) {δ₂ : ℚ} (hδ₂ : l1Q Ft₂.poly F₂.poly ≤ δ₂)
-    {g xc T₁ T₂ : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - 1 / 1024)
-    (hR₁ : ∀ x ∈ Icc g xc, fieldTower F₁ (poleF F₁.poles) 0 x + lfieldTower Ts 0 x ≤ T₁)
-    (hR₂ : ∀ x ∈ Icc g xc, fieldTower F₂ (poleF F₂.poles) 0 x + lfieldTower Ts 0 x ≤ T₂) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc α₁ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
-      (famD X N).fPosMR (groupedMarkedField P410 N) rc α x ≤
-        (T₁ + δ₁ + K) + (α - α₁) / (α₂ - α₁) * ((T₂ + δ₂ + K) - (T₁ + δ₁ + K)) + ε := by
-  have hlimk : ∀ (αk Tk : ℝ) (Ftk Fk : FieldQ) {δk : ℚ},
-      (∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * αk * (-Real.log (1 - x ^ 2)) =
-        fieldTower Ftk (poleF Ftk.poles) 0 x + lfieldTower Ts 0 x + K +
-          (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0)) →
-      Ftk.plogs = Fk.plogs → Ftk.poles = Fk.poles → l1Q Ftk.poly Fk.poly ≤ δk →
-      (∀ x ∈ Icc g xc, fieldTower Fk (poleF Fk.poles) 0 x + lfieldTower Ts 0 x ≤ Tk) →
-      ∀ x ∈ Ico g xc, posLim X x ≤ (fun x => Tk + δk + K - rc * αk * (-Real.log (1 - x ^ 2))) x := by
-    intro αk Tk Ftk Fk δk hF hpl hpo hδ hR x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith [hx.2]⟩
-    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
-    have e := hF x hx01
-    have hi0 : (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; linarith [hx.2]
-    rw [hi0] at e
-    have := hR x ⟨hx.1, hx.2.le⟩
-    have := fieldTower_le_cell Ftk Fk hpl hpo hδ hx1 poleF
-    show posLim X x ≤ Tk + δk + K - rc * αk * (-Real.log (1 - x ^ 2))
-    linarith
-  have hxc1 : xc ≤ 1 := by linarith
-  intro ε hε
-  have h₁ := posMS_fam X hok hRt hg hxc1 (hlimk α₁ T₁ Ft₁ F₁ hFt₁ hpl₁ hpo₁ hδ₁ hR₁) ε hε
-  have h₂ := posMS_fam X hok hRt hg hxc1 (hlimk α₂ T₂ Ft₂ F₂ hFt₂ hpl₂ hpo₂ hδ₂ hR₂) ε hε
-  filter_upwards [h₁, h₂] with N hN₁ hN₂ α hα' x _ hgx hxx
-  have a₁ := hN₁ x ⟨hgx, hxx⟩
-  have a₂ := hN₂ x ⟨hgx, hxx⟩
-  have hd : 0 < α₂ - α₁ := by linarith
-  set s := (α - α₁) / (α₂ - α₁) with hs
-  have hs0 : 0 ≤ s := div_nonneg (by linarith [hα'.1]) hd.le
-  have hs1 : s ≤ 1 := (div_le_one hd).mpr (by linarith [hα'.2])
-  have hαs : α = (1 - s) * α₁ + s * α₂ := by
-    rw [hs]; field_simp; ring
-  unfold SignedData.fPosMR
-  set L := -Real.log (1 - x ^ 2)
-  set M := (famD X N).fPosMS (groupedMarkedField P410 N) x
-  have : M + rc * α * L = (1 - s) * (M + rc * α₁ * L) + s * (M + rc * α₂ * L) := by rw [hαs]; ring
-  rw [this]
-  nlinarith [mul_le_mul_of_nonneg_left a₁ (by linarith : (0 : ℝ) ≤ 1 - s), mul_le_mul_of_nonneg_left a₂ hs0]
-
-
-/-- **σ⁺ rows (`hpos`) from the R cells at the upper corner only.**  For `x ∈ (0, 1)` the remainder
-`rc α (-log (1 - x²))` is nondecreasing in `α` (`rc ≥ 0`), so the corner `α₂` bounds every `α ≤ α₂` (the interval
-`[0, 1/200]` needs no corner at `α = 0`). -/
-theorem rowPosHi_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {rc : ℝ} (hrc : 0 ≤ rc) {α₂ : ℝ} (Ft F : FieldQ) (Ts : List LTerm) {K : ℝ}
-    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
-      fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
-        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
-    (hpl : Ft.plogs = F.plogs) (hpo : Ft.poles = F.poles) {δ : ℚ} (hδ : l1Q Ft.poly F.poly ≤ δ)
-    {g xc T : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - 1 / 1024)
-    (hR : ∀ x ∈ Icc g xc, fieldTower F (poleF F.poles) 0 x + lfieldTower Ts 0 x ≤ T) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ≤ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
-      (famD X N).fPosMR (groupedMarkedField P410 N) rc α x ≤ T + δ + K + ε := by
-  have hlim : ∀ x ∈ Ico g xc, posLim X x ≤ (fun x => T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))) x := by
-    intro x hx
-    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith [hx.2]⟩
-    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
-    have e := hFt x hx01
-    have hi0 : (if 1 - 1 / 1024 < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; linarith [hx.2]
-    rw [hi0] at e
-    have := hR x ⟨hx.1, hx.2.le⟩
-    have := fieldTower_le_cell Ft F hpl hpo hδ hx1 poleF
-    show posLim X x ≤ T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))
-    linarith
-  intro ε hε
-  filter_upwards [posMS_fam X hok hRt hg (by linarith) hlim ε hε] with N hN α hα x hx hgx hxx
-  have a := hN x ⟨hgx, hxx⟩
-  have hL : 0 ≤ -Real.log (1 - x ^ 2) := by
-    have h1 : 0 < 1 - x ^ 2 := by nlinarith [hx.1, hx.2]
-    have h2 : 1 - x ^ 2 ≤ 1 := by nlinarith
-    linarith [Real.log_nonpos h1.le h2]
-  unfold SignedData.fPosMR
-  have : rc * α * (-Real.log (1 - x ^ 2)) ≤ rc * α₂ * (-Real.log (1 - x ^ 2)) :=
-    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hα hrc) hL
-  linarith
-
-/-! ### Near-type rows: corner cells of the trapezoid `{lo ≤ α ≤ hi, 0 ≤ β ≤ α}` -/
-
-/-- The near limit field of a family member (`RnL = -(53/58) log(1+y²) + (24/29) log|y|`). -/
-abbrev nearLim (X : FamPar) (α β x : ℝ) : ℝ :=
-  fNearMSLim X.T.form (fun y => -((53 : ℝ) / 58) * Real.log (1 + y ^ 2) + (24 / 29) * Real.log |y|) α β
-    (20 / 58) (bSeq X.bs) X.bs.length ((X.CSP : ℝ) / 58) (1 / 1024) x
-
-/-- Bilinear interpolation of corner values over the trapezoid, `s = (α-lo)/(hi-lo)`, `t = β/α`. -/
 def bilin (lo hi T00 T01 T10 T11 α β : ℝ) : ℝ :=
   (1 - (α - lo) / (hi - lo)) * (1 - β / α) * T00 + (1 - (α - lo) / (hi - lo)) * (β / α) * T01 +
     ((α - lo) / (hi - lo)) * (1 - β / α) * T10 + ((α - lo) / (hi - lo)) * (β / α) * T11
@@ -544,197 +184,12 @@ theorem bilin_mix {L : ℝ → ℝ → ℝ} {L0 A B : ℝ} (hL : ∀ a b, L a b 
   nlinarith [mul_le_mul_of_nonneg_left h00 w00, mul_le_mul_of_nonneg_left h01 w01,
     mul_le_mul_of_nonneg_left h10 w10, mul_le_mul_of_nonneg_left h11 w11]
 
-theorem nearLim_affine (X : FamPar) (x : ℝ) :
-    ∀ a b, nearLim X a b x = nearLim X 0 0 x + a * Glue410.nearAlphaCoef x +
-      b * Glue410.nearBetaCoef X.T.form x :=
-  fun a b => Glue410.fNearMSLim_affine _ _ a b _ _ _ _ _ x
-
-/-- The finite-`N` near field is eventually below its limit plus `(1/2ν)(-log(1-x²))`, on a window `(g, 1)`. -/
-theorem nearMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {g : ℝ} (hg : 0 < g) :
-    ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo g 1,
-      (famD X N).fNearMS (groupedNearField P410 N) α β x ≤ nearLim X α β x +
-        (1 / (2 * (famD X N).ν)) * (-Real.log (1 - x ^ 2)) + ε := by
-  have hf := famD_family X hok
-  have hP : Admissible P410 := D58.Odd.design_admissible
-  have hRn := Glue410.hRn_window hP (c := (53 : ℝ) / 58) (c' := (24 : ℝ) / 29)
-    (by norm_num [P410, D58.Odd.design]) (by norm_num [P410, D58.Odd.design])
-    (Rn := fun N => groupedNearField P410 N) (fun N => rfl) hg
-  have hcs : Tendsto (fun N => (famD X N).cs) atTop (𝓝 ((X.CSP : ℝ) / 58)) := tendsto_const_nhds
-  have key := fNearMS_le_lim hf (famD_R_tail X hRt) (by norm_num) le_rfl (fun _ => rfl) (fun _ => rfl)
-    (fun _ => rfl) (famD_sigma_tendsto X) hcs (Glue410.rnPatch_err hRn)
-  intro ε hε
-  filter_upwards [key ε hε] with N hN α β hβ x hx
-  rw [← Glue410.fNearMS_rnPatch (D := famD X N) (Rn := fun N => groupedNearField P410 N)
-    (RnL := fun y => -((53 : ℝ) / 58) * Real.log (1 + y ^ 2) + (24 / 29) * Real.log |y|) (N := N)
-    (α := α) (β := β) hx.1]
-  exact hN α β hβ x ⟨hg.trans hx.1, hx.2⟩
-
-/-- **Near rows (`hnear`) from the four corner bounds** on `[g, xc)`: the bound is the bilinear interpolation of the
-corner thresholds. -/
-theorem rowNear_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {g xc T00 T01 T10 T11 : ℝ} (hg : 0 < g) (hxc : xc < 1)
-    (h00 : ∀ x ∈ Ico g xc, nearLim X lo 0 x ≤ T00) (h01 : ∀ x ∈ Ico g xc, nearLim X lo lo x ≤ T01)
-    (h10 : ∀ x ∈ Ico g xc, nearLim X hi 0 x ≤ T10) (h11 : ∀ x ∈ Ico g xc, nearLim X hi hi x ≤ T11) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x →
-      x < xc → (famD X N).fNearMS (groupedNearField P410 N) α β x ≤ bilin lo hi T00 T01 T10 T11 α β + ε := by
-  intro ε hε
-  have hf := famD_family X hok
-  have h2 : ∀ᶠ N in atTop, (-Real.log (1 - xc ^ 2)) / (2 * (famD X N).ν) ≤ ε / 2 :=
-    (tendsto_const_nhds.div_atTop
-      (hf.hν.const_mul_atTop (by norm_num : (0 : ℝ) < 2))).eventually (ge_mem_nhds (by linarith))
-  filter_upwards [nearMS_fam X hok hRt (half_pos hg) (ε / 2) (by linarith), h2,
-    hf.hν.eventually_gt_atTop 0] with N hN hν2 hνpos α hα β hβ x hx hgx hxx
-  have hgx' : x ∈ Ioo (g / 2) 1 := ⟨by linarith, hx.2⟩
-  have hxpos : 0 ≤ x := hx.1.le
-  have hx2 : x ^ 2 ≤ xc ^ 2 := by nlinarith
-  have hlog : Real.log (1 - xc ^ 2) ≤ Real.log (1 - x ^ 2) :=
-    Real.log_le_log (by nlinarith) (by linarith)
-  have h6 : (1 / (2 * (famD X N).ν)) * (-Real.log (1 - x ^ 2)) ≤
-      (-Real.log (1 - xc ^ 2)) / (2 * (famD X N).ν) := by
-    rw [one_div, ← div_eq_inv_mul]
-    exact div_le_div_of_nonneg_right (by linarith) (by positivity)
-  have hm := bilin_mix (L := fun a b => nearLim X a b x) (nearLim_affine X x) hlo hlh
-    (h00 x ⟨hgx, hxx⟩) (h01 x ⟨hgx, hxx⟩) (h10 x ⟨hgx, hxx⟩) (h11 x ⟨hgx, hxx⟩) hα hβ
-  have := hN α β hβ.1 x hgx'
-  linarith
-
-/-- **Near top rows (`hnearTop`) from the four corner bounds** on `[xc, 1)` of the shape `G + r (-log(1-x²))`; the
-finite-`N` correction `(1/2ν)(-log(1-x²))` is absorbed by the margin `δ > 0` on the log coefficient. -/
-theorem rowNearTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {xc G00 G01 G10 G11 r00 r01 r10 r11 δ : ℝ} (hxc : 0 < xc)
-    (hδ : 0 < δ)
-    (h00 : ∀ x ∈ Ico xc 1, nearLim X lo 0 x ≤ G00 + r00 * (-Real.log (1 - x ^ 2)))
-    (h01 : ∀ x ∈ Ico xc 1, nearLim X lo lo x ≤ G01 + r01 * (-Real.log (1 - x ^ 2)))
-    (h10 : ∀ x ∈ Ico xc 1, nearLim X hi 0 x ≤ G10 + r10 * (-Real.log (1 - x ^ 2)))
-    (h11 : ∀ x ∈ Ico xc 1, nearLim X hi hi x ≤ G11 + r11 * (-Real.log (1 - x ^ 2))) :
-    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
-      (famD X N).fNearMS (groupedNearField P410 N) α β x ≤
-        bilin lo hi G00 G01 G10 G11 α β + ε +
-          (bilin lo hi r00 r01 r10 r11 α β + δ) * (-Real.log (1 - x ^ 2)) := by
-  intro ε hε
-  have hf := famD_family X hok
-  have h1 : ∀ᶠ N in atTop, 1 / (2 * δ) ≤ (famD X N).ν := hf.hν.eventually_ge_atTop (1 / (2 * δ))
-  filter_upwards [nearMS_fam X hok hRt (half_pos hxc) ε hε, h1, hf.hν.eventually_gt_atTop 0]
-    with N hN h1N hνpos α hα β hβ x hx hxx
-  have hgx' : x ∈ Ioo (xc / 2) 1 := ⟨by linarith, hx.2⟩
-  have hL : 0 ≤ -Real.log (1 - x ^ 2) :=
-    neg_nonneg.mpr (Real.log_nonpos (by nlinarith [hx.1, hx.2]) (by nlinarith [sq_nonneg x]))
-  have hgap : 1 / (2 * (famD X N).ν) ≤ δ := by
-    rw [div_le_iff₀ (by positivity)]
-    have := (div_le_iff₀ (by positivity : 0 < 2 * δ)).mp h1N
-    nlinarith
-  have h3 : (1 / (2 * (famD X N).ν)) * (-Real.log (1 - x ^ 2)) ≤ δ * (-Real.log (1 - x ^ 2)) :=
-    mul_le_mul_of_nonneg_right hgap hL
-  have hxI : x ∈ Ico xc 1 := ⟨hxx, hx.2⟩
-  have hm := bilin_mix (L := fun a b => nearLim X a b x) (nearLim_affine X x) hlo hlh
-    (h00 x hxI) (h01 x hxI) (h10 x hxI) (h11 x hxI) hα hβ
-  have hsplit : bilin lo hi (G00 + r00 * (-Real.log (1 - x ^ 2))) (G01 + r01 * (-Real.log (1 - x ^ 2)))
-      (G10 + r10 * (-Real.log (1 - x ^ 2))) (G11 + r11 * (-Real.log (1 - x ^ 2))) α β =
-      bilin lo hi G00 G01 G10 G11 α β + bilin lo hi r00 r01 r10 r11 α β * (-Real.log (1 - x ^ 2)) := by
-    unfold bilin; ring
-  rw [hsplit] at hm
-  have := hN α β hβ.1 x hgx'
-  nlinarith
-
-
-/-! ### The spike environment from the Frostman cells -/
-
-theorem famD_R_fin (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (N : ℕ) : ∀ k, (famD X N).R k = X.T.form.R.f (k + 1) := by
-  have h := famD_spec X hok N
-  have hRt' : X.T.form.R.tail = [] := by simp [TrialQ.form, SeqQ.form, hRt]
-  intro k
-  rw [TrialForm.R_eq h]
-  simp [hRt', gseq]
-
-theorem famD_R_zeroL (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    (N : ℕ) : ∀ k, X.T.form.R.L ≤ k → (famD X N).R k = 0 := by
-  intro k hk
-  rw [famD_R_fin X hok hRt N]
-  exact (famD_spec X hok N).hRf (k + 1) (by omega)
-
 theorem refTilt_succ (R : ℕ → ℝ) (k : ℕ) :
     refTilt R (k + 1) = -(-1 : ℝ) ^ (k + 1) * R k / ((k + 1 : ℕ) : ℝ) := by
   simp [refTilt]
 
 /-- **`SpikeEnv` of the family members** from a Frostman bound `frLim ≤ S0 < Sup` at `τ = 1` on
 `[-1, 1]` (the FR cells): `|Q_τ - Q_1| ≤ e Σ |R_k|` (`qTau_sub_le_fin`) and `e = dampE N → 0`. -/
-theorem famD_spikeEnv (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
-    {S0 : ℝ} (hfr : ∀ x ∈ Icc (-1 : ℝ) 1, frLim X.T.form x ≤ S0) (hgap : S0 < X.T.Sup) :
-    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (famD X N)) := by
-  set L := X.T.form.R.L
-  set SR : ℝ := ∑ k ∈ Finset.range L, |X.T.form.R.f (k + 1)|
-  have hd : Tendsto (fun N : ℕ => dampE N * SR) atTop (𝓝 0) := by
-    have : Tendsto (fun N : ℕ => dampE N) atTop (𝓝 0) := by
-      have h := (tendsto_natCast_atTop_atTop (R := ℝ)).atTop_add (tendsto_const_nhds (x := (1 : ℝ)))
-      have := (h.inv_tendsto_atTop).const_mul (1 / 2 ^ 30 : ℝ)
-      simpa [dampE, div_eq_mul_inv] using this
-    simpa using this.mul_const SR
-  filter_upwards [hd.eventually (gt_mem_nhds (sub_pos.mpr hgap)), eventually_gt_atTop 0] with N hN hN0
-  have h := famD_spec X hok N
-  have hR := famD_R_fin X hok hRt N
-  have hR0 := famD_R_zeroL X hok hRt N
-  have he := dampE_mem N
-  have hfs : ∀ {f : ℕ → ℝ}, (∀ k, L ≤ k → f k = 0) → HasSum f (∑ k ∈ Finset.range L, f k) :=
-    fun hf => hasSum_sum_of_ne_finset_zero (fun k hk => hf k (by simpa using hk))
-  refine ⟨{
-    hν := by show (0 : ℝ) < 58 * (N : ℝ); positivity
-    he := he
-    hsp := by show ((20 * N : ℕ) : ℝ) ≤ 58 * (N : ℝ); push_cast; nlinarith [(Nat.cast_nonneg N : (0 : ℝ) ≤ N)]
-    hθ := by show (1 / 1024 : ℝ) ∈ Ioo (0 : ℝ) 1; constructor <;> norm_num
-    ha := Glue410.Spec_summable_a h
-    hr := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
-    hra := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
-    Qref := fun x => ∑ k ∈ Finset.range L, refTilt (famD X N).R (k + 1) *
-      realEnergyTau (famD X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x
-    hQ := fun x _ => hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)
-    hℓ := ?_
-    hbK := fun i hi => by
-      show bSeq X.bs i = 0
-      have hi' : X.bs.length < i := hi
-      unfold bSeq
-      rw [if_neg (by omega), List.getD_eq_default _ _ (by omega)]
-      simp }⟩
-  intro x hx
-  have hx1 : |x| ≤ 1 := abs_le.mpr hx
-  have hQt := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
-      (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
-    (fun k hk => by rw [hR0 k hk]; simp)
-  have hQ1 := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
-      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
-    (fun k hk => by rw [hR0 k hk]; simp)
-  have hq := Data.Cells.qTau_sub_le_fin (K := L) he.1.le (by linarith [he.2]) hR0 hx hQt hQ1
-  have hsum : ∑ k ∈ Finset.range L, |(famD X N).R k| = SR := by
-    simp only [SR, hR]
-  rw [hsum] at hq
-  have hfr' := hfr x hx
-  have hTa : barrierTrialT (famD X N).a x = X.T.form.a.Tform x := by
-    rw [h.ha]; exact barrierTrialT_tseq h.haf h.haT hx1
-  have hQ1e : ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
-      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x = frLim X.T.form x + 2 * X.T.form.a.Tform x := by
-    unfold frLim
-    rw [sub_add_cancel]
-    refine Finset.sum_congr rfl (fun k _ => ?_)
-    rw [hR k, pow_succ]
-    ring
-  have hQte : (∑ k ∈ Finset.range L, refTilt (famD X N).R (k + 1) *
-      realEnergyTau (famD X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x) =
-      ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD X N).R k / ((k + 1 : ℕ) : ℝ)) *
-        (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x := by
-    refine Finset.sum_congr rfl (fun k _ => ?_)
-    rw [refTilt_succ]; rfl
-  show _ - 2 * barrierTrialT (famD X N).a x ≤ (X.T.Sup : ℝ)
-  rw [hQte, hTa]
-  rw [hQ1e] at hq
-  have := (abs_le.mp hq).2
-  have hSup : X.T.form.Sup = (X.T.Sup : ℝ) := rfl
-  linarith
-
-/-! ### Helpers for the row instances (`RowsQ0`–`RowsQ2`) -/
-
-/-- `l1Q` with structural recursion on the first list (the kernel evaluates it; `l1Q` itself is
-well-founded because its `[]` case recurses on the second list). -/
 def l1S : List ℚ → List ℚ → ℚ
   | [], bs => (bs.map qAbs).sum
   | a :: as, [] => qAbs a + l1S as []
@@ -820,6 +275,847 @@ theorem bilin_lin {lo hi c α β : ℝ} (hlo : lo < hi) (hα0 : 0 < α) :
   field_simp
   ring
 
+namespace Generic
+
+variable (dc : DesignConst)
+
+theorem rowSC_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ s, cfLim dc.toParameters s + 2 * X.T.form.v.Tform s = fieldTower Ft (poleF Ft.poles) 0 s + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {T TR c lo : ℝ}
+    (hsup : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
+    (hlo0 : 0 < lo) (hlo1 : lo < 1)
+    (hend : ∀ x ∈ Icc lo 1, x ≠ 1 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 1|)
+    (hc : 0 < c) (hcmp : TR + c * Real.log (1 - lo) ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ s ∈ Ioo (0 : ℝ) 1,
+      (famD dc X N).fCol s ≤ T + δ + K + ε := by
+  have hbr : ∀ s ∈ Ioo (0 : ℝ) 1, cfLim dc.toParameters s + 2 * X.T.form.v.Tform s ≤
+      fieldTower Fc (poleF Fc.poles) 0 s + δ + K := by
+    intro s hs
+    have hs1 : |s| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hs.1, hs.2]
+    have := fieldTower_le_cell Ft Fc hpl hpo hδ hs1 poleF
+    rw [hFt s]; linarith
+  refine rowSC dc X hok (r := lo) (T0 := T + δ + K) (lo := lo) (T1 := TR + δ + K) (c1 := c)
+    (a := lo / 2) (b := lo) (Sm := T + δ + K) hlo0 hlo1 ?_ hlo0 hlo1 hc ?_ (by linarith) (by linarith)
+    hlo1 (by linarith) le_rfl ?_ le_rfl ?_ le_rfl
+  · intro s hs
+    have h1 := hbr s ⟨hs.1, by linarith [hs.2]⟩
+    have h2 := hsup s ⟨hs.1, by linarith [hs.2]⟩
+    linarith
+  · intro s hs
+    have h1 := hbr s ⟨by linarith [hs.1], hs.2⟩
+    have h2 := hend s ⟨hs.1.le, hs.2.le⟩ (ne_of_lt hs.2)
+    have habs : |s - 1| = 1 - s := by rw [abs_of_neg (by linarith [hs.2])]; ring
+    rw [habs] at h2
+    linarith
+  · intro s hs
+    have h1 := hbr s ⟨by linarith [hs.1], by linarith [hs.2]⟩
+    have h2 := hsup s ⟨by linarith [hs.1], by linarith [hs.2]⟩
+    linarith
+  · linarith
+
+/-- **Negative free rows (`hSn`) from SN cells.**  `hsup` is the cell `Sup` on `(-1,0)`, `hend` the
+log-form end window at `0` (`fNeg_cell_zero`'s `c log|x|`). -/
+theorem rowSN_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ x, fNegLim X.T.form (rfLim dc.toParameters) x = fieldTower Ft (poleF Ft.poles) 0 x + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {T TR c lo : ℝ}
+    (hsup : ∀ x ∈ Ioo (-1 : ℝ) 0, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
+    (hlo0 : -1 < lo) (hlo1 : lo < 0)
+    (hend : ∀ x ∈ Icc lo 0, x ≠ 0 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 0|)
+    (hc : 0 < c) (hcmp : TR + c * Real.log (-lo) ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0,
+      (famD dc X N).fNeg x ≤ T + δ + K + ε := by
+  have hbr : ∀ x ∈ Ioo (-1 : ℝ) 0, fNegLim X.T.form (rfLim dc.toParameters) x ≤
+      fieldTower Fc (poleF Fc.poles) 0 x + δ + K := by
+    intro x hx
+    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]
+    have := fieldTower_le_cell Ft Fc hpl hpo hδ hx1 poleF
+    rw [hFt x]; linarith
+  refine rowSN dc X hok hRt (r := -lo) (Tr := TR + δ + K) (c := c) (hi := lo) (T := T + δ + K)
+    (a := lo) (b := lo) (Sm := T + δ + K) (by linarith) (by linarith) hc ?_ hlo1 ?_ hlo0 le_rfl hlo1
+    le_rfl (by linarith) ?_ ?_ le_rfl le_rfl
+  · intro x hx
+    have h1 := hbr x ⟨by linarith [hx.1], hx.2⟩
+    have h2 := hend x ⟨by linarith [hx.1], hx.2.le⟩ (ne_of_lt hx.2)
+    rw [sub_zero] at h2
+    linarith
+  · intro x hx
+    have h1 := hbr x ⟨hx.1, by linarith [hx.2]⟩
+    have h2 := hsup x ⟨hx.1, by linarith [hx.2]⟩
+    linarith
+  · intro x hx
+    have h1 := hbr x ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    have h2 := hsup x ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    linarith
+  · linarith
+
+/-- **Positive free rows (`hSp`) from SP cells.**  Five regions of `(0,1)`: the log-form end window at `0`
+(`hR0`, rounded interior field `F2`), the gap (`hR1`, the trial field `Ft` itself), the interior (`hR2`, `F2`),
+the jump region (`hR3`, rounded field `F3`) and the log-form end window at `1` (`hR4`, `F3`).  The spike cost
+`csL` is paid on `(1 - θ, 1)`, which lies inside the jump region. -/
+theorem rowSP_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft F2 F3 : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, fPosLim X.T.form (rfLim dc.toParameters) ((dc.sp : ℝ) / dc.n0) (bSeq X.bs) X.bs.length
+      ((X.CSP : ℝ) / dc.n0) (dc.thetaL : ℝ) x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0))
+    (hcs : (0 : ℝ) ≤ X.CSP)
+    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
+    (hpl3 : Ft.plogs = F3.plogs) (hpo3 : Ft.poles = F3.poles) {δ3 : ℚ} (hδ3 : l1Q Ft.poly F3.poly ≤ δ3)
+    {h0 m1 j lo1 TR0 c0 T1 T2 T3 TR4 c4 S : ℝ}
+    (hh0 : 0 < h0) (hh0m : h0 < m1) (hm1j : m1 ≤ j) (hj : j = 1 - (dc.thetaL : ℝ)) (hjlo : j < lo1) (hlo1 : lo1 < 1)
+    (hR0 : ∀ x ∈ Ioc 0 h0, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ TR0 + c0 * Real.log |x|)
+    (hc0 : 0 < c0)
+    (hR1 : ∀ x ∈ Ioo h0 m1, fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
+    (hR2 : ∀ x ∈ Icc m1 j, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
+    (hR3 : ∀ x ∈ Ico j 1, fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ T3)
+    (hR4 : ∀ x ∈ Icc lo1 1, x ≠ 1 →
+      fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ TR4 + c4 * Real.log |x - 1|)
+    (hc4 : 0 < c4)
+    (hS0 : TR0 + δ2 + K + c0 * Real.log h0 ≤ S) (hS1 : T1 + K ≤ S) (hS2 : T2 + δ2 + K ≤ S)
+    (hS3 : T3 + δ3 + K + (X.CSP : ℝ) / dc.n0 ≤ S)
+    (hS4 : TR4 + δ3 + K + (X.CSP : ℝ) / dc.n0 + c4 * Real.log (1 - lo1) ≤ S) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, (famD dc X N).fPosS x ≤ S + ε := by
+  have hcs58 : (0 : ℝ) ≤ (X.CSP : ℝ) / dc.n0 := by positivity
+  have br2 : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Ft (poleF Ft.poles) 0 x ≤ fieldTower F2 (poleF F2.poles) 0 x + δ2 :=
+    fun x hx => fieldTower_le_cell Ft F2 hpl2 hpo2 hδ2
+      (by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]) poleF
+  have br3 : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Ft (poleF Ft.poles) 0 x ≤ fieldTower F3 (poleF F3.poles) 0 x + δ3 :=
+    fun x hx => fieldTower_le_cell Ft F3 hpl3 hpo3 hδ3
+      (by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]) poleF
+  have ind0 : ∀ x : ℝ, x ≤ j → (if 1 - (dc.thetaL : ℝ) < x then (1 : ℝ) else 0) = 0 := by
+    intro x hx; rw [if_neg]; rw [← hj]; linarith
+  have ind1 : ∀ x : ℝ, (if 1 - (dc.thetaL : ℝ) < x then (1 : ℝ) else 0) ≤ 1 := by
+    intro x; split_ifs <;> norm_num
+  have hlogh0 : ∀ x ∈ Ioc 0 h0, Real.log |x| ≤ Real.log h0 := by
+    intro x hx; rw [abs_of_pos hx.1]; exact Real.log_le_log hx.1 hx.2
+  refine rowSP dc X hok hRt (r := h0) (Tr := TR0 + δ2 + K) (c := c0) (lo := lo1)
+    (T1 := TR4 + δ3 + K + (X.CSP : ℝ) / dc.n0) (c1 := c4) (a := h0) (b := lo1) (Sm := S)
+    hh0 (by linarith) hc0 ?_ (by linarith) hlo1 hc4 ?_ hh0 (by linarith) hlo1 le_rfl le_rfl ?_ hS0 hS4 le_rfl
+  · intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨hx.1, by linarith [hx.2]⟩
+    rw [hFt x hx01, ind0 x (by linarith [hx.2])]
+    have := hR0 x ⟨hx.1, hx.2.le⟩
+    have := br2 x hx01
+    linarith
+  · intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], hx.2⟩
+    rw [hFt x hx01]
+    have h4 := hR4 x ⟨hx.1.le, hx.2.le⟩ (ne_of_lt hx.2)
+    have habs : |x - 1| = 1 - x := by rw [abs_of_neg (by linarith [hx.2])]; ring
+    rw [habs] at h4
+    have := br3 x hx01
+    have := ind1 x
+    have : (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0) ≤ (X.CSP : ℝ) / dc.n0 := by
+      calc _ ≤ (X.CSP : ℝ) / dc.n0 * 1 := mul_le_mul_of_nonneg_left (ind1 x) hcs58
+        _ = _ := mul_one _
+    linarith
+  · intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith [hx.2]⟩
+    rw [hFt x hx01]
+    rcases eq_or_lt_of_le hx.1 with hxe | hxg
+    · -- the left end point of the interior: the end window at `0`
+      subst hxe
+      rw [ind0 _ (by linarith)]
+      have := hR0 h0 ⟨hh0, le_rfl⟩
+      have := br2 h0 hx01
+      rw [abs_of_pos hh0] at *
+      linarith
+    by_cases h1 : x < m1
+    · rw [ind0 x (by linarith)]
+      have := hR1 x ⟨hxg, h1⟩
+      linarith
+    push_neg at h1
+    by_cases h2 : x ≤ j
+    · rw [ind0 x h2]
+      have := hR2 x ⟨h1, h2⟩
+      have := br2 x hx01
+      linarith
+    push_neg at h2
+    have := hR3 x ⟨h2.le, by linarith [hx.2]⟩
+    have := br3 x hx01
+    have : (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0) ≤ (X.CSP : ℝ) / dc.n0 := by
+      calc _ ≤ (X.CSP : ℝ) / dc.n0 * 1 := mul_le_mul_of_nonneg_left (ind1 x) hcs58
+        _ = _ := mul_one _
+    linarith
+
+
+/-- **σ⁻ rows (`hneg`) from SM cells.**  The SM `Sup` covers `(-1, g]` with `g = -gs`; on `x ≤ g` the finite-`N`
+error `(-log|x|)/(2ν)` of `fNegM_le_lim` is at most `(-log (-g))/(2ν) → 0`. -/
+theorem rowNeg_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ x, fNegMLim X.T.form (fun y => -(((dc.n0 : ℝ) - dc.g0) / dc.n0) * Real.log (1 + y ^ 2)) x =
+      fieldTower Ft (poleF Ft.poles) 0 x + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {g T : ℝ} (hg1 : -1 < g) (hg0 : g < 0)
+    (hsup : ∀ x ∈ Ioc (-1 : ℝ) g, fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ g →
+      (famD dc X N).fNegM (groupedMarkedField dc.toParameters N) x ≤ T + δ + K + ε := by
+  intro ε hε
+  have hf := famD_family dc X hok
+  have hP : Admissible dc.toParameters := dc.admissible
+  have hRm := Glue410.hRm_neg hP (c := ((dc.n0 : ℝ) - dc.g0) / dc.n0) (by rfl)
+    (Rm := fun N => groupedMarkedField dc.toParameters N) (fun N => rfl)
+  have hL := fNegM_le_lim hf (famD_R_tail X hRt) (by norm_num) le_rfl hRm (ε / 2) (by linarith)
+  have hlog : 0 ≤ -Real.log (-g) := by
+    have : Real.log (-g) ≤ 0 := Real.log_nonpos (by linarith) (by linarith)
+    linarith
+  have h2 : ∀ᶠ N in atTop, (-Real.log (-g)) / (2 * (famD dc X N).ν) ≤ ε / 2 :=
+    (tendsto_const_nhds.div_atTop (hf.hν.const_mul_atTop (by norm_num : (0 : ℝ) < 2))).eventually
+      (ge_mem_nhds (by linarith))
+  filter_upwards [hL, h2, hf.hν.eventually_gt_atTop 0] with N hN h2N hνN x hx hxg
+  have e1 := hN x hx
+  have hlx : -Real.log |x| ≤ -Real.log (-g) := by
+    have hax : |x| = -x := abs_of_neg hx.2
+    rw [hax]
+    have := Real.log_le_log (by linarith) (by linarith : -g ≤ -x)
+    linarith
+  have e2 : (-Real.log |x|) / (2 * (famD dc X N).ν) ≤ (-Real.log (-g)) / (2 * (famD dc X N).ν) :=
+    div_le_div_of_nonneg_right hlx (by positivity)
+  have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx.1, hx.2]
+  have e3 := fieldTower_le_cell Ft Fc hpl hpo hδ hx1 poleF
+  have e4 := hsup x ⟨hx.1, hxg⟩
+  have e5 := hFt x
+  have e6 : (groupedMarkedField dc.toParameters N) = (fun N => groupedMarkedField dc.toParameters N) N := rfl
+  linarith
+
+/-- `fPosMS_cell` on the half-open cell `[lo, hi)` (the proof uses the cell only pointwise). -/
+abbrev posLim (X : FamPar) (x : ℝ) : ℝ :=
+  fPosMSLim X.T.form (fun y => -(((dc.n0 : ℝ) - dc.g0) / dc.n0) * Real.log (1 + y ^ 2)) ((dc.sp : ℝ) / dc.n0) (bSeq X.bs) X.bs.length
+    ((X.CSP : ℝ) / dc.n0) (dc.thetaL : ℝ) x
+
+/-- `fPosMS ≤ Tf + ε` on `[lo, hi)` for a member of the family, from the limit bound (`fPosMS_cell_Ico` with the
+family's data). -/
+theorem posMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} {Tf : ℝ → ℝ} (hlo : 0 < lo) (hhi : hi ≤ 1)
+    (hlim : ∀ x ∈ Ico lo hi, posLim dc X x ≤ Tf x) :
+    ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ico lo hi, (famD dc X N).fPosMS (groupedMarkedField dc.toParameters N) x ≤ Tf x + ε := by
+  have hf := famD_family dc X hok
+  have hP : Admissible dc.toParameters := dc.admissible
+  have hRm := Glue410.hRm_pos hP (c := ((dc.n0 : ℝ) - dc.g0) / dc.n0) (by rfl)
+    (Rm := fun N => groupedMarkedField dc.toParameters N) (fun N => rfl)
+  have hcs : Tendsto (fun N => (famD dc X N).cs) atTop (𝓝 ((X.CSP : ℝ) / dc.n0)) := tendsto_const_nhds
+  exact fPosMS_cell_Ico hf (famD_R_tail X hRt) (by norm_num) le_rfl (fun _ => rfl) (fun _ => rfl)
+    (fun _ => rfl) (famD_sigma_tendsto dc X) hcs hRm hlo hhi hlim
+
+/-- **σ⁺ top rows (`hposTop`) from the top cells.**  On `[xc, 1)`: the top cell `Sup` on `[xc, m]` (field `F1`) and
+the jump region `[m, 1)` (field `F2`, spike cost paid there, `m = 1 - 1/1024`). -/
+theorem rowPosTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft F1 F2 : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim dc X x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0))
+    (hcs : (0 : ℝ) ≤ X.CSP)
+    (hpl1 : Ft.plogs = F1.plogs) (hpo1 : Ft.poles = F1.poles) {δ1 : ℚ} (hδ1 : l1Q Ft.poly F1.poly ≤ δ1)
+    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
+    {xc m T1 T2 S : ℝ} (hxc : 0 < xc) (hxcm : xc ≤ m) (hm : m = 1 - (dc.thetaL : ℝ))
+    (hR1 : ∀ x ∈ Icc xc m, fieldTower F1 (poleF F1.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
+    (hR2 : ∀ x ∈ Ico m 1, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
+    (hS1 : T1 + δ1 + K ≤ S) (hS2 : T2 + δ2 + K + (X.CSP : ℝ) / dc.n0 ≤ S) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
+      (famD dc X N).fPosMS (groupedMarkedField dc.toParameters N) x ≤ S + ε := by
+  have hcs58 : (0 : ℝ) ≤ (X.CSP : ℝ) / dc.n0 := by positivity
+  have hlim : ∀ x ∈ Ico xc 1, posLim dc X x ≤ S := by
+    intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], hx.2⟩
+    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
+    rw [hFt x hx01]
+    by_cases h : x ≤ m
+    · have hi0 : (if 1 - (dc.thetaL : ℝ) < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; rw [← hm]; linarith
+      rw [hi0]
+      have := hR1 x ⟨hx.1, h⟩
+      have := fieldTower_le_cell Ft F1 hpl1 hpo1 hδ1 hx1 poleF
+      linarith
+    · push_neg at h
+      have := hR2 x ⟨h.le, hx.2⟩
+      have := fieldTower_le_cell Ft F2 hpl2 hpo2 hδ2 hx1 poleF
+      have : (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0) ≤ (X.CSP : ℝ) / dc.n0 := by
+        split_ifs <;> linarith
+      linarith
+  intro ε hε
+  filter_upwards [posMS_fam dc X hok hRt (Tf := fun _ => S) hxc le_rfl hlim ε hε] with N hN x hx hxx
+  exact hN x ⟨hxx, hx.2⟩
+
+/-- **σ⁺ rows (`hpos`) from the R cells at two corners `α₁ ≤ α₂`.**  `fPosMR α = fPosMS + rc α L` is affine in
+`α`; the corner cells bound `posLim dc + rc αₖ L` on `[g, xc)`, so every `α ∈ [α₁, α₂]` gets the chord of the corner
+thresholds. -/
+theorem rowPos_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {rc : ℝ} (hrc : 0 ≤ rc) {α₁ α₂ : ℝ} (hα : α₁ < α₂) (hα₁ : 0 ≤ α₁)
+    (Ft₁ Ft₂ F₁ F₂ : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt₁ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim dc X x + rc * α₁ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft₁ (poleF Ft₁.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0))
+    (hFt₂ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim dc X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft₂ (poleF Ft₂.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0))
+    (hpl₁ : Ft₁.plogs = F₁.plogs) (hpo₁ : Ft₁.poles = F₁.poles) {δ₁ : ℚ} (hδ₁ : l1Q Ft₁.poly F₁.poly ≤ δ₁)
+    (hpl₂ : Ft₂.plogs = F₂.plogs) (hpo₂ : Ft₂.poles = F₂.poles) {δ₂ : ℚ} (hδ₂ : l1Q Ft₂.poly F₂.poly ≤ δ₂)
+    {g xc T₁ T₂ : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - (dc.thetaL : ℝ))
+    (hR₁ : ∀ x ∈ Icc g xc, fieldTower F₁ (poleF F₁.poles) 0 x + lfieldTower Ts 0 x ≤ T₁)
+    (hR₂ : ∀ x ∈ Icc g xc, fieldTower F₂ (poleF F₂.poles) 0 x + lfieldTower Ts 0 x ≤ T₂) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc α₁ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
+      (famD dc X N).fPosMR (groupedMarkedField dc.toParameters N) rc α x ≤
+        (T₁ + δ₁ + K) + (α - α₁) / (α₂ - α₁) * ((T₂ + δ₂ + K) - (T₁ + δ₁ + K)) + ε := by
+  have hθpos : (0 : ℝ) < (dc.thetaL : ℝ) := by exact_mod_cast dc.thetaL_mem.1
+  have hlimk : ∀ (αk Tk : ℝ) (Ftk Fk : FieldQ) {δk : ℚ},
+      (∀ x ∈ Ioo (0 : ℝ) 1, posLim dc X x + rc * αk * (-Real.log (1 - x ^ 2)) =
+        fieldTower Ftk (poleF Ftk.poles) 0 x + lfieldTower Ts 0 x + K +
+          (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0)) →
+      Ftk.plogs = Fk.plogs → Ftk.poles = Fk.poles → l1Q Ftk.poly Fk.poly ≤ δk →
+      (∀ x ∈ Icc g xc, fieldTower Fk (poleF Fk.poles) 0 x + lfieldTower Ts 0 x ≤ Tk) →
+      ∀ x ∈ Ico g xc, posLim dc X x ≤ (fun x => Tk + δk + K - rc * αk * (-Real.log (1 - x ^ 2))) x := by
+    intro αk Tk Ftk Fk δk hF hpl hpo hδ hR x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith only [hx.2, hxc, hθpos]⟩
+    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
+    have e := hF x hx01
+    have hi0 : (if 1 - (dc.thetaL : ℝ) < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; linarith [hx.2]
+    rw [hi0] at e
+    have := hR x ⟨hx.1, hx.2.le⟩
+    have := fieldTower_le_cell Ftk Fk hpl hpo hδ hx1 poleF
+    show posLim dc X x ≤ Tk + δk + K - rc * αk * (-Real.log (1 - x ^ 2))
+    linarith
+  have hxc1 : xc ≤ 1 := by linarith only [hxc, hθpos]
+  intro ε hε
+  have h₁ := posMS_fam dc X hok hRt hg hxc1 (hlimk α₁ T₁ Ft₁ F₁ hFt₁ hpl₁ hpo₁ hδ₁ hR₁) ε hε
+  have h₂ := posMS_fam dc X hok hRt hg hxc1 (hlimk α₂ T₂ Ft₂ F₂ hFt₂ hpl₂ hpo₂ hδ₂ hR₂) ε hε
+  filter_upwards [h₁, h₂] with N hN₁ hN₂ α hα' x _ hgx hxx
+  have a₁ := hN₁ x ⟨hgx, hxx⟩
+  have a₂ := hN₂ x ⟨hgx, hxx⟩
+  have hd : 0 < α₂ - α₁ := by linarith
+  set s := (α - α₁) / (α₂ - α₁) with hs
+  have hs0 : 0 ≤ s := div_nonneg (by linarith [hα'.1]) hd.le
+  have hs1 : s ≤ 1 := (div_le_one hd).mpr (by linarith [hα'.2])
+  have hαs : α = (1 - s) * α₁ + s * α₂ := by
+    rw [hs]; field_simp; ring
+  unfold SignedData.fPosMR
+  set L := -Real.log (1 - x ^ 2)
+  set M := (famD dc X N).fPosMS (groupedMarkedField dc.toParameters N) x
+  have : M + rc * α * L = (1 - s) * (M + rc * α₁ * L) + s * (M + rc * α₂ * L) := by rw [hαs]; ring
+  rw [this]
+  nlinarith [mul_le_mul_of_nonneg_left a₁ (by linarith : (0 : ℝ) ≤ 1 - s), mul_le_mul_of_nonneg_left a₂ hs0]
+
+
+/-- **σ⁺ rows (`hpos`) from the R cells at the upper corner only.**  For `x ∈ (0, 1)` the remainder
+`rc α (-log (1 - x²))` is nondecreasing in `α` (`rc ≥ 0`), so the corner `α₂` bounds every `α ≤ α₂` (the interval
+`[0, 1/200]` needs no corner at `α = 0`). -/
+theorem rowPosHi_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {rc : ℝ} (hrc : 0 ≤ rc) {α₂ : ℝ} (Ft F : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim dc X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / dc.n0 * (if 1 - (dc.thetaL : ℝ) < x then 1 else 0))
+    (hpl : Ft.plogs = F.plogs) (hpo : Ft.poles = F.poles) {δ : ℚ} (hδ : l1Q Ft.poly F.poly ≤ δ)
+    {g xc T : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - (dc.thetaL : ℝ))
+    (hR : ∀ x ∈ Icc g xc, fieldTower F (poleF F.poles) 0 x + lfieldTower Ts 0 x ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ≤ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
+      (famD dc X N).fPosMR (groupedMarkedField dc.toParameters N) rc α x ≤ T + δ + K + ε := by
+  have hθpos : (0 : ℝ) < (dc.thetaL : ℝ) := by exact_mod_cast dc.thetaL_mem.1
+  have hlim : ∀ x ∈ Ico g xc, posLim dc X x ≤ (fun x => T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))) x := by
+    intro x hx
+    have hx01 : x ∈ Ioo (0 : ℝ) 1 := ⟨by linarith [hx.1], by linarith only [hx.2, hxc, hθpos]⟩
+    have hx1 : |x| ≤ 1 := by rw [abs_le]; constructor <;> linarith [hx01.1, hx01.2]
+    have e := hFt x hx01
+    have hi0 : (if 1 - (dc.thetaL : ℝ) < x then (1 : ℝ) else 0) = 0 := by rw [if_neg]; linarith [hx.2]
+    rw [hi0] at e
+    have := hR x ⟨hx.1, hx.2.le⟩
+    have := fieldTower_le_cell Ft F hpl hpo hδ hx1 poleF
+    show posLim dc X x ≤ T + δ + K - rc * α₂ * (-Real.log (1 - x ^ 2))
+    linarith
+  intro ε hε
+  filter_upwards [posMS_fam dc X hok hRt hg (by linarith only [hxc, hθpos]) hlim ε hε] with N hN α hα x hx hgx hxx
+  have a := hN x ⟨hgx, hxx⟩
+  have hL : 0 ≤ -Real.log (1 - x ^ 2) := by
+    have h1 : 0 < 1 - x ^ 2 := by nlinarith [hx.1, hx.2]
+    have h2 : 1 - x ^ 2 ≤ 1 := by nlinarith
+    linarith [Real.log_nonpos h1.le h2]
+  unfold SignedData.fPosMR
+  have : rc * α * (-Real.log (1 - x ^ 2)) ≤ rc * α₂ * (-Real.log (1 - x ^ 2)) :=
+    mul_le_mul_of_nonneg_right (mul_le_mul_of_nonneg_left hα hrc) hL
+  linarith
+
+/-! ### Near-type rows: corner cells of the trapezoid `{lo ≤ α ≤ hi, 0 ≤ β ≤ α}` -/
+
+/-- The near limit field of a family member (`RnL = -(53/58) log(1+y²) + (24/29) log|y|`). -/
+abbrev nearLim (X : FamPar) (α β x : ℝ) : ℝ :=
+  fNearMSLim X.T.form (fun y => -(((dc.n0 : ℝ) - dc.g0) / dc.n0) * Real.log (1 + y ^ 2) + (((dc.n0 : ℝ) - 2 * dc.g0) / dc.n0) * Real.log |y|) α β
+    ((dc.sp : ℝ) / dc.n0) (bSeq X.bs) X.bs.length ((X.CSP : ℝ) / dc.n0) (dc.thetaL : ℝ) x
+
+/-- Bilinear interpolation of corner values over the trapezoid, `s = (α-lo)/(hi-lo)`, `t = β/α`. -/
+theorem nearLim_affine (X : FamPar) (x : ℝ) :
+    ∀ a b, nearLim dc X a b x = nearLim dc X 0 0 x + a * Glue410.nearAlphaCoef x +
+      b * Glue410.nearBetaCoef X.T.form x :=
+  fun a b => Glue410.fNearMSLim_affine _ _ a b _ _ _ _ _ x
+
+/-- The finite-`N` near field is eventually below its limit plus `(1/2ν)(-log(1-x²))`, on a window `(g, 1)`. -/
+theorem nearMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {g : ℝ} (hg : 0 < g) :
+    ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo g 1,
+      (famD dc X N).fNearMS (groupedNearField dc.toParameters N) α β x ≤ nearLim dc X α β x +
+        (1 / (2 * (famD dc X N).ν)) * (-Real.log (1 - x ^ 2)) + ε := by
+  have hf := famD_family dc X hok
+  have hP : Admissible dc.toParameters := dc.admissible
+  have hRn := Glue410.hRn_window hP (c := ((dc.n0 : ℝ) - dc.g0) / dc.n0) (c' := ((dc.n0 : ℝ) - 2 * dc.g0) / dc.n0)
+    (by rfl) (by rfl)
+    (Rn := fun N => groupedNearField dc.toParameters N) (fun N => rfl) hg
+  have hcs : Tendsto (fun N => (famD dc X N).cs) atTop (𝓝 ((X.CSP : ℝ) / dc.n0)) := tendsto_const_nhds
+  have key := fNearMS_le_lim hf (famD_R_tail X hRt) (by norm_num) le_rfl (fun _ => rfl) (fun _ => rfl)
+    (fun _ => rfl) (famD_sigma_tendsto dc X) hcs (Glue410.rnPatch_err hRn)
+  intro ε hε
+  filter_upwards [key ε hε] with N hN α β hβ x hx
+  rw [← Glue410.fNearMS_rnPatch (D := famD dc X N) (Rn := fun N => groupedNearField dc.toParameters N)
+    (RnL := fun y => -(((dc.n0 : ℝ) - dc.g0) / dc.n0) * Real.log (1 + y ^ 2) + (((dc.n0 : ℝ) - 2 * dc.g0) / dc.n0) * Real.log |y|) (N := N)
+    (α := α) (β := β) hx.1]
+  exact hN α β hβ x ⟨hg.trans hx.1, hx.2⟩
+
+/-- **Near rows (`hnear`) from the four corner bounds** on `[g, xc)`: the bound is the bilinear interpolation of the
+corner thresholds. -/
+theorem rowNear_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {g xc T00 T01 T10 T11 : ℝ} (hg : 0 < g) (hxc : xc < 1)
+    (h00 : ∀ x ∈ Ico g xc, nearLim dc X lo 0 x ≤ T00) (h01 : ∀ x ∈ Ico g xc, nearLim dc X lo lo x ≤ T01)
+    (h10 : ∀ x ∈ Ico g xc, nearLim dc X hi 0 x ≤ T10) (h11 : ∀ x ∈ Ico g xc, nearLim dc X hi hi x ≤ T11) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x →
+      x < xc → (famD dc X N).fNearMS (groupedNearField dc.toParameters N) α β x ≤ bilin lo hi T00 T01 T10 T11 α β + ε := by
+  intro ε hε
+  have hf := famD_family dc X hok
+  have h2 : ∀ᶠ N in atTop, (-Real.log (1 - xc ^ 2)) / (2 * (famD dc X N).ν) ≤ ε / 2 :=
+    (tendsto_const_nhds.div_atTop
+      (hf.hν.const_mul_atTop (by norm_num : (0 : ℝ) < 2))).eventually (ge_mem_nhds (by linarith))
+  filter_upwards [nearMS_fam dc X hok hRt (half_pos hg) (ε / 2) (by linarith), h2,
+    hf.hν.eventually_gt_atTop 0] with N hN hν2 hνpos α hα β hβ x hx hgx hxx
+  have hgx' : x ∈ Ioo (g / 2) 1 := ⟨by linarith, hx.2⟩
+  have hxpos : 0 ≤ x := hx.1.le
+  have hx2 : x ^ 2 ≤ xc ^ 2 := by nlinarith
+  have hlog : Real.log (1 - xc ^ 2) ≤ Real.log (1 - x ^ 2) :=
+    Real.log_le_log (by nlinarith) (by linarith)
+  have h6 : (1 / (2 * (famD dc X N).ν)) * (-Real.log (1 - x ^ 2)) ≤
+      (-Real.log (1 - xc ^ 2)) / (2 * (famD dc X N).ν) := by
+    rw [one_div, ← div_eq_inv_mul]
+    exact div_le_div_of_nonneg_right (by linarith) (by positivity)
+  have hm := bilin_mix (L := fun a b => nearLim dc X a b x) (nearLim_affine dc X x) hlo hlh
+    (h00 x ⟨hgx, hxx⟩) (h01 x ⟨hgx, hxx⟩) (h10 x ⟨hgx, hxx⟩) (h11 x ⟨hgx, hxx⟩) hα hβ
+  have := hN α β hβ.1 x hgx'
+  linarith
+
+/-- **Near top rows (`hnearTop`) from the four corner bounds** on `[xc, 1)` of the shape `G + r (-log(1-x²))`; the
+finite-`N` correction `(1/2ν)(-log(1-x²))` is absorbed by the margin `δ > 0` on the log coefficient. -/
+theorem rowNearTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {xc G00 G01 G10 G11 r00 r01 r10 r11 δ : ℝ} (hxc : 0 < xc)
+    (hδ : 0 < δ)
+    (h00 : ∀ x ∈ Ico xc 1, nearLim dc X lo 0 x ≤ G00 + r00 * (-Real.log (1 - x ^ 2)))
+    (h01 : ∀ x ∈ Ico xc 1, nearLim dc X lo lo x ≤ G01 + r01 * (-Real.log (1 - x ^ 2)))
+    (h10 : ∀ x ∈ Ico xc 1, nearLim dc X hi 0 x ≤ G10 + r10 * (-Real.log (1 - x ^ 2)))
+    (h11 : ∀ x ∈ Ico xc 1, nearLim dc X hi hi x ≤ G11 + r11 * (-Real.log (1 - x ^ 2))) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
+      (famD dc X N).fNearMS (groupedNearField dc.toParameters N) α β x ≤
+        bilin lo hi G00 G01 G10 G11 α β + ε +
+          (bilin lo hi r00 r01 r10 r11 α β + δ) * (-Real.log (1 - x ^ 2)) := by
+  intro ε hε
+  have hf := famD_family dc X hok
+  have h1 : ∀ᶠ N in atTop, 1 / (2 * δ) ≤ (famD dc X N).ν := hf.hν.eventually_ge_atTop (1 / (2 * δ))
+  filter_upwards [nearMS_fam dc X hok hRt (half_pos hxc) ε hε, h1, hf.hν.eventually_gt_atTop 0]
+    with N hN h1N hνpos α hα β hβ x hx hxx
+  have hgx' : x ∈ Ioo (xc / 2) 1 := ⟨by linarith, hx.2⟩
+  have hL : 0 ≤ -Real.log (1 - x ^ 2) :=
+    neg_nonneg.mpr (Real.log_nonpos (by nlinarith [hx.1, hx.2]) (by nlinarith [sq_nonneg x]))
+  have hgap : 1 / (2 * (famD dc X N).ν) ≤ δ := by
+    rw [div_le_iff₀ (by positivity)]
+    have := (div_le_iff₀ (by positivity : 0 < 2 * δ)).mp h1N
+    nlinarith
+  have h3 : (1 / (2 * (famD dc X N).ν)) * (-Real.log (1 - x ^ 2)) ≤ δ * (-Real.log (1 - x ^ 2)) :=
+    mul_le_mul_of_nonneg_right hgap hL
+  have hxI : x ∈ Ico xc 1 := ⟨hxx, hx.2⟩
+  have hm := bilin_mix (L := fun a b => nearLim dc X a b x) (nearLim_affine dc X x) hlo hlh
+    (h00 x hxI) (h01 x hxI) (h10 x hxI) (h11 x hxI) hα hβ
+  have hsplit : bilin lo hi (G00 + r00 * (-Real.log (1 - x ^ 2))) (G01 + r01 * (-Real.log (1 - x ^ 2)))
+      (G10 + r10 * (-Real.log (1 - x ^ 2))) (G11 + r11 * (-Real.log (1 - x ^ 2))) α β =
+      bilin lo hi G00 G01 G10 G11 α β + bilin lo hi r00 r01 r10 r11 α β * (-Real.log (1 - x ^ 2)) := by
+    unfold bilin; ring
+  rw [hsplit] at hm
+  have := hN α β hβ.1 x hgx'
+  nlinarith
+
+
+/-! ### The spike environment from the Frostman cells -/
+
+theorem famD_R_fin (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, (famD dc X N).R k = X.T.form.R.f (k + 1) := by
+  have h := famD_spec dc X hok N
+  have hRt' : X.T.form.R.tail = [] := by simp [TrialQ.form, SeqQ.form, hRt]
+  intro k
+  rw [TrialForm.R_eq h]
+  simp [hRt', gseq]
+
+theorem famD_R_zeroL (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, X.T.form.R.L ≤ k → (famD dc X N).R k = 0 := by
+  intro k hk
+  rw [famD_R_fin dc X hok hRt N]
+  exact (famD_spec dc X hok N).hRf (k + 1) (by omega)
+
+theorem famD_spikeEnv (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {S0 : ℝ} (hfr : ∀ x ∈ Icc (-1 : ℝ) 1, frLim X.T.form x ≤ S0) (hgap : S0 < X.T.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (famD dc X N)) := by
+  set L := X.T.form.R.L
+  set SR : ℝ := ∑ k ∈ Finset.range L, |X.T.form.R.f (k + 1)|
+  have hd : Tendsto (fun N : ℕ => dampE N * SR) atTop (𝓝 0) := by
+    have : Tendsto (fun N : ℕ => dampE N) atTop (𝓝 0) := by
+      have h := (tendsto_natCast_atTop_atTop (R := ℝ)).atTop_add (tendsto_const_nhds (x := (1 : ℝ)))
+      have := (h.inv_tendsto_atTop).const_mul (1 / 2 ^ 30 : ℝ)
+      simpa [dampE, div_eq_mul_inv] using this
+    simpa using this.mul_const SR
+  filter_upwards [hd.eventually (gt_mem_nhds (sub_pos.mpr hgap)), eventually_gt_atTop 0] with N hN hN0
+  have h := famD_spec dc X hok N
+  have hR := famD_R_fin dc X hok hRt N
+  have hR0 := famD_R_zeroL dc X hok hRt N
+  have he := dampE_mem N
+  have hfs : ∀ {f : ℕ → ℝ}, (∀ k, L ≤ k → f k = 0) → HasSum f (∑ k ∈ Finset.range L, f k) :=
+    fun hf => hasSum_sum_of_ne_finset_zero (fun k hk => hf k (by simpa using hk))
+  refine ⟨{
+    hν := by
+      show (0 : ℝ) < (dc.n0 : ℝ) * (N : ℝ)
+      exact mul_pos (by exact_mod_cast dc.n0_pos) (by exact_mod_cast hN0)
+    he := he
+    hsp := by
+      show ((dc.sp * N : ℕ) : ℝ) ≤ (dc.n0 : ℝ) * (N : ℝ)
+      exact_mod_cast Nat.mul_le_mul_right N dc.sp_le_n0
+    hθ := by
+      show (dc.thetaL : ℝ) ∈ Ioo (0 : ℝ) 1
+      exact ⟨by exact_mod_cast dc.thetaL_mem.1, by exact_mod_cast dc.thetaL_mem.2⟩
+    ha := Glue410.Spec_summable_a h
+    hr := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
+    hra := (hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)).summable
+    Qref := fun x => ∑ k ∈ Finset.range L, refTilt (famD dc X N).R (k + 1) *
+      realEnergyTau (famD dc X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x
+    hQ := fun x _ => hfs (fun k hk => by rw [refTilt_succ, hR0 k hk]; simp)
+    hℓ := ?_
+    hbK := fun i hi => by
+      show bSeq X.bs i = 0
+      have hi' : X.bs.length < i := hi
+      unfold bSeq
+      rw [if_neg (by omega), List.getD_eq_default _ _ (by omega)]
+      simp }⟩
+  intro x hx
+  have hx1 : |x| ≤ 1 := abs_le.mpr hx
+  have hQt := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD dc X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
+    (fun k hk => by rw [hR0 k hk]; simp)
+  have hQ1 := hfs (f := fun k => (-(-1 : ℝ) ^ (k + 1) * (famD dc X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x)
+    (fun k hk => by rw [hR0 k hk]; simp)
+  have hq := Data.Cells.qTau_sub_le_fin (K := L) he.1.le (by linarith [he.2]) hR0 hx hQt hQ1
+  have hsum : ∑ k ∈ Finset.range L, |(famD dc X N).R k| = SR := by
+    simp only [SR, hR]
+  rw [hsum] at hq
+  have hfr' := hfr x hx
+  have hTa : barrierTrialT (famD dc X N).a x = X.T.form.a.Tform x := by
+    rw [h.ha]; exact barrierTrialT_tseq h.haf h.haT hx1
+  have hQ1e : ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD dc X N).R k / ((k + 1 : ℕ) : ℝ)) *
+      (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x = frLim X.T.form x + 2 * X.T.form.a.Tform x := by
+    unfold frLim
+    rw [sub_add_cancel]
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [hR k, pow_succ]
+    ring
+  have hQte : (∑ k ∈ Finset.range L, refTilt (famD dc X N).R (k + 1) *
+      realEnergyTau (famD dc X N).e ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x) =
+      ∑ k ∈ Finset.range L, (-(-1 : ℝ) ^ (k + 1) * (famD dc X N).R k / ((k + 1 : ℕ) : ℝ)) *
+        (1 - dampE N) ^ (k + 1) * (Polynomial.Chebyshev.T ℝ ((k + 1 : ℕ) : ℤ)).eval x := by
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [refTilt_succ]; rfl
+  show _ - 2 * barrierTrialT (famD dc X N).a x ≤ (X.T.Sup : ℝ)
+  rw [hQte, hTa]
+  rw [hQ1e] at hq
+  have := (abs_le.mp hq).2
+  have hSup : X.T.form.Sup = (X.T.Sup : ℝ) := rfl
+  linarith
+
+/-! ### Helpers for the row instances (`RowsQ0`–`RowsQ2`) -/
+
+/- `l1Q` with structural recursion on the first list (the kernel evaluates it; `l1Q` itself is
+well-founded because its `[]` case recurses on the second list). -/
+
+end Generic
+
+theorem rowSC_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C)
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ s, cfLim P410 s + 2 * X.T.form.v.Tform s = fieldTower Ft (poleF Ft.poles) 0 s + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {T TR c lo : ℝ}
+    (hsup : ∀ x ∈ Ioo (0 : ℝ) 1, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
+    (hlo0 : 0 < lo) (hlo1 : lo < 1)
+    (hend : ∀ x ∈ Icc lo 1, x ≠ 1 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 1|)
+    (hc : 0 < c) (hcmp : TR + c * Real.log (1 - lo) ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ s ∈ Ioo (0 : ℝ) 1,
+      (famD X N).fCol s ≤ T + δ + K + ε := by
+  revert X hok Ft Fc K hFt hpl hpo δ hδ T TR c lo hsup hlo0 hlo1 hend hc hcmp
+  simpa only [famD_eq_generic, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowSC_cell dc58)
+
+theorem rowSN_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ x, fNegLim X.T.form (rfLim P410) x = fieldTower Ft (poleF Ft.poles) 0 x + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {T TR c lo : ℝ}
+    (hsup : ∀ x ∈ Ioo (-1 : ℝ) 0, fieldTower Fc (poleF Fc.poles) 0 x ≤ T)
+    (hlo0 : -1 < lo) (hlo1 : lo < 0)
+    (hend : ∀ x ∈ Icc lo 0, x ≠ 0 → fieldTower Fc (poleF Fc.poles) 0 x ≤ TR + c * Real.log |x - 0|)
+    (hc : 0 < c) (hcmp : TR + c * Real.log (-lo) ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0,
+      (famD X N).fNeg x ≤ T + δ + K + ε := by
+  revert X hok hRt Ft Fc K hFt hpl hpo δ hδ T TR c lo hsup hlo0 hlo1 hend hc hcmp
+  simpa only [famD_eq_generic, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowSN_cell dc58)
+
+theorem rowSP_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft F2 F3 : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, fPosLim X.T.form (rfLim P410) (20 / 58) (bSeq X.bs) X.bs.length
+      ((X.CSP : ℝ) / 58) (1 / 1024) x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hcs : (0 : ℝ) ≤ X.CSP)
+    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
+    (hpl3 : Ft.plogs = F3.plogs) (hpo3 : Ft.poles = F3.poles) {δ3 : ℚ} (hδ3 : l1Q Ft.poly F3.poly ≤ δ3)
+    {h0 m1 j lo1 TR0 c0 T1 T2 T3 TR4 c4 S : ℝ}
+    (hh0 : 0 < h0) (hh0m : h0 < m1) (hm1j : m1 ≤ j) (hj : j = 1 - 1 / 1024) (hjlo : j < lo1) (hlo1 : lo1 < 1)
+    (hR0 : ∀ x ∈ Ioc 0 h0, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ TR0 + c0 * Real.log |x|)
+    (hc0 : 0 < c0)
+    (hR1 : ∀ x ∈ Ioo h0 m1, fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
+    (hR2 : ∀ x ∈ Icc m1 j, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
+    (hR3 : ∀ x ∈ Ico j 1, fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ T3)
+    (hR4 : ∀ x ∈ Icc lo1 1, x ≠ 1 →
+      fieldTower F3 (poleF F3.poles) 0 x + lfieldTower Ts 0 x ≤ TR4 + c4 * Real.log |x - 1|)
+    (hc4 : 0 < c4)
+    (hS0 : TR0 + δ2 + K + c0 * Real.log h0 ≤ S) (hS1 : T1 + K ≤ S) (hS2 : T2 + δ2 + K ≤ S)
+    (hS3 : T3 + δ3 + K + (X.CSP : ℝ) / 58 ≤ S)
+    (hS4 : TR4 + δ3 + K + (X.CSP : ℝ) / 58 + c4 * Real.log (1 - lo1) ≤ S) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, (famD X N).fPosS x ≤ S + ε := by
+  revert X hok hRt Ft F2 F3 Ts K hFt hcs hpl2 hpo2 δ2 hδ2 hpl3 hpo3 δ3 hδ3 h0 m1 j lo1 TR0 c0 T1 T2 T3 TR4 c4 S hh0 hh0m hm1j hj hjlo hlo1 hR0 hc0 hR1 hR2 hR3 hR4 hc4 hS0 hS1 hS2 hS3 hS4
+  simpa only [famD_eq_generic, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowSP_cell dc58)
+
+theorem rowNeg_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft Fc : FieldQ) {K : ℝ}
+    (hFt : ∀ x, fNegMLim X.T.form (fun y => -((53 : ℝ) / 58) * Real.log (1 + y ^ 2)) x =
+      fieldTower Ft (poleF Ft.poles) 0 x + K)
+    (hpl : Ft.plogs = Fc.plogs) (hpo : Ft.poles = Fc.poles) {δ : ℚ} (hδ : l1Q Ft.poly Fc.poly ≤ δ)
+    {g T : ℝ} (hg1 : -1 < g) (hg0 : g < 0)
+    (hsup : ∀ x ∈ Ioc (-1 : ℝ) g, fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ g →
+      (famD X N).fNegM (groupedMarkedField P410 N) x ≤ T + δ + K + ε := by
+  revert X hok hRt Ft Fc K hFt hpl hpo δ hδ g T hg1 hg0 hsup
+  simpa only [famD_eq_generic, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowNeg_cell dc58)
+
+abbrev posLim (X : FamPar) (x : ℝ) : ℝ := Generic.posLim dc58 X x
+
+theorem posMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} {Tf : ℝ → ℝ} (hlo : 0 < lo) (hhi : hi ≤ 1)
+    (hlim : ∀ x ∈ Ico lo hi, posLim X x ≤ Tf x) :
+    ∀ ε > 0, ∀ᶠ N in atTop, ∀ x ∈ Ico lo hi, (famD X N).fPosMS (groupedMarkedField P410 N) x ≤ Tf x + ε := by
+  revert X hok hRt lo hi Tf hlo hhi hlim
+  simpa only [famD_eq_generic, posLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.posMS_fam dc58)
+
+theorem rowPosTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (Ft F1 F2 : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x = fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hcs : (0 : ℝ) ≤ X.CSP)
+    (hpl1 : Ft.plogs = F1.plogs) (hpo1 : Ft.poles = F1.poles) {δ1 : ℚ} (hδ1 : l1Q Ft.poly F1.poly ≤ δ1)
+    (hpl2 : Ft.plogs = F2.plogs) (hpo2 : Ft.poles = F2.poles) {δ2 : ℚ} (hδ2 : l1Q Ft.poly F2.poly ≤ δ2)
+    {xc m T1 T2 S : ℝ} (hxc : 0 < xc) (hxcm : xc ≤ m) (hm : m = 1 - 1 / 1024)
+    (hR1 : ∀ x ∈ Icc xc m, fieldTower F1 (poleF F1.poles) 0 x + lfieldTower Ts 0 x ≤ T1)
+    (hR2 : ∀ x ∈ Ico m 1, fieldTower F2 (poleF F2.poles) 0 x + lfieldTower Ts 0 x ≤ T2)
+    (hS1 : T1 + δ1 + K ≤ S) (hS2 : T2 + δ2 + K + (X.CSP : ℝ) / 58 ≤ S) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
+      (famD X N).fPosMS (groupedMarkedField P410 N) x ≤ S + ε := by
+  revert X hok hRt Ft F1 F2 Ts K hFt hcs hpl1 hpo1 δ1 hδ1 hpl2 hpo2 δ2 hδ2 xc m T1 T2 S hxc hxcm hm hR1 hR2 hS1 hS2
+  simpa only [famD_eq_generic, posLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowPosTop_cell dc58)
+
+theorem rowPos_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {rc : ℝ} (hrc : 0 ≤ rc) {α₁ α₂ : ℝ} (hα : α₁ < α₂) (hα₁ : 0 ≤ α₁)
+    (Ft₁ Ft₂ F₁ F₂ : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt₁ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₁ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft₁ (poleF Ft₁.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hFt₂ : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft₂ (poleF Ft₂.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hpl₁ : Ft₁.plogs = F₁.plogs) (hpo₁ : Ft₁.poles = F₁.poles) {δ₁ : ℚ} (hδ₁ : l1Q Ft₁.poly F₁.poly ≤ δ₁)
+    (hpl₂ : Ft₂.plogs = F₂.plogs) (hpo₂ : Ft₂.poles = F₂.poles) {δ₂ : ℚ} (hδ₂ : l1Q Ft₂.poly F₂.poly ≤ δ₂)
+    {g xc T₁ T₂ : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - 1 / 1024)
+    (hR₁ : ∀ x ∈ Icc g xc, fieldTower F₁ (poleF F₁.poles) 0 x + lfieldTower Ts 0 x ≤ T₁)
+    (hR₂ : ∀ x ∈ Icc g xc, fieldTower F₂ (poleF F₂.poles) 0 x + lfieldTower Ts 0 x ≤ T₂) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc α₁ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
+      (famD X N).fPosMR (groupedMarkedField P410 N) rc α x ≤
+        (T₁ + δ₁ + K) + (α - α₁) / (α₂ - α₁) * ((T₂ + δ₂ + K) - (T₁ + δ₁ + K)) + ε := by
+  revert X hok hRt rc hrc α₁ α₂ hα hα₁ Ft₁ Ft₂ F₁ F₂ Ts K hFt₁ hFt₂ hpl₁ hpo₁ δ₁ hδ₁ hpl₂ hpo₂ δ₂ hδ₂ g xc T₁ T₂ hg hgxc hxc hR₁ hR₂
+  simpa only [famD_eq_generic, posLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowPos_cell dc58)
+
+theorem rowPosHi_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {rc : ℝ} (hrc : 0 ≤ rc) {α₂ : ℝ} (Ft F : FieldQ) (Ts : List LTerm) {K : ℝ}
+    (hFt : ∀ x ∈ Ioo (0 : ℝ) 1, posLim X x + rc * α₂ * (-Real.log (1 - x ^ 2)) =
+      fieldTower Ft (poleF Ft.poles) 0 x + lfieldTower Ts 0 x + K +
+        (X.CSP : ℝ) / 58 * (if 1 - 1 / 1024 < x then 1 else 0))
+    (hpl : Ft.plogs = F.plogs) (hpo : Ft.poles = F.poles) {δ : ℚ} (hδ : l1Q Ft.poly F.poly ≤ δ)
+    {g xc T : ℝ} (hg : 0 < g) (hgxc : g ≤ xc) (hxc : xc ≤ 1 - 1 / 1024)
+    (hR : ∀ x ∈ Icc g xc, fieldTower F (poleF F.poles) 0 x + lfieldTower Ts 0 x ≤ T) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ≤ α₂, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x → x < xc →
+      (famD X N).fPosMR (groupedMarkedField P410 N) rc α x ≤ T + δ + K + ε := by
+  revert X hok hRt rc hrc α₂ Ft F Ts K hFt hpl hpo δ hδ g xc T hg hgxc hxc hR
+  simpa only [famD_eq_generic, posLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowPosHi_cell dc58)
+
+abbrev nearLim (X : FamPar) (α β x : ℝ) : ℝ := Generic.nearLim dc58 X α β x
+
+theorem nearLim_affine (X : FamPar) (x : ℝ) :
+    ∀ a b, nearLim X a b x = nearLim X 0 0 x + a * Glue410.nearAlphaCoef x +
+      b * Glue410.nearBetaCoef X.T.form x := by
+  revert X x
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.nearLim_affine dc58)
+
+theorem nearMS_fam (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {g : ℝ} (hg : 0 < g) :
+    ∀ ε > 0, ∀ᶠ N in atTop, ∀ α β : ℝ, 0 ≤ β → ∀ x ∈ Ioo g 1,
+      (famD X N).fNearMS (groupedNearField P410 N) α β x ≤ nearLim X α β x +
+        (1 / (2 * (famD X N).ν)) * (-Real.log (1 - x ^ 2)) + ε := by
+  revert X hok hRt g hg
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.nearMS_fam dc58)
+
+theorem rowNear_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {g xc T00 T01 T10 T11 : ℝ} (hg : 0 < g) (hxc : xc < 1)
+    (h00 : ∀ x ∈ Ico g xc, nearLim X lo 0 x ≤ T00) (h01 : ∀ x ∈ Ico g xc, nearLim X lo lo x ≤ T01)
+    (h10 : ∀ x ∈ Ico g xc, nearLim X hi 0 x ≤ T10) (h11 : ∀ x ∈ Ico g xc, nearLim X hi hi x ≤ T11) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, g ≤ x →
+      x < xc → (famD X N).fNearMS (groupedNearField P410 N) α β x ≤ bilin lo hi T00 T01 T10 T11 α β + ε := by
+  revert X hok hRt lo hi hlo hlh g xc T00 T01 T10 T11 hg hxc h00 h01 h10 h11
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowNear_cell dc58)
+
+theorem rowNearTop_cell (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {lo hi : ℝ} (hlo : 0 ≤ lo) (hlh : lo < hi) {xc G00 G01 G10 G11 r00 r01 r10 r11 δ : ℝ} (hxc : 0 < xc)
+    (hδ : 0 < δ)
+    (h00 : ∀ x ∈ Ico xc 1, nearLim X lo 0 x ≤ G00 + r00 * (-Real.log (1 - x ^ 2)))
+    (h01 : ∀ x ∈ Ico xc 1, nearLim X lo lo x ≤ G01 + r01 * (-Real.log (1 - x ^ 2)))
+    (h10 : ∀ x ∈ Ico xc 1, nearLim X hi 0 x ≤ G10 + r10 * (-Real.log (1 - x ^ 2)))
+    (h11 : ∀ x ∈ Ico xc 1, nearLim X hi hi x ≤ G11 + r11 * (-Real.log (1 - x ^ 2))) :
+    ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, ∀ x ∈ Ioo (0 : ℝ) 1, xc ≤ x →
+      (famD X N).fNearMS (groupedNearField P410 N) α β x ≤
+        bilin lo hi G00 G01 G10 G11 α β + ε +
+          (bilin lo hi r00 r01 r10 r11 α β + δ) * (-Real.log (1 - x ^ 2)) := by
+  revert X hok hRt lo hi hlo hlh xc G00 G01 G10 G11 r00 r01 r10 r11 δ hxc hδ h00 h01 h10 h11
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.rowNearTop_cell dc58)
+
+theorem famD_R_fin (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, (famD X N).R k = X.T.form.R.f (k + 1) := by
+  revert X hok hRt N
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.famD_R_fin dc58)
+
+theorem famD_R_zeroL (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    (N : ℕ) : ∀ k, X.T.form.R.L ≤ k → (famD X N).R k = 0 := by
+  revert X hok hRt N
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.famD_R_zeroL dc58)
+
+theorem famD_spikeEnv (X : FamPar) (hok : ∀ C : ℝ, (X.Cb : ℝ) ≤ C → X.T.DataOK C) (hRt : X.T.R.tail = [])
+    {S0 : ℝ} (hfr : ∀ x ∈ Icc (-1 : ℝ) 1, frLim X.T.form x ≤ S0) (hgap : S0 < X.T.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (famD X N)) := by
+  revert X hok hRt S0 hfr hgap
+  simpa only [famD_eq_generic, posLim, nearLim, P410, D58.Odd.design, dc58_toParameters, dc58_n0, dc58_g0, dc58_sp,
+    (show (dc58.thetaL : ℝ) = (1 / 1024 : ℝ) by norm_num [dc58]),
+    Nat.cast_ofNat,
+    (show ((58 : ℝ) - 5) / 58 = (53 / 58 : ℝ) by norm_num),
+    (show ((58 : ℝ) - 2 * 5) / 58 = (24 / 29 : ℝ) by norm_num)] using (Generic.famD_spikeEnv dc58)
+
+
 end
 
 end CatalanMeasure.GenD.Signed.Data.Assembly
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.fPosMS_cell_Ico
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.bilin_mix
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.refTilt_succ
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.l1Q_nil_left
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.l1Q_eq_l1S
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.endUOK_cmp
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.endR_one
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.endR_zero
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.chord_mono
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.bilin_mono
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.bilin_lin
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSC_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSN_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSP_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNeg_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.posMS_fam
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPosTop_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPos_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPosHi_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.nearLim_affine
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.nearMS_fam
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNear_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNearTop_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.famD_R_fin
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.famD_R_zeroL
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.famD_spikeEnv
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowSC_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowSN_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowSP_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowNeg_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.posMS_fam
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowPosTop_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowPos_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowPosHi_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.nearLim_affine
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.nearMS_fam
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowNear_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.rowNearTop_cell
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.famD_R_fin
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.famD_R_zeroL
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.famD_spikeEnv
