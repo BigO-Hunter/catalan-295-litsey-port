@@ -1303,14 +1303,45 @@ theorem siteClean_sound (ts : List (List ℚ × ℚ)) (x : ℝ) :
         simp only [List.map_cons, List.sum_cons, ih, hz, zero_mul, zero_add]
       · simp only [List.map_cons, List.sum_cons, trimPoly_sound, ih]
 
+
+/-- Structural insertion/sort is deliberately kernel-reducible across module boundaries. -/
+def insertKernel {α : Type} (le : α → α → Bool) (a : α) : List α → List α
+  | [] => [a]
+  | b :: bs => if le a b then a :: b :: bs else b :: insertKernel le a bs
+
+def sortKernel {α : Type} (le : α → α → Bool) : List α → List α
+  | [] => []
+  | a :: as => insertKernel le a (sortKernel le as)
+
+theorem map_sum_insertKernel {α : Type} (le : α → α → Bool) (f : α → ℝ) (a : α) :
+    ∀ l : List α, ((insertKernel le a l).map f).sum = f a+(l.map f).sum := by
+  intro l
+  induction l with
+  | nil => simp [insertKernel]
+  | cons b bs ih =>
+      simp only [insertKernel]
+      split_ifs
+      · simp
+      · simp only [List.map_cons,List.sum_cons,ih]
+        ring
+
+theorem map_sum_sortKernel {α : Type} (le : α → α → Bool) (f : α → ℝ) (l : List α) :
+    ((sortKernel le l).map f).sum = (l.map f).sum := by
+  induction l with
+  | nil => rfl
+  | cons a as ih => simp only [sortKernel,map_sum_insertKernel,ih,List.map_cons,List.sum_cons]
+
+#print axioms map_sum_insertKernel
+#print axioms map_sum_sortKernel
+
 def siteNF (ts : List (List ℚ × ℚ)) : List (List ℚ × ℚ) :=
-  (siteClean (mergeSites ts)).mergeSort (fun a b => decide (a.2 ≤ b.2))
+  sortKernel (fun a b => decide (a.2 ≤ b.2)) (siteClean (mergeSites ts))
 
 theorem siteNF_sound (ts : List (List ℚ × ℚ)) (x : ℝ) :
     ((siteNF ts).map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum =
       (ts.map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum := by
   unfold siteNF
-  rw [map_sum_mergeSort, siteClean_sound, mergeSites_eq]
+  rw [map_sum_sortKernel, siteClean_sound, mergeSites_eq]
 
 def ratPairLE (a b : ℚ × ℚ) : Bool := decide (a.1 < b.1 ∨ a.1 = b.1 ∧ a.2 ≤ b.2)
 
@@ -1337,12 +1368,12 @@ theorem lfClean_sound (ts : List LTerm) (x : ℝ) :
       · simp only [lf_cons, trimPoly_sound, ih]
 
 def laurentNF (ts : List LTerm) : List LTerm :=
-  (lfClean (mergeL ts)).mergeSort (fun a b => lFactorLE a.2 b.2)
+  sortKernel (fun a b => lFactorLE a.2 b.2) (lfClean (mergeL ts))
 
 theorem laurentNF_sound (ts : List LTerm) (x : ℝ) :
     lfieldTower (laurentNF ts) 0 x = lfieldTower ts 0 x := by
   unfold laurentNF lfieldTower
-  rw [map_sum_mergeSort]
+  rw [map_sum_sortKernel]
   change lfieldTower (lfClean (mergeL ts)) 0 x = lfieldTower ts 0 x
   rw [lfClean_sound, lfieldTower_mergeL]
 
@@ -1550,11 +1581,11 @@ theorem poleClean_sound (qs : List PoleR) (x : ℝ) : poleF (poleClean qs) x = p
       · simp only [poleF_cons, ih]
 
 def poleNF (qs : List PoleR) : List PoleR :=
-  (poleClean (mergePoles qs)).mergeSort (fun a b => ratPairLE (a.pr,a.pi) (b.pr,b.pi))
+  sortKernel (fun a b => ratPairLE (a.pr,a.pi) (b.pr,b.pi)) (poleClean (mergePoles qs))
 
 theorem poleNF_sound (qs : List PoleR) (x : ℝ) : poleF (poleNF qs) x = poleF qs x := by
   unfold poleNF poleF
-  rw [map_sum_mergeSort]
+  rw [map_sum_sortKernel]
   change poleF (poleClean (mergePoles qs)) x = poleF qs x
   rw [poleClean_sound, mergePoles_sound]
 
