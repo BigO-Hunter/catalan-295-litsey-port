@@ -72,6 +72,28 @@ theorem inverseImage_hW_of_phi (P : Parameters) (hg : P.g0 ≤ P.n0)
     have hm1 : m - 1 + 1 = m := by omega
     simpa only [hm1, inverseQuadratureNodes, τ, J] using ht
 
+theorem inverseImage_binom_hweights_of_phi (P : Parameters) (hg : P.g0 ≤ P.n0)
+    (hdpos : 0 < P.n0 - P.g0) (hn0 : 0 < P.n0) (hPQ : 0 < P.h0 + P.q0)
+    {p : ℝ[X]} {m : ℕ} {G : ℝ → Prop}
+    (cert : InverseBranchCertificate p m G) (hdeg : p.natDegree = m) (hm : 0 < m)
+    {r Ψ w : ℝ} (hr0 : 0 < r) (hr1 : r ≤ 1) (ω : ℝ → ℝ)
+    (hcirc : ∀ κ ∈ Icc (0 : ℝ) 1, ∀ z : ℂ, ‖z‖ = r →
+      nodalPhi P (nodalGreen p m) κ z ≤ (P.n0 : ℝ) * ω κ)
+    (hseg : ∀ κ ∈ Icc (0 : ℝ) 1, ∀ x : ℝ, r ≤ |x| → |x| ≤ 1 →
+      nodalPhi P (nodalGreen p m) κ (x : ℂ) ≤ (P.n0 : ℝ) * ω κ)
+    (hΨ : ∀ κ ∈ Icc (0 : ℝ) 1, ω κ + binomRate κ ≤ Ψ)
+    (hw : (P.n0 : ℝ) * Ψ < w) :
+    ∀ᶠ N : ℕ in Filter.atTop, ∀ p m : ℕ, p + m = P.n N →
+      ∀ k : ℕ, k < P.n N → ∀ i : Fin ((P.n0 - P.g0) * N),
+        |(rowCommonFactor P N).eval (inverseQuadratureNodes P cert hm N i)| *
+          |restrictedWeight P N k (inverseQuadratureNodes P cert hm N) i| *
+          (CatalanMeasure.binomBeta p m k : ℝ) ≤ 108000 * (N : ℝ) * Real.exp (w * N) := by
+  obtain ⟨C0, hC0, hW⟩ := inverseImage_hW_of_phi P hg hdpos hn0 hPQ cert hdeg hm hr0 hr1 ω hcirc hseg
+  exact binom_hweights_of_column_bound P (inverseQuadratureNodes P cert hm)
+    (2 * m + 1) ω hC0 hW hΨ hw
+
 end
 end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.inverseImage_hW_of_phi
+
+#print axioms CatalanMeasure.GenD.Analytic.inverseImage_binom_hweights_of_phi
