@@ -1,5 +1,5 @@
 module
-public import CatalanMeasure.GenD.Uniform.W.Prof.Slot
+public import CatalanMeasure.GenD.Uniform.W.Prof.OfWindow
 public import CatalanMeasure.GenD.Uniform.W.Lucas.PStep
 public import CatalanMeasure.GenD.Uniform.W.Charts3.PStepPoly
 @[expose] public section
