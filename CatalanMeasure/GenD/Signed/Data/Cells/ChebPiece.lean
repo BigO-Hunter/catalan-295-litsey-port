@@ -26,6 +26,12 @@ the data `γ` is untrusted, only the final inequality is checked.
 * `chebCellV_sound`: field-level piece, the **same conclusion and `BlockFacts` hypothesis as
   `cellV_sound`** (`∀ x ∈ Icc lo hi, fieldTower fq (poleF fq.poles) 0 x ≤ T`, `BlockFacts` of order
   `n + 1`), so a piece replaces a block of cells with the same consumers.
+* `chebFieldPiece_sound` (section 6): Taylor-free piece, monotone log/arg enclosures per term.
+* `chebMergePiece_sound` (section 8): Taylor-merged piece.  Poles and plog sites far from the piece
+  (`r ≤ qb |c - p|`, `qb ≤ 1/2`) are replaced by the degree-`M` Taylor polynomial of
+  `Re[ρ log (x - p)]` at the centre (rational Gaussian coefficients, rounded to `2^-P`) and merged into
+  the polynomial before the Chebyshev bound, with the series tail
+  `qb^(M+1)/((M+1)(1-qb))` and the rounding in the error; near terms use the monotone enclosures.
 -/
 
 namespace CatalanMeasure.GenD.Signed.Data.Cells
@@ -957,5 +963,765 @@ theorem toy_piece_tight :
 #print axioms chebFieldPiece_sound
 #print axioms toy_piece_check
 #print axioms toy_piece_sound
+
+
+/-- `Σ_{k<M} (-1)^k u^(k+1)/(k+1)`, the degree-`M` Taylor polynomial of `log (1 + u)` -/
+noncomputable def logPS (M : ℕ) (u : ℂ) : ℂ :=
+  ∑ k ∈ Finset.range M, (-1 : ℂ) ^ k * u ^ (k + 1) / ((k : ℂ) + 1)
+
+theorem norm_log_one_add_sub_logPS_le (M : ℕ) {u : ℂ} {s : ℝ} (hu : ‖u‖ ≤ s) (hs : s < 1) :
+    ‖Complex.log (1 + u) - logPS M u‖ ≤ s ^ (M + 1) / (((M : ℝ) + 1) * (1 - s)) := by
+  have hu1 : ‖u‖ < 1 := lt_of_le_of_lt hu hs
+  have hs0 : 0 ≤ s := (norm_nonneg u).trans hu
+  have hS := Complex.hasSum_taylorSeries_log hu1
+  set f : ℕ → ℂ := fun n => (-1) ^ (n + 1) * u ^ n / n with hf
+  have hsum : ∑ i ∈ Finset.range (M + 1), f i = logPS M u := by
+    rw [Finset.sum_range_succ']
+    simp only [hf, logPS]
+    have h0 : (-1 : ℂ) ^ (0 + 1) * u ^ 0 / ((0 : ℕ) : ℂ) = 0 := by simp
+    rw [h0, add_zero]
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    push_cast
+    have : (-1 : ℂ) ^ (k + 1 + 1) = (-1) ^ k := by
+      rw [pow_succ, pow_succ]; ring
+    rw [this]
+  have hdec := hS.summable.sum_add_tsum_nat_add (M + 1)
+  rw [hS.tsum_eq, hsum] at hdec
+  have hrest : Complex.log (1 + u) - logPS M u = ∑' i, f (i + (M + 1)) := by
+    rw [← hdec]; ring
+  rw [hrest]
+  have hg : HasSum (fun i : ℕ => s ^ (M + 1) / ((M : ℝ) + 1) * s ^ i)
+      (s ^ (M + 1) / ((M : ℝ) + 1) * (1 - s)⁻¹) :=
+    (hasSum_geometric_of_lt_one hs0 hs).mul_left _
+  have hb := tsum_of_norm_bounded hg (f := fun i => f (i + (M + 1))) (fun i => by
+    simp only [hf, norm_div, norm_mul, norm_pow, norm_neg, norm_one, one_pow, one_mul,
+      norm_natCast]
+    have hM : (0 : ℝ) < (M : ℝ) + 1 := by positivity
+    have h1 : ‖u‖ ^ (i + (M + 1)) ≤ s ^ (i + (M + 1)) := pow_le_pow_left₀ (norm_nonneg u) hu _
+    have h2 : ((M : ℝ) + 1) ≤ ((i + (M + 1) : ℕ) : ℝ) := by push_cast; linarith [(Nat.cast_nonneg i : (0:ℝ) ≤ i)]
+    calc ‖u‖ ^ (i + (M + 1)) / ((i + (M + 1) : ℕ) : ℝ) ≤ s ^ (i + (M + 1)) / ((i + (M + 1) : ℕ) : ℝ) := by
+          gcongr
+      _ ≤ s ^ (i + (M + 1)) / ((M : ℝ) + 1) := by
+          apply div_le_div_of_nonneg_left (by positivity) hM h2
+      _ = s ^ (M + 1) / ((M : ℝ) + 1) * s ^ i := by ring)
+  refine hb.trans (le_of_eq ?_)
+  have : (1 - s) ≠ 0 := by linarith
+  field_simp
+
+
+/-- `log (z + y) = log z + log (1 + y/z)` for real `y` with `|y| < ‖z‖` (any branch position) -/
+theorem clog_add_real (z : ℂ) (y : ℝ) (hz : z ≠ 0) (hy : |y| < ‖z‖) :
+    Complex.log (z + y) = Complex.log z + Complex.log (1 + y / z) := by
+  set w : ℂ := 1 + (y : ℂ) / z with hw
+  have hzw : z * w = z + y := by rw [hw]; field_simp
+  have hnz : 0 < ‖z‖ := norm_pos_iff.mpr hz
+  have hz' : z + (y : ℂ) ≠ 0 := by
+    intro h
+    have : z = -(y : ℂ) := by linear_combination h
+    rw [this] at hy
+    simp at hy
+  have hw0 : w ≠ 0 := by
+    intro h; apply hz'; rw [← hzw, h, mul_zero]
+  have hyz : ‖(y : ℂ) / z‖ < 1 := by
+    rw [norm_div, Complex.norm_real, Real.norm_eq_abs, div_lt_one hnz]; exact hy
+  have hre : 0 < w.re := by
+    have h1 : |((y : ℂ) / z).re| ≤ ‖(y : ℂ) / z‖ := Complex.abs_re_le_norm _
+    have h2 := abs_le.mp h1
+    have : w.re = 1 + ((y : ℂ) / z).re := by rw [hw]; simp
+    rw [this]; linarith [h2.1]
+  have hargw : |Complex.arg w| < Real.pi / 2 := Complex.abs_arg_lt_pi_div_two_iff.mpr (Or.inl hre)
+  have hexp : Complex.exp (Complex.log (z + y) - Complex.log z - Complex.log w) = 1 := by
+    rw [Complex.exp_sub, Complex.exp_sub, Complex.exp_log hz', Complex.exp_log hz,
+      Complex.exp_log hw0, ← hzw]
+    field_simp
+  obtain ⟨n, hn⟩ := Complex.exp_eq_one_iff.mp hexp
+  have him := congrArg Complex.im hn
+  simp only [Complex.sub_im, Complex.log_im, Complex.mul_im, Complex.intCast_re, Complex.intCast_im,
+    Complex.mul_re, Complex.re_ofNat, Complex.im_ofNat, Complex.I_re, Complex.I_im,
+    Complex.ofReal_re, Complex.ofReal_im] at him
+  have hsame : (z + (y : ℂ)).im = z.im := by simp
+  have hdiff : |Complex.arg (z + y) - Complex.arg z| ≤ Real.pi := by
+    rcases lt_or_ge z.im 0 with h | h
+    · have a1 := Complex.neg_pi_lt_arg (z + y)
+      have a2 := Complex.neg_pi_lt_arg z
+      have b1 : Complex.arg (z + y) < 0 := Complex.arg_neg_iff.mpr (by rw [hsame]; exact h)
+      have b2 : Complex.arg z < 0 := Complex.arg_neg_iff.mpr h
+      rw [abs_le]; constructor <;> linarith
+    · have a1 := Complex.arg_nonneg_iff.mpr (show 0 ≤ (z + (y : ℂ)).im by rw [hsame]; exact h)
+      have a2 := Complex.arg_nonneg_iff.mpr h
+      have b1 := Complex.arg_le_pi (z + y)
+      have b2 := Complex.arg_le_pi z
+      rw [abs_le]; constructor <;> linarith
+  have hpi := Real.pi_pos
+  have habs := abs_le.mp hdiff
+  have habw := abs_lt.mp hargw
+  have h2pi : (n : ℝ) * (2 * Real.pi) = Complex.arg (z + y) - Complex.arg z - Complex.arg w := by
+    linarith [him]
+  have hn1 : (n : ℝ) < 1 := by
+    by_contra hcon
+    have hcon := not_lt.mp hcon
+    nlinarith
+  have hn2 : (-1 : ℝ) < n := by
+    by_contra hcon
+    have hcon := not_lt.mp hcon
+    nlinarith
+  have hn0 : n = 0 := by
+    have a : n < 1 := by exact_mod_cast hn1
+    have b : -1 < n := by exact_mod_cast hn2
+    omega
+  subst hn0
+  simp at hn
+  have : Complex.log (z + y) = Complex.log z + Complex.log w := by
+    linear_combination hn
+  exact this
+
+theorem clog_series (z : ℂ) (y s : ℝ) (hz : z ≠ 0) (hy : |y| ≤ s * ‖z‖) (hs : s < 1) (M : ℕ) :
+    ‖Complex.log (z + y) - Complex.log z - logPS M (y / z)‖ ≤
+      s ^ (M + 1) / (((M : ℝ) + 1) * (1 - s)) := by
+  have hnz : 0 < ‖z‖ := norm_pos_iff.mpr hz
+  have hlt : |y| < ‖z‖ := by
+    calc |y| ≤ s * ‖z‖ := hy
+      _ < 1 * ‖z‖ := by gcongr
+      _ = ‖z‖ := one_mul _
+  rw [clog_add_real z y hz hlt]
+  have hu : ‖(y : ℂ) / z‖ ≤ s := by
+    rw [norm_div, Complex.norm_real, Real.norm_eq_abs, div_le_iff₀ hnz]; exact hy
+  have := norm_log_one_add_sub_logPS_le M hu hs
+  have e : Complex.log z + Complex.log (1 + (y : ℂ) / z) - Complex.log z - logPS M (y / z) =
+      Complex.log (1 + (y : ℂ) / z) - logPS M (y / z) := by ring
+  rw [e]; exact this
+
+
+/-! ### 8. Taylor-merge -/
+
+def geoQ (r : ℚ) : ℕ → ℚ
+  | 0 => 0
+  | n + 1 => geoQ r n + r ^ (n + 1)
+
+theorem geoQ_cast (r : ℚ) : ∀ n : ℕ, ((geoQ r n : ℚ) : ℝ) = ∑ k ∈ Finset.range n, (r : ℝ) ^ (k + 1) := by
+  intro n
+  induction n with
+  | zero => simp [geoQ]
+  | succ n ih => rw [geoQ, Finset.sum_range_succ]; push_cast; rw [ih]
+
+theorem polyTow_mapRange (M : ℕ) : ∀ (f : ℕ → ℚ) (x : ℝ),
+    polyTow ((List.range M).map f) 0 x = ∑ k ∈ Finset.range M, (f k : ℝ) * x ^ k := by
+  induction M with
+  | zero => intro f x; simp [polyTow]
+  | succ M ih =>
+    intro f x
+    rw [List.range_succ_eq_map, List.map_cons, List.map_map, polyTow, Finset.sum_range_succ']
+    have := ih (f ∘ Nat.succ) x
+    simp only [Function.comp] at this
+    show (f 0 : ℝ) + x * polyTow ((List.range M).map (f ∘ Nat.succ)) 0 x = _
+    rw [this, Finset.mul_sum]
+    simp only [pow_zero, mul_one]
+    rw [add_comm]
+    congr 1
+    refine Finset.sum_congr rfl (fun k _ => ?_)
+    rw [pow_succ]; ring
+
+/-- coefficient of `y^(k+1)` in `Re[ρ log (1 + y/z)]`, `z = c - p` -/
+def poleCoef (q : PoleR) (c : ℚ) (k : ℕ) : ℚ :=
+  (-1) ^ k / ((k : ℚ) + 1) *
+    (q.rr * (cpowQ (uOf q c) (k + 1)).1 - q.ri * (cpowQ (uOf q c) (k + 1)).2)
+
+theorem pole_series_re (q : PoleR) (c : ℚ) (M : ℕ) (y : ℝ) :
+    (q.rho * logPS M ((y : ℂ) / ((c : ℂ) - q.pc))).re =
+      ∑ k ∈ Finset.range M, (poleCoef q c k : ℝ) * y ^ (k + 1) := by
+  unfold logPS
+  rw [Finset.mul_sum, Complex.re_sum]
+  refine Finset.sum_congr rfl (fun k _ => ?_)
+  have hW := cpowQ_spec q c (k + 1)
+  set W := (((c : ℂ) - q.pc)⁻¹) ^ (k + 1) with hWdef
+  have h1 : ((y : ℂ) / ((c : ℂ) - q.pc)) ^ (k + 1) = ((y ^ (k + 1) : ℝ) : ℂ) * W := by
+    rw [div_eq_mul_inv, mul_pow]; push_cast; rfl
+  rw [h1]
+  have h2 : q.rho * ((-1 : ℂ) ^ k * (((y ^ (k + 1) : ℝ) : ℂ) * W) / ((k : ℂ) + 1)) =
+      (((-1 : ℝ) ^ k * y ^ (k + 1) / ((k : ℝ) + 1) : ℝ) : ℂ) * (q.rho * W) := by
+    push_cast; ring
+  rw [h2, Complex.re_ofReal_mul]
+  have h3 : (q.rho * W).re = (q.rr : ℝ) * ((cpowQ (uOf q c) (k + 1)).1 : ℝ) -
+      (q.ri : ℝ) * ((cpowQ (uOf q c) (k + 1)).2 : ℝ) := by
+    rw [← hW]; simp [PoleR.rho, Complex.mul_re]
+  rw [h3]; unfold poleCoef; push_cast; ring
+
+theorem norm_rho_le (q : PoleR) (rb : ℚ) (h0 : 0 ≤ rb) (h : q.rr ^ 2 + q.ri ^ 2 ≤ rb ^ 2) :
+    ‖q.rho‖ ≤ (rb : ℝ) := by
+  rw [Complex.norm_def, Complex.normSq_apply, Real.sqrt_le_iff]
+  refine ⟨by exact_mod_cast h0, ?_⟩
+  have h' : ((q.rr : ℝ)) ^ 2 + (q.ri : ℝ) ^ 2 ≤ (rb : ℝ) ^ 2 := by exact_mod_cast h
+  simp only [PoleR.rho]
+  nlinarith [h']
+
+
+/-- enclosure of `arg (c - p)`, only needed when `ri ≠ 0` -/
+def poleArg (nA : ℕ) (q : PoleR) (c : ℚ) : Option (ℚ × ℚ) :=
+  if q.ri = 0 then some (0, 0) else argQ nA (c - q.pr) (-q.pi)
+
+/-- Centre constant: `|Re[ρ log z] - (rr/2) lg + ri av| ≤ |rr|/2 eg + |ri| ea` -/
+theorem pole_const_spec (nL nA : ℕ) (q : PoleR) (c : ℚ) (lg eg av ea : ℚ)
+    (hlg : logQ nL ((c - q.pr) ^ 2 + q.pi ^ 2) = some (lg, eg))
+    (harg : poleArg nA q c = some (av, ea)) :
+    |(q.rho * Complex.log ((c : ℂ) - q.pc)).re - (((q.rr / 2 * lg - q.ri * av : ℚ)) : ℝ)| ≤
+      ((qabs' q.rr / 2 * eg + qabs' q.ri * ea : ℚ) : ℝ) := by
+  have hz : (c : ℂ) - q.pc = (((c : ℝ) : ℂ)) - q.pc := by simp
+  rw [hz, pole_term_eq]
+  obtain ⟨_, hL⟩ := logQ_spec hlg
+  unfold Enc at hL
+  have hL' : |Real.log (((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) - (lg : ℝ)| ≤ (eg : ℝ) := by
+    have : (((c - q.pr) ^ 2 + q.pi ^ 2 : ℚ) : ℝ) = ((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2 := by
+      push_cast; ring
+    rw [this] at hL; exact hL
+  have hA : |(q.ri : ℝ) * (Complex.arg ⟨(c : ℝ) - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ - (av : ℝ))| ≤
+      (|(q.ri : ℝ)| * (ea : ℝ)) := by
+    by_cases hri : q.ri = 0
+    · simp [hri]
+    · have harg' : argQ nA (c - q.pr) (-q.pi) = some (av, ea) := by
+        unfold poleArg at harg; rwa [if_neg hri] at harg
+      have := argQ_spec harg'
+      have e : (⟨(c : ℝ) - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ : ℂ) =
+          ⟨((c - q.pr : ℚ) : ℝ), ((-q.pi : ℚ) : ℝ)⟩ := by
+        apply Complex.ext <;> simp
+      rw [e, abs_mul]
+      exact mul_le_mul_of_nonneg_left this (abs_nonneg _)
+  have hlin : (q.rr : ℝ) * (Real.log (((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) / 2) -
+        (q.ri : ℝ) * Complex.arg ⟨(c : ℝ) - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ -
+        (((q.rr / 2 * lg - q.ri * av : ℚ)) : ℝ) =
+      (q.rr : ℝ) / 2 * (Real.log (((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) - (lg : ℝ)) -
+        (q.ri : ℝ) * (Complex.arg ⟨(c : ℝ) - (q.pr : ℝ), ((-q.pi : ℚ) : ℝ)⟩ - (av : ℝ)) := by
+    push_cast; ring
+  rw [hlin]
+  have h1 : |(q.rr : ℝ) / 2 * (Real.log (((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2) - (lg : ℝ))| ≤
+      |(q.rr : ℝ)| / 2 * (eg : ℝ) := by
+    rw [abs_mul, abs_div, abs_two]
+    exact mul_le_mul_of_nonneg_left hL' (by positivity)
+  have h2 := (abs_sub _ _).trans (add_le_add h1 hA)
+  have e : ((qabs' q.rr / 2 * eg + qabs' q.ri * ea : ℚ) : ℝ) =
+      |(q.rr : ℝ)| / 2 * (eg : ℝ) + |(q.ri : ℝ)| * (ea : ℝ) := by
+    push_cast; rw [qabs'_cast, qabs'_cast]
+  rw [e]; exact h2
+
+/-- the degree-`M` Taylor polynomial (rounded to `2^-P`) of `Re[ρ log (x - p)]` at the centre `c`,
+with a bound on the error on `|x - c| ≤ r` (series tail with the data `qb ≥ r/|c - p|`,
+`rb ≥ |ρ|`, centre constants from `logQ`/`argQ`, rounding) -/
+def poleApx (nL nA M P : ℕ) (c r qb rb : ℚ) (q : PoleR) : Option (List ℚ × ℚ) :=
+  if 0 < qb ∧ qb ≤ 1 / 2 ∧ 0 ≤ rb ∧ q.rr ^ 2 + q.ri ^ 2 ≤ rb ^ 2 ∧
+      r ^ 2 ≤ qb ^ 2 * ((c - q.pr) ^ 2 + q.pi ^ 2) then
+    match logQ nL ((c - q.pr) ^ 2 + q.pi ^ 2),
+        poleArg nA q c with
+    | some (lg, eg), some (av, ea) =>
+      some (dyRound P (q.rr / 2 * lg - q.ri * av) ::
+          (List.range M).map (fun k => dyRound P (poleCoef q c k)),
+        qabs' q.rr / 2 * eg + qabs' q.ri * ea + 1 / 2 ^ P * (1 + geoQ r M) +
+          rb * (qb ^ (M + 1) / (((M : ℚ) + 1) * (1 - qb))))
+    | _, _ => none
+  else none
+
+theorem abs_combine4 {E1 E2 S T b1 pp g t : ℝ} (h1 : |E1| ≤ b1) (h2 : 0 ≤ E2) (h2' : E2 ≤ pp)
+    (h3 : |S| ≤ pp * g) (h4 : |T| ≤ t) :
+    |E1 + E2 + S + T| ≤ b1 + pp * (1 + g) + t := by
+  have a1 := abs_le.mp h1
+  have a3 := abs_le.mp h3
+  have a4 := abs_le.mp h4
+  have : pp * (1 + g) = pp + pp * g := by ring
+  rw [abs_le]
+  constructor <;> linarith
+
+theorem poleApx_spec {nL nA M P : ℕ} {c r qb rb : ℚ} {q : PoleR} {A : List ℚ} {B : ℚ}
+    (h : poleApx nL nA M P c r qb rb q = some (A, B)) (hr : 0 < r) (x : ℝ)
+    (hx : |x - (c : ℝ)| ≤ (r : ℝ)) :
+    |(q.rho * Complex.log ((x : ℂ) - q.pc)).re - polyTow A 0 (x - (c : ℝ))| ≤ (B : ℝ) := by
+  unfold poleApx at h
+  split_ifs at h with hc
+  obtain ⟨hqb0, hqb1, hrb0, hrb, hr2⟩ := hc
+  split at h
+  · rename_i lg eg av ea hlg harg
+    simp only [Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    set y : ℝ := x - (c : ℝ) with hy
+    set z : ℂ := (c : ℂ) - q.pc with hzdef
+    have hzre : z.re = (c : ℝ) - (q.pr : ℝ) := by simp [hzdef, PoleR.pc]
+    have hzim : z.im = -(q.pi : ℝ) := by simp [hzdef, PoleR.pc]
+    have hnz2 : ‖z‖ ^ 2 = ((c : ℝ) - (q.pr : ℝ)) ^ 2 + (q.pi : ℝ) ^ 2 := by
+      rw [Complex.sq_norm, Complex.normSq_apply, hzre, hzim]; ring
+    have hr' : (0 : ℝ) < (r : ℝ) := by exact_mod_cast hr
+    have hr2' : (r : ℝ) ^ 2 ≤ (qb : ℝ) ^ 2 * ‖z‖ ^ 2 := by
+      rw [hnz2]
+      have : ((r ^ 2 : ℚ) : ℝ) ≤ ((qb ^ 2 * ((c - q.pr) ^ 2 + q.pi ^ 2) : ℚ) : ℝ) := by
+        exact_mod_cast hr2
+      push_cast at this
+      exact this
+    have hqb0' : (0 : ℝ) < (qb : ℝ) := by exact_mod_cast hqb0
+    have hqb1' : (qb : ℝ) ≤ 1 / 2 := by
+      have := (Rat.cast_le (K := ℝ)).mpr hqb1; push_cast at this; linarith
+    have hz0 : z ≠ 0 := by
+      intro h0
+      rw [h0, norm_zero] at hr2'
+      nlinarith
+    have hnz : 0 < ‖z‖ := norm_pos_iff.mpr hz0
+    have hrz : (r : ℝ) ≤ (qb : ℝ) * ‖z‖ := by
+      have h1 : ((r : ℝ)) ^ 2 ≤ ((qb : ℝ) * ‖z‖) ^ 2 := by rw [mul_pow]; exact hr2'
+      exact (pow_le_pow_iff_left₀ hr'.le (by positivity) (two_ne_zero)).mp h1
+    have hyz : |y| ≤ (qb : ℝ) * ‖z‖ := hx.trans hrz
+    have hser := clog_series z y (qb : ℝ) hz0 hyz (by linarith) M
+    have hxz : (x : ℂ) - q.pc = z + (y : ℂ) := by simp [hy, hzdef]
+    -- split the logarithm
+    set D := Complex.log (z + y) - Complex.log z - logPS M (y / z) with hD
+    have hsplit : (q.rho * Complex.log ((x : ℂ) - q.pc)).re =
+        (q.rho * Complex.log z).re + (q.rho * logPS M (y / z)).re + (q.rho * D).re := by
+      rw [hxz, hD, ← Complex.add_re, ← Complex.add_re]
+      congr 1; ring
+    have hT3 : |(q.rho * D).re| ≤
+        (rb : ℝ) * ((qb : ℝ) ^ (M + 1) / (((M : ℝ) + 1) * (1 - (qb : ℝ)))) := by
+      calc |(q.rho * D).re| ≤ ‖q.rho * D‖ := Complex.abs_re_le_norm _
+        _ = ‖q.rho‖ * ‖D‖ := norm_mul _ _
+        _ ≤ (rb : ℝ) * ((qb : ℝ) ^ (M + 1) / (((M : ℝ) + 1) * (1 - (qb : ℝ)))) :=
+            mul_le_mul (norm_rho_le q rb hrb0 hrb) hser (norm_nonneg _) (by exact_mod_cast hrb0)
+    have hT1 := pole_const_spec nL nA q c lg eg av ea hlg harg
+    have hT2 := pole_series_re q c M y
+    rw [← hzdef] at hT2
+    -- polynomial value
+    set cf : ℕ → ℚ := fun k => dyRound P (poleCoef q c k) with hcf
+    have hpoly : polyTow (dyRound P (q.rr / 2 * lg - q.ri * av) :: (List.range M).map cf) 0 y =
+        (dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ) +
+          ∑ k ∈ Finset.range M, (cf k : ℝ) * y ^ (k + 1) := by
+      have hc : polyTow (dyRound P (q.rr / 2 * lg - q.ri * av) :: (List.range M).map cf) 0 y =
+          (dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ) + y * polyTow ((List.range M).map cf) 0 y := rfl
+      rw [hc, polyTow_mapRange, Finset.mul_sum]
+      congr 1
+      refine Finset.sum_congr rfl (fun k _ => ?_)
+      ring
+    have hcoef : |∑ k ∈ Finset.range M, ((poleCoef q c k : ℝ) - (cf k : ℝ)) * y ^ (k + 1)| ≤
+        (1 / 2 ^ P : ℝ) * (∑ k ∈ Finset.range M, (r : ℝ) ^ (k + 1)) := by
+      refine (Finset.abs_sum_le_sum_abs _ _).trans ?_
+      rw [Finset.mul_sum]
+      refine Finset.sum_le_sum (fun k _ => ?_)
+      obtain ⟨d0, d1⟩ := dyRound_spec P (poleCoef q c k)
+      have d0' : (0 : ℝ) ≤ (poleCoef q c k : ℝ) - (cf k : ℝ) := by
+        have := (Rat.cast_le (K := ℝ)).mpr d0; push_cast at this; exact this
+      have d1' : (poleCoef q c k : ℝ) - (cf k : ℝ) ≤ 1 / 2 ^ P := by
+        have := (Rat.cast_le (K := ℝ)).mpr d1; push_cast at this; exact this
+      rw [abs_mul, abs_of_nonneg d0', abs_pow]
+      have hp : |y| ^ (k + 1) ≤ (r : ℝ) ^ (k + 1) := pow_le_pow_left₀ (abs_nonneg _) hx _
+      exact mul_le_mul d1' hp (by positivity) (by positivity)
+    obtain ⟨k0, k1⟩ := dyRound_spec P (q.rr / 2 * lg - q.ri * av)
+    have k0' : (0 : ℝ) ≤ ((q.rr / 2 * lg - q.ri * av : ℚ) : ℝ) -
+        (dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ) := by
+      have := (Rat.cast_le (K := ℝ)).mpr k0; push_cast at this ⊢; linarith
+    have k1' : ((q.rr / 2 * lg - q.ri * av : ℚ) : ℝ) -
+        (dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ) ≤ 1 / 2 ^ P := by
+      have := (Rat.cast_le (K := ℝ)).mpr k1; push_cast at this ⊢; linarith
+    rw [hsplit, hpoly, hT2]
+    have hsum : ∑ k ∈ Finset.range M, (poleCoef q c k : ℝ) * y ^ (k + 1) -
+        ∑ k ∈ Finset.range M, (cf k : ℝ) * y ^ (k + 1) =
+        ∑ k ∈ Finset.range M, ((poleCoef q c k : ℝ) - (cf k : ℝ)) * y ^ (k + 1) := by
+      rw [← Finset.sum_sub_distrib]; refine Finset.sum_congr rfl (fun k _ => ?_); ring
+    have hgeo := geoQ_cast r M
+    have hBcast : (((qabs' q.rr / 2 * eg + qabs' q.ri * ea + 1 / 2 ^ P * (1 + geoQ r M) +
+        rb * (qb ^ (M + 1) / (((M : ℚ) + 1) * (1 - qb))) : ℚ)) : ℝ) =
+        ((qabs' q.rr / 2 * eg + qabs' q.ri * ea : ℚ) : ℝ) + 1 / 2 ^ P *
+          (1 + ∑ k ∈ Finset.range M, (r : ℝ) ^ (k + 1)) +
+        (rb : ℝ) * ((qb : ℝ) ^ (M + 1) / (((M : ℝ) + 1) * (1 - (qb : ℝ)))) := by
+      push_cast
+      rw [hgeo]
+    rw [hBcast]
+    have hfin : (q.rho * Complex.log z).re + ∑ k ∈ Finset.range M, (poleCoef q c k : ℝ) * y ^ (k + 1) +
+        (q.rho * D).re - ((dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ) +
+          ∑ k ∈ Finset.range M, (cf k : ℝ) * y ^ (k + 1)) =
+        ((q.rho * Complex.log z).re - ((q.rr / 2 * lg - q.ri * av : ℚ) : ℝ)) +
+          (((q.rr / 2 * lg - q.ri * av : ℚ) : ℝ) -
+            (dyRound P (q.rr / 2 * lg - q.ri * av) : ℝ)) +
+          ∑ k ∈ Finset.range M, ((poleCoef q c k : ℝ) - (cf k : ℝ)) * y ^ (k + 1) +
+            (q.rho * D).re := by
+      rw [← hsum]; ring
+    rw [hfin]
+    exact abs_combine4 hT1 k0' k1' hcoef hT3
+  · simp at h
+
+
+/-! #### terms, lists, and the merged piece -/
+
+/-- `g ≤ polyTow A (x - c) + B` on `[lo, hi]`, `c = (lo + hi)/2` -/
+def Bnd (lo hi : ℚ) (g : ℝ → ℝ) (A : List ℚ) (B : ℚ) : Prop :=
+  ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), g x ≤ polyTow A 0 (x - (((lo + hi) / 2 : ℚ) : ℝ)) + (B : ℝ)
+
+theorem Bnd.zero (lo hi : ℚ) : Bnd lo hi (fun _ => 0) [] 0 := by
+  intro x _; simp [polyTow]
+
+theorem Bnd.add {lo hi : ℚ} {g1 g2 : ℝ → ℝ} {A1 A2 : List ℚ} {B1 B2 : ℚ}
+    (h1 : Bnd lo hi g1 A1 B1) (h2 : Bnd lo hi g2 A2 B2) :
+    Bnd lo hi (fun x => g1 x + g2 x) (vecAdd A1 A2) (B1 + B2) := by
+  intro x hx
+  have a := h1 x hx
+  have b := h2 x hx
+  rw [polyTow_vecAdd, Rat.cast_add]
+  linarith
+
+theorem hx_abs (lo hi : ℚ) (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    |x - (((lo + hi) / 2 : ℚ) : ℝ)| ≤ (((hi - lo) / 2 : ℚ) : ℝ) := by
+  push_cast
+  exact abs_le.mpr ⟨by linarith [hx.1], by linarith [hx.2]⟩
+
+theorem abs_polyTow_le_absSum (l : List ℚ) (c r : ℚ) (hr : 0 < (r : ℝ)) (x : ℝ)
+    (hx : |x - (c : ℝ)| ≤ (r : ℝ)) :
+    |polyTow l 0 (x - (c : ℝ))| ≤ ((absSum (sclPow r 0 l) : ℚ) : ℝ) := by
+  have hu : |(x - (c : ℝ)) / (r : ℝ)| ≤ 1 := by
+    rw [abs_div, abs_of_pos hr, div_le_one hr]; exact hx
+  have h := polyTow_abs_le ((x - (c : ℝ)) / (r : ℝ)) hu (sclPow r 0 l)
+  rw [polyTow_sclPow] at h
+  have e : (r : ℝ) * ((x - (c : ℝ)) / (r : ℝ)) = x - (c : ℝ) := by field_simp
+  rw [e] at h
+  simpa using h
+
+theorem polyTow_le_cheb (l γ : List ℚ) (c r : ℚ) (hr : 0 < (r : ℝ)) (x : ℝ)
+    (hx : |x - (c : ℝ)| ≤ (r : ℝ)) :
+    polyTow l 0 (x - (c : ℝ)) ≤ ((chebPolyUB (sclPow r 0 l) γ : ℚ) : ℝ) := by
+  have hu : |(x - (c : ℝ)) / (r : ℝ)| ≤ 1 := by
+    rw [abs_div, abs_of_pos hr, div_le_one hr]; exact hx
+  have h := chebPoly_le (sclPow r 0 l) γ ((x - (c : ℝ)) / (r : ℝ)) hu
+  rw [polyTow_sclPow] at h
+  have e : (r : ℝ) * ((x - (c : ℝ)) / (r : ℝ)) = x - (c : ℝ) := by field_simp
+  rw [e] at h
+  simpa using h
+
+/-- Bound of `P(x) log|x - e|`: Taylor-merge (`poleApx` of the pole `1 · log (x - e)`, times the
+exactly shifted `P`, error `sup |P| · B`) when the data `qb` allows, else the monotone `plogUB`. -/
+def plogTerm (nL nA Ml P : ℕ) (lo hi : ℚ) (t : List ℚ × ℚ) (d : ℚ × (List ℚ × List ℚ)) :
+    Option (List ℚ × ℚ) :=
+  match poleApx nL nA Ml P ((lo + hi) / 2) ((hi - lo) / 2) d.1 1 ⟨1, 0, t.2, 0⟩ with
+  | some (A, B) =>
+    some (pmulQ (shiftLK ((lo + hi) / 2) t.1.length t.1) A,
+      absSum (sclPow ((hi - lo) / 2) 0 (shiftLK ((lo + hi) / 2) t.1.length t.1)) * B)
+  | none => (plogUB nL t d.2 lo hi).map (fun v => ([], v))
+
+theorem plogTerm_bnd {nL nA Ml P : ℕ} {lo hi : ℚ} (hlo : lo < hi) {t : List ℚ × ℚ}
+    {d : ℚ × (List ℚ × List ℚ)} {A : List ℚ} {B : ℚ}
+    (h : plogTerm nL nA Ml P lo hi t d = some (A, B)) :
+    Bnd lo hi (fun x => polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)|) A B := by
+  intro x hx
+  show polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)| ≤ _
+  have hr : (0 : ℝ) < (((hi - lo) / 2 : ℚ) : ℝ) := by
+    have : (lo : ℝ) < (hi : ℝ) := by exact_mod_cast hlo
+    push_cast; linarith
+  have hxc := hx_abs lo hi x hx
+  unfold plogTerm at h
+  split at h
+  · rename_i A0 B0 hpa
+    simp only [Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    set c : ℚ := (lo + hi) / 2 with hc
+    set r : ℚ := (hi - lo) / 2 with hr'
+    have hap := poleApx_spec hpa (by exact_mod_cast hr) x hxc
+    have hre : (((⟨1, 0, t.2, 0⟩ : PoleR)).rho * Complex.log ((x : ℂ) - (⟨1, 0, t.2, 0⟩ : PoleR).pc)).re =
+        Real.log |x - (t.2 : ℝ)| := by
+      rw [re_clog_real _ rfl rfl]
+      simp
+    rw [hre] at hap
+    set Psh := shiftLK c t.1.length t.1 with hPsh
+    have hP : polyTow t.1 0 x = polyTow Psh 0 (x - (c : ℝ)) := by
+      rw [hPsh, shiftLK_eq', polyTow_shiftL, sub_add_cancel]
+    have hPm := abs_polyTow_le_absSum Psh c r hr x hxc
+    rw [l0_pmul, hP]
+    set Pv := polyTow Psh 0 (x - (c : ℝ)) with hPv
+    set Lg := Real.log |x - (t.2 : ℝ)| with hLg
+    set Ap := polyTow A0 0 (x - (c : ℝ)) with hAp
+    have hB0 : (0 : ℝ) ≤ (B0 : ℝ) := (abs_nonneg _).trans hap
+    have h1 : Pv * Lg - Pv * Ap ≤ ((absSum (sclPow r 0 Psh) : ℚ) : ℝ) * (B0 : ℝ) := by
+      calc Pv * Lg - Pv * Ap = Pv * (Lg - Ap) := by ring
+        _ ≤ |Pv * (Lg - Ap)| := le_abs_self _
+        _ = |Pv| * |Lg - Ap| := abs_mul _ _
+        _ ≤ ((absSum (sclPow r 0 Psh) : ℚ) : ℝ) * (B0 : ℝ) :=
+            mul_le_mul hPm hap (abs_nonneg _) ((abs_nonneg _).trans hPm)
+    push_cast
+    linarith
+  · rename_i hpa
+    simp only [Option.map_eq_some_iff] at h
+    obtain ⟨v, hv, hAB⟩ := h
+    simp only [Prod.mk.injEq] at hAB
+    obtain ⟨rfl, rfl⟩ := hAB
+    have := plogUB_le nL t d.2 lo hi v hlo hv x hx
+    have e0 : polyTow [] 0 (x - (((lo + hi) / 2 : ℚ) : ℝ)) = 0 := rfl
+    rw [e0, zero_add]
+    exact this
+
+/-- Bound of a pole term `Re[ρ log (x - p)]`. -/
+def poleTerm (nL nA M P : ℕ) (lo hi : ℚ) (q : PoleR) (d : ℚ × ℚ) : Option (List ℚ × ℚ) :=
+  match poleApx nL nA M P ((lo + hi) / 2) ((hi - lo) / 2) d.1 d.2 q with
+  | some ab => some ab
+  | none => (poleUB nL nA q lo hi).map (fun v => ([], v))
+
+theorem poleTerm_bnd {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi) {q : PoleR} {d : ℚ × ℚ}
+    {A : List ℚ} {B : ℚ} (h : poleTerm nL nA M P lo hi q d = some (A, B)) :
+    Bnd lo hi (fun x => (q.rho * Complex.log ((x : ℂ) - q.pc)).re) A B := by
+  intro x hx
+  show (q.rho * Complex.log ((x : ℂ) - q.pc)).re ≤ _
+  have hr : (0 : ℝ) < (((hi - lo) / 2 : ℚ) : ℝ) := by
+    have : (lo : ℝ) < (hi : ℝ) := by exact_mod_cast hlo
+    push_cast; linarith
+  have hxc := hx_abs lo hi x hx
+  unfold poleTerm at h
+  split at h
+  · rename_i hpa
+    simp only [Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl, rfl⟩ := h
+    have hap := poleApx_spec hpa (by exact_mod_cast hr) x hxc
+    have := (abs_le.mp hap).2
+    linarith
+  · rename_i hpa
+    simp only [Option.map_eq_some_iff] at h
+    obtain ⟨v, hv, hAB⟩ := h
+    simp only [Prod.mk.injEq] at hAB
+    obtain ⟨rfl, rfl⟩ := hAB
+    have := poleUB_le nL nA q lo hi v hv x hx
+    have e0 : polyTow [] 0 (x - (((lo + hi) / 2 : ℚ) : ℝ)) = 0 := rfl
+    rw [e0, zero_add]
+    exact this
+
+def plogsM (nL nA Ml P : ℕ) (lo hi : ℚ) :
+    List (List ℚ × ℚ) → List (ℚ × (List ℚ × List ℚ)) → Option (List ℚ × ℚ)
+  | [], [] => some ([], 0)
+  | t :: ts, d :: ds =>
+    match plogTerm nL nA Ml P lo hi t d, plogsM nL nA Ml P lo hi ts ds with
+    | some a, some b => some (vecAdd a.1 b.1, a.2 + b.2)
+    | _, _ => none
+  | _, _ => none
+
+theorem plogsM_bnd {nL nA Ml P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
+    ∀ (ts : List (List ℚ × ℚ)) (ds : List (ℚ × (List ℚ × List ℚ))) (A : List ℚ) (B : ℚ),
+      plogsM nL nA Ml P lo hi ts ds = some (A, B) →
+      Bnd lo hi (fun x => (ts.map (fun t => polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)|)).sum) A B := by
+  intro ts
+  induction ts with
+  | nil =>
+    intro ds A B h
+    cases ds with
+    | nil =>
+      simp only [plogsM, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      simpa using Bnd.zero lo hi
+    | cons d ds => simp [plogsM] at h
+  | cons t ts ih =>
+    intro ds A B h
+    cases ds with
+    | nil => simp [plogsM] at h
+    | cons d ds =>
+      unfold plogsM at h
+      split at h
+      · rename_i a b ha hb
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have := (plogTerm_bnd hlo ha).add (ih ds b.1 b.2 hb)
+        simpa using this
+      · simp at h
+
+def polesM (nL nA M P : ℕ) (lo hi : ℚ) : List PoleR → List (ℚ × ℚ) → Option (List ℚ × ℚ)
+  | [], [] => some ([], 0)
+  | q :: qs, d :: ds =>
+    match poleTerm nL nA M P lo hi q d, polesM nL nA M P lo hi qs ds with
+    | some a, some b => some (vecAdd a.1 b.1, a.2 + b.2)
+    | _, _ => none
+  | _, _ => none
+
+theorem polesM_bnd {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
+    ∀ (qs : List PoleR) (ds : List (ℚ × ℚ)) (A : List ℚ) (B : ℚ),
+      polesM nL nA M P lo hi qs ds = some (A, B) → Bnd lo hi (fun x => poleF qs x) A B := by
+  intro qs
+  induction qs with
+  | nil =>
+    intro ds A B h
+    cases ds with
+    | nil =>
+      simp only [polesM, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have := Bnd.zero lo hi
+      simpa [poleF] using this
+    | cons d ds => simp [polesM] at h
+  | cons q qs ih =>
+    intro ds A B h
+    cases ds with
+    | nil => simp [polesM] at h
+    | cons d ds =>
+      unfold polesM at h
+      split at h
+      · rename_i a b ha hb
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have := (poleTerm_bnd hlo ha).add (ih ds b.1 b.2 hb)
+        intro x hx
+        show poleF (q :: qs) x ≤ _
+        have h2 := this x hx
+        have e : poleF (q :: qs) x = (q.rho * Complex.log ((x : ℂ) - q.pc)).re + poleF qs x := by
+          simp [poleF]
+        rw [e]
+        exact h2
+      · simp at h
+
+/-- Same-site plog entries are added exactly (first occurrence order): the leading polynomials of
+sites that cancel in the field (`P_e` and `-P_e + small`) are then small, which the tail bound `sup|P_e|`
+needs. -/
+def addSite (t : List ℚ × ℚ) : List (List ℚ × ℚ) → List (List ℚ × ℚ)
+  | [] => [t]
+  | s :: ss => if s.2 = t.2 then (vecAdd s.1 t.1, s.2) :: ss else s :: addSite t ss
+
+def mergeSites (l : List (List ℚ × ℚ)) : List (List ℚ × ℚ) :=
+  l.foldl (fun acc t => addSite t acc) []
+
+theorem addSite_sum (t : List ℚ × ℚ) (x : ℝ) : ∀ l : List (List ℚ × ℚ),
+    ((addSite t l).map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum =
+      polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)| +
+        (l.map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum := by
+  intro l
+  induction l with
+  | nil => simp [addSite]
+  | cons s ss ih =>
+    unfold addSite
+    by_cases h : s.2 = t.2
+    · rw [if_pos h]
+      simp only [List.map_cons, List.sum_cons, polyTow_vecAdd, h]
+      push_cast
+      ring
+    · rw [if_neg h]
+      simp only [List.map_cons, List.sum_cons, ih]
+      ring
+
+theorem mergeSites_sum (x : ℝ) : ∀ (l acc : List (List ℚ × ℚ)),
+    ((l.foldl (fun a t => addSite t a) acc).map
+        (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum =
+      (l.map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum +
+        (acc.map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum := by
+  intro l
+  induction l with
+  | nil => intro acc; simp
+  | cons t ts ih =>
+    intro acc
+    simp only [List.foldl_cons, List.map_cons, List.sum_cons]
+    rw [ih, addSite_sum]
+    ring
+
+theorem mergeSites_eq (x : ℝ) (l : List (List ℚ × ℚ)) :
+    ((mergeSites l).map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum =
+      (l.map (fun s => polyTow s.1 0 x * Real.log |x - (s.2 : ℝ)|)).sum := by
+  unfold mergeSites
+  rw [mergeSites_sum]
+  simp
+
+/-- The bound of a Taylor-merged piece: the Chebyshev bound of the merged polynomial
+(`poly` shifted exactly to the centre, plus the Taylor polynomials of the far plog sites and poles)
+plus the error terms and the monotone fallback bounds of the near terms. -/
+def mergeUB (fq : FieldQ) (nL nA Mp Ml P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (γ : List ℚ) : Option ℚ :=
+  if lo < hi then
+    match plogsM nL nA Ml P lo hi (mergeSites fq.plogs) pd, polesM nL nA Mp P lo hi fq.poles qd with
+    | some a, some b =>
+      some (chebPolyUB (sclPow ((hi - lo) / 2) 0
+          (vecAdd (shiftLK ((lo + hi) / 2) fq.poly.length fq.poly) (vecAdd a.1 b.1))) γ + a.2 + b.2)
+    | _, _ => none
+  else none
+
+def chebMergePiece (fq : FieldQ) (nL nA Mp Ml P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (γ : List ℚ) (T : ℚ) : Bool :=
+  match mergeUB fq nL nA Mp Ml P lo hi pd qd γ with
+  | some v => decide (v ≤ T)
+  | none => false
+
+/-- **Taylor-merged piece soundness**: same conclusion as `cellV_sound`, no `BlockFacts`.  The data
+`pd` (per plog site: `qb ≥ r/|c - e|`, fallback Chebyshev data), `qd` (per pole: `qb ≥ r/|c - p|`,
+`rb ≥ |ρ|`) and `γ` are untrusted: a term whose data fail the checked conditions falls back to its
+monotone enclosure. -/
+theorem chebMergePiece_sound (fq : FieldQ) (nL nA Mp Ml P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (γ : List ℚ) (T : ℚ)
+    (hchk : chebMergePiece fq nL nA Mp Ml P lo hi pd qd γ T = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x ≤ (T : ℝ) := by
+  unfold chebMergePiece at hchk
+  split at hchk
+  · rename_i v hv
+    simp only [decide_eq_true_eq] at hchk
+    unfold mergeUB at hv
+    split_ifs at hv with hlo
+    · split at hv
+      · rename_i a b ha hb
+        simp only [Option.some.injEq] at hv
+        subst hv
+        intro x hx
+        have hr : (0 : ℝ) < (((hi - lo) / 2 : ℚ) : ℝ) := by
+          have : (lo : ℝ) < (hi : ℝ) := by exact_mod_cast hlo
+          push_cast; linarith
+        have hxc := hx_abs lo hi x hx
+        have h2 := plogsM_bnd hlo (mergeSites fq.plogs) pd a.1 a.2 ha x hx
+        beta_reduce at h2
+        rw [mergeSites_eq] at h2
+        have h3 := polesM_bnd hlo fq.poles qd b.1 b.2 hb x hx
+        have h1 : polyTow fq.poly 0 x =
+            polyTow (shiftLK ((lo + hi) / 2) fq.poly.length fq.poly) 0
+              (x - (((lo + hi) / 2 : ℚ) : ℝ)) := by
+          rw [shiftLK_eq', polyTow_shiftL, sub_add_cancel]
+        have h4 := polyTow_le_cheb
+          (vecAdd (shiftLK ((lo + hi) / 2) fq.poly.length fq.poly) (vecAdd a.1 b.1)) γ
+          ((lo + hi) / 2) ((hi - lo) / 2) hr x hxc
+        rw [polyTow_vecAdd, polyTow_vecAdd] at h4
+        have hT : ((chebPolyUB (sclPow ((hi - lo) / 2) 0
+            (vecAdd (shiftLK ((lo + hi) / 2) fq.poly.length fq.poly) (vecAdd a.1 b.1))) γ + a.2 + b.2 :
+            ℚ) : ℝ) ≤ (T : ℝ) := by exact_mod_cast hchk
+        rw [fieldTower_zero, h1]
+        rw [Rat.cast_add, Rat.cast_add] at hT
+        beta_reduce at h3
+        linarith
+      · simp at hv
+  · simp at hchk
+
+/-! ### 9. Regression of the Taylor-merged piece
+
+`f(x) = 1 + x²/2 + x log|x + 3| + ½ · ½ log (x - 2)² + Re[(1 - i/2) log (x - (-2 + i))]` on `[0, 1]`
+(centre `1/2`, `r = 1/2`; true maximum `3.8767`).  The plog site `-3` is at `q = r/|c - e| = 1/7`,
+the poles `2` and `-2 + i` at `q = 1/3`, `q = 0.186`; the data `qb = 1/7, 1/3, 1/5` and `rb = 1/2, 6/5`
+pass the rational tests.  With `γ = []` the Chebyshev bound is the monomial bound `Σ |a_k| r^k`.
+`mergeUB` (`#eval`): 3.8983 (all Taylor), 3.8899 (plog by fallback), 4.2326 (poles by fallback),
+4.2233 (all by fallback).
+
+kcost: one `shiftLK` of 3 and 2 coefficients, 3 `logQ` and 1 `argQ` (series orders 12 and 24), degree-10
+series (30 rational coefficients with `dyRound 64`), `pmulQ` of 2 by 11 terms, one
+`absSum`/`vsubQ` of length 13: about 5000 reduction steps, 1 s (estimated). -/
+
+def toyMFQ : FieldQ where
+  poly := [1, 0, 1 / 2]
+  plogs := [([0, 1], -3)]
+  poles := [⟨1 / 2, 0, 2, 0⟩, ⟨1, -1 / 2, -2, 1⟩]
+
+def toyMpd : List (ℚ × (List ℚ × List ℚ)) := [(1 / 7, ([1 / 2, 1 / 2], [-1 / 2, -1 / 2]))]
+def toyMqd : List (ℚ × ℚ) := [(1 / 3, 1 / 2), (1 / 5, 6 / 5)]
+def toyMpd0 : List (ℚ × (List ℚ × List ℚ)) := [(0, ([1 / 2, 1 / 2], [-1 / 2, -1 / 2]))]
+def toyMqd0 : List (ℚ × ℚ) := [(0, 0), (0, 0)]
+
+theorem toy_merge_check : chebMergePiece toyMFQ 12 24 10 10 64 0 1 toyMpd toyMqd [] (39 / 10) = true := by
+  decide +kernel
+
+/-- the same piece with a threshold below the bound fails -/
+theorem toy_merge_tight : chebMergePiece toyMFQ 12 24 10 10 64 0 1 toyMpd toyMqd [] (389 / 100) = false := by
+  decide +kernel
+
+/-- the plog site by fallback, the poles merged -/
+theorem toy_merge_mixed : chebMergePiece toyMFQ 12 24 10 10 64 0 1 toyMpd0 toyMqd [] (39 / 10) = true := by
+  decide +kernel
+
+/-- every term by fallback: a larger bound, still sound -/
+theorem toy_merge_fallback :
+    chebMergePiece toyMFQ 12 24 10 10 64 0 1 toyMpd0 toyMqd0 [] (43 / 10) = true := by
+  decide +kernel
+
+theorem toy_merge_fallback_tight :
+    chebMergePiece toyMFQ 12 24 10 10 64 0 1 toyMpd0 toyMqd0 [] (39 / 10) = false := by
+  decide +kernel
+
+theorem toy_merge_sound : ∀ x ∈ Icc (((0 : ℚ)) : ℝ) (((1 : ℚ)) : ℝ),
+    fieldTower toyMFQ (poleF toyMFQ.poles) 0 x ≤ (((39 / 10 : ℚ)) : ℝ) :=
+  chebMergePiece_sound toyMFQ 12 24 10 10 64 0 1 toyMpd toyMqd [] (39 / 10) toy_merge_check
+
+#print axioms chebMergePiece_sound
+#print axioms toy_merge_check
+#print axioms toy_merge_tight
+#print axioms toy_merge_mixed
+#print axioms toy_merge_fallback
+#print axioms toy_merge_sound
 
 end CatalanMeasure.GenD.Signed.Data.Cells
