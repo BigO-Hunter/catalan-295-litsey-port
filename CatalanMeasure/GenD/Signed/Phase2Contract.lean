@@ -98,8 +98,8 @@ def CapEnd.toS (E : CapEnd) (αA αB : ℝ) : SigmaCapData where
 `fNegM, fPosMS, fPosMR, fNearMS` of the interpolated family are affine in the weight, so the
 endpoint hypotheses (A and B, same form as the hypotheses of `fixedSumAt_of_cap`) give those of
 the chord cap data `E.toS αA αB`; `ZB := zbCap (E.toS αA αB)`. -/
-theorem fixedSum_ends {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc αA αB lo hi : ℝ}
-    {DA DB : ℕ → SignedData} (h : IntervalEnds αA αB lo hi DA DB) (E : CapEnd)
+theorem fixedSum_ends_asym {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc αA αB lo hi : ℝ}
+    {DA DB : ℕ → SignedData} (h : IntervalEnds αA αB lo hi DA DB) (E : CapEnd) (gsN : ℝ)
     (constant : ℕ → ℝ → ℝ)
     {FixAdm : ∀ (N m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop}
     (hxc0 : 0 ≤ E.xc) (hxc1 : E.xc < 1) (hC1 : 0 < E.C1) (hrc : 0 ≤ rc) (hlo : 0 ≤ lo)
@@ -119,11 +119,11 @@ theorem fixedSum_ends {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc �
     (hlogu : Tendsto (fun N => -Real.log (umin N) / (ncount N : ℝ)) atTop (nhds 0))
     (hFix : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
       FixAdm N m1 m2 s yn yp zp →
-        FixAdmCap E.gs E.xc E.C1 (ncount N : ℝ) (umin N) yn yp zp)
+        FixAdmCapAsym gsN E.gs E.xc E.C1 (ncount N : ℝ) (umin N) yn yp zp)
     (hnegA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
-      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -E.gs → (DA N).fNegM (Rm N) x ≤ E.lamNA + ε)
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -gsN → (DA N).fNegM (Rm N) x ≤ E.lamNA + ε)
     (hnegB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
-      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -E.gs → (DB N).fNegM (Rm N) x ≤ E.lamNB + ε)
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -gsN → (DB N).fNegM (Rm N) x ≤ E.lamNB + ε)
     (hposA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
       ∀ x ∈ Ioo (0 : ℝ) 1, E.gs ≤ x → x < E.xc →
         (DA N).fPosMR (Rm N) rc α x ≤ E.lamPA α + ε)
@@ -152,7 +152,7 @@ theorem fixedSum_ends {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc �
       (zbCap (E.toS αA αB)) FixAdm := by
   have hmem : ∀ α ∈ Icc lo hi, 0 ≤ interpL αA αB α ∧ interpL αA αB α ≤ 1 :=
     fun α hα => h.mem hα
-  refine fixedSumAt_of_cap (E.toS αA αB) (ZB := zbCap (E.toS αA αB)) hxc0 hxc1 hC1 hrc hlo hhi
+  refine fixedSumAt_of_cap_asym (E.toS αA αB) gsN (ZB := zbCap (E.toS αA αB)) hxc0 hxc1 hC1 hrc hlo hhi
     hn (fun N α => hν N) hrP ?_ umin hum0 hum1 Bd Rbd ?_ ?_ ?_ ?_ hn_top hlogu hFix
     (fun _ _ _ _ _ _ => le_rfl) ?_ ?_ ?_ ?_ ?_
   · intro α hα β hβ
@@ -216,7 +216,64 @@ theorem fixedSum_ends {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc �
 /-! ### 4. The complete Phase 2 data and the contract -/
 
 /-- **Everything a Phase 2 data module supplies** for `I` α-intervals (see `NOTES-PC.md`). -/
-structure Phase2Data (I : ℕ) where
+theorem fixedSum_ends {ncount : ℕ → ℕ} {Rm Rn : ℕ → ℝ → ℝ} {rc αA αB lo hi : ℝ}
+    {DA DB : ℕ → SignedData} (h : IntervalEnds αA αB lo hi DA DB) (E : CapEnd)
+    (constant : ℕ → ℝ → ℝ)
+    {FixAdm : ∀ (N m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop}
+    (hxc0 : 0 ≤ E.xc) (hxc1 : E.xc < 1) (hC1 : 0 < E.C1) (hrc : 0 ≤ rc) (hlo : 0 ≤ lo)
+    (hhi : hi ≤ 1) (hn : ∀ N, 0 < N → 0 < ncount N) (hν : ∀ N, (DA N).ν = (ncount N : ℝ))
+    (hrP : ∀ α ∈ Icc lo hi, rc * α ≤ E.rP α)
+    (hrSA : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, 0 ≤ E.rSA α β)
+    (hrSB : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, 0 ≤ E.rSB α β)
+    (umin : ℕ → ℝ) (hum0 : ∀ N, 0 < umin N) (hum1 : ∀ N, umin N ≤ 1) (Bd Rbd : ℝ)
+    (hBdPA : ∀ α ∈ Icc lo hi, E.gPA α - E.lamPA α ≤ Bd)
+    (hBdPB : ∀ α ∈ Icc lo hi, E.gPB α - E.lamPB α ≤ Bd)
+    (hBdSA : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, E.gSA α β - E.lamSA α β ≤ Bd)
+    (hBdSB : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, E.gSB α β - E.lamSB α β ≤ Bd)
+    (hRP : ∀ α ∈ Icc lo hi, E.rP α ≤ Rbd)
+    (hRSA : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, E.rSA α β ≤ Rbd)
+    (hRSB : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, E.rSB α β ≤ Rbd)
+    (hn_top : Tendsto (fun N => (ncount N : ℝ)) atTop atTop)
+    (hlogu : Tendsto (fun N => -Real.log (umin N) / (ncount N : ℝ)) atTop (nhds 0))
+    (hFix : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
+      FixAdm N m1 m2 s yn yp zp →
+        FixAdmCap E.gs E.xc E.C1 (ncount N : ℝ) (umin N) yn yp zp)
+    (hnegA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -E.gs → (DA N).fNegM (Rm N) x ≤ E.lamNA + ε)
+    (hnegB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -E.gs → (DB N).fNegM (Rm N) x ≤ E.lamNB + ε)
+    (hposA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.gs ≤ x → x < E.xc →
+        (DA N).fPosMR (Rm N) rc α x ≤ E.lamPA α + ε)
+    (hposB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.gs ≤ x → x < E.xc →
+        (DB N).fPosMR (Rm N) rc α x ≤ E.lamPB α + ε)
+    (hposTopA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.xc ≤ x → (DA N).fPosMS (Rm N) x ≤ E.gPA α + ε)
+    (hposTopB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.xc ≤ x → (DB N).fPosMS (Rm N) x ≤ E.gPB α + ε)
+    (hnearA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.gs ≤ x → x < E.xc →
+        (DA N).fNearMS (Rn N) α β x ≤ E.lamSA α β + ε)
+    (hnearB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.gs ≤ x → x < E.xc →
+        (DB N).fNearMS (Rn N) α β x ≤ E.lamSB α β + ε)
+    (hnearTopA : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.xc ≤ x →
+        (DA N).fNearMS (Rn N) α β x ≤
+          E.gSA α β + ε + E.rSA α β * (-Real.log (1 - x ^ 2)))
+    (hnearTopB : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, E.xc ≤ x →
+        (DB N).fNearMS (Rn N) α β x ≤
+          E.gSB α β + ε + E.rSB α β * (-Real.log (1 - x ^ 2))) :
+    FixedSumAt ncount (interpFamily αA αB DA DB constant) Rm Rn rc lo hi
+      (zbCap (E.toS αA αB)) FixAdm  := by
+  exact fixedSum_ends_asym h E E.gs constant hxc0 hxc1 hC1 hrc hlo hhi hn hν hrP hrSA hrSB
+    umin hum0 hum1 Bd Rbd hBdPA hBdPB hBdSA hBdSB hRP hRSA hRSB hn_top hlogu hFix
+    hnegA hnegB hposA hposB hposTopA hposTopB hnearA hnearB hnearTopA hnearTopB
+
+
+structure Phase2DataCore (I : ℕ) (negativeGap : Option ℝ) where
   -- scale, partition, problem data
   ncount : ℕ → ℕ
   ncount_pos : ∀ N, 0 < N → 0 < ncount N
@@ -334,9 +391,9 @@ structure Phase2Data (I : ℕ) where
   hC1le : ∀ i, C1 ≤ (capE i).C1
   -- endpoint bounds of the fixed-row fields
   hnegA : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
-    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(capE i).gs → (DA i N).fNegM (Rm N) x ≤ (capE i).lamNA + ε
+    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(negativeGap.getD (capE i).gs) → (DA i N).fNegM (Rm N) x ≤ (capE i).lamNA + ε
   hnegB : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
-    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(capE i).gs → (DB i N).fNegM (Rm N) x ≤ (capE i).lamNB + ε
+    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(negativeGap.getD (capE i).gs) → (DB i N).fNegM (Rm N) x ≤ (capE i).lamNB + ε
   hposA : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (lo i) (hi i),
     ∀ x ∈ Ioo (0 : ℝ) 1, (capE i).gs ≤ x → x < (capE i).xc →
       (DA i N).fPosMR (Rm N) (remC (epsSplit i)) α x ≤ (capE i).lamPA α + ε
@@ -378,6 +435,115 @@ structure Phase2Data (I : ℕ) where
       (1 - κhi i - α) * chord (αA i) (αB i) (SpA i) (SpB i) α +
       (1 - α) * chord (αA i) (αB i) (SyA i) (SyB i) α + zb i α ≤ B + cost * α
 
+/-- Legacy symmetric contract; its field types reduce to the original ones. -/
+abbrev Phase2Data (I : ℕ) := Phase2DataCore I none
+/-- Independent negative support cutoff; positive/near fields keep capE.gs. -/
+abbrev Phase2DataAsym (I : ℕ) (gsN : ℝ) := Phase2DataCore I (some gsN)
+
+abbrev Phase2Data.mk {I : ℕ} := @Phase2DataCore.mk I none
+abbrev Phase2Data.ncount {I : ℕ} (D : Phase2Data I) := Phase2DataCore.ncount D
+abbrev Phase2Data.ncount_pos {I : ℕ} (D : Phase2Data I) := Phase2DataCore.ncount_pos D
+abbrev Phase2Data.B {I : ℕ} (D : Phase2Data I) := Phase2DataCore.B D
+abbrev Phase2Data.cost {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cost D
+abbrev Phase2Data.α1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.α1 D
+abbrev Phase2Data.α1_nonneg {I : ℕ} (D : Phase2Data I) := Phase2DataCore.α1_nonneg D
+abbrev Phase2Data.lo {I : ℕ} (D : Phase2Data I) := Phase2DataCore.lo D
+abbrev Phase2Data.hi {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hi D
+abbrev Phase2Data.cover {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cover D
+abbrev Phase2Data.Rf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Rf D
+abbrev Phase2Data.Cf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Cf D
+abbrev Phase2Data.Rm {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Rm D
+abbrev Phase2Data.Rn {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Rn D
+abbrev Phase2Data.constant {I : ℕ} (D : Phase2Data I) := Phase2DataCore.constant D
+abbrev Phase2Data.αA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.αA D
+abbrev Phase2Data.αB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.αB D
+abbrev Phase2Data.DA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.DA D
+abbrev Phase2Data.DB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.DB D
+abbrev Phase2Data.hends {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hends D
+abbrev Phase2Data.hν {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hν D
+abbrev Phase2Data.hRf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hRf D
+abbrev Phase2Data.hCf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hCf D
+abbrev Phase2Data.mA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.mA D
+abbrev Phase2Data.mB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.mB D
+abbrev Phase2Data.SnA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SnA D
+abbrev Phase2Data.SnB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SnB D
+abbrev Phase2Data.SpA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SpA D
+abbrev Phase2Data.SpB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SpB D
+abbrev Phase2Data.SyA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SyA D
+abbrev Phase2Data.SyB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.SyB D
+abbrev Phase2Data.hSnA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSnA D
+abbrev Phase2Data.hSnB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSnB D
+abbrev Phase2Data.hSpA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSpA D
+abbrev Phase2Data.hSpB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSpB D
+abbrev Phase2Data.hSyA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSyA D
+abbrev Phase2Data.hSyB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hSyB D
+abbrev Phase2Data.cP {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cP D
+abbrev Phase2Data.rA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.rA D
+abbrev Phase2Data.rB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.rB D
+abbrev Phase2Data.κc {I : ℕ} (D : Phase2Data I) := Phase2DataCore.κc D
+abbrev Phase2Data.hP {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hP D
+abbrev Phase2Data.hrA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hrA D
+abbrev Phase2Data.hrB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hrB D
+abbrev Phase2Data.hκ {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hκ D
+abbrev Phase2Data.κlo {I : ℕ} (D : Phase2Data I) := Phase2DataCore.κlo D
+abbrev Phase2Data.κhi {I : ℕ} (D : Phase2Data I) := Phase2DataCore.κhi D
+abbrev Phase2Data.epsSplit {I : ℕ} (D : Phase2Data I) := Phase2DataCore.epsSplit D
+abbrev Phase2Data.epsSplit_pos {I : ℕ} (D : Phase2Data I) := Phase2DataCore.epsSplit_pos D
+abbrev Phase2Data.epsSplit_le {I : ℕ} (D : Phase2Data I) := Phase2DataCore.epsSplit_le D
+abbrev Phase2Data.etaA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.etaA D
+abbrev Phase2Data.Clsf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Clsf D
+abbrev Phase2Data.LRf {I : ℕ} (D : Phase2Data I) := Phase2DataCore.LRf D
+abbrev Phase2Data.cp {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cp D
+abbrev Phase2Data.cp_pos {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cp_pos D
+abbrev Phase2Data.cp_le {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cp_le D
+abbrev Phase2Data.err_small {I : ℕ} (D : Phase2Data I) := Phase2DataCore.err_small D
+abbrev Phase2Data.cp_theta {I : ℕ} (D : Phase2Data I) := Phase2DataCore.cp_theta D
+abbrev Phase2Data.hLR {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hLR D
+abbrev Phase2Data.hCls {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hCls D
+abbrev Phase2Data.capE {I : ℕ} (D : Phase2Data I) := Phase2DataCore.capE D
+abbrev Phase2Data.hxc0 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hxc0 D
+abbrev Phase2Data.hxc1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hxc1 D
+abbrev Phase2Data.hC1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hC1 D
+abbrev Phase2Data.hlo0 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hlo0 D
+abbrev Phase2Data.hhi1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hhi1 D
+abbrev Phase2Data.hrP {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hrP D
+abbrev Phase2Data.hrSA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hrSA D
+abbrev Phase2Data.hrSB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hrSB D
+abbrev Phase2Data.umin {I : ℕ} (D : Phase2Data I) := Phase2DataCore.umin D
+abbrev Phase2Data.hum0 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hum0 D
+abbrev Phase2Data.hum1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hum1 D
+abbrev Phase2Data.Bd {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Bd D
+abbrev Phase2Data.Rbd {I : ℕ} (D : Phase2Data I) := Phase2DataCore.Rbd D
+abbrev Phase2Data.hBdPA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hBdPA D
+abbrev Phase2Data.hBdPB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hBdPB D
+abbrev Phase2Data.hBdSA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hBdSA D
+abbrev Phase2Data.hBdSB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hBdSB D
+abbrev Phase2Data.hRP {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hRP D
+abbrev Phase2Data.hRSA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hRSA D
+abbrev Phase2Data.hRSB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hRSB D
+abbrev Phase2Data.hn_top {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hn_top D
+abbrev Phase2Data.hlogu {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hlogu D
+abbrev Phase2Data.gs {I : ℕ} (D : Phase2Data I) := Phase2DataCore.gs D
+abbrev Phase2Data.xc {I : ℕ} (D : Phase2Data I) := Phase2DataCore.xc D
+abbrev Phase2Data.C1 {I : ℕ} (D : Phase2Data I) := Phase2DataCore.C1 D
+abbrev Phase2Data.hgs {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hgs D
+abbrev Phase2Data.hxc {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hxc D
+abbrev Phase2Data.hC1le {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hC1le D
+abbrev Phase2Data.hnegA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnegA D
+abbrev Phase2Data.hnegB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnegB D
+abbrev Phase2Data.hposA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hposA D
+abbrev Phase2Data.hposB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hposB D
+abbrev Phase2Data.hposTopA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hposTopA D
+abbrev Phase2Data.hposTopB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hposTopB D
+abbrev Phase2Data.hnearA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnearA D
+abbrev Phase2Data.hnearB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnearB D
+abbrev Phase2Data.hnearTopA {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnearTopA D
+abbrev Phase2Data.hnearTopB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hnearTopB D
+abbrev Phase2Data.zb {I : ℕ} (D : Phase2Data I) := Phase2DataCore.zb D
+abbrev Phase2Data.hZB {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hZB D
+abbrev Phase2Data.hbudLo {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hbudLo D
+abbrev Phase2Data.hbudHi {I : ℕ} (D : Phase2Data I) := Phase2DataCore.hbudHi D
+
 theorem remC_nonneg {ε : ℝ} (h : 0 < ε) : 0 ≤ remC ε := by
   unfold remC; positivity
 
@@ -397,6 +563,20 @@ theorem FixAdmCap_mono {gs gs' xc xc' C1 C1' n umin : ℝ} {m1 m2 s : ℕ} {yn :
     fun j hj => (h7 j (hxc.trans hj)).trans (key _ (h5 j))⟩
 
 /-- The single admissibility predicate of the Phase 2 contract (common geometry). -/
+theorem FixAdmCapAsym_mono {gsN gsN' gs gs' xc xc' C1 C1' n umin : ℝ} {m1 m2 s : ℕ} {yn : Fin m1 → ℝ}
+    {yp : Fin m2 → ℝ} {zp : Fin s → ℝ} (hgsN : gsN' ≤ gsN) (hgs : gs' ≤ gs) (hxc : xc ≤ xc') (hC : C1 ≤ C1')
+    (hn : 0 ≤ n) (hu : 0 ≤ umin) (h : FixAdmCapAsym gsN gs xc C1 n umin yn yp zp) :
+    FixAdmCapAsym gsN' gs' xc' C1' n umin yn yp zp := by
+  obtain ⟨h1, h2, h3, h4, h5, h6, h7⟩ := h
+  have key : ∀ y : ℝ, y ≤ 1 - umin → C1 * n * (1 - y) + 1 ≤ C1' * n * (1 - y) + 1 := by
+    intro y hy
+    have : 0 ≤ n * (1 - y) := mul_nonneg hn (by linarith)
+    nlinarith [mul_le_mul_of_nonneg_right hC this]
+  refine ⟨fun j => (h1 j).trans (by linarith only [hgsN]), fun j => hgs.trans (h2 j),
+    fun j => hgs.trans (h3 j), h4, h5, fun j hj => (h6 j (hxc.trans hj)).trans (key _ (h4 j)),
+    fun j hj => (h7 j (hxc.trans hj)).trans (key _ (h5 j))⟩
+
+/-- The single admissibility predicate of the Phase 2 contract (common geometry). -/
 def Phase2Data.FixAdm {I : ℕ} (D : Phase2Data I) (N m1 m2 s : ℕ) (yn : Fin m1 → ℝ)
     (yp : Fin m2 → ℝ) (zp : Fin s → ℝ) : Prop :=
   FixAdmCap D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) yn yp zp
@@ -409,6 +589,23 @@ theorem Phase2Data.hFix {I : ℕ} (D : Phase2Data I) (i : Fin I) :
           yn yp zp :=
   fun N _ _ _ _ _ _ h => FixAdmCap_mono (D.hgs i) (D.hxc i) (D.hC1le i) (Nat.cast_nonneg _)
     (D.hum0 N).le h
+
+
+def Phase2DataCore.FixAdm {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap)
+    (N m1 m2 s : ℕ) (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ) : Prop :=
+  FixAdmCapAsym (negativeGap.getD D.gs) D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) yn yp zp
+
+theorem Phase2DataCore.hFix {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap)
+    (i : Fin I) : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
+      D.FixAdm N m1 m2 s yn yp zp →
+      FixAdmCapAsym (negativeGap.getD (D.capE i).gs) (D.capE i).gs (D.capE i).xc (D.capE i).C1
+        (D.ncount N : ℝ) (D.umin N) yn yp zp := by
+  intro N m1 m2 s yn yp zp hadm
+  have hgN : negativeGap.getD (D.capE i).gs ≤ negativeGap.getD D.gs := by
+    cases negativeGap with
+    | none => exact D.hgs i
+    | some gsN => exact le_rfl
+  exact FixAdmCapAsym_mono hgN (D.hgs i) (D.hxc i) (D.hC1le i) (Nat.cast_nonneg _) (D.hum0 N).le hadm
 
 /-! ### Admissibility of the actual marked nodes -/
 
@@ -449,7 +646,7 @@ theorem fixAdmCap_of_marked {gs xc C1 n umin : ℝ} (hxc : 0 ≤ xc) {m m1 m2 r 
     exact (Nat.cast_le.2 (count_sub_le y _ hinj j)).trans (h3 _ hj)
 
 /-- The complete contract `SignedNearBounds I` from the Phase 2 data. -/
-def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
+def Phase2DataCore.toBounds {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : SignedNearBounds I :=
   SignedNearBounds.ofEnds D.ncount D.ncount_pos D.B D.cost D.α1 D.α1_nonneg D.lo D.hi D.cover
     D.Rf D.Cf D.Rm D.Rn D.constant D.αA D.αB D.DA D.DB D.hends D.hν D.hRf D.hCf D.mA D.mB
     D.SnA D.SnB D.SpA D.SpB D.SyA D.SyB D.hSnA D.hSnB D.hSpA D.hSpB D.hSyA D.hSyB
@@ -458,7 +655,7 @@ def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
     D.cp D.cp_pos D.cp_le D.err_small
     (spikeFix_of_ends D.αA D.αB D.DA D.DB D.constant D.cp D.cp_pos D.cp_le D.cp_theta
       (fun i N => ((D.hends i).compat N).sp) D.Clsf D.LRf D.hLR D.hCls)
-    (fun i ε hε => fixedSum_ends (D.hends i) (D.capE i) D.constant (D.hxc0 i) (D.hxc1 i)
+    (fun i ε hε => fixedSum_ends_asym (D.hends i) (D.capE i) (negativeGap.getD (D.capE i).gs) D.constant (D.hxc0 i) (D.hxc1 i)
       (D.hC1 i) (remC_nonneg (D.epsSplit_pos i)) (D.hlo0 i) (D.hhi1 i) D.ncount_pos (D.hν i)
       (D.hrP i) (D.hrSA i) (D.hrSB i) D.umin D.hum0 D.hum1 (D.Bd i) (D.Rbd i)
       (D.hBdPA i) (D.hBdPB i) (D.hBdSA i) (D.hBdSB i) (D.hRP i) (D.hRSA i) (D.hRSB i)
@@ -468,6 +665,10 @@ def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
     D.hZB D.hbudLo D.hbudHi
 
 /-- The budget's `ZB` and the `ZB` of the field `fixedSum` are the same function `zbCap`. -/
+def Phase2Data.toBounds {I : ℕ} (D : Phase2Data I) : SignedNearBounds I :=
+  Phase2DataCore.toBounds D
+
+
 theorem Phase2Data.toBounds_ZB {I : ℕ} (D : Phase2Data I) (i : Fin I) :
     D.toBounds.ZB i = zbCap ((D.capE i).toS (D.αA i) (D.αB i)) := rfl
 
@@ -2020,3 +2221,8 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.hCls_of_canon
 #print axioms CatalanMeasure.Signed.Phase2Data.hlink_nearOpt
 #print axioms CatalanMeasure.Signed.Phase2Data.signedSecondSheetNearNd_nearOpt_of_cert
+
+#print axioms CatalanMeasure.Signed.fixedSum_ends_asym
+#print axioms CatalanMeasure.Signed.FixAdmCapAsym_mono
+#print axioms CatalanMeasure.Signed.Phase2DataCore.hFix
+#print axioms CatalanMeasure.Signed.Phase2DataCore.toBounds
