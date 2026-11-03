@@ -847,6 +847,148 @@ theorem convQ_delta_right (U : ℕ → ℚ) (L : ℚ) (k : ℕ) :
         exact (hk (Finset.mem_range.mpr (Nat.lt_succ_self k))).elim
     _ = U k*L := by simp
 
+/-! ## One coarse Laurent majorant, with the exact constant-factor cases -/
+
+def laurentCoarseCoef (c q L : ℚ) (t : LTerm) (k : ℕ) : ℚ :=
+  convQ (invMajAux c q 0 t.1) (lfCoarse t.2 L q) k (k+1)
+
+def laurentCoarseTotal (c q L : ℚ) (t : LTerm) : ℚ :=
+  match t.2 with
+  | none => invMajTotal c q 0 t.1
+  | some ab => if ab.1 = 0 then L*invMajTotal c q 0 t.1 else geoMajTotal c q L 0 t.1
+
+def laurentCoarseTail (c q L : ℚ) (K : ℕ) (t : LTerm) : ℚ :=
+  match t.2 with
+  | none => invMajTail c q K 0 t.1
+  | some ab => if ab.1 = 0 then L*invMajTail c q K 0 t.1 else geoMajTail c q L K 0 t.1
+
+theorem laurentCoarseCoefSeries (c q L : ℚ) (t : LTerm) (hq0 : 0 ≤ q) (hq1 : q < 1) :
+    HasSum (fun k : ℕ => (laurentCoarseCoef c q L t k : ℝ)) (laurentCoarseTotal c q L t : ℝ) := by
+  rcases t with ⟨a,o⟩
+  cases o with
+  | none =>
+      have he : lfCoarse none L q = fun k => if k = 0 then (1 : ℚ) else 0 := by
+        funext k
+        cases k <;> simp [lfCoarse]
+      simp only [laurentCoarseCoef, he, convQ_delta_right, mul_one, laurentCoarseTotal]
+      exact invMajAuxSeries c q hq0 hq1 a 0
+  | some ab =>
+      by_cases ha : ab.1 = 0
+      · have he : lfCoarse (some ab) L q = fun k => if k = 0 then L else 0 := by
+          funext k
+          cases k <;> simp [lfCoarse, ha]
+        have h := (invMajAuxSeries c q hq0 hq1 a 0).mul_right (L : ℝ)
+        convert h using 1
+        · funext k
+          simp only [laurentCoarseCoef, he, convQ_delta_right, Rat.cast_mul]
+        · simp only [laurentCoarseTotal, if_pos ha]
+          push_cast <;> ring
+      · simp only [laurentCoarseCoef, laurentCoarseTotal, if_neg ha]
+        simp_rw [invMajAux_conv c q L ab ha a 0]
+        exact geoMajAuxSeries c q L hq0 hq1 a 0
+
+theorem laurentCoarseTail_eq (c q L : ℚ) (K : ℕ) (t : LTerm) (hq : q ≠ 1) :
+    laurentCoarseTotal c q L t - (∑ k ∈ Finset.range (K+1), laurentCoarseCoef c q L t k) =
+      laurentCoarseTail c q L K t := by
+  rcases t with ⟨a,o⟩
+  cases o with
+  | none =>
+      have he : lfCoarse none L q = fun k => if k = 0 then (1 : ℚ) else 0 := by
+        funext k
+        cases k <;> simp [lfCoarse]
+      simp only [laurentCoarseCoef, he, convQ_delta_right, mul_one, laurentCoarseTotal, laurentCoarseTail]
+      exact invMajTail_eq c q K hq a 0
+  | some ab =>
+      by_cases ha : ab.1 = 0
+      · have he : lfCoarse (some ab) L q = fun k => if k = 0 then L else 0 := by
+          funext k
+          cases k <;> simp [lfCoarse, ha]
+        simp only [laurentCoarseCoef, he, convQ_delta_right, laurentCoarseTotal, laurentCoarseTail, if_pos ha]
+        rw [← Finset.sum_mul]
+        linear_combination L * (invMajTail_eq c q K hq a 0)
+      · simp only [laurentCoarseCoef, laurentCoarseTotal, laurentCoarseTail, if_neg ha]
+        simp_rw [invMajAux_conv c q L ab ha a 0]
+        exact geoMajTail_eq c q L K hq a 0
+
+def laurentFineCoef (c q0 qL L : ℚ) (t : LTerm) (k : ℕ) : ℚ :=
+  convQ (invMajAux c q0 0 t.1) (lfMaj t.2 L qL) k (k+1)
+
+/-- The section-7.1 tail: precise convolution up to K, plus the full R/J remainder. -/
+def laurentTail (c q0 qL L : ℚ) (M K : ℕ) (t : LTerm) : ℚ :=
+  (∑ k ∈ Finset.Ico (M+1) (K+1), laurentFineCoef c q0 qL L t k) +
+    laurentCoarseTail c (max q0 qL) L K t
+
+theorem laurentMajorant_tail (t : LTerm) (c q0 qL L : ℚ) (M K : ℕ) (y : ℝ)
+    (hc : c ≠ 0) (hq0 : 0 ≤ q0) (hq0' : q0 ≤ 1/2) (hqL : 0 ≤ qL) (hqL' : qL ≤ 1/2)
+    (hMK : M ≤ K) (hy : |y| ≤ (q0 : ℝ)*|(c : ℝ)|)
+    (hne : ∀ ab, t.2 = some ab → (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0)
+    (hL : ∀ ab, t.2 = some ab → |Real.log (|(ab.1 : ℝ)*(c : ℝ)-ab.2|)| ≤ (L : ℝ))
+    (hR : ∀ ab, t.2 = some ab → |(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| ≤ (qL : ℝ)) :
+    |mulTower (zTow t.1) (lfTower t.2) 0 ((c : ℝ)+y) -
+      ∑ k ∈ Finset.range (M+1),
+        mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+      (laurentTail c q0 qL L M K t : ℝ) := by
+  have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+  have hy0 : |y| < |(c : ℝ)| := by
+    have hq : (q0 : ℝ) ≤ 1/2 := by
+      have h := (Rat.cast_le (K := ℝ)).mpr hq0'
+      push_cast at h
+      exact h
+    have hm := mul_le_mul_of_nonneg_right hq (abs_nonneg (c : ℝ))
+    have hp : (1/2 : ℝ)*|(c : ℝ)| < |(c : ℝ)| := by linarith [abs_pos.mpr hc']
+    exact (hy.trans hm).trans_lt hp
+  have hyL : ∀ ab, t.2 = some ab → |-(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| < 1 := by
+    intro ab hab
+    have hq : (qL : ℝ) ≤ 1/2 := by
+      have h := (Rat.cast_le (K := ℝ)).mpr hqL'
+      push_cast at h
+      exact h
+    have hr := hR ab hab
+    have he : -(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2) =
+        -((ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)) := by ring
+    rw [he, abs_neg]
+    linarith
+  have hf := laurentTaylor_ident t c hc y hy0 hne hyL
+  have hq : 0 ≤ max q0 qL := hq0.trans (le_max_left _ _)
+  have hq1 : max q0 qL < 1 := (max_le hq0' hqL').trans_lt (by norm_num)
+  have hyq : |y| ≤ ((max q0 qL : ℚ) : ℝ)*|(c : ℝ)| := by
+    have hh : (q0 : ℝ) ≤ ((max q0 qL : ℚ) : ℝ) := by exact_mod_cast le_max_left q0 qL
+    exact hy.trans (mul_le_mul_of_nonneg_right hh (abs_nonneg _))
+  have hRq : ∀ ab, t.2 = some ab → |(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| ≤
+      ((max q0 qL : ℚ) : ℝ) := by
+    intro ab hab
+    have hh : (qL : ℝ) ≤ ((max q0 qL : ℚ) : ℝ) := by exact_mod_cast le_max_right q0 qL
+    exact (hR ab hab).trans hh
+  have hU := invMajAux_bound c q0 hc hq0 y hy t.1 0
+  have hV := lfMaj_bound t.2 c L qL y hqL hne hL hR
+  have hC : ∀ k, |mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+      (laurentFineCoef c q0 qL L t k : ℝ) := by
+    intro k
+    exact mulTower_scaled_bound (zTow t.1) (lfTower t.2) (c : ℝ) y (invMajAux c q0 0 t.1) (lfMaj t.2 L qL) hU hV k
+  have hUq := invMajAux_bound c (max q0 qL) hc hq y hyq t.1 0
+  have hVq : ∀ k, |lfTower t.2 k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+      (lfCoarse t.2 L (max q0 qL) k : ℝ) := by
+    intro k
+    have h := lfMaj_bound t.2 c L (max q0 qL) y hq hne hL hRq k
+    have he : (lfMaj t.2 L (max q0 qL) k : ℝ) ≤ (lfCoarse t.2 L (max q0 qL) k : ℝ) := by
+      exact_mod_cast lfMaj_le_coarse t.2 L (max q0 qL) hq k
+    exact h.trans he
+  have hD : ∀ k, |mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤
+      (laurentCoarseCoef c (max q0 qL) L t k : ℝ) := by
+    intro k
+    exact mulTower_scaled_bound (zTow t.1) (lfTower t.2) (c : ℝ) y (invMajAux c (max q0 qL) 0 t.1) (lfCoarse t.2 L (max q0 qL)) hUq hVq k
+  have hd := laurentCoarseCoefSeries c (max q0 qL) L t hq hq1
+  have ht := series_refined_tail_error _ _ _ _ _ M K hMK hf hd hC hD
+  have he := congrArg (fun v : ℚ => (v : ℝ)) (laurentCoarseTail_eq c (max q0 qL) L K t (ne_of_lt hq1))
+  push_cast at he
+  unfold laurentTail
+  push_cast
+  linarith [ht]
+
+#print axioms laurentCoarseCoefSeries
+#print axioms laurentCoarseTail_eq
+#print axioms laurentMajorant_tail
+
 #print axioms geoMajAuxSeries
 #print axioms geoMajTail_eq
 #print axioms convQ_add_left
