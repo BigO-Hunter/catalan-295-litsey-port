@@ -113,6 +113,20 @@ def NullityLB.ofFam (P : Parameters) (hP : Admissible P) (kap : ℕ → ℕ → 
 
 /-! ### From nullity to valuation -/
 
+open Classical in
+/-- Indexed S alone, without changing the existing four-family maximum. -/
+def NullityLB.ofSIndex (P : Parameters) (hP : Admissible P) (k : ℕ) (hk : 2 ≤ k) :
+    NullityLB P where
+  kap N p := if SApp P N p then sM1_k P N p k - sM0_k P N p k - sE P N p else 0
+  ok := by
+    intro N p hN hp hp2 hH
+    haveI : Fact p.Prime := ⟨hp⟩
+    split_ifs with h
+    · have hr := s_rank_k hk hP hN hp2 hH h.1 h.2
+      unfold nullity
+      omega
+    · exact Nat.zero_le _
+
 theorem scaledResidue_affine (P : Parameters) {N p : ℕ} [Fact p.Prime] (hp2 : p ≠ 2)
     (hH : P.H N < p ^ 2) (z : ℚ) (hz : (z.den : ZMod p) ≠ 0) (r k : Fin (P.n N)) :
     palindromicRatResidue p ((p : ℚ) ^ 2 * Parametric.filteredEntryRat P z N r.val k.val) =
@@ -181,3 +195,5 @@ theorem det_valuation_of_nullity (P : Parameters) {N p : ℕ} [Fact p.Prime] (hp
 end
 
 end CatalanMeasure.GenD
+
+#print axioms CatalanMeasure.GenD.NullityLB.ofSIndex
