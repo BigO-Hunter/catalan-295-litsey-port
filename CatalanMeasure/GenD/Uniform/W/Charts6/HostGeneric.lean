@@ -462,5 +462,80 @@ theorem int_bp_sound (N : Nat) (hN : N + 2 < p)
     (ResRec.bp_sound N hN (scaledResidues p Z BP) (scaledResidues p Z IV)
       hiv hb0 hb1 he d hd)
 
+
+/-- Cleared first harmonic table with an exact integer increment. -/
+theorem int_h1_sound (N : Nat) (hN : N < p)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (H1 IV : List Int)
+    (hIV : ∀ n, 0 < n → n < N + 1 → (n : Int) * intAt IV n = Z)
+    (h0 : intAt H1 0 = 0)
+    (hstep : ∀ n, n + 1 < N + 1 →
+      intAt H1 (n + 1) = intAt H1 n + intAt IV (n + 1)) :
+    ∀ n, n < N + 1 → ResRec.Gd p (harmonicRat 1 n)
+      ((intAt H1 n : ZMod p) / (Z : ZMod p)) := by
+  have hiv : ∀ n, 0 < n → n < N + 1 →
+      ((n * ResRec.tl (scaledResidues p Z IV) n : Nat) : ZMod p) = 1 := by
+    intro n hn hlt
+    exact int_inverse_sound Z hZ IV (hIV n hn hlt)
+  have hb : (ResRec.tl (scaledResidues p Z H1) 0 : ZMod p) = 0 := by
+    rw [scaledResidues_at, h0]
+    simp
+  have he : ∀ n, n + 1 < N + 1 →
+      (ResRec.tl (scaledResidues p Z H1) (n + 1) : ZMod p) =
+        ((ResRec.tl (scaledResidues p Z H1) n +
+          ResRec.tl (scaledResidues p Z IV) (n + 1) : Nat) : ZMod p) := by
+    intro n hn
+    have e := congrArg (fun z : Int => (z : ZMod p)) (hstep n hn)
+    push_cast at e ⊢
+    rw [scaledResidues_at, scaledResidues_at, scaledResidues_at]
+    simpa only [add_div] using congrArg (fun z : ZMod p => z / (Z : ZMod p)) e
+  intro n hn
+  exact ResRec.Gd.val (scaledResidues_at Z H1 n)
+    (ResRec.h1_sound N hN (scaledResidues p Z H1) (scaledResidues p Z IV) hiv hb he n hn)
+
+/-- Integer two-dimensional source table, with explicit zero defaults. -/
+def intAt2 (T : List (List Int)) (i j : Nat) : Int := intAt (T.getD i []) j
+
+/-- Cleared moment diagonal equations prove both the actual rational residue
+and its denominator unit, avoiding the weaker residue-only interface. -/
+theorem int_moment_sound (H L : Nat) (hH : H + 3 < p) (hLH : L ≤ H)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (MS BM BP : List Int) (MT : List (List Int))
+    (hms : ∀ i, i < H → ResRec.Gd p (momentScalar i)
+      ((intAt MS i : ZMod p) / (Z : ZMod p)))
+    (hbm : ∀ i, i < H → ResRec.Gd p (boundaryMinus i)
+      ((intAt BM i : ZMod p) / (Z : ZMod p)))
+    (hbp : ∀ j, j < L → ResRec.Gd p (boundaryPlus j)
+      ((intAt BP j : ZMod p) / (Z : ZMod p)))
+    (hcol : ∀ i, i < H → intAt2 MT i 0 = intAt BM i)
+    (hrow : ∀ j, j < L → intAt2 MT 0 j = intAt BP j)
+    (hdiag : ∀ i j, i + 1 < H → j + 1 < L →
+      (j + 1 : Int) * (intAt2 MT i j - intAt2 MT (i + 1) (j + 1)) = intAt MS i) :
+    ∀ i j, i < H → j < L → ResRec.Gd p (momentRat i j)
+      ((intAt2 MT i j : ZMod p) / (Z : ZMod p)) := by
+  refine ResRec.diag_sound momentRat
+    (fun i j => momentScalar i / ((j + 1 : Nat) : Rat))
+    (fun i j => (intAt2 MT i j : ZMod p) / (Z : ZMod p))
+    (fun i j => ((intAt MS i : ZMod p) / (Z : ZMod p)) *
+      (((j + 1 : Nat) : ZMod p)⁻¹)) H L momentRat_step ?_ ?_ ?_ ?_
+  · intro i j hi hj
+    simpa only [div_eq_mul_inv, one_mul] using
+      ResRec.Gd.mul (hms i (by omega))
+        (ResRec.Gd.inv_nat (p := p) (n := j + 1) (by omega) (by omega))
+  · intro i j hi hj
+    have hn : ((j + 1 : Nat) : ZMod p) ≠ 0 :=
+      ResRec.natCast_ne_zero_of_lt (by omega) (by omega)
+    rw [eq_mul_inv_iff_mul_eq₀ hn]
+    have e := congrArg (fun z : Int => (z : ZMod p)) (hdiag i j hi hj)
+    push_cast at e
+    have ed := congrArg (fun z : ZMod p => z / (Z : ZMod p)) e
+    push_cast
+    convert ed using 1 <;> ring
+  · intro i hi
+    rw [momentRat_zero_right, hcol i hi]
+    exact hbm i hi
+  · intro j hj
+    rw [momentRat_zero_left, hrow j hj]
+    exact hbp j hj
+
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
