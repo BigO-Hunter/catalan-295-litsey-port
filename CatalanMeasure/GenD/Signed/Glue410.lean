@@ -1,5 +1,6 @@
 module
 
+public import CatalanMeasure.GenD.Signed.DesignConst
 public import CatalanMeasure.GenD.Signed.FieldForm
 public import CatalanMeasure.GenD.Signed.SigmaCap
 public import CatalanMeasure.GenD.Signed.MarkedCap
@@ -343,21 +344,43 @@ theorem nodeCap_gap_mono {g : ℝ} (hg0 : 0 < g) (hg1 : g < 1) {xc n : ℝ} (hxc
         (gapNodesGen (2 * g / (1 + g ^ 2)) J i)) :=
   nodeCap_mono (nodeCap_gap hg0 hg1 hxc hn J) hgs hxc' hC hn.le (by positivity) hu
 
+namespace Generic
+
+/-- Scale cancellation for any design; the numerical C1 bound is an input. -/
+theorem gap_C1_le (dc : CatalanMeasure.GenD.Signed.DesignConst)
+    {g xc n C1 : ℝ} {J N : ℕ} (hN : 0 < N)
+    (hJ : (J : ℝ) = (dc.d0 : ℝ) * N) (hn : n = (dc.n0 : ℝ) * N)
+    (hxc : xc = (dc.xc : ℝ)) (ha : 2 * g / (1 + g ^ 2) = (dc.astar : ℝ))
+    (hC : (dc.d0 : ℝ) / ((dc.n0 : ℝ) *
+      (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) ≤ C1) :
+    (J : ℝ) / (n * (2 * xc * Real.sqrt (1 - (2 * g / (1 + g ^ 2)) ^ 2))) ≤ C1 := by
+  have hNr : (N : ℝ) ≠ 0 := by exact_mod_cast hN.ne'
+  rw [ha, hJ, hn, hxc]
+  have e : ((dc.d0 : ℝ) * N) / ((dc.n0 : ℝ) * N *
+      (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) =
+      (dc.d0 : ℝ) / ((dc.n0 : ℝ) *
+        (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) := by
+    rw [show (dc.n0 : ℝ) * N * (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2)) =
+        N * ((dc.n0 : ℝ) * (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) by ring,
+      show (dc.d0 : ℝ) * N = N * (dc.d0 : ℝ) by ring, mul_div_mul_left _ _ hNr]
+  rw [e]
+  exact hC
+
+end Generic
+
 /-- The node constant of the actual gap nodes is at most `9631/20000`
 (`J = 53 N`, `n = 58 N`, `2g/(1+g^2) = 2005000/6410801`, `xc = 999/1000`). -/
 theorem gap_C1_le {g xc n : ℝ} {J N : ℕ} (hN : 0 < N) (hJ : (J : ℝ) = 53 * N) (hn : n = 58 * N)
     (hxc : xc = 999 / 1000) (ha : 2 * g / (1 + g ^ 2) = 2005000 / 6410801) :
-    (J : ℝ) / (n * (2 * xc * Real.sqrt (1 - (2 * g / (1 + g ^ 2)) ^ 2))) ≤ 9631 / 20000 := by
-  have hNr : (N : ℝ) ≠ 0 := by exact_mod_cast hN.ne'
-  rw [ha, hJ, hn, hxc]
-  have e : (53 * (N : ℝ)) / (58 * N * (2 * (999 / 1000) *
-        Real.sqrt (1 - (2005000 / 6410801 : ℝ) ^ 2))) =
-      53 / (58 * (2 * (999 / 1000) * Real.sqrt (1 - (2005000 / 6410801 : ℝ) ^ 2))) := by
-    rw [show (58 : ℝ) * N * (2 * (999 / 1000) * Real.sqrt (1 - (2005000 / 6410801 : ℝ) ^ 2)) =
-        N * (58 * (2 * (999 / 1000) * Real.sqrt (1 - (2005000 / 6410801 : ℝ) ^ 2))) by ring,
-      show (53 : ℝ) * N = N * 53 by ring, mul_div_mul_left _ _ hNr]
-  rw [e]
-  exact CatalanMeasure.Signed.Consts.C1_bound
+    (J : ℝ) / (n * (2 * xc * Real.sqrt (1 - (2 * g / (1 + g ^ 2)) ^ 2))) ≤ 9631 / 20000  := by
+  refine Generic.gap_C1_le CatalanMeasure.GenD.Signed.dc58 hN ?_ ?_ ?_ ?_ ?_
+  · convert hJ using 1 <;> norm_num [CatalanMeasure.GenD.Signed.dc58, CatalanMeasure.GenD.Signed.DesignConst.d0]
+  · convert hn using 1 <;> norm_num [CatalanMeasure.GenD.Signed.dc58]
+  · convert hxc using 1 <;> norm_num [CatalanMeasure.GenD.Signed.dc58]
+  · convert ha using 1 <;> norm_num [CatalanMeasure.GenD.Signed.dc58, CatalanMeasure.GenD.Signed.DesignConst.astar]
+  · convert CatalanMeasure.Signed.Consts.C1_bound using 1 <;>
+      norm_num [CatalanMeasure.GenD.Signed.dc58, CatalanMeasure.GenD.Signed.DesignConst.d0, CatalanMeasure.GenD.Signed.DesignConst.astar]
+
 
 end Node
 
@@ -662,3 +685,35 @@ end CatalanMeasure.Signed.Glue410
 #print axioms CatalanMeasure.Signed.Glue410.zbCap_le
 #print axioms CatalanMeasure.Signed.Glue410.fNearMSLim_le_affine
 #print axioms CatalanMeasure.Signed.Glue410.fNearMSLim_top_split
+
+#print axioms CatalanMeasure.Signed.Glue410.summable_tailNorm
+#print axioms CatalanMeasure.Signed.Glue410.abs_tailSum_le
+#print axioms CatalanMeasure.Signed.Glue410.tailNorm_nonneg
+#print axioms CatalanMeasure.Signed.Glue410.Spec_summable_v
+#print axioms CatalanMeasure.Signed.Glue410.Spec_summable_a
+#print axioms CatalanMeasure.Signed.Glue410.Spec_summable_p
+#print axioms CatalanMeasure.Signed.Glue410.hasum_of_spec
+#print axioms CatalanMeasure.Signed.Glue410.cast_n_sub_g_sub_one
+#print axioms CatalanMeasure.Signed.Glue410.cast_n_sub_one_sub_two_g
+#print axioms CatalanMeasure.Signed.Glue410.eventually_div_le
+#print axioms CatalanMeasure.Signed.Glue410.rm_err_eq
+#print axioms CatalanMeasure.Signed.Glue410.rm_err_le
+#print axioms CatalanMeasure.Signed.Glue410.hRm_neg
+#print axioms CatalanMeasure.Signed.Glue410.hRm_pos
+#print axioms CatalanMeasure.Signed.Glue410.rn_err_eq
+#print axioms CatalanMeasure.Signed.Glue410.rn_err_le
+#print axioms CatalanMeasure.Signed.Glue410.rnPatch_err
+#print axioms CatalanMeasure.Signed.Glue410.fNearMS_rnPatch
+#print axioms CatalanMeasure.Signed.Glue410.Generic.gap_C1_le
+#print axioms CatalanMeasure.Signed.Glue410.groupedConstant_real
+#print axioms CatalanMeasure.Signed.Glue410.hconst_closed
+#print axioms CatalanMeasure.Signed.Glue410.constantClosed_eq_lim
+#print axioms CatalanMeasure.Signed.Glue410.constantClosed_le_lim
+#print axioms CatalanMeasure.Signed.Glue410.constantLim_eq
+#print axioms CatalanMeasure.Signed.Glue410.exp_neg_le_inv_one_add
+#print axioms CatalanMeasure.Signed.Glue410.exp_neg_le_inv_quad
+#print axioms CatalanMeasure.Signed.Glue410.mul_exp_mono
+#print axioms CatalanMeasure.Signed.Glue410.fNearMSLim_affine
+#print axioms CatalanMeasure.Signed.Glue410.nearAlphaCoef_le_hi
+#print axioms CatalanMeasure.Signed.Glue410.nearAlphaCoef_le_log2
+#print axioms CatalanMeasure.Signed.Glue410.nearBetaCoef_le_hi
