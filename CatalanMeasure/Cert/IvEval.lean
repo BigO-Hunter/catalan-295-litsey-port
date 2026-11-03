@@ -15,8 +15,8 @@ each step, so the operands stay near `log₂ S` bits and no gcd is taken.
 * `Enc S I x`: `lo ≤ x S ≤ hi`; closed under `add`, multiplication by a rational constant (`mulC`),
   division by a positive integer (`divN`), squaring (`sq`, scale `S²`) and rational inputs
   (`ofQ`, `ofQdiv`).
-* `seqLoop`: `Σ_{k<n} φ_k(u_k)` for `u_k = g_k + Σ_i c_i z_i^(k+1)` (finite part plus pole tails),
-  the poles carried by the recurrence `c z^(k+2) = (c z^(k+1)) · z` (`seqLoop_enc`).
+* `seqLoopLegacy`: `Σ_{k<n} φ_k(u_k)` for `u_k = g_k + Σ_i c_i z_i^(k+1)` (finite part plus pole tails),
+  the poles carried by the recurrence `c z^(k+2) = (c z^(k+1)) · z` (`seqLoopLegacy_enc`).
 * `momLoop`: `Σ_{k<n} φ_k(v_k)` for values with a stateless enclosure, e.g. the moments
   `mom1 p m = Σ_j p_j / (m + j)` (`momIv`).
 * `le_of_enc`, `le_of_enc'`: a rational bound from an enclosure, checked by one integer comparison.
@@ -238,11 +238,11 @@ theorem headD_drop : ∀ (l : List ℚ) (k : ℕ), (l.drop k).headD 0 = l.getD k
   | a :: l, k + 1 => by simp
 
 /-- `acc + Σ_{j<n} φ_{k+j}(u_{k+j})`, with the finite part `g` consumed from the front. -/
-def seqLoop (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) :
+def seqLoopLegacy (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) :
     ℕ → ℕ → List ℚ → List Iv → Iv → Iv
   | 0, _, _, _, acc => acc
   | n + 1, k, g, Is, acc =>
-    seqLoop S ps φ n (k + 1) g.tail (stepIv ps Is) (add acc (φ k (add (ofQ S (g.headD 0)) (sumIv Is))))
+    seqLoopLegacy S ps φ n (k + 1) g.tail (stepIv ps Is) (add acc (φ k (add (ofQ S (g.headD 0)) (sumIv Is))))
 
 theorem sum_shift (f : ℕ → ℚ) (k n : ℕ) :
     ∑ j ∈ Finset.range (n + 1), f (k + j) = f k + ∑ j ∈ Finset.range n, f (k + 1 + j) := by
@@ -251,26 +251,26 @@ theorem sum_shift (f : ℕ → ℚ) (k n : ℕ) :
   refine Finset.sum_congr rfl fun j _ => ?_
   rw [show k + (j + 1) = k + 1 + j by omega]
 
-theorem seqLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) (ψ : ℕ → ℚ → ℚ)
+theorem seqLoopLegacy_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) (ψ : ℕ → ℚ → ℚ)
     (hφ : ∀ k I x, Enc (S : ℚ) I x → Enc S' (φ k I) (ψ k x)) (g : List ℚ) :
     ∀ (n k : ℕ) (Is : List Iv) (acc : Iv) (a : ℚ), PolesEnc (S : ℚ) ps k Is → Enc S' acc a →
-      Enc S' (seqLoop S ps φ n k (g.drop k) Is acc)
+      Enc S' (seqLoopLegacy S ps φ n k (g.drop k) Is acc)
         (a + ∑ j ∈ Finset.range n, ψ (k + j) (useq g ps (k + j)))
-  | 0, k, Is, acc, a, _, hacc => by simpa [seqLoop] using hacc
+  | 0, k, Is, acc, a, _, hacc => by simpa [seqLoopLegacy] using hacc
   | n + 1, k, Is, acc, a, hI, hacc => by
     have hD : Enc (S : ℚ) (add (ofQ S ((g.drop k).headD 0)) (sumIv Is)) (useq g ps k) := by
       rw [headD_drop]
       exact enc_add (enc_ofQ S _) (polesEnc_sum hI)
-    have h := seqLoop_enc ps φ ψ hφ g n (k + 1) (stepIv ps Is) _ _ (polesEnc_step hI)
+    have h := seqLoopLegacy_enc ps φ ψ hφ g n (k + 1) (stepIv ps Is) _ _ (polesEnc_step hI)
       (enc_add hacc (hφ k _ _ hD))
-    simp only [seqLoop]
+    simp only [seqLoopLegacy]
     rw [List.tail_drop, sum_shift (fun j => ψ j (useq g ps j)) k n, ← add_assoc]
     exact h
 
 
 /-! ### Shared geometric-tail tables
 
-A table is checked once against the same fixed-point recurrence as `seqLoop`.
+A table is checked once against the same fixed-point recurrence as `seqLoopLegacy`.
 Consumers traverse the literal table, without evaluating any pole powers.
 -/
 
@@ -286,13 +286,36 @@ def cachedLoop (S : ℕ) (φ : ℕ → Iv → Iv) : ℕ → List ℚ → List Iv
     cachedLoop S φ (k + 1) g.tail Is (add acc (φ k (add (ofQ S (g.headD 0)) I)))
 
 /-- Exact checker equality: caching introduces no new error estimate. -/
-theorem cachedLoop_tailTable (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) :
+theorem cachedLoop_tailTable_legacy (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) :
     ∀ (n k : ℕ) (g : List ℚ) (Is : List Iv) (acc : Iv),
-      cachedLoop S φ k g (tailTable ps n Is) acc = seqLoop S ps φ n k g Is acc
+      cachedLoop S φ k g (tailTable ps n Is) acc = seqLoopLegacy S ps φ n k g Is acc
   | 0, _, _, _, _ => rfl
   | n + 1, k, g, Is, acc => by
-    simp only [tailTable, cachedLoop, seqLoop]
-    exact cachedLoop_tailTable S ps φ n (k + 1) g.tail (stepIv ps Is) _
+    simp only [tailTable, cachedLoop, seqLoopLegacy]
+    exact cachedLoop_tailTable_legacy S ps φ n (k + 1) g.tail (stepIv ps Is) _
+
+/-- Default sequence evaluator: one geometric-tail table, consumed structurally. -/
+def seqLoop (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv)
+    (n k : ℕ) (g : List ℚ) (Is : List Iv) (acc : Iv) : Iv :=
+  cachedLoop S φ k g (tailTable ps n Is) acc
+
+theorem seqLoop_eq_legacy (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv)
+    (n k : ℕ) (g : List ℚ) (Is : List Iv) (acc : Iv) :
+    seqLoop S ps φ n k g Is acc = seqLoopLegacy S ps φ n k g Is acc :=
+  cachedLoop_tailTable_legacy S ps φ n k g Is acc
+
+theorem seqLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) (ψ : ℕ → ℚ → ℚ)
+    (hφ : ∀ k I x, Enc (S : ℚ) I x → Enc S' (φ k I) (ψ k x)) (g : List ℚ)
+    (n k : ℕ) (Is : List Iv) (acc : Iv) (a : ℚ)
+    (hI : PolesEnc (S : ℚ) ps k Is) (ha : Enc S' acc a) :
+    Enc S' (seqLoop S ps φ n k (g.drop k) Is acc)
+      (a + ∑ j ∈ Finset.range n, ψ (k + j) (useq g ps (k + j))) := by
+  rw [seqLoop_eq_legacy]
+  exact seqLoopLegacy_enc ps φ ψ hφ g n k Is acc a hI ha
+
+theorem cachedLoop_tailTable (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv)
+    (n k : ℕ) (g : List ℚ) (Is : List Iv) (acc : Iv) :
+    cachedLoop S φ k g (tailTable ps n Is) acc = seqLoop S ps φ n k g Is acc := rfl
 
 /-- Reuse a checked literal table with the original loop's soundness theorem. -/
 theorem cachedLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ))
@@ -302,7 +325,8 @@ theorem cachedLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ))
     (ht : ts = tailTable ps n Is) (hI : PolesEnc (S : ℚ) ps k Is) (ha : Enc S' acc a) :
     Enc S' (cachedLoop S φ k (g.drop k) ts acc)
       (a + ∑ j ∈ Finset.range n, ψ (k + j) (useq g ps (k + j))) := by
-  rw [ht, cachedLoop_tailTable]
+  rw [ht]
+  change Enc S' (seqLoop S ps φ n k (g.drop k) Is acc) _
   exact seqLoop_enc ps φ ψ hφ g n k Is acc a hI ha
 
 #print axioms cachedLoop_tailTable

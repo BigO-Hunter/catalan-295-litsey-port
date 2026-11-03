@@ -112,7 +112,39 @@ theorem powTapeOK_eq (xs : List ℤ) : ∀ (ms : List ℤ) (es : List ℕ),
 #print axioms powTapeOK_eq
 
 /-- The shared cell transform. -/
-def mobCell (Pn : List ℤ) (S : ℕ) (A B : ℤ) : List ℤ := zCompS 0 1 1 (zCompS S A (B - A) Pn).reverse
+def mobCellLegacy (Pn : List ℤ) (S : ℕ) (A B : ℤ) : List ℤ := zCompS 0 1 1 (zCompS S A (B - A) Pn).reverse
+
+/-- Mathematical transform value. Numeric spike certificates use spikeCellOK below. -/
+abbrev mobCell := mobCellLegacy
+
+/-- Zero or odd mantissas prevent structured integer literals at certificate boundaries. -/
+def oddMantissas (ms : List ℤ) : Bool :=
+  ms.all (fun m => decide (m = 0 ∨ m % 2 ≠ 0))
+
+/-- Default spike checker: verify the coordinate normalization and the exponent tape.
+The grid is for the normalized variable. Old D58 transforms remain mobCellLegacy. -/
+def spikeCellOK (Pn V : List ℤ) (d c : ℤ) (S : ℕ) (A B : ℤ)
+    (ms : List ℤ) (es : List ℕ) : Bool :=
+  decide (zDilate d V = zSmul c Pn) && decide (0 < c) &&
+    oddMantissas ms && powTapeOK (mobCell V S A B) ms es
+
+theorem spikeCellOK_spec {Pn V : List ℤ} {d c : ℤ} {S : ℕ} {A B : ℤ}
+    {ms : List ℤ} {es : List ℕ}
+    (h : spikeCellOK Pn V d c S A B ms es = true) :
+    zDilate d V = zSmul c Pn ∧ 0 < c ∧ mobCell V S A B = powRestore ms es := by
+  simp only [spikeCellOK, Bool.and_eq_true, decide_eq_true_eq] at h
+  exact ⟨h.1.1.1, h.1.1.2, powTapeOK_eq _ _ _ h.2⟩
+
+theorem spikeCellOK_transfer {Pn V : List ℤ} {d c : ℤ} {S : ℕ} {A B : ℤ}
+    {ms : List ℤ} {es : List ℕ}
+    (h : spikeCellOK Pn V d c S A B ms es = true) (x : ℝ) :
+    (c : ℝ) * zv Pn x = zv V ((d : ℝ) * x) := by
+  have he := congrArg (fun p => zv p x) (spikeCellOK_spec h).1
+  rw [zv_dilate, zv_smul] at he
+  exact he.symm
+
+#print axioms spikeCellOK_spec
+#print axioms spikeCellOK_transfer
 
 theorem mob_eval {Pn : List ℤ} {m : ℕ} (hL : Pn.length = m + 1) (S : ℕ) {A B : ℤ} {y : ℝ}
     (hy : 0 ≤ y) :
