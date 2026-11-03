@@ -40,6 +40,7 @@ noncomputable section
 structure LF where
   c0 : ℚ
   ts : List (ℚ × ℚ)
+deriving DecidableEq
 
 /-- `Σ cₖ log |rₖ|`. -/
 def termsEval : List (ℚ × ℚ) → ℝ
@@ -118,6 +119,13 @@ theorem termsEval_mergeT : ∀ l : List (ℚ × ℚ), termsEval (mergeT l) = ter
     split_ifs with h
     · simp [termsEval, h, termsEval_mergeT l]
     · simp only [termsEval, termsEval_addT, termsEval_mergeT l]
+
+/-- Exact cache normal form. Keep rational coefficients exact across jobs;
+only the final summed form is enclosed, so aggregate cancellations are preserved. -/
+def LF.normalize (f : LF) : LF := ⟨f.c0, mergeT f.ts⟩
+
+theorem LF.normalize_eval (f : LF) : f.normalize.eval = f.eval := by
+  simp only [LF.normalize, LF.eval, termsEval_mergeT]
 
 def encTerms (n : ℕ) : List (ℚ × ℚ) → Option (ℚ × ℚ)
   | [] => some (0, 0)
@@ -641,9 +649,43 @@ theorem refEnergy_enc (μ : SRef) (R : RefQ) (hμ : IsRefQ μ R) (hR : R.OK)
   rw [refEnergy_eq_refBil]
   exact refBil_enc μ μ R R hμ hμ hR hR hl n h
 
+/-- Normalized literal caches preserve the exact evaluated sum, including cancellation. -/
+theorem eval_cached_sum {js : List Job} {ls : List LF}
+    (h : List.Forall₂ (fun (j : Job) (l : LF) => j.lf.normalize = l) js ls) :
+    (LF.sumL ls).eval = (LF.sumL (js.map Job.lf)).eval := by
+  induction h with
+  | nil => rfl
+  | cons h1 h2 ih =>
+    simp only [List.map_cons, LF.sumL, LF.eval_add]
+    rw [← h1, LF.normalize_eval, ih]
+
+/-- Default cache consumer for normalized per-job literal forms.
+No per-pair enclosure is added: the final exact sum is enclosed once.
+The older raw-literal refBil_enc remains available for frozen D58 certificates. -/
+theorem refBil_cached_enc (μ ν : SRef) (R S : RefQ) (hμ : IsRefQ μ R) (hν : IsRefQ ν S)
+    (hR : R.OK) (hS : S.OK) {lits : List LF}
+    (hl : List.Forall₂ (fun (j : Job) (l : LF) => j.lf.normalize = l) (refPlan R S) lits) (n : ℕ)
+    {p : ℚ × ℚ} (h : (LF.sumL lits).enc n = some p) : Enc (refBil μ ν) p := by
+  have hv := LF.enc_spec n _ p h
+  rw [eval_cached_sum hl, eval_refPlan] at hv
+  rwa [refBil_eval μ ν R S hμ hν hR hS]
+
+theorem refEnergy_cached_enc (μ : SRef) (R : RefQ) (hμ : IsRefQ μ R) (hR : R.OK)
+    {lits : List LF}
+    (hl : List.Forall₂ (fun (j : Job) (l : LF) => j.lf.normalize = l) (refPlan R R) lits) (n : ℕ)
+    {p : ℚ × ℚ} (h : (LF.sumL lits).enc n = some p) : Enc (refEnergy μ) p := by
+  rw [refEnergy_eq_refBil]
+  exact refBil_cached_enc μ μ R R hμ hμ hR hR hl n h
+
+
 end
 
 end CatalanMeasure.GenD.Signed.Data.Consts.EvalRef
 
 #print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refBil_enc
 #print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refEnergy_enc
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.LF.normalize_eval
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.eval_cached_sum
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refBil_cached_enc
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refEnergy_cached_enc
