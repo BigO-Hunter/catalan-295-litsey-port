@@ -49,7 +49,9 @@ theorem clipped {c R B L U : ℚ} (hR : 0 < R)
     rw [← Real.exp_log (by norm_num : 0 < (1 / 1000 : ℝ))]
     exact Real.exp_le_exp.mpr (hlogU.trans hbranch')
   have hc : (1/1000 : ℝ) * ((c : ℝ) + (R : ℝ) - (R : ℝ) * (L : ℝ)) ≤ (B : ℝ) := by
-    exact_mod_cast hcap
+    have h := (Rat.cast_le (K := ℝ)).mpr hcap
+    push_cast at h
+    exact h
   have hm := mul_le_mul_of_nonneg_left hlogL hr.le
   rw [capInt, if_pos hr, min_eq_right ht, capPrim]
   linarith only [hm, hc]
