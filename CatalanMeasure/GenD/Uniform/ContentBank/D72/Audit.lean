@@ -27,3 +27,7 @@ as their generic and data proofs are completed. -/
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_bm_sound
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_inverse_sound
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_bp_sound
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_h1_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_moment_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_zeta_sound
