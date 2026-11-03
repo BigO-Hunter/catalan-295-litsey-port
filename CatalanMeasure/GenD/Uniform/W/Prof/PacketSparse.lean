@@ -140,5 +140,75 @@ theorem Packet.factorCheck_sound {pk : Packet}
     have hs := FactorData.chartCheck_sound (hcharts ⟨j, hj⟩ hjm)
     simpa [List.get_eq_getElem, heq] using hs
 
+
+/-! Bounded signed radix reflection for packed embedded kernels. -/
+-- Intended additions to canonical PacketSparse after static audit.
+/-- Signed radix evaluation, low digit first. -/
+def radixEval (base : Nat) : List Int → Int
+  | [] => 0
+  | a :: as => a + (base : Int) * radixEval base as
+
+/-- A zero radix value with strictly bounded signed digits has only zero digits. -/
+theorem radixEval_zero {base : Nat} (hb : 0 < base) :
+    ∀ xs : List Int, (∀ a ∈ xs, a.natAbs < base) →
+      radixEval base xs = 0 → ∀ a ∈ xs, a = 0 := by
+  intro xs
+  induction xs with
+  | nil => simp
+  | cons a as ih =>
+    intro hbound hzero
+    have hdiv : (base : Int) ∣ a := by
+      refine ⟨-radixEval base as, ?_⟩
+      rw [mul_neg]
+      change a + (base : Int) * radixEval base as = 0 at hzero
+      omega
+    have ha : a = 0 := Int.eq_zero_of_dvd_of_natAbs_lt_natAbs hdiv
+      (by simpa using hbound a (by simp))
+    have htail : radixEval base as = 0 := by
+      have hz : (base : Int) * radixEval base as = 0 := by
+        simpa [radixEval, ha] using hzero
+      exact (mul_eq_zero.mp hz).resolve_left (by exact_mod_cast Nat.ne_of_gt hb)
+    intro z hz
+    rcases List.mem_cons.mp hz with h | h
+    · exact h.trans ha
+    · exact ih (fun z hz => hbound z (List.mem_cons_of_mem _ hz)) htail z h
+
+theorem radixEval_map_mul {ι : Type*} (base : Nat) (xs : List ι)
+    (a : Int) (f : ι → Int) :
+    radixEval base (xs.map fun x => a * f x) = a * radixEval base (xs.map f) := by
+  induction xs with
+  | nil => simp [radixEval]
+  | cons x xs ih =>
+    simp only [List.map_cons, radixEval, ih]
+    ring
+
+theorem radixEval_map_sum {ι κ : Type*} (base : Nat) (xs : List κ)
+    (s : Finset ι) (f : ι → κ → Int) :
+    radixEval base (xs.map fun x => ∑ i ∈ s, f i x) =
+      ∑ i ∈ s, radixEval base (xs.map (f i)) := by
+  induction xs with
+  | nil => simp [radixEval]
+  | cons x xs ih =>
+    simp only [List.map_cons, radixEval, ih, Finset.sum_add_distrib, Finset.mul_sum]
+
+/-- One bounded packed row equation proves every embedded-kernel row equation. -/
+theorem packed_kernel_kill {n k base : Nat} (hb : 0 < base)
+    (B : Fin n → Int) (U : Fin n → Fin k → Int)
+    (hbound : ∀ i : Fin k, (∑ x : Fin n, B x * U x i).natAbs < base)
+    (hcheck : (∑ x : Fin n,
+      B x * radixEval base ((List.finRange k).map (U x))) = 0) :
+    ∀ i : Fin k, (∑ x : Fin n, B x * U x i) = 0 := by
+  have hzero : radixEval base
+      ((List.finRange k).map fun i => ∑ x : Fin n, B x * U x i) = 0 := by
+    rw [radixEval_map_sum]
+    simp_rw [radixEval_map_mul]
+    exact hcheck
+  have hall := radixEval_zero hb _ (by
+    intro a ha
+    obtain ⟨i, _, rfl⟩ := List.mem_map.mp ha
+    exact hbound i) hzero
+  intro i
+  exact hall _ (List.mem_map.mpr ⟨i, by simp, rfl⟩)
+
 end
 end CatalanMeasure.GenD.Uniform.W.Prof
