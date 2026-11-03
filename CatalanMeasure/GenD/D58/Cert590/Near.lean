@@ -14,6 +14,8 @@ namespace CatalanMeasure.GenD.D58.Cert590
 open CatalanMeasure.CellCert CatalanMeasure.Cert OAI.InternalCatalan Set
 noncomputable section
 
+-- BEGIN GENERATED FIRSTQ (phase2-data/consts/firstq_emit.py)
+-- kcost: 0.090 s estimated; first coefficient plus 75 tails, about 12 rational operations/tail.
 theorem firstQ_data : (9 / 50 : ℚ) ≤ Cert.firstQ Pc P := by
   unfold Cert.firstQ; decide +kernel
 
@@ -22,6 +24,10 @@ theorem first_lower : (9 / 50 : ℝ) ≤ trialSeqS Pc P 1 := by
   have h : (((9 / 50 : ℚ)) : ℝ) ≤ ((Cert.firstQ Pc P : ℚ) : ℝ) := Rat.cast_le.mpr firstQ_data
   push_cast at h
   exact h
+-- END GENERATED FIRSTQ
 
 end
 end CatalanMeasure.GenD.D58.Cert590
+
+#print axioms CatalanMeasure.GenD.D58.Cert590.firstQ_data
+#print axioms CatalanMeasure.GenD.D58.Cert590.first_lower
