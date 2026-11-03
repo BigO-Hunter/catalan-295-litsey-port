@@ -637,6 +637,135 @@ theorem mulTower_scaled_bound (z l : ℕ → ℝ → ℝ) (c y : ℝ) (U V : ℕ
   exact mul_le_mul (hU i) (hV (k-i)) (abs_nonneg _)
     ((abs_nonneg _).trans (hU i))
 
+/-! ## The J-series and scalar coarse product -/
+
+def logInvCoef (s : ℕ) (q : ℚ) : ℕ → ℚ
+  | 0 => 0
+  | k+1 => (invBinom (s+1) k : ℚ)*q^(k+1)
+
+def geoInvCoef (s : ℕ) (L q : ℚ) (k : ℕ) : ℚ :=
+  L*(invBinom s k : ℚ)*q^k + logInvCoef s q k
+
+def geoInvTotal (s : ℕ) (L q : ℚ) : ℚ := L/(1-q)^s + q/(1-q)^(s+1)
+
+def geoInvTail (s K : ℕ) (L q : ℚ) : ℚ :=
+  L*invTailPosQ K q s + logInvTailQ s K q
+
+theorem invBinom_sum (s k : ℕ) :
+    ∑ i ∈ Finset.range (k+1), (invBinom s i : ℚ) = (invBinom (s+1) k : ℚ) := by
+  induction k with
+  | zero => simp
+  | succ k ih =>
+      rw [Finset.sum_range_succ, ih]
+      exact_mod_cast (invBinom_step s k).symm
+
+theorem logInvCoefSeries (s : ℕ) (q : ℚ) (hq0 : 0 ≤ q) (hq1 : q < 1) :
+    HasSum (fun k : ℕ => (logInvCoef s q k : ℝ)) ((q/(1-q)^(s+1) : ℚ) : ℝ) := by
+  have hq : |(q : ℝ)| < 1 := by
+    rw [abs_of_nonneg (by exact_mod_cast hq0)]
+    exact_mod_cast hq1
+  have hp : HasSum (fun k : ℕ => (logInvCoef s q (k+1) : ℝ))
+      ((q/(1-q)^(s+1) : ℚ) : ℝ) := by
+    convert (invPowerSeries (s+1) (q : ℝ) hq).mul_left (q : ℝ) using 1
+    · funext k
+      simp only [logInvCoef, Rat.cast_mul, Rat.cast_pow, Rat.cast_natCast, pow_succ]
+      ring
+    · push_cast <;> ring
+  have hfull := (hasSum_nat_add_iff
+    (f := fun k : ℕ => (logInvCoef s q k : ℝ)) 1).mp hp
+  simpa [logInvCoef] using hfull
+
+theorem logInvTailQ_eq (s K : ℕ) (q : ℚ) (hq : q ≠ 1) :
+    q/(1-q)^(s+1) - (∑ k ∈ Finset.range (K+1), logInvCoef s q k) = logInvTailQ s K q := by
+  have hp : (∑ k ∈ Finset.range K, logInvCoef s q (k+1)) =
+      q*(∑ k ∈ Finset.range K, (invBinom (s+1) k : ℚ)*q^k) := by
+    simp only [logInvCoef]
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k _
+    rw [pow_succ]
+    ring
+  rw [Finset.sum_range_succ' (fun k => logInvCoef s q k) K, hp]
+  simp only [logInvCoef, add_zero]
+  unfold logInvTailQ
+  rw [invTailPosQ_eq K q hq]
+  unfold invTailQ
+  rw [Finset.sum_range_succ (fun k => (invBinom (s+1) k : ℚ)*q^k) K]
+  ring
+
+theorem geoInvCoefSeries (s : ℕ) (L q : ℚ) (hq0 : 0 ≤ q) (hq1 : q < 1) :
+    HasSum (fun k : ℕ => (geoInvCoef s L q k : ℝ)) (geoInvTotal s L q : ℝ) := by
+  have hq : |(q : ℝ)| < 1 := by
+    rw [abs_of_nonneg (by exact_mod_cast hq0)]
+    exact_mod_cast hq1
+  have h := ((invPowerSeries s (q : ℝ) hq).mul_left (L : ℝ)).add
+    (logInvCoefSeries s q hq0 hq1)
+  convert h using 1
+  · funext k
+    simp only [geoInvCoef]
+    push_cast <;> ring
+  · simp only [geoInvTotal]
+    push_cast <;> ring
+
+theorem geoInvTail_eq (s K : ℕ) (L q : ℚ) (hq : q ≠ 1) :
+    geoInvTotal s L q - (∑ k ∈ Finset.range (K+1), geoInvCoef s L q k) =
+      geoInvTail s K L q := by
+  have hp : (∑ k ∈ Finset.range (K+1), geoInvCoef s L q k) =
+      L*(∑ k ∈ Finset.range (K+1), (invBinom s k : ℚ)*q^k) +
+        ∑ k ∈ Finset.range (K+1), logInvCoef s q k := by
+    simp only [geoInvCoef, Finset.sum_add_distrib]
+    congr 1
+    rw [Finset.mul_sum]
+    apply Finset.sum_congr rfl
+    intro k _
+    ring
+  have hj := logInvTailQ_eq s K q hq
+  rw [hp]
+  unfold geoInvTail geoInvTotal
+  rw [invTailPosQ_eq K q hq]
+  unfold invTailQ
+  linear_combination hj
+
+theorem convQ_fin (U V : ℕ → ℚ) (k n : ℕ) :
+    convQ U V k n = ∑ i ∈ Finset.range n, U i*V (k-i) := by
+  induction n with
+  | zero => simp [convQ]
+  | succ n ih => rw [convQ, Finset.sum_range_succ, ih]
+
+theorem invGeo_conv (s k : ℕ) (q L : ℚ) (ab : ℚ × ℚ) (ha : ab.1 ≠ 0) :
+    convQ (fun i => (invBinom s i : ℚ)*q^i) (lfCoarse (some ab) L q) k (k+1) =
+      geoInvCoef s L q k := by
+  cases k with
+  | zero => simp [convQ, lfCoarse, geoInvCoef, logInvCoef]
+  | succ k =>
+      have hp : convQ (fun i => (invBinom s i : ℚ)*q^i)
+          (lfCoarse (some ab) L q) (k+1) (k+1) =
+            (invBinom (s+1) k : ℚ)*q^(k+1) := by
+        rw [convQ_fin]
+        calc
+          (∑ i ∈ Finset.range (k+1), (invBinom s i : ℚ)*q^i*lfCoarse (some ab) L q (k+1-i)) =
+              ∑ i ∈ Finset.range (k+1), (invBinom s i : ℚ)*q^(k+1) := by
+                apply Finset.sum_congr rfl
+                intro i hi
+                have hik : i < k+1 := Finset.mem_range.mp hi
+                obtain ⟨m, hm⟩ : ∃ m, k+1-i = m+1 := ⟨k-i, by omega⟩
+                rw [hm, lfCoarse, if_neg ha]
+                have he : i+(m+1) = k+1 := by omega
+                rw [mul_assoc, ← pow_add, he]
+          _ = (invBinom (s+1) k : ℚ)*q^(k+1) := by
+                rw [← Finset.sum_mul, invBinom_sum]
+      rw [convQ, hp]
+      simp only [Nat.sub_self, lfCoarse, geoInvCoef, logInvCoef]
+      ring
+
+#print axioms invBinom_sum
+#print axioms logInvCoefSeries
+#print axioms logInvTailQ_eq
+#print axioms geoInvCoefSeries
+#print axioms geoInvTail_eq
+#print axioms convQ_fin
+#print axioms invGeo_conv
+
 #print axioms lf_scaled_eq
 #print axioms lfMaj_nonneg
 #print axioms lfMaj_le_coarse
