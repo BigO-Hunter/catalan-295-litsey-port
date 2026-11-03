@@ -213,12 +213,10 @@ theorem shareN_eval {Pn MP : List ℤ} {m : ℕ} (S : ℕ) {A B : ℤ} (a c k w0
   rw [hMV']
   ring
 
-/-- One cell: nonnegativity of `(a zv Pn x - c)(w0 + w1 x) - k` on `(A/2^S, B/2^S]`. -/
-theorem share_cell_Ioc {Pn MP : List ℤ} {m S : ℕ} {A B : ℤ} (hL : Pn.length = m + 1)
-    (hMP : mobCell Pn S A B = MP) (hAB : A < B) {a c k w0 w1 : ℤ}
-    (hN : (shareN MP m S A B a c k w0 w1).all (fun n => decide (0 ≤ n)) = true) {x : ℝ}
+/-- Reparameterize a dyadic cell away from its left endpoint for Mobius evaluation. -/
+theorem exists_mobParameter {S : ℕ} {A B : ℤ} {x : ℝ} (hAB : A < B)
     (hx : x ∈ Ioc ((A : ℝ) / 2 ^ S) ((B : ℝ) / 2 ^ S)) :
-    0 ≤ ((a : ℝ) * zv Pn x - c) * ((w0 : ℝ) + w1 * x) - k := by
+    ∃ y : ℝ, 0 ≤ y ∧ ((A : ℝ) + ((B - A : ℤ) : ℝ) * (1 + y)⁻¹) / 2 ^ S = x := by
   have h2 : (0 : ℝ) < 2 ^ S := by positivity
   have hD : (0 : ℝ) < ((B - A : ℤ) : ℝ) := by
     have : (A : ℝ) < B := by exact_mod_cast hAB
@@ -237,6 +235,15 @@ theorem share_cell_Ioc {Pn MP : List ℤ} {m S : ℕ} {A B : ℤ} (hL : Pn.lengt
   have h1y : (1 : ℝ) + y = u⁻¹ := by rw [hy]; ring
   have hxu : ((A : ℝ) + ((B - A : ℤ) : ℝ) * (1 + y)⁻¹) / 2 ^ S = x := by
     rw [h1y, inv_inv, hu]; field_simp; ring
+  exact ⟨y, hy0, hxu⟩
+
+/-- One cell: nonnegativity of `(a zv Pn x - c)(w0 + w1 x) - k` on `(A/2^S, B/2^S]`. -/
+theorem share_cell_Ioc {Pn MP : List ℤ} {m S : ℕ} {A B : ℤ} (hL : Pn.length = m + 1)
+    (hMP : mobCell Pn S A B = MP) (hAB : A < B) {a c k w0 w1 : ℤ}
+    (hN : (shareN MP m S A B a c k w0 w1).all (fun n => decide (0 ≤ n)) = true) {x : ℝ}
+    (hx : x ∈ Ioc ((A : ℝ) / 2 ^ S) ((B : ℝ) / 2 ^ S)) :
+    0 ≤ ((a : ℝ) * zv Pn x - c) * ((w0 : ℝ) + w1 * x) - k := by
+  obtain ⟨y, hy0, hxu⟩ := exists_mobParameter hAB hx
   have hmob := mob_eval hL S (A := A) (B := B) hy0
   rw [hMP] at hmob
   have hev := shareN_eval (Pn := Pn) (MP := MP) (m := m) S (A := A) (B := B) a c k w0 w1 hy0 hmob
@@ -268,6 +275,54 @@ theorem share_cell_Icc {Pn MP : List ℤ} {m S : ℕ} {A B : ℤ} (hL : Pn.lengt
   have := closure_minimal hsub hcl
   rw [closure_Ioc hab.ne] at this
   exact this hx
+
+/-- The coefficientwise dominance checker for two already checked transforms. -/
+def mobDomOK (a b : ℤ) (MP MQ : List ℤ) : Bool :=
+  (zAdd (zSmul b MQ) (zSmul (-a) MP)).all (fun n => decide (0 ≤ n))
+
+/-- Compare weighted polynomials on the closed cell without another transform. -/
+theorem mob_dom_Icc {p q MP MQ : List ℤ} {m S : ℕ} {A B : ℤ} {a b : ℤ}
+    (hp : p.length = m + 1) (hq : q.length = m + 1)
+    (hMP : mobCell p S A B = MP) (hMQ : mobCell q S A B = MQ) (hAB : A < B)
+    (hN : mobDomOK a b MP MQ = true) {x : ℝ}
+    (hx : x ∈ Icc ((A : ℝ) / 2 ^ S) ((B : ℝ) / 2 ^ S)) :
+    (a : ℝ) * zv p x ≤ (b : ℝ) * zv q x := by
+  have h2 : (0 : ℝ) < 2 ^ S := by positivity
+  have hab : (A : ℝ) / 2 ^ S < (B : ℝ) / 2 ^ S := by
+    have h : (A : ℝ) < B := by exact_mod_cast hAB
+    exact div_lt_div_of_pos_right h h2
+  have hpC : Continuous (zv p) := lpEval_continuous _
+  have hqC : Continuous (zv q) := lpEval_continuous _
+  have hcl : IsClosed {z : ℝ | (a : ℝ) * zv p z ≤ (b : ℝ) * zv q z} :=
+    isClosed_le (continuous_const.mul hpC) (continuous_const.mul hqC)
+  have hsub : Ioc ((A : ℝ) / 2 ^ S) ((B : ℝ) / 2 ^ S) ⊆
+      {z : ℝ | (a : ℝ) * zv p z ≤ (b : ℝ) * zv q z} := by
+    intro z hz
+    obtain ⟨y, hy, hzy⟩ := exists_mobParameter hAB hz
+    have hn := zv_nonneg hN hy
+    simp only [zv_add, zv_smul, Int.cast_neg] at hn
+    rw [← hMP, ← hMQ, mob_eval hp S hy, mob_eval hq S hy, hzy] at hn
+    have hf : (0 : ℝ) < (1 + y) ^ m * 2 ^ (S * m) := by
+      have : (0 : ℝ) < 1 + y := by linarith
+      positivity
+    have hg : 0 ≤ ((1 + y) ^ m * 2 ^ (S * m)) *
+        ((b : ℝ) * zv q z - (a : ℝ) * zv p z) := by
+      convert hn using 1 <;> ring
+    exact sub_nonneg.mp ((mul_nonneg_iff_of_pos_left hf).mp hg)
+  have hc := closure_minimal hsub hcl
+  rw [closure_Ioc hab.ne] at hc
+  exact hc hx
+
+/-- One weighted rho inequality transfers to any dominating trial. -/
+theorem rho_transfer_of_dom {p q s t w U : ℝ} (hdom : s * p ≤ t * q)
+    (hw : 0 ≤ w) (ht : 0 < t) (hρ : U ≤ s * p * w) : U / t ≤ q * w := by
+  apply (div_le_iff₀ ht).mpr
+  calc U ≤ s * p * w := hρ
+    _ ≤ t * q * w := mul_le_mul_of_nonneg_right hdom hw
+    _ = q * w * t := by ring
+
+#print axioms mob_dom_Icc
+#print axioms rho_transfer_of_dom
 
 theorem share_union {f : ℝ → ℝ} {a b c : ℝ} (h1 : ∀ x ∈ Icc a b, 0 ≤ f x)
     (h2 : ∀ x ∈ Icc b c, 0 ≤ f x) : ∀ x ∈ Icc a c, 0 ≤ f x := by
