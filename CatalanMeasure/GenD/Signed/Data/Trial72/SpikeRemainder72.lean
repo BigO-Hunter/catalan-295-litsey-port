@@ -10,14 +10,14 @@ noncomputable section
 coefficients involving it are real constants. Bound the scaled remainder
 uniformly in the count and number of marked rows. -/
 theorem uniform (bs : List ℚ) (ρ W : ℝ) (hW : 0 ≤ W) :
-    ∃ K : ℝ, 0 ≤ K ∧ ∀ (l : ℝ) (s m : ℕ), 0 ≤ l → l ≤ 1 → 0 < s →
+    ∃ K : ℝ, 0 ≤ K ∧ ∀ (l : ℝ) (s m : ℕ), 0 ≤ l → l ≤ 2 → 0 < s →
       (m : ℝ)/s ≤ W → costRem (fun k => l * bSeq bs k) s m ρ ≤ K := by
   let a : ℝ := S2q bs
   let b : ℝ := S1q bs
   let c : ℝ := ∑' k : ℕ, bSeq bs (k+1) * poisSeq ρ (k+1)
   let d : ℝ := barrierTrialS (bSeq bs) (-ρ)
   let e : ℝ := 2*ρ^2/(1-ρ^2)
-  let B : ℝ := |a|+2*|b|+4*|c|+4*|d|
+  let B : ℝ := 4*|a|+8*|b|+8*|c|+8*|d|
   have hB : 0 ≤ B := by dsimp [B]; positivity
   refine ⟨|Real.log 2|+(1+W)*B+W*|e|, by positivity, ?_⟩
   intro l s m hl h1 hs hw
@@ -26,7 +26,7 @@ theorem uniform (bs : List ℚ) (ρ W : ℝ) (hW : 0 ≤ W) :
   have hw0 : 0 ≤ w := by dsimp [w]; positivity
   have hwW : w ≤ W := hw
   let C : ℝ := -(l^2)*a+2*l^2*b-4*l*c+4*l*d
-  have hls : l^2 ≤ 1 := by nlinarith [mul_nonneg hl (sub_nonneg.mpr h1)]
+  have hls : l^2 ≤ 4 := by nlinarith [mul_nonneg hl (sub_nonneg.mpr h1)]
   have ha := mul_le_mul (neg_le_abs a) hls (sq_nonneg l) (abs_nonneg a)
   have hb := mul_le_mul (le_abs_self b) hls (sq_nonneg l) (abs_nonneg b)
   have hc := mul_le_mul (neg_le_abs c) h1 hl (abs_nonneg c)

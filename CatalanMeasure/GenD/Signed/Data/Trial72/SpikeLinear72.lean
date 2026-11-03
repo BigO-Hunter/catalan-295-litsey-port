@@ -89,6 +89,25 @@ theorem root_geometry {τ ρ : ℝ} (hτ : τ ∈ Icc (1-1/1073741824 : ℝ) 1)
   refine ⟨?_,hlim,sub_nonpos.mpr hh⟩
   rw [abs_of_nonneg hρ.1]
   linarith [hρ.2]
+
+/-- Transfer the normalized De estimate to the actual count, pay the
+damping term, and reserve a uniform margin for the finite remainder. -/
+theorem linear_withCount {N x m sr De Sg qlo A e : ℝ}
+    (hN : 0 ≤ N) (hx : 0 < x) (hSg : Sg ≤ 0)
+    (hm : qlo*N/2 ≤ m) (he : 0 ≤ e) (hemax : e ≤ 1/1073741824)
+    (hA : 0 ≤ A) (hAmax : A ≤ 6100)
+    (hlinear : 72/1000 + sr*De + qlo/2*Sg ≤ 11/10) :
+    72*N*(1/1000) + 2*x*((sr*N/x)*(De/2)) + m*Sg + 2*(72*N)*e*A ≤
+      (5/4-1/10)*N := by
+  have hde : 2*x*((sr*N/x)*(De/2)) = sr*N*De := by field_simp [hx.ne'] <;> ring
+  have hsg := mul_le_mul_of_nonpos_right hm hSg
+  have hdamp := mul_le_mul hemax hAmax hA (by norm_num : (0 : ℝ) ≤ 1/1073741824)
+  have hdamp' : 2*(72*N)*e*A ≤ (1/100 : ℝ)*N := by
+    have h := mul_le_mul_of_nonneg_left hdamp (show 0 ≤ 2*(72*N) by positivity)
+    nlinarith only [h,hN]
+  rw [hde]
+  have hlin := mul_le_mul_of_nonneg_right hlinear hN
+  nlinarith only [hlin,hsg,hdamp',hN]
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.SpikeLinear72
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.SpikeLinear72.scalar0
