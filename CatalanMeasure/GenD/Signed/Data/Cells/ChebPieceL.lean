@@ -1941,6 +1941,86 @@ theorem laurentRoundM_bnd {nL M P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
             simpa only [lfieldTower, List.map_cons, List.sum_cons] using hs x hx
           · simp at h
 
+
+/-! ## Rounded merged checker (the input may be put in exact normal form beforehand). -/
+
+def roundMergeUBL (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) : Option ℚ :=
+  if lo < hi then
+    match plogsRoundM nL nA Ml P lo hi (mergeSites fq.plogs) pd,
+      polesRoundM nL nA Mp P lo hi fq.poles qd, laurentRoundM nL ML P lo hi ts ld with
+    | some a, some b, some l =>
+        let s := polyRoundApx P lo hi fq.poly
+        some (chebPolyUB (vecAdd s.1 (vecAdd a.1 (vecAdd b.1 l.1))) γ+s.2+a.2+b.2+l.2)
+    | _, _, _ => none
+  else none
+
+def chebRoundPieceL (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (T : ℚ) : Bool :=
+  match roundMergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ with
+  | some v => decide (v ≤ T)
+  | none => false
+
+theorem roundMergeUBL_spec (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (v : ℚ) (hv : roundMergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ = some v) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (v : ℝ) := by
+  unfold roundMergeUBL at hv
+  split_ifs at hv with hlo
+  · split at hv
+    · rename_i a b l ha hb hl
+      simp only [Option.some.injEq] at hv
+      subst v
+      intro x hx
+      have hp := plogsRoundM_bnd hlo (mergeSites fq.plogs) pd a.1 a.2 ha x hx
+      beta_reduce at hp
+      rw [mergeSites_eq] at hp
+      have hq := polesRoundM_bnd hlo fq.poles qd b.1 b.2 hb x hx
+      have hL := laurentRoundM_bnd hlo ts ld l.1 l.2 hl x hx
+      have hs := polyRoundApx_bnd hlo P fq.poly x hx
+      have hc := chebPoly_le
+        (vecAdd (polyRoundApx P lo hi fq.poly).1 (vecAdd a.1 (vecAdd b.1 l.1))) γ
+        ((x-(((lo+hi)/2 : ℚ) : ℝ))/(((hi-lo)/2 : ℚ) : ℝ)) (hx_unit hlo x hx)
+      rw [polyTow_vecAdd,polyTow_vecAdd,polyTow_vecAdd] at hc
+      rw [fieldTower_zero]
+      simp only [Rat.cast_add]
+      beta_reduce at hs hq hL
+      linarith
+    · simp at hv
+
+theorem chebRoundPieceL_sound (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (T : ℚ)
+    (hchk : chebRoundPieceL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ T = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (T : ℝ) := by
+  unfold chebRoundPieceL at hchk
+  split at hchk
+  · rename_i v hv
+    simp only [decide_eq_true_eq] at hchk
+    intro x hx
+    exact (roundMergeUBL_spec fq ts nL nA Mp Ml ML P lo hi pd qd ld γ v hv x hx).trans
+      ((Rat.cast_le (K := ℝ)).mpr hchk)
+  · simp at hchk
+
+theorem roundMergeUBL_of_parts (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ S Ap Aq Al : List ℚ) (Es Ep Eq El : ℚ) (hlo : lo < hi)
+    (hs : polyRoundApx P lo hi fq.poly = (S,Es))
+    (hp : plogsRoundM nL nA Ml P lo hi (mergeSites fq.plogs) pd = some (Ap,Ep))
+    (hq : polesRoundM nL nA Mp P lo hi fq.poles qd = some (Aq,Eq))
+    (hl : laurentRoundM nL ML P lo hi ts ld = some (Al,El)) :
+    roundMergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ =
+      some (chebPolyUB (vecAdd S (vecAdd Ap (vecAdd Aq Al))) γ+Es+Ep+Eq+El) := by
+  simp only [roundMergeUBL, if_pos hlo, hp, hq, hl, hs]
+
+#print axioms roundMergeUBL_spec
+#print axioms chebRoundPieceL_sound
+#print axioms roundMergeUBL_of_parts
+
 #print axioms plogRoundTerm_bnd
 #print axioms poleRoundTerm_bnd
 #print axioms laurentRoundTerm_bnd
