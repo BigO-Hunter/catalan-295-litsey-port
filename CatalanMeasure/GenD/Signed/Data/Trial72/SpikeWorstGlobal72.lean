@@ -53,17 +53,9 @@ public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_7_5
 public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_7_6
 public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_7_7
 public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_7_8
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_0
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_1
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_2
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_3
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_4
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_5
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_6
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_7
-public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorst2_8_8
 public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorstCenter4
 public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorstCenter5
+public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeWorstCenter8
 public import CatalanMeasure.GenD.Signed.Data.Trial72.RhoGlobal72
 public import CatalanMeasure.GenD.Signed.Data.Trial72.CostRootData
 public import CatalanMeasure.GenD.Signed.Data.Trial72.RhoQAliases72
@@ -78,14 +70,14 @@ open Set CatalanMeasure.Signed CatalanMeasure.Signed.Consts
 open RhoGlobal72
 noncomputable section
 
-def shift : ℝ := (1255247228561439513 : ℝ)/102034679057612800
-def floor : ℝ := (784 : ℝ)/29
+def shift : ℝ := (13557453843224073 : ℝ)/703687441776640
+def floor : ℝ := (20 : ℝ)/1
 
-private theorem center {x U ap : ℝ} (hx : x ∈ Icc (-1 : ℝ) 1)
+private theorem center {x U ap : ℝ} (hx : (-1 : ℝ) ≤ x)
     (hU : U ≤ 1/2) (ha : 0 ≤ ap) (hP : 1 ≤ sr2*P2 x-shift) :
     U ≤ (sr2*P2 x-shift)*(1+ap+x/2) := by
-  have h := mul_le_mul_of_nonneg_right hP (show 0 ≤ 1+ap+x/2 by linarith [hx.1])
-  linarith [hx.1]
+  have h := mul_le_mul_of_nonneg_right hP (show 0 ≤ 1+ap+x/2 by linarith [hx])
+  linarith [hx]
 
 private theorem cent4 {x : ℝ} (hx : x ∈ Icc (((-8 : ℤ) : ℝ)/2^3) (((0 : ℤ) : ℝ)/2^3)) :
     1 ≤ sr2*P2 x-shift := by
@@ -95,6 +87,12 @@ private theorem cent4 {x : ℝ} (hx : x ∈ Icc (((-8 : ℤ) : ℝ)/2^3) (((0 : 
 private theorem cent5 {x : ℝ} (hx : x ∈ Icc (((0 : ℤ) : ℝ)/2^3) (((8 : ℤ) : ℝ)/2^3)) :
     1 ≤ sr2*P2 x-shift := by
   have h := SpikeWorstCenter5.cover hx
+  convert h using 1 <;> unfold sr2 P2 shift <;> ring
+
+
+private theorem cent8 {x : ℝ} (hx : x ∈ Icc (((14 : ℤ) : ℝ)/2^3) (((16 : ℤ) : ℝ)/2^3)) :
+    1 ≤ sr2*P2 x-shift := by
+  have h := SpikeWorstCenter8.cover hx
   convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
 
@@ -119,10 +117,10 @@ private theorem global00 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_0.row00 hy
@@ -133,8 +131,7 @@ private theorem global00 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_0.row00 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound00 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -179,10 +176,10 @@ private theorem global01 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_0.row01 hy
@@ -193,8 +190,7 @@ private theorem global01 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_0.row01 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound01 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -239,10 +235,10 @@ private theorem global02 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_0.row02 hy
@@ -253,8 +249,7 @@ private theorem global02 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_0.row02 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound02 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -299,10 +294,10 @@ private theorem global03 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_1.row03 hy
@@ -313,8 +308,7 @@ private theorem global03 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_1.row03 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound03 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -359,10 +353,10 @@ private theorem global04 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_1.row04 hy
@@ -373,8 +367,7 @@ private theorem global04 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_1.row04 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound04 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -419,10 +412,10 @@ private theorem global05 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_1.row05 hy
@@ -433,8 +426,7 @@ private theorem global05 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_1.row05 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound05 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -479,10 +471,10 @@ private theorem global06 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_2.row06 hy
@@ -493,8 +485,7 @@ private theorem global06 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_2.row06 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound06 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -539,10 +530,10 @@ private theorem global07 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_2.row07 hy
@@ -553,8 +544,7 @@ private theorem global07 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_2.row07 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound07 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -599,10 +589,10 @@ private theorem global08 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_2.row08 hy
@@ -613,8 +603,7 @@ private theorem global08 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_2.row08 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound08 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -659,10 +648,10 @@ private theorem global09 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_3.row09 hy
@@ -673,8 +662,7 @@ private theorem global09 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_3.row09 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound09 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -719,10 +707,10 @@ private theorem global10 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_3.row10 hy
@@ -733,8 +721,7 @@ private theorem global10 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_3.row10 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound10 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -779,10 +766,10 @@ private theorem global11 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_3.row11 hy
@@ -793,8 +780,7 @@ private theorem global11 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_3.row11 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound11 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -839,10 +825,10 @@ private theorem global12 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_4.row12 hy
@@ -853,8 +839,7 @@ private theorem global12 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_4.row12 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound12 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -899,10 +884,10 @@ private theorem global13 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_4.row13 hy
@@ -913,8 +898,7 @@ private theorem global13 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_4.row13 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound13 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -959,10 +943,10 @@ private theorem global14 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_4.row14 hy
@@ -973,8 +957,7 @@ private theorem global14 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_4.row14 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound14 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1019,10 +1002,10 @@ private theorem global15 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_5.row15 hy
@@ -1033,8 +1016,7 @@ private theorem global15 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_5.row15 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound15 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1079,10 +1061,10 @@ private theorem global16 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_5.row16 hy
@@ -1093,8 +1075,7 @@ private theorem global16 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_5.row16 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound16 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1139,10 +1120,10 @@ private theorem global17 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_5.row17 hy
@@ -1153,8 +1134,7 @@ private theorem global17 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_5.row17 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound17 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1199,10 +1179,10 @@ private theorem global18 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_6.row18 hy
@@ -1213,8 +1193,7 @@ private theorem global18 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_6.row18 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound18 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1259,10 +1238,10 @@ private theorem global19 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_6.row19 hy
@@ -1273,8 +1252,7 @@ private theorem global19 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_6.row19 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound19 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1319,10 +1297,10 @@ private theorem global20 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_6.row20 hy
@@ -1333,8 +1311,7 @@ private theorem global20 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_6.row20 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound20 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1379,10 +1356,10 @@ private theorem global21 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_7.row21 hy
@@ -1393,8 +1370,7 @@ private theorem global21 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_7.row21 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound21 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1439,10 +1415,10 @@ private theorem global22 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_7.row22 hy
@@ -1453,8 +1429,7 @@ private theorem global22 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_7.row22 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound22 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1499,10 +1474,10 @@ private theorem global23 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_7.row23 hy
@@ -1513,8 +1488,7 @@ private theorem global23 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_7.row23 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound23 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1559,10 +1533,10 @@ private theorem global24 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_8.row24 hy
@@ -1573,8 +1547,7 @@ private theorem global24 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_8.row24 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound24 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1619,10 +1592,10 @@ private theorem global25 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_8.row25 hy
@@ -1633,8 +1606,7 @@ private theorem global25 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_8.row25 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound25 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)
@@ -1679,10 +1651,10 @@ private theorem global26 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent4 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent4 hy)
 
   · intro y hy
-    exact center (⟨by linarith [hy.1], by linarith [hy.2]⟩) (by norm_num) (by norm_num) (cent5 hy)
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent5 hy)
 
   · intro y hy
     have h := SpikeWorst2_6_8.row26 hy
@@ -1693,8 +1665,7 @@ private theorem global26 {x : ℝ} (hx : x ∈ Icc (-2 : ℝ) 2) :
     convert h using 1 <;> unfold sr2 P2 shift <;> ring
 
   · intro y hy
-    have h := SpikeWorst2_8_8.row26 hy
-    convert h using 1 <;> unfold sr2 P2 shift <;> ring
+    exact center (by linarith [hy.1]) (by norm_num) (by norm_num) (cent8 hy)
 
 
 theorem bound26 {u q : ℝ} (hu : u ∈ Icc (-1 : ℝ) 1) (hq : 0 ≤ q)

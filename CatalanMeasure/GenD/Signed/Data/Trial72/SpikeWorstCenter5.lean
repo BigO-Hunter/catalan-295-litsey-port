@@ -17,13 +17,13 @@ private theorem mob0 : mobCell SpikeNormalized2.V 4 (0) (8) = NP0 := by
   -- kcost: 44.1 s measured same-class transform.
   decide +kernel
 private theorem checked0 :
-    (shareN NP0 120 4 (0) (8) 3625 2779713346803819137024 0 1 0).all
+    (shareN NP0 120 4 (0) (8) 25 29206817351681460224 0 1 0).all
       (fun n => decide (0 ≤ n)) = true := by decide +kernel
 theorem cell0 {x : ℝ} (hx : x ∈ Icc (((0 : ℤ) : ℝ)/2^4) (((8 : ℤ) : ℝ)/2^4)) :
-    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (1255247228561439513 : ℝ)/102034679057612800 := by
+    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (13557453843224073 : ℝ)/703687441776640 := by
   have h := share_cell_Icc (Pn := SpikeNormalized2.V) (MP := NP0) (m := 120)
     (by decide +kernel) mob0 (by decide +kernel) checked0 hx
-  have he : 0 ≤ (208967022709991014400 : ℝ) * ((5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (1255247228561439513 : ℝ)/102034679057612800 - 1) := by
+  have he : 0 ≤ (1441151880758558720 : ℝ) * ((5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (13557453843224073 : ℝ)/703687441776640 - 1) := by
     convert h using 1 <;> push_cast <;> ring
   exact sub_nonneg.mp (nonneg_of_mul_nonneg_right he (by norm_num))
 
@@ -34,18 +34,18 @@ private theorem mob1 : mobCell SpikeNormalized2.V 4 (8) (16) = NP1 := by
   -- kcost: 44.1 s measured same-class transform.
   decide +kernel
 private theorem checked1 :
-    (shareN NP1 120 4 (8) (16) 3625 2779713346803819137024 0 1 0).all
+    (shareN NP1 120 4 (8) (16) 25 29206817351681460224 0 1 0).all
       (fun n => decide (0 ≤ n)) = true := by decide +kernel
 theorem cell1 {x : ℝ} (hx : x ∈ Icc (((8 : ℤ) : ℝ)/2^4) (((16 : ℤ) : ℝ)/2^4)) :
-    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (1255247228561439513 : ℝ)/102034679057612800 := by
+    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (13557453843224073 : ℝ)/703687441776640 := by
   have h := share_cell_Icc (Pn := SpikeNormalized2.V) (MP := NP1) (m := 120)
     (by decide +kernel) mob1 (by decide +kernel) checked1 hx
-  have he : 0 ≤ (208967022709991014400 : ℝ) * ((5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (1255247228561439513 : ℝ)/102034679057612800 - 1) := by
+  have he : 0 ≤ (1441151880758558720 : ℝ) * ((5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (13557453843224073 : ℝ)/703687441776640 - 1) := by
     convert h using 1 <;> push_cast <;> ring
   exact sub_nonneg.mp (nonneg_of_mul_nonneg_right he (by norm_num))
 
 theorem cover {x : ℝ} (hx : x ∈ Icc (((0 : ℤ) : ℝ)/2^3) (((8 : ℤ) : ℝ)/2^3)) :
-    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (1255247228561439513 : ℝ)/102034679057612800 := by
+    1 ≤ (5 : ℝ)/288230376151711744 * zv SpikeNormalized2.V x - (13557453843224073 : ℝ)/703687441776640 := by
   norm_num at hx
 
   by_cases h0 : x ≤ (8 : ℝ)/2^4
