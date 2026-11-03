@@ -9,7 +9,7 @@ noncomputable section
 /-! The emitted nearFq/spmFq are at the trial's own alpha. Off-diagonal
 threshold corners require these parameterized fields on the SAME frozen trial. -/
 def nearAt (a b : ℚ) : FieldQ := nearFQ trial (rnFQ (11/12) (5/6)) aS rS bS (5/18) a b
-def spmAt (a : ℚ) : FieldQ := spmFQ trial (rmFQ (11/12)) pT aS rS bS rr (5/18) (11/8) a
+def spmAt (a : ℚ) : FieldQ := spmFQ trial (sqFQ (11/12)) pT aS rS bS rr (5/18) (11/8) a
 theorem nearIdentityAt (a b : ℚ) {csL θL x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 1) :
     fNearMSLim trial.form (rnQ (11/12) (5/6)) a b ((5/18:ℚ):ℝ)
       (fQ bsL) bsL.length csL θL x =
@@ -26,3 +26,6 @@ theorem spmIdentityAt (a : ℚ) {csL θL x : ℝ} (hx : x ∈ Set.Ioo (0 : ℝ) 
   hid_spm trial (fun y => (fval_rm _ y).symm) pT_eq aS_eq rS_eq bS_eq rr_eq rfl har rfl hx
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.T0
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.T0.nearIdentityAt
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.T0.spmIdentityAt
