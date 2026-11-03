@@ -128,6 +128,57 @@ def dc58 : DesignConst where
     simp only [List.mem_cons, List.not_mem_nil, or_false] at hx
     rcases hx with rfl | rfl | rfl <;> norm_num
 
+/-- D72, with p1min=17/100 from GATE0-D72 P72_p17. The node gap is provisional. -/
+def dc72 : DesignConst where
+  toParameters := ⟨72, 11, 4, 6, 4⟩
+  sp := 20
+  spc := 63 / 2
+  m_cuts_B1 := [9 / 32, 15 / 32]
+  m_cuts_B2 := [19 / 100, 19 / 50, 1 / 2]
+  m_top := 57 / 100
+  gstar := 401 / 2500
+  xc := 999 / 1000
+  thetaL := 1 / 1024
+  rc := 11 / 8
+  bilin := 5 / 11
+  sr_offset := 6
+  hspq_qlo := 25 / 58
+  near_shift_b := 11 / 4
+  p1min := 17 / 100
+  admissible := by norm_num [Admissible]
+  sp_pos := by norm_num
+  sp_le_n0 := by norm_num
+  spc_bounds := by norm_num
+  thetaL_mem := by norm_num
+  gstar_mem := by norm_num
+  xc_mem := by norm_num
+  gstar_lt_xc := by norm_num
+  rc_bounds := by norm_num
+  bilin_nonneg := by norm_num
+  p1min_nonneg := by norm_num
+  cuts_B1_ordered := by norm_num [List.pairwise_cons]
+  cuts_B2_ordered := by norm_num [List.pairwise_cons]
+  cuts_B1_bounds := by
+    intro x hx
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hx
+    rcases hx with rfl | rfl <;> norm_num
+  cuts_B2_bounds := by
+    intro x hx
+    simp only [List.mem_cons, List.not_mem_nil, or_false] at hx
+    rcases hx with rfl | rfl | rfl <;> norm_num
+
+@[simp] theorem dc72_toParameters : dc72.toParameters = ⟨72, 11, 4, 6, 4⟩ := rfl
+@[simp] theorem dc72_n0 : dc72.n0 = 72 := rfl
+@[simp] theorem dc72_b0 : dc72.b0 = 11 := rfl
+@[simp] theorem dc72_q0 : dc72.q0 = 4 := rfl
+@[simp] theorem dc72_g0 : dc72.g0 = 6 := rfl
+@[simp] theorem dc72_h0 : dc72.h0 = 4 := rfl
+@[simp] theorem dc72_d0 : dc72.d0 = 66 := rfl
+@[simp] theorem dc72_H : dc72.H = 97 := rfl
+@[simp] theorem dc72_H_succ : dc72.H + 1 = 98 := rfl
+@[simp] theorem dc72_gstar : dc72.gstar = 401 / 2500 := rfl
+@[simp] theorem dc72_p1min : dc72.p1min = 17 / 100 := rfl
+
 @[simp] theorem dc58_toParameters : dc58.toParameters = ⟨58, 9, 3, 5, 3⟩ := rfl
 @[simp] theorem dc58_n0 : dc58.n0 = 58 := rfl
 @[simp] theorem dc58_b0 : dc58.b0 = 9 := rfl
@@ -222,3 +273,15 @@ end CatalanMeasure.GenD.Signed
 #print axioms CatalanMeasure.GenD.Signed.dc58_GD
 #print axioms CatalanMeasure.GenD.Signed.dc58_ENF
 #print axioms CatalanMeasure.GenD.Signed.dc58_sigma
+
+#print axioms CatalanMeasure.GenD.Signed.dc72_toParameters
+#print axioms CatalanMeasure.GenD.Signed.dc72_n0
+#print axioms CatalanMeasure.GenD.Signed.dc72_b0
+#print axioms CatalanMeasure.GenD.Signed.dc72_q0
+#print axioms CatalanMeasure.GenD.Signed.dc72_g0
+#print axioms CatalanMeasure.GenD.Signed.dc72_h0
+#print axioms CatalanMeasure.GenD.Signed.dc72_d0
+#print axioms CatalanMeasure.GenD.Signed.dc72_H
+#print axioms CatalanMeasure.GenD.Signed.dc72_H_succ
+#print axioms CatalanMeasure.GenD.Signed.dc72_gstar
+#print axioms CatalanMeasure.GenD.Signed.dc72_p1min
