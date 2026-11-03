@@ -379,5 +379,88 @@ theorem intScalarCheck_sound (N : Nat) (hN : N + 2 < p)
   refine ⟨hc.1.1.1.1, hc.1.1.1.2, ?_⟩
   exact int_ms_sound N hN Z hZ MS hc.1.1.2 hc.1.2 (fun m hm => hc.2 m (by omega) hm)
 
+
+/-- Exact cleared boundary-minus recurrences inherit the existing uniform
+rational-residue theorem. The common scale is never evaluated in Rat. -/
+theorem int_bm_sound (N : Nat) (hN : N + 2 < p)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (MS BM : List Int)
+    (hms : ∀ i, i < N → ResRec.Gd p (momentScalar i)
+      ((intAt MS i : ZMod p) / (Z : ZMod p)))
+    (h0 : intAt BM 0 = 0) (h1 : intAt BM 1 = 2 * Z)
+    (hstep : ∀ d, d + 2 < N →
+      (d + 2 : Int) * intAt BM (d + 2) =
+        (d + 1 : Int) * intAt BM d + intAt MS d + intAt MS (d + 1)) :
+    ∀ d, d < N → ResRec.Gd p (boundaryMinus d)
+      ((intAt BM d : ZMod p) / (Z : ZMod p)) := by
+  have hs : ∀ i, i < N → ResRec.Gd p (momentScalar i)
+      (ResRec.tl (scaledResidues p Z MS) i : ZMod p) := by
+    intro i hi
+    exact ResRec.Gd.val (scaledResidues_at Z MS i).symm (hms i hi)
+  have hb0 : (ResRec.tl (scaledResidues p Z BM) 0 : ZMod p) = 0 := by
+    rw [scaledResidues_at, h0]
+    simp
+  have hb1 : (ResRec.tl (scaledResidues p Z BM) 1 : ZMod p) = 2 := by
+    rw [scaledResidues_at, h1]
+    simp [hZ]
+  have he : ∀ d, d + 2 < N →
+      (((d + 2) * ResRec.tl (scaledResidues p Z BM) (d + 2) : Nat) : ZMod p) =
+        (((d + 1) * ResRec.tl (scaledResidues p Z BM) d +
+          ResRec.tl (scaledResidues p Z MS) d +
+          ResRec.tl (scaledResidues p Z MS) (d + 1) : Nat) : ZMod p) := by
+    intro d hd
+    have e := congrArg (fun z : Int => (z : ZMod p)) (hstep d hd)
+    push_cast at e ⊢
+    rw [scaledResidues_at, scaledResidues_at, scaledResidues_at, scaledResidues_at]
+    simpa only [add_div, mul_div_assoc] using
+      congrArg (fun z : ZMod p => z / (Z : ZMod p)) e
+  intro d hd
+  exact ResRec.Gd.val (scaledResidues_at Z BM d)
+    (ResRec.bm_sound N hN (scaledResidues p Z MS) (scaledResidues p Z BM)
+      hs hb0 hb1 he d hd)
+
+/-- Cleared reciprocal table entries are actual inverses after normalization. -/
+theorem int_inverse_sound (Z : Int) (hZ : (Z : ZMod p) ≠ 0)
+    (IV : List Int) {n : Nat} (he : (n : Int) * intAt IV n = Z) :
+    ((n * ResRec.tl (scaledResidues p Z IV) n : Nat) : ZMod p) = 1 := by
+  have e := congrArg (fun z : Int => (z : ZMod p)) he
+  push_cast at e ⊢
+  rw [scaledResidues_at, ← mul_div_assoc, e]
+  exact div_self hZ
+
+/-- Cleared boundary-plus recurrence, including its reciprocal source. -/
+theorem int_bp_sound (N : Nat) (hN : N + 2 < p)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (BP IV : List Int)
+    (hIV : ∀ n, 0 < n → n < N → (n : Int) * intAt IV n = Z)
+    (h0 : intAt BP 0 = 0) (h1 : intAt BP 1 = 0)
+    (hstep : ∀ d, d + 2 < N →
+      (d + 1 : Int) * intAt BP (d + 2) =
+        (d : Int) * intAt BP d + 2 * intAt IV (d + 1)) :
+    ∀ d, d < N → ResRec.Gd p (boundaryPlus d)
+      ((intAt BP d : ZMod p) / (Z : ZMod p)) := by
+  have hiv : ∀ n, 0 < n → n < N →
+      ((n * ResRec.tl (scaledResidues p Z IV) n : Nat) : ZMod p) = 1 := by
+    intro n hn hlt
+    exact int_inverse_sound Z hZ IV (hIV n hn hlt)
+  have hb0 : (ResRec.tl (scaledResidues p Z BP) 0 : ZMod p) = 0 := by
+    rw [scaledResidues_at, h0]
+    simp
+  have hb1 : (ResRec.tl (scaledResidues p Z BP) 1 : ZMod p) = 0 := by
+    rw [scaledResidues_at, h1]
+    simp
+  have he : ∀ d, d + 2 < N →
+      (((d + 1) * ResRec.tl (scaledResidues p Z BP) (d + 2) : Nat) : ZMod p) =
+        ((d * ResRec.tl (scaledResidues p Z BP) d +
+          2 * ResRec.tl (scaledResidues p Z IV) (d + 1) : Nat) : ZMod p) := by
+    intro d hd
+    have e := congrArg (fun z : Int => (z : ZMod p)) (hstep d hd)
+    push_cast at e ⊢
+    rw [scaledResidues_at, scaledResidues_at, scaledResidues_at]
+    simpa only [add_div, mul_div_assoc] using
+      congrArg (fun z : ZMod p => z / (Z : ZMod p)) e
+  intro d hd
+  exact ResRec.Gd.val (scaledResidues_at Z BP d)
+    (ResRec.bp_sound N hN (scaledResidues p Z BP) (scaledResidues p Z IV)
+      hiv hb0 hb1 he d hd)
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
