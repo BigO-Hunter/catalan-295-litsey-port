@@ -2,6 +2,8 @@ module
 public import CatalanMeasure.QuadCircle
 public import Mathlib.Analysis.SpecialFunctions.Arcosh
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.Series
+public import Mathlib.Analysis.Calculus.Deriv.Polynomial
+public import Mathlib.Topology.Algebra.MetricSpace.Lipschitz
 public import Mathlib.Tactic
 
 @[expose] public section
@@ -105,6 +107,76 @@ theorem nodalGreen_holder (p : ℝ[X]) {m : ℕ} (hm : 0 < m) (z w : ℂ) :
   rw [← sub_div, abs_div, abs_of_pos hmR]
   exact div_le_div_of_nonneg_right (ellipseLog_holder _ _) hmR.le
 
+theorem polynomial_eval_compact_lipschitz (p : ℝ[X]) {s : Set ℂ} (hs : IsCompact s) :
+    ∃ L : ℝ, 0 ≤ L ∧ ∀ z ∈ s, ∀ w ∈ s,
+      ‖(p.map (algebraMap ℝ ℂ)).eval z - (p.map (algebraMap ℝ ℂ)).eval w‖ ≤ L * ‖z - w‖ := by
+  have hlocal : LocallyLipschitzOn s (fun z : ℂ => (p.map (algebraMap ℝ ℂ)).eval z) := by
+    intro z hz
+    obtain ⟨K, t, ht, hK⟩ :=
+      ((p.map (algebraMap ℝ ℂ)).hasStrictDerivAt z).hasStrictFDerivAt.exists_lipschitzOnWith
+    exact ⟨K, t, mem_nhdsWithin_of_mem_nhds ht, hK⟩
+  obtain ⟨K, hK⟩ := LocallyLipschitzOn.exists_lipschitzOnWith_of_compact hs hlocal
+  refine ⟨(K : ℝ), by positivity, fun z hz w hw => ?_⟩
+  simpa only [dist_eq_norm] using hK.dist_le_mul z hz w hw
+
+theorem nodalGreen_compact_holder (p : ℝ[X]) {m : ℕ} (hm : 0 < m)
+    {s : Set ℂ} (hs : IsCompact s) : ∃ L : ℝ, 0 ≤ L ∧ ∀ z ∈ s, ∀ w ∈ s,
+      |nodalGreen p m z - nodalGreen p m w| ≤ L * Real.sqrt ‖z - w‖ := by
+  obtain ⟨K, hK, hLip⟩ := polynomial_eval_compact_lipschitz p hs
+  have hmR : (0 : ℝ) < m := by exact_mod_cast hm
+  refine ⟨Real.sqrt (2 * K) / (m : ℝ), by positivity, fun z hz w hw => ?_⟩
+  have h := (nodalGreen_holder p hm z w).trans
+    (div_le_div_of_nonneg_right (Real.sqrt_le_sqrt
+      (mul_le_mul_of_nonneg_left (hLip z hz w hw) (by norm_num))) hmR.le)
+  have he : Real.sqrt (2 * (K * ‖z - w‖)) / (m : ℝ) =
+      Real.sqrt (2 * K) / (m : ℝ) * Real.sqrt ‖z - w‖ := by
+    rw [show 2 * (K * ‖z - w‖) = (2 * K) * ‖z - w‖ by ring,
+      Real.sqrt_mul (by positivity : 0 ≤ 2 * K)]
+    ring
+  exact he ▸ h
+
+theorem mul_sqrt_norm_le_one {N : ℕ} {z w : ℂ}
+    (hclose : (N : ℝ)^2 * ‖z - w‖ ≤ 1) : (N : ℝ) * Real.sqrt ‖z - w‖ ≤ 1 := by
+  have hs := Real.sq_sqrt (norm_nonneg (z - w))
+  have hn : (0 : ℝ) ≤ N := Nat.cast_nonneg _
+  have h0 := mul_nonneg hn (Real.sqrt_nonneg ‖z - w‖)
+  have hsq : ((N : ℝ) * Real.sqrt ‖z - w‖)^2 ≤ 1 := by
+    rw [mul_pow, hs]
+    exact hclose
+  nlinarith
+
+/-- Moving a contour point by O(N^-2) changes its N-scaled Green exponent
+by one fixed constant. This is the no-rate-loss step of the keyhole contract. -/
+theorem nodalGreen_scaled_perturbation (p : ℝ[X]) {m : ℕ} (hm : 0 < m)
+    {s : Set ℂ} (hs : IsCompact s) : ∃ L : ℝ, 0 ≤ L ∧ ∀ (N : ℕ) z, z ∈ s →
+      ∀ w ∈ s, (N : ℝ)^2 * ‖z - w‖ ≤ 1 →
+        (N : ℝ) * nodalGreen p m z ≤ (N : ℝ) * nodalGreen p m w + L := by
+  obtain ⟨L, hL, hLip⟩ := nodalGreen_compact_holder p hm hs
+  refine ⟨L, hL, fun N z hz w hw hclose => ?_⟩
+  have hdiff := (le_abs_self (nodalGreen p m z - nodalGreen p m w)).trans (hLip z hz w hw)
+  have hroot := mul_sqrt_norm_le_one hclose
+  calc
+    (N : ℝ) * nodalGreen p m z = (N : ℝ) * nodalGreen p m w +
+        (N : ℝ) * (nodalGreen p m z - nodalGreen p m w) := by ring
+    _ ≤ (N : ℝ) * nodalGreen p m w + (N : ℝ) * (L * Real.sqrt ‖z - w‖) := by
+      exact add_le_add le_rfl (mul_le_mul_of_nonneg_left hdiff (Nat.cast_nonneg N))
+    _ = (N : ℝ) * nodalGreen p m w + L * ((N : ℝ) * Real.sqrt ‖z - w‖) := by ring
+    _ ≤ (N : ℝ) * nodalGreen p m w + L * 1 := by
+      exact add_le_add le_rfl (mul_le_mul_of_nonneg_left hroot hL)
+    _ = (N : ℝ) * nodalGreen p m w + L := by ring
+
+theorem chebyshev_comp_norm_le_green (p : ℝ[X]) {m : ℕ} (hm : 0 < m) (K : ℕ) (z : ℂ) :
+    ‖(((Chebyshev.T ℝ (K : ℤ)).comp p).map (algebraMap ℝ ℂ)).eval z‖ ≤
+      Real.exp (((m * K : ℕ) : ℝ) * nodalGreen p m z) := by
+  have hmR : (m : ℝ) ≠ 0 := by exact_mod_cast hm.ne'
+  have he : ((m * K : ℕ) : ℝ) * nodalGreen p m z =
+      (K : ℝ) * ellipseLog ((p.map (algebraMap ℝ ℂ)).eval z) := by
+    unfold nodalGreen
+    push_cast
+    field_simp
+  rw [he, Polynomial.map_comp, Chebyshev.map_T, Polynomial.eval_comp]
+  exact norm_T_eval_le_exp_ellipseLog K _
+
 end
 end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.one_add_half_sq_le_cosh
@@ -117,3 +189,13 @@ end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.norm_T_eval_le_exp_ellipseLog
 #print axioms CatalanMeasure.GenD.Analytic.nodalGreen_nonneg
 #print axioms CatalanMeasure.GenD.Analytic.nodalGreen_holder
+
+#print axioms CatalanMeasure.GenD.Analytic.polynomial_eval_compact_lipschitz
+
+#print axioms CatalanMeasure.GenD.Analytic.nodalGreen_compact_holder
+
+#print axioms CatalanMeasure.GenD.Analytic.mul_sqrt_norm_le_one
+
+#print axioms CatalanMeasure.GenD.Analytic.nodalGreen_scaled_perturbation
+
+#print axioms CatalanMeasure.GenD.Analytic.chebyshev_comp_norm_le_green
