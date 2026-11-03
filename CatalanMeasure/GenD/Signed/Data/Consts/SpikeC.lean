@@ -21,6 +21,8 @@ pairing are finite rational sums (`idxSum`).  This file proves
 namespace CatalanMeasure.Signed.Consts
 
 open Set CatalanMeasure.Cert OAI.InternalCatalan CatalanMeasure.Signed
+set_option Elab.async false
+set_option profiler true
 
 def idxSum (f : ℕ → ℚ → ℚ) : List ℚ → ℕ → ℚ
   | [], _ => 0
@@ -81,6 +83,86 @@ theorem barrierTrialS_bSeq (bs : List ℚ) (x : ℚ) :
   unfold barrierTrialS
   have := tsum_bSeq bs (fun k t => t * (x : ℝ) ^ (k + 1) / ((k + 1 : ℕ) : ℝ)) (fun _ => by simp)
   rw [this, Sbq, idxSum_cast]; push_cast; simp
+
+
+/-! ### Exact positive-coefficient Horner route for endpoint costs -/
+
+/-- Coefficients of S_b(-rho)/rho. Positivity is an explicit instance condition. -/
+def sbPosCoeffs : List ℚ → ℕ → List ℚ
+  | [], _ => []
+  | b :: bs, k => ((-1 : ℚ) ^ (k + 1) * b / ((k : ℚ) + 1)) :: sbPosCoeffs bs (k + 1)
+
+def sbHorQ (r : ℚ) : List ℚ → ℚ
+  | [] => 0
+  | c :: cs => c + r * sbHorQ r cs
+
+theorem sbHorQ_cast (r : ℚ) (cs : List ℚ) :
+    ((sbHorQ r cs : ℚ) : ℝ) = lpEval cs (r : ℝ) := by
+  induction cs with
+  | nil => simp [sbHorQ, lpEval]
+  | cons c cs ih => simp [sbHorQ, lpEval_cons, ih]
+
+theorem sb_sum_horner (bs : List ℚ) (r : ℝ) : ∀ k : ℕ,
+    (∑ j ∈ Finset.range bs.length, (bs.getD j 0 : ℝ) * (-r) ^ (k + j + 1) /
+      (((k + j : ℕ) : ℝ) + 1)) = r ^ (k + 1) * lpEval (sbPosCoeffs bs k) r := by
+  induction bs with
+  | nil => intro k; simp [sbPosCoeffs, lpEval]
+  | cons b bs ih =>
+    intro k
+    rw [List.length_cons, Finset.sum_range_succ']
+    simp only [List.getD_cons_zero, List.getD_cons_succ, Nat.add_zero]
+    have ht :
+        (∑ j ∈ Finset.range bs.length, (bs.getD j 0 : ℝ) * (-r) ^ (k + (j + 1) + 1) /
+          (((k + (j + 1) : ℕ) : ℝ) + 1)) =
+        (∑ j ∈ Finset.range bs.length, (bs.getD j 0 : ℝ) * (-r) ^ (k + 1 + j + 1) /
+          (((k + 1 + j : ℕ) : ℝ) + 1)) := by
+      apply Finset.sum_congr rfl
+      intro j hj
+      rw [show k + (j + 1) = k + 1 + j by omega]
+    rw [ht, ih (k + 1), sbPosCoeffs, lpEval_cons]
+    have hp : (-r) ^ (k + 1) = (-1 : ℝ) ^ (k + 1) * r ^ (k + 1) := by
+      rw [← mul_pow]
+      congr 1
+      ring
+    rw [hp, show r ^ (k + 1 + 1) = r ^ (k + 1) * r by rw [pow_succ]]
+    push_cast
+    ring
+
+theorem barrierTrialS_horner (bs : List ℚ) (r : ℝ) :
+    barrierTrialS (bSeq bs) (-r) = r * lpEval (sbPosCoeffs bs 0) r := by
+  unfold barrierTrialS
+  rw [tsum_bSeq bs (fun k t => t * (-r) ^ (k + 1) / ((k + 1 : ℕ) : ℝ)) (by intro k; simp)]
+  simpa only [Nat.zero_add, Nat.cast_add, Nat.cast_one, pow_one] using sb_sum_horner bs r 0
+
+theorem Sbq_neg_horner (bs : List ℚ) (r : ℚ) :
+    Sbq bs (-r) = r * sbHorQ r (sbPosCoeffs bs 0) := by
+  have hb : barrierTrialS (bSeq bs) (-(r : ℝ)) = ((Sbq bs (-r) : ℚ) : ℝ) := by
+    simpa only [Rat.cast_neg] using barrierTrialS_bSeq bs (-r)
+  have h := barrierTrialS_horner bs (r : ℝ)
+  rw [hb] at h
+  have hc : ((Sbq bs (-r) : ℚ) : ℝ) = ((r * sbHorQ r (sbPosCoeffs bs 0) : ℚ) : ℝ) := by
+    simpa only [Rat.cast_mul, sbHorQ_cast] using h
+  exact_mod_cast hc
+
+theorem lpEval_mono_nonneg {x y : ℝ} (hx : 0 ≤ x) (hxy : x ≤ y) :
+    ∀ cs : List ℚ, cs.all (fun c => decide (0 ≤ c)) = true → lpEval cs x ≤ lpEval cs y
+  | [], _ => by simp [lpEval]
+  | c :: cs, h => by
+    simp only [List.all_cons, Bool.and_eq_true] at h
+    rw [lpEval_cons, lpEval_cons]
+    exact add_le_add le_rfl (mul_le_mul hxy (lpEval_mono_nonneg hx hxy cs h.2)
+      (lpEval_nonneg h.2 hx) (hx.trans hxy))
+
+theorem barrierTrialS_neg_mono {bs : List ℚ}
+    (hc : (sbPosCoeffs bs 0).all (fun c => decide (0 ≤ c)) = true)
+    {r t : ℝ} (hr : 0 ≤ r) (hrt : r ≤ t) :
+    barrierTrialS (bSeq bs) (-r) ≤ barrierTrialS (bSeq bs) (-t) := by
+  rw [barrierTrialS_horner, barrierTrialS_horner]
+  exact mul_le_mul hrt (lpEval_mono_nonneg hr hrt _ hc) (lpEval_nonneg hc hr) (hr.trans hrt)
+
+#print axioms Sbq_neg_horner
+#print axioms barrierTrialS_horner
+#print axioms barrierTrialS_neg_mono
 
 /-! ### `costRem` of the count trial `l * b` -/
 
