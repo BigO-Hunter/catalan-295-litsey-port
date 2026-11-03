@@ -251,3 +251,28 @@ theorem boundSM2 (Fc : FieldQ) (hpl : T2.smFq.plogs = Fc.plogs) (hpo : T2.smFq.p
       (by norm_num : (-1:ℝ)< -(19501/100000:ℝ)) (by norm_num : -(19501/100000:ℝ)<0) hsup
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
+
+namespace CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
+open Filter Set CatalanMeasure.Signed CatalanMeasure.Signed.FieldForm
+open CatalanMeasure.GenD.Signed.Data.Trial CatalanMeasure.GenD.Signed.Data.Assembly
+noncomputable section
+theorem spikeEnv0 {S0 : ℝ}
+    (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T0.trial.form x ≤ S0)
+    (hgap : S0 < T0.trial.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T0.D N)) := by
+  simpa only [T0.D, X0, toAssembly] using
+    Generic.famD_spikeEnv dc72 X0 hok0 hRt0 hfr hgap
+theorem spikeEnv1 {S0 : ℝ}
+    (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T1.trial.form x ≤ S0)
+    (hgap : S0 < T1.trial.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T1.D N)) := by
+  simpa only [T1.D, X1, toAssembly] using
+    Generic.famD_spikeEnv dc72 X1 hok1 hRt1 hfr hgap
+theorem spikeEnv2 {S0 : ℝ}
+    (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T2.trial.form x ≤ S0)
+    (hgap : S0 < T2.trial.Sup) :
+    ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T2.D N)) := by
+  simpa only [T2.D, X2, toAssembly] using
+    Generic.famD_spikeEnv dc72 X2 hok2 hRt2 hfr hgap
+end
+end CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
