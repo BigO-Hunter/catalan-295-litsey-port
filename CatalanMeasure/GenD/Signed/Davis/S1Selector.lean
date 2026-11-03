@@ -110,7 +110,62 @@ theorem scalarOK_spec {lo hi U Ψ : ℚ} (hlo : 0 ≤ lo) (hlh : lo ≤ hi) (hhi
           · rw [hbin]
             linarith
 
+structure Cell where
+  lo : ℚ
+  hi : ℚ
+  upper : ℚ
+
+def cellOK (Ψ : ℚ) (c : Cell) : Bool :=
+  decide (0 ≤ c.lo ∧ c.lo ≤ c.hi ∧ c.hi ≤ 1) && scalarOK c.lo c.hi c.upper Ψ
+
+def coversFrom (start target : ℚ) : List (ℚ × ℚ) → Bool
+  | [] => decide (start = target)
+  | c :: cs => decide (start = c.1 ∧ c.1 ≤ c.2) && coversFrom c.2 target cs
+
+theorem coversFrom_spec {cells : List (ℚ × ℚ)} {start target : ℚ}
+    (h : coversFrom start target cells = true) (hlt : start < target) :
+    ∀ x : ℝ, (start : ℝ) ≤ x → x ≤ (target : ℝ) →
+      ∃ c ∈ cells, (c.1 : ℝ) ≤ x ∧ x ≤ (c.2 : ℝ) := by
+  induction cells generalizing start with
+  | nil =>
+    have he : start = target := by simpa [coversFrom] using h
+    subst start
+    exact False.elim (lt_irrefl _ hlt)
+  | cons c cs ih =>
+    simp only [coversFrom, Bool.and_eq_true, decide_eq_true_eq] at h
+    obtain ⟨⟨he, hc⟩, htail⟩ := h
+    intro x hx hx'
+    by_cases hxc : x ≤ (c.2 : ℝ)
+    · refine ⟨c, List.mem_cons_self, ?_, hxc⟩
+      simpa only [he] using hx
+    · have ht : (c.2 : ℝ) < (target : ℝ) := by linarith
+      have htQ : c.2 < target := by exact_mod_cast ht
+      obtain ⟨d, hd, hdx⟩ := ih htail htQ x (by linarith [not_le.mp hxc]) hx'
+      exact ⟨d, List.mem_cons_of_mem c hd, hdx⟩
+
+theorem selector_list_hPsi (cells : List Cell) {Ψ : ℚ}
+    (hcover : coversFrom 0 1 (cells.map (fun c => (c.lo,c.hi))) = true)
+    (hchecks : ∀ c ∈ cells, cellOK Ψ c = true) :
+    ∀ κ ∈ Set.Icc (0 : ℝ) 1,
+      ((12-72*κ)*Real.log (3/5)+(24330011831893/549755813888 : ℝ))/72 +
+        binomRate κ ≤ (Ψ : ℝ)/72 := by
+  intro κ hκ
+  obtain ⟨iv, hiv, hκiv⟩ := coversFrom_spec hcover (by norm_num) κ
+    (by simpa using hκ.1) (by simpa using hκ.2)
+  obtain ⟨c, hc, rfl⟩ := List.mem_map.mp hiv
+  have h := hchecks c hc
+  simp only [cellOK, Bool.and_eq_true, decide_eq_true_eq] at h
+  obtain ⟨⟨hlo, hlh, hhi⟩, hscalar⟩ := h
+  obtain ⟨hU,hΨ⟩ := scalarOK_spec hlo hlh hhi hscalar
+  have ht := affine_circle_selector_cell (by norm_num : (0 : ℝ) < 3/5)
+    (by norm_num : (3/5 : ℝ) ≤ 1) (by norm_num : (0 : ℝ) ≤ 72)
+    (by exact_mod_cast hlo) (by exact_mod_cast hhi) hU hΨ κ hκiv
+  linarith
+
 end
 end CatalanMeasure.GenD.Signed.Davis.S1Selector
 #print axioms CatalanMeasure.GenD.Signed.Davis.S1Selector.mul_logQ_upper
 #print axioms CatalanMeasure.GenD.Signed.Davis.S1Selector.scalarOK_spec
+
+#print axioms CatalanMeasure.GenD.Signed.Davis.S1Selector.coversFrom_spec
+#print axioms CatalanMeasure.GenD.Signed.Davis.S1Selector.selector_list_hPsi
