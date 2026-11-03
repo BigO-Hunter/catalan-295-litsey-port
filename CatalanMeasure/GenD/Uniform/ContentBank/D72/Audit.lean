@@ -16,3 +16,6 @@ as their generic and data proofs are completed. -/
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.map_zTy
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.map_zGy
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.zProfileData_realises
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Prof.radixEval_zero
+#print axioms CatalanMeasure.GenD.Uniform.W.Prof.packed_kernel_kill
