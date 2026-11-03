@@ -301,5 +301,175 @@ theorem int_zeta_sound (H L : Nat) (hH : H + 3 < p) (hLH : L ≤ H)
     rw [zetaRat_symm, hrow j hj]
     exact col0 j (by omega)
 
+
+/-- Complete finite base-source data. All entries are native cleared integers. -/
+structure IntMomentData where
+  H : Nat
+  L : Nat
+  N : Nat
+  scale : Int
+  ms : List Int
+  bm : List Int
+  bp : List Int
+  h1 : List Int
+  iv : List Int
+  mt : List (List Int)
+  zt : List (List Int)
+
+/-- Shape is separate from arithmetic, to expose every consumed finite bound. -/
+def IntMomentData.shape (d : IntMomentData) : Bool :=
+  decide (d.L ≤ d.H) && decide (d.H + 2 ≤ d.N) &&
+  [d.ms, d.bm, d.bp].all (fun t => decide (t.length = d.N)) &&
+  [d.h1, d.iv].all (fun t => decide (t.length = d.N + 1)) &&
+  [d.mt, d.zt].all (fun t => decide (t.length = d.H) &&
+    t.all (fun row => decide (row.length = d.L)))
+
+def IntMomentData.checks (d : IntMomentData) : List Bool := [
+  d.shape,
+  intScalarCheck d.N d.scale d.ms,
+  decide (intAt d.bm 0 = 0), decide (intAt d.bm 1 = 2 * d.scale),
+  decide (intAt d.bp 0 = 0), decide (intAt d.bp 1 = 0),
+  decide (intAt d.h1 0 = 0), decide (intAt d.iv 0 = 0),
+  (List.range (d.N + 1)).all (fun n => decide (0 < n →
+    (n : Int) * intAt d.iv n = d.scale)),
+  (List.range d.N).all (fun n => decide (n + 2 < d.N →
+    (n + 2 : Int) * intAt d.bm (n + 2) =
+      (n + 1 : Int) * intAt d.bm n + intAt d.ms n + intAt d.ms (n + 1))),
+  (List.range d.N).all (fun n => decide (n + 2 < d.N →
+    (n + 1 : Int) * intAt d.bp (n + 2) =
+      (n : Int) * intAt d.bp n + 2 * intAt d.iv (n + 1))),
+  (List.range d.N).all (fun n => decide (
+    intAt d.h1 (n + 1) = intAt d.h1 n + intAt d.iv (n + 1))),
+  (List.range d.H).all (fun i => decide (intAt2 d.mt i 0 = intAt d.bm i)),
+  (List.range d.L).all (fun j => decide (intAt2 d.mt 0 j = intAt d.bp j)),
+  decide (intAt2 d.zt 0 0 = 0),
+  (List.range d.H).all (fun i => decide (0 < i →
+    (i : Int) * intAt2 d.zt i 0 = intAt d.h1 i)),
+  (List.range d.L).all (fun j => decide (intAt2 d.zt 0 j = intAt2 d.zt j 0)),
+  (List.range d.H).all (fun i => (List.range d.L).all (fun j => decide (
+    i + 1 < d.H → j + 1 < d.L →
+      (j + 1 : Int) * (intAt2 d.mt i j - intAt2 d.mt (i + 1) (j + 1)) = intAt d.ms i))),
+  (List.range d.H).all (fun i => (List.range d.L).all (fun j => decide (
+    i + 1 < d.H → j + 1 < d.L →
+      (i + 1 : Int) * (j + 1 : Int) *
+        (intAt2 d.zt i j - intAt2 d.zt (i + 1) (j + 1)) = d.scale))) ]
+
+/-- Uniform-prime certificate checker: no Rat, ZMod or fixed prime occurs here. -/
+def IntMomentData.check (d : IntMomentData) : Bool := d.checks.all id
+
+/-- Actual rational source values and denominator units at an arbitrary prime. -/
+structure IntMomentData.Sound (d : IntMomentData) (p : Nat) [Fact p.Prime] : Prop where
+  positive : 0 < d.scale
+  shape : d.shape = true
+  ms : ∀ i, i < d.N → ResRec.Gd p (momentScalar i)
+    ((intAt d.ms i : ZMod p) / (d.scale : ZMod p))
+  bm : ∀ i, i < d.N → ResRec.Gd p (boundaryMinus i)
+    ((intAt d.bm i : ZMod p) / (d.scale : ZMod p))
+  bp : ∀ i, i < d.N → ResRec.Gd p (boundaryPlus i)
+    ((intAt d.bp i : ZMod p) / (d.scale : ZMod p))
+  h1 : ∀ i, i < d.N + 1 → ResRec.Gd p (harmonicRat 1 i)
+    ((intAt d.h1 i : ZMod p) / (d.scale : ZMod p))
+  mt : ∀ i j, i < d.H → j < d.L → ResRec.Gd p (momentRat i j)
+    ((intAt2 d.mt i j : ZMod p) / (d.scale : ZMod p))
+  zt : ∀ i j, i < d.H → j < d.L → ResRec.Gd p (zetaRat i j)
+    ((intAt2 d.zt i j : ZMod p) / (d.scale : ZMod p))
+
+theorem IntMomentData.check_sound (d : IntMomentData) (hp : d.N + 2 < p)
+    (hz : (d.scale : ZMod p) ≠ 0) (hc : d.check = true) : d.Sound p := by
+  have get (b : Bool) (hb : b ∈ d.checks) : b = true :=
+    List.all_eq_true.mp hc b hb
+  have hs : d.shape = true := get _ (by simp [IntMomentData.checks])
+  have hdim := hs
+  simp only [IntMomentData.shape, Bool.and_eq_true, decide_eq_true_eq] at hdim
+  have hLH : d.L ≤ d.H := hdim.1.1.1.1
+  have hHN : d.H + 2 ≤ d.N := hdim.1.1.1.2
+  have hH : d.H + 3 < p := by omega
+  have hm := intScalarCheck_sound d.N hp d.scale hz d.ms
+    (get _ (by simp [IntMomentData.checks]))
+  have hb0 : intAt d.bm 0 = 0 := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hb1 : intAt d.bm 1 = 2 * d.scale := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hp0 : intAt d.bp 0 = 0 := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hp1 : intAt d.bp 1 = 0 := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hh0 : intAt d.h1 0 = 0 := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hz00 : intAt2 d.zt 0 0 = 0 := of_decide_eq_true (get _ (by simp [IntMomentData.checks]))
+  have hiv : ∀ n, 0 < n → n < d.N + 1 → (n : Int) * intAt d.iv n = d.scale := by
+    have he : (List.range (d.N + 1)).all (fun n => decide (0 < n →
+      (n : Int) * intAt d.iv n = d.scale)) = true := get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro n hn hlt
+    exact he n hlt hn
+  have hbmstep : ∀ n, n + 2 < d.N → (n + 2 : Int) * intAt d.bm (n + 2) =
+      (n + 1 : Int) * intAt d.bm n + intAt d.ms n + intAt d.ms (n + 1) := by
+    have he : (List.range d.N).all (fun n => decide (n + 2 < d.N →
+      (n + 2 : Int) * intAt d.bm (n + 2) = (n + 1 : Int) * intAt d.bm n +
+        intAt d.ms n + intAt d.ms (n + 1))) = true := get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro n hn
+    exact he n (by omega) hn
+  have hbpstep : ∀ n, n + 2 < d.N → (n + 1 : Int) * intAt d.bp (n + 2) =
+      (n : Int) * intAt d.bp n + 2 * intAt d.iv (n + 1) := by
+    have he : (List.range d.N).all (fun n => decide (n + 2 < d.N →
+      (n + 1 : Int) * intAt d.bp (n + 2) = (n : Int) * intAt d.bp n +
+        2 * intAt d.iv (n + 1))) = true := get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro n hn
+    exact he n (by omega) hn
+  have hhstep : ∀ n, n + 1 < d.N + 1 →
+      intAt d.h1 (n + 1) = intAt d.h1 n + intAt d.iv (n + 1) := by
+    have he : (List.range d.N).all (fun n => decide (
+      intAt d.h1 (n + 1) = intAt d.h1 n + intAt d.iv (n + 1))) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro n hn
+    exact he n (by omega)
+  have hmc : ∀ i, i < d.H → intAt2 d.mt i 0 = intAt d.bm i := by
+    have he : (List.range d.H).all (fun i => decide (intAt2 d.mt i 0 = intAt d.bm i)) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simpa only [List.all_eq_true, List.mem_range, decide_eq_true_eq] using he
+  have hmr : ∀ j, j < d.L → intAt2 d.mt 0 j = intAt d.bp j := by
+    have he : (List.range d.L).all (fun j => decide (intAt2 d.mt 0 j = intAt d.bp j)) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simpa only [List.all_eq_true, List.mem_range, decide_eq_true_eq] using he
+  have hzc : ∀ i, 0 < i → i < d.H → (i : Int) * intAt2 d.zt i 0 = intAt d.h1 i := by
+    have he : (List.range d.H).all (fun i => decide (0 < i →
+      (i : Int) * intAt2 d.zt i 0 = intAt d.h1 i)) = true := get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro i hi hlt
+    exact he i hlt hi
+  have hzr : ∀ j, j < d.L → intAt2 d.zt 0 j = intAt2 d.zt j 0 := by
+    have he : (List.range d.L).all (fun j => decide (intAt2 d.zt 0 j = intAt2 d.zt j 0)) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simpa only [List.all_eq_true, List.mem_range, decide_eq_true_eq] using he
+  have hmd : ∀ i j, i + 1 < d.H → j + 1 < d.L →
+      (j + 1 : Int) * (intAt2 d.mt i j - intAt2 d.mt (i + 1) (j + 1)) = intAt d.ms i := by
+    have he : (List.range d.H).all (fun i => (List.range d.L).all (fun j => decide (
+      i + 1 < d.H → j + 1 < d.L →
+        (j + 1 : Int) * (intAt2 d.mt i j - intAt2 d.mt (i + 1) (j + 1)) = intAt d.ms i))) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro i j hi hj
+    exact he i (by omega) j (by omega) hi hj
+  have hzd : ∀ i j, i + 1 < d.H → j + 1 < d.L →
+      (i + 1 : Int) * (j + 1 : Int) *
+        (intAt2 d.zt i j - intAt2 d.zt (i + 1) (j + 1)) = d.scale := by
+    have he : (List.range d.H).all (fun i => (List.range d.L).all (fun j => decide (
+      i + 1 < d.H → j + 1 < d.L →
+        (i + 1 : Int) * (j + 1 : Int) *
+          (intAt2 d.zt i j - intAt2 d.zt (i + 1) (j + 1)) = d.scale))) = true :=
+      get _ (by simp [IntMomentData.checks])
+    simp only [List.all_eq_true, List.mem_range, decide_eq_true_eq] at he
+    intro i j hi hj
+    exact he i (by omega) j (by omega) hi hj
+  have hbm := int_bm_sound d.N hp d.scale hz d.ms d.bm hm.2.2 hb0 hb1 hbmstep
+  have hbp := int_bp_sound d.N hp d.scale hz d.bp d.iv
+    (fun n hn hlt => hiv n hn (by omega)) hp0 hp1 hbpstep
+  have hh := int_h1_sound d.N (by omega) d.scale hz d.h1 d.iv hiv hh0 hhstep
+  refine ⟨hm.1, hs, hm.2.2, hbm, hbp, hh, ?_, ?_⟩
+  · exact int_moment_sound d.H d.L hH hLH d.scale hz d.ms d.bm d.bp d.mt
+      (fun i hi => hm.2.2 i (by omega)) (fun i hi => hbm i (by omega))
+      (fun j hj => hbp j (by omega)) hmc hmr hmd
+  · exact int_zeta_sound d.H d.L hH hLH d.scale hz d.h1 d.zt
+      (fun n hn => hh n (by omega)) hz00 hzc hzr hzd
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
