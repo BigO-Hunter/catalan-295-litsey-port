@@ -70,6 +70,82 @@ theorem point_value_sound (c : ℤ × ℤ) {q : ℤ} (hq : q ≠ 0) (as : List �
   rw [hpower, one_mul, Int.cast_pow] at ht
   exact ht
 
+def evalPairs : List (ℤ × ℤ) → ℂ → ℂ
+  | [], _ => 0
+  | a :: as, z => castPair a + z * evalPairs as z
+
+theorem evalPairs_append_zero (as : List (ℤ × ℤ)) (z : ℂ) :
+    evalPairs (as ++ [(0, 0)]) z = evalPairs as z := by
+  induction as with
+  | nil => simp [evalPairs, castPair_real]
+  | cons a as ih => simp [evalPairs, ih]
+
+theorem evalPairs_zip_linear (as bs : List (ℤ × ℤ))
+    (hlen : as.length = bs.length) (c : ℤ × ℤ) (z : ℂ) :
+    evalPairs ((as.zip bs).map (fun vw => plus vw.1 (times c vw.2))) z =
+      evalPairs as z + castPair c * evalPairs bs z := by
+  induction as generalizing bs with
+  | nil =>
+    cases bs <;> simp_all [evalPairs]
+  | cons a as ih =>
+    cases bs with
+    | nil => simp at hlen
+    | cons b bs =>
+      have hlen' : as.length = bs.length := by simpa using hlen
+      simp only [List.zip_cons_cons, List.map_cons, evalPairs, castPair_plus, castPair_times]
+      rw [ih bs hlen']
+      ring
+
+theorem evalPairs_modifyHead_add (as : List (ℤ × ℤ)) (hne : as ≠ []) (a : ℤ) (z : ℂ) :
+    evalPairs (as.modifyHead (fun v => plus v (a, 0))) z = evalPairs as z + (a : ℂ) := by
+  cases as with
+  | nil => contradiction
+  | cons b bs =>
+    simp only [List.modifyHead_cons, evalPairs, castPair_plus, castPair_real]
+    ring
+
+def shiftStep (c : ℤ × ℤ) (q : ℤ) (state : List (ℤ × ℤ) × ℤ) (a : ℤ) :
+    List (ℤ × ℤ) × ℤ :=
+  let shifted := (((0, 0)::state.1).zip (state.1++[(0, 0)])).map
+    (fun vw => plus vw.1 (times c vw.2))
+  (shifted.modifyHead (fun v => plus v (a * state.2, 0)), state.2 * q)
+
+theorem evalPairs_shiftStep (c : ℤ × ℤ) (q : ℤ) (state : List (ℤ × ℤ) × ℤ)
+    (a : ℤ) (z : ℂ) :
+    evalPairs (shiftStep c q state a).1 z =
+      (z + castPair c) * evalPairs state.1 z + (a : ℂ) * (state.2 : ℂ) := by
+  let shifted := (((0, 0)::state.1).zip (state.1++[(0, 0)])).map
+    (fun vw => plus vw.1 (times c vw.2))
+  have hlen : ((0, 0)::state.1).length = (state.1++[(0, 0)]).length := by simp
+  have hnonempty : shifted ≠ [] := by
+    intro he
+    have ht := congrArg List.length he
+    simp [shifted] at ht
+  change evalPairs (shifted.modifyHead (fun v => plus v (a * state.2, 0))) z = _
+  rw [evalPairs_modifyHead_add shifted hnonempty]
+  change evalPairs (((((0, 0)::state.1).zip (state.1++[(0, 0)])).map
+    (fun vw => plus vw.1 (times c vw.2)))) z + ((a * state.2 : ℤ) : ℂ) = _
+  rw [evalPairs_zip_linear _ _ hlen c z, evalPairs_append_zero]
+  simp only [evalPairs, castPair_real, Int.cast_zero, zero_add, Int.cast_mul]
+  ring
+
+/-- Every checked translated coefficient list denotes exactly the translated
+polynomial value, for all complex evaluation variables simultaneously. -/
+theorem translation_value_sound (c : ℤ × ℤ) {q : ℤ} (hq : q ≠ 0)
+    (as : List ℤ) (z : ℂ) :
+    evalPairs (as.foldl (shiftStep c q) ([], 1)).1 z * (q : ℂ) =
+      (q : ℂ) ^ as.length *
+        as.foldl (fun (v : ℂ) (a : ℤ) => (z + castPair c) / (q : ℂ) * v + (a : ℂ)) 0 := by
+  have hv : ∀ state a, evalPairs (shiftStep c q state a).1 z =
+      (z + castPair c) * evalPairs state.1 z + (a : ℂ) * (state.2 : ℂ) :=
+    fun state a => evalPairs_shiftStep c q state a z
+  have hp : ∀ state a, (shiftStep c q state a).2 = state.2 * q := fun _ _ => rfl
+  have ht := homogeneous_fold_invariant (shiftStep c q) (fun state => evalPairs state.1 z)
+    (fun state => state.2) hq (z + castPair c) hv hp as ([], 1) 0 (by simp [evalPairs])
+  have hpower := fold_power (shiftStep c q) (fun state => state.2) q hp as ([], 1)
+  rw [hpower, one_mul, Int.cast_pow] at ht
+  exact ht
+
 end
 end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.castPair_plus
@@ -78,3 +154,13 @@ end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.homogeneous_fold_invariant
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.fold_power
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.point_value_sound
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_append_zero
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_zip_linear
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_modifyHead_add
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_shiftStep
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.translation_value_sound
