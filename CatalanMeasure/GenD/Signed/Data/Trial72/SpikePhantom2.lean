@@ -18,10 +18,10 @@ def B1q : ℚ := 386055281697 / 274877906944
 def BRq : ℚ := 512126924357 / 549755813888
 def Lθ : ℚ := 7
 
-theorem log_bound : Real.log (1 / (1/1000 : ℝ)) ≤ (Lθ : ℝ) := by
+theorem log_bound : Real.log (1 / (1/1024 : ℝ)) ≤ (Lθ : ℝ) := by
   have hlog := Real.log_two_lt_d9
-  have h := Real.log_le_log (by norm_num : 0 < (1/(1/1000) : ℝ))
-    (by norm_num : (1/(1/1000) : ℝ) ≤ 2^10)
+  have h := Real.log_le_log (by norm_num : 0 < (1/(1/1024) : ℝ))
+    (by norm_num : (1/(1/1024) : ℝ) ≤ 2^10)
   rw [Real.log_pow] at h
   norm_num [Lθ] at h ⊢
   linarith
