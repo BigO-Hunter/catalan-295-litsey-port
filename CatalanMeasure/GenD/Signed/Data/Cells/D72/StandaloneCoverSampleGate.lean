@@ -166,12 +166,12 @@ theorem cell30 (x : ℝ) (hx : x ∈ Icc ((((-1 : ℚ) / 1024) : ℚ) : ℝ) (((
   have hBound := h.trans (by norm_num [d2SAE000Target, d2SAE000EndLiteral.q2] : (d2SAE000Target : ℝ) ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ))
   simpa only [d2SAE000FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
 
-def edge : List (ℚ × ℚ) := [((-1 : ℚ) / 1024, 0)]
-theorem edgeCheck : pieceCover 0 ((-1 : ℚ) / 1024) edge = true := by decide +kernel
-theorem edgeCover : ∀ x ∈ Icc (((-1 : ℚ) / 1024) : ℝ) (0 : ℝ), valid x →
+def edge : List (ℚ × ℚ) := [((-1 : ℚ) / 1024, (0 : ℚ) / 1)]
+theorem edgeCheck : pieceCover ((0 : ℚ) / 1) ((-1 : ℚ) / 1024) edge = true := by decide +kernel
+theorem edgeCover : ∀ x ∈ Icc (((-1 : ℚ) / 1024) : ℝ) (((0 : ℚ) / 1) : ℝ), valid x →
     fval D72.StandaloneFieldData.f0 x ≤ (((-33625206883788140229 : ℚ) / 4503599627370496000) : ℝ) := by
   apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid
-    _ ((-1 : ℚ) / 1024) 0 edge (by decide +kernel) edgeCheck
+    _ ((-1 : ℚ) / 1024) ((0 : ℚ) / 1) edge (by decide +kernel) edgeCheck
   intro p hp
   simp only [edge, List.mem_cons, List.mem_nil_iff, or_false] at hp
   subst p

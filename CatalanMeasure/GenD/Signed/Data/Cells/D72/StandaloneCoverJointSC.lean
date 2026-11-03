@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPieceL
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LaurentCache
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.RootScale
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.ZeroLaurent
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.AnchoredLaurent
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached050
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached051
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached052
@@ -4594,7 +4595,7 @@ theorem signedLiteral : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((1 : �
 #print axioms signedLiteralCover
 #print axioms signedLiteral
 theorem signedSC (x : ℝ) (hx : x ∈ Ioo (0 : ℝ) 1) : fval CatalanMeasure.GenD.Signed.Data.Trial72.T0.scFq x ≤ ((((-20222538696221 : ℚ) / 1099511627776) : ℚ) : ℝ) := by
-  have h := signedLiteral x (by exact ⟨hx.1.le, hx.2.le⟩) ⟨ne_of_gt hx.1, ne_of_lt hx.2⟩
+  have h := signedLiteral x (by simpa [Set.mem_Icc] using (show 0 ≤ x ∧ x ≤ 1 from ⟨hx.1.le, hx.2.le⟩)) ⟨ne_of_gt hx.1, ne_of_lt hx.2⟩
   change fieldTower D72.StandaloneFieldData.f4 (poleF D72.StandaloneFieldData.f4.poles) 0 x ≤ _ at h
   rw [fieldNFCheck_sound scFieldCheck x] at h
   exact h

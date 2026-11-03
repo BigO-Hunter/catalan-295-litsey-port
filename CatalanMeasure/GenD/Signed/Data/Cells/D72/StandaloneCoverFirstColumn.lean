@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPieceL
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LaurentCache
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.RootScale
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.ZeroLaurent
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.AnchoredLaurent
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached011
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached012
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached013

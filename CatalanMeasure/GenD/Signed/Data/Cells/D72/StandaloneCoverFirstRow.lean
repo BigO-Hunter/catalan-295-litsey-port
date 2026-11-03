@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPieceL
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LaurentCache
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.RootScale
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.ZeroLaurent
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.AnchoredLaurent
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached000
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached001
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneCached002
@@ -446,8 +447,8 @@ theorem cell65 (x : ℝ) (hx : x ∈ Icc ((((1023 : ℚ) / 1024) : ℚ) : ℝ) (
   simpa only [d2SAE002FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
 def domain0Block0Pieces : List (ℚ × ℚ) := [(((-1 : ℚ) / 1), ((-130049 : ℚ) / 131072)), (((-130049 : ℚ) / 131072), ((-15361 : ℚ) / 16384)), (((-15361 : ℚ) / 16384), ((-25607 : ℚ) / 32768)), (((-25607 : ℚ) / 32768), ((-17423 : ℚ) / 32768)), (((-17423 : ℚ) / 32768), ((-1025 : ℚ) / 2048)), (((-1025 : ℚ) / 2048), ((-31777 : ℚ) / 65536)), (((-31777 : ℚ) / 65536), ((-9239 : ℚ) / 32768)), (((-9239 : ℚ) / 32768), ((-3085 : ℚ) / 16384)), (((-3085 : ℚ) / 16384), ((-21611 : ℚ) / 131072)), (((-21611 : ℚ) / 131072), ((-5147 : ℚ) / 32768)), (((-5147 : ℚ) / 32768), ((-19565 : ℚ) / 131072)), (((-19565 : ℚ) / 131072), ((-9271 : ℚ) / 65536)), (((-9271 : ℚ) / 65536), ((-17519 : ℚ) / 131072)), (((-17519 : ℚ) / 131072), ((-1031 : ℚ) / 8192)), (((-1031 : ℚ) / 8192), ((-15473 : ℚ) / 131072)), (((-15473 : ℚ) / 131072), ((-7225 : ℚ) / 65536))]
 theorem domain0Block0Cover : pieceCover ((-7225 : ℚ) / 65536) ((-1 : ℚ) / 1) domain0Block0Pieces = true := by decide +kernel
-theorem domain0Block0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((-7225 : ℚ) / 65536) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-1 : ℚ) / 1) ((-7225 : ℚ) / 65536) domain0Block0Pieces (by decide +kernel) domain0Block0Cover
+theorem domain0Block0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((-7225 : ℚ) / 65536) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-1 : ℚ) / 1) ((-7225 : ℚ) / 65536) domain0Block0Pieces (by decide +kernel) domain0Block0Cover
   intro p hp
   simp only [domain0Block0Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
@@ -487,8 +488,8 @@ theorem domain0Block0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((-7225
 #print axioms domain0Block0
 def domain0Block1Pieces : List (ℚ × ℚ) := [(((-7225 : ℚ) / 65536), ((-13427 : ℚ) / 131072)), (((-13427 : ℚ) / 131072), ((-3101 : ℚ) / 32768)), (((-3101 : ℚ) / 32768), ((-11381 : ℚ) / 131072)), (((-11381 : ℚ) / 131072), ((-5179 : ℚ) / 65536)), (((-5179 : ℚ) / 65536), ((-9335 : ℚ) / 131072)), (((-9335 : ℚ) / 131072), ((-1039 : ℚ) / 16384)), (((-1039 : ℚ) / 16384), ((-7289 : ℚ) / 131072)), (((-7289 : ℚ) / 131072), ((-3133 : ℚ) / 65536)), (((-3133 : ℚ) / 65536), ((-5243 : ℚ) / 131072)), (((-5243 : ℚ) / 131072), ((-1055 : ℚ) / 32768)), (((-1055 : ℚ) / 32768), ((-3197 : ℚ) / 131072)), (((-3197 : ℚ) / 131072), ((-1087 : ℚ) / 65536)), (((-1087 : ℚ) / 65536), ((-1151 : ℚ) / 131072)), (((-1151 : ℚ) / 131072), ((-1 : ℚ) / 1024)), (((-1 : ℚ) / 1024), ((0 : ℚ) / 1))]
 theorem domain0Block1Cover : pieceCover ((0 : ℚ) / 1) ((-7225 : ℚ) / 65536) domain0Block1Pieces = true := by decide +kernel
-theorem domain0Block1 : ∀ x ∈ Icc ((((-7225 : ℚ) / 65536) : ℚ) : ℝ) ((((0 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-7225 : ℚ) / 65536) ((0 : ℚ) / 1) domain0Block1Pieces (by decide +kernel) domain0Block1Cover
+theorem domain0Block1 : ∀ x ∈ Icc ((((-7225 : ℚ) / 65536) : ℚ) : ℝ) ((((0 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-7225 : ℚ) / 65536) ((0 : ℚ) / 1) domain0Block1Pieces (by decide +kernel) domain0Block1Cover
   intro p hp
   simp only [domain0Block1Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
@@ -526,8 +527,8 @@ theorem domain0Block1 : ∀ x ∈ Icc ((((-7225 : ℚ) / 65536) : ℚ) : ℝ) ((
 #print axioms domain0Block1
 def domain0Pieces : List (ℚ × ℚ) := [(((-1 : ℚ) / 1), ((-7225 : ℚ) / 65536)), (((-7225 : ℚ) / 65536), ((0 : ℚ) / 1))]
 theorem domain0Cover : pieceCover ((0 : ℚ) / 1) ((-1 : ℚ) / 1) domain0Pieces = true := by decide +kernel
-theorem domain0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((0 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-1 : ℚ) / 1) ((0 : ℚ) / 1) domain0Pieces (by decide +kernel) domain0Cover
+theorem domain0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((0 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((-1 : ℚ) / 1) ((0 : ℚ) / 1) domain0Pieces (by decide +kernel) domain0Cover
   intro p hp
   simp only [domain0Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl
@@ -539,8 +540,8 @@ theorem domain0 : ∀ x ∈ Icc ((((-1 : ℚ) / 1) : ℚ) : ℝ) ((((0 : ℚ) / 
 #print axioms domain0
 def domain1Block0Pieces : List (ℚ × ℚ) := [(((0 : ℚ) / 1), ((1 : ℚ) / 1024)), (((1 : ℚ) / 1024), ((575 : ℚ) / 65536)), (((575 : ℚ) / 65536), ((543 : ℚ) / 32768)), (((543 : ℚ) / 32768), ((1597 : ℚ) / 65536)), (((1597 : ℚ) / 65536), ((527 : ℚ) / 16384)), (((527 : ℚ) / 16384), ((2619 : ℚ) / 65536)), (((2619 : ℚ) / 65536), ((1565 : ℚ) / 32768)), (((1565 : ℚ) / 32768), ((3641 : ℚ) / 65536)), (((3641 : ℚ) / 65536), ((519 : ℚ) / 8192)), (((519 : ℚ) / 8192), ((4663 : ℚ) / 65536)), (((4663 : ℚ) / 65536), ((2587 : ℚ) / 32768)), (((2587 : ℚ) / 32768), ((5685 : ℚ) / 65536)), (((5685 : ℚ) / 65536), ((11881 : ℚ) / 131072)), (((11881 : ℚ) / 131072), ((1549 : ℚ) / 16384)), (((1549 : ℚ) / 16384), ((6707 : ℚ) / 65536)), (((6707 : ℚ) / 65536), ((3609 : ℚ) / 32768))]
 theorem domain1Block0Cover : pieceCover ((3609 : ℚ) / 32768) ((0 : ℚ) / 1) domain1Block0Pieces = true := by decide +kernel
-theorem domain1Block0 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((3609 : ℚ) / 32768) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((0 : ℚ) / 1) ((3609 : ℚ) / 32768) domain1Block0Pieces (by decide +kernel) domain1Block0Cover
+theorem domain1Block0 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((3609 : ℚ) / 32768) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((0 : ℚ) / 1) ((3609 : ℚ) / 32768) domain1Block0Pieces (by decide +kernel) domain1Block0Cover
   intro p hp
   simp only [domain1Block0Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
@@ -580,8 +581,8 @@ theorem domain1Block0 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((3609 :
 #print axioms domain1Block0
 def domain1Block1Pieces : List (ℚ × ℚ) := [(((3609 : ℚ) / 32768), ((7729 : ℚ) / 65536)), (((7729 : ℚ) / 65536), ((515 : ℚ) / 4096)), (((515 : ℚ) / 4096), ((8751 : ℚ) / 65536)), (((8751 : ℚ) / 65536), ((4631 : ℚ) / 32768)), (((4631 : ℚ) / 32768), ((9773 : ℚ) / 65536)), (((9773 : ℚ) / 65536), ((2571 : ℚ) / 16384)), (((2571 : ℚ) / 16384), ((10795 : ℚ) / 65536)), (((10795 : ℚ) / 65536), ((3593 : ℚ) / 16384)), (((3593 : ℚ) / 16384), ((1537 : ℚ) / 4096)), (((1537 : ℚ) / 4096), ((2559 : ℚ) / 4096)), (((2559 : ℚ) / 4096), ((11769 : ℚ) / 16384)), (((11769 : ℚ) / 16384), ((1535 : ℚ) / 2048)), (((1535 : ℚ) / 2048), ((12791 : ℚ) / 16384)), (((12791 : ℚ) / 16384), ((14835 : ℚ) / 16384)), (((14835 : ℚ) / 16384), ((15857 : ℚ) / 16384)), (((15857 : ℚ) / 16384), ((32225 : ℚ) / 32768))]
 theorem domain1Block1Cover : pieceCover ((32225 : ℚ) / 32768) ((3609 : ℚ) / 32768) domain1Block1Pieces = true := by decide +kernel
-theorem domain1Block1 : ∀ x ∈ Icc ((((3609 : ℚ) / 32768) : ℚ) : ℝ) ((((32225 : ℚ) / 32768) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((3609 : ℚ) / 32768) ((32225 : ℚ) / 32768) domain1Block1Pieces (by decide +kernel) domain1Block1Cover
+theorem domain1Block1 : ∀ x ∈ Icc ((((3609 : ℚ) / 32768) : ℚ) : ℝ) ((((32225 : ℚ) / 32768) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((3609 : ℚ) / 32768) ((32225 : ℚ) / 32768) domain1Block1Pieces (by decide +kernel) domain1Block1Cover
   intro p hp
   simp only [domain1Block1Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl
@@ -621,8 +622,8 @@ theorem domain1Block1 : ∀ x ∈ Icc ((((3609 : ℚ) / 32768) : ℚ) : ℝ) (((
 #print axioms domain1Block1
 def domain1Block2Pieces : List (ℚ × ℚ) := [(((32225 : ℚ) / 32768), ((130433 : ℚ) / 131072)), (((130433 : ℚ) / 131072), ((1023 : ℚ) / 1024)), (((1023 : ℚ) / 1024), ((1 : ℚ) / 1))]
 theorem domain1Block2Cover : pieceCover ((1 : ℚ) / 1) ((32225 : ℚ) / 32768) domain1Block2Pieces = true := by decide +kernel
-theorem domain1Block2 : ∀ x ∈ Icc ((((32225 : ℚ) / 32768) : ℚ) : ℝ) ((((1 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((32225 : ℚ) / 32768) ((1 : ℚ) / 1) domain1Block2Pieces (by decide +kernel) domain1Block2Cover
+theorem domain1Block2 : ∀ x ∈ Icc ((((32225 : ℚ) / 32768) : ℚ) : ℝ) ((((1 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((32225 : ℚ) / 32768) ((1 : ℚ) / 1) domain1Block2Pieces (by decide +kernel) domain1Block2Cover
   intro p hp
   simp only [domain1Block2Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl
@@ -636,8 +637,8 @@ theorem domain1Block2 : ∀ x ∈ Icc ((((32225 : ℚ) / 32768) : ℚ) : ℝ) ((
 #print axioms domain1Block2
 def domain1Pieces : List (ℚ × ℚ) := [(((0 : ℚ) / 1), ((3609 : ℚ) / 32768)), (((3609 : ℚ) / 32768), ((32225 : ℚ) / 32768)), (((32225 : ℚ) / 32768), ((1 : ℚ) / 1))]
 theorem domain1Cover : pieceCover ((1 : ℚ) / 1) ((0 : ℚ) / 1) domain1Pieces = true := by decide +kernel
-theorem domain1 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((1 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
-  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206882110418629 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((0 : ℚ) / 1) ((1 : ℚ) / 1) domain1Pieces (by decide +kernel) domain1Cover
+theorem domain1 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((1 : ℚ) / 1) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f0 x ≤ ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) := by
+  apply D72.StandaloneCoverTools.coverOn (fval D72.StandaloneFieldData.f0) valid ((((-33625206883788140229 : ℚ) / 4503599627370496000) : ℚ) : ℝ) ((0 : ℚ) / 1) ((1 : ℚ) / 1) domain1Pieces (by decide +kernel) domain1Cover
   intro p hp
   simp only [domain1Pieces, List.mem_cons, List.mem_nil_iff, or_false] at hp
   rcases hp with rfl | rfl | rfl
