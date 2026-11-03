@@ -23,7 +23,7 @@ structure FirstTrialCertificate : Prop where
   norm : barrierTrialNormSq firstP + barrierTrialNormSq firstV / 2 ≤ firstNormCap
   budget : ∀ a : ℝ,
     (-gC0 P72 + gC1 P72 * a - a^2) * Real.log 2 + firstNormCap +
-      (1-a)*firstFieldCap + a*(2*firstLambda*((P72.g0:ℝ)/P72.n0)) ≤
+      (1-a)*firstFieldCap + a*(2*firstLambda*(((P72).g0:ℝ)/(P72).n0)) ≤
         -target72 + Real.log 2/2 + cost72*a
 
 def firstBounds (C : FirstTrialCertificate) (B : FirstDecayBounds) :
@@ -39,6 +39,12 @@ theorem hfirst (C : FirstTrialCertificate) (B : FirstDecayBounds) :
     FreeFirstBound P72 target72 (72*cost72) :=
   freeFirstBound_of_end dc72.admissible (firstBounds C B)
 
+/- C22 / chebengine standalone manifest pins the reference caps to
+MX = -96992793/100000000, MY = -158005012/100000000,
+residual = -6909202/100000000, nearCap = -77/100.
+The near proof uses near_residual_field_le with l=7704/10000, u=7705/10000.
+The record stays parameterized so the same certified fields serve both endpoints.
+No numerical cap or Arb assertion is treated as a proof here. -/
 /-- Exact field obligations for the standalone second/reference sequences. -/
 structure SecondDecayBounds (MX MY residual nearCap : ℝ) : Prop where
   row : ∀ x ∈ Ico (-1 : ℝ) 0 ∪ Ioo 0 1,
@@ -46,7 +52,7 @@ structure SecondDecayBounds (MX MY residual nearCap : ℝ) : Prop where
   column : ∀ s ∈ Ioo (0 : ℝ) 1, colFieldG (11/72) (1/18) secondV s ≤ MY
   residual : ∀ x ∈ Icc (-1 : ℝ) 1, G72 x → resFieldGen (gRes P72) secondP x ≤ residual
   near : ∀ y ∈ Ioo (0 : ℝ) 1,
-    -gRes P72 * Real.log (1+y^2) + (((P72.n0:ℝ)-2*P72.g0-1)/P72.n0)*Real.log y -
+    -gRes P72 * Real.log (1+y^2) + ((((P72).n0:ℝ)-2*(P72).g0-1)/(P72).n0)*Real.log y -
       secondP 1*y ≤ nearCap
 
 structure SecondTrialCertificate (α1 target cost MX MY normCap fieldCap residual nearCap : ℝ) : Prop where
@@ -81,3 +87,6 @@ def nearReference {target cost MX MY normCap fieldCap residual nearCap : ℝ}
 
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.SheetBindings
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.SheetBindings.hfirst
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.SheetBindings.hlarge
