@@ -5,6 +5,7 @@ public import Mathlib.Tactic
 
 @[expose] public section
 namespace CatalanMeasure.GenD.Analytic.GaussianHorner
+open Polynomial
 noncomputable section
 
 def plus (a b : ℤ × ℤ) : ℤ × ℤ := (a.1 + b.1, a.2 + b.2)
@@ -146,6 +147,65 @@ theorem translation_value_sound (c : ℤ × ℤ) {q : ℤ} (hq : q ≠ 0)
   rw [hpower, one_mul, Int.cast_pow] at ht
   exact ht
 
+def polynomialOfPairs : List (ℤ × ℤ) → ℂ[X]
+  | [] => 0
+  | a :: as => Polynomial.C (castPair a) + Polynomial.X * polynomialOfPairs as
+
+theorem polynomialOfPairs_eval (as : List (ℤ × ℤ)) (z : ℂ) :
+    (polynomialOfPairs as).eval z = evalPairs as z := by
+  induction as with
+  | nil => simp [polynomialOfPairs, evalPairs]
+  | cons a as ih => simp [polynomialOfPairs, evalPairs, ih]
+
+def normHorner : List ℝ → ℝ → ℝ
+  | [], _ => 0
+  | a :: as, r => a + r * normHorner as r
+
+theorem evalPairs_norm_le {as : List (ℤ × ℤ)} {U : List ℝ}
+    (h : List.Forall₂ (fun a u => ‖castPair a‖ ≤ u) as U) {r : ℝ}
+    (hr : 0 ≤ r) (z : ℂ) (hz : ‖z‖ ≤ r) : ‖evalPairs as z‖ ≤ normHorner U r := by
+  induction h with
+  | nil => simp [evalPairs, normHorner]
+  | @cons a u as U ha h ih =>
+    simp only [evalPairs, normHorner]
+    calc
+      _ ≤ ‖castPair a‖ + ‖z‖ * ‖evalPairs as z‖ := by
+        simpa only [norm_mul] using norm_add_le (castPair a) (z * evalPairs as z)
+      _ ≤ u + r * normHorner U r :=
+        add_le_add ha (mul_le_mul hz ih (norm_nonneg _) hr)
+
+def weightedPairs : ℤ → List (ℤ × ℤ) → List (ℤ × ℤ)
+  | _, [] => []
+  | n, a :: as => times (n, 0) a :: weightedPairs (n + 1) as
+
+theorem polynomialOfPairs_weighted (n : ℤ) (as : List (ℤ × ℤ)) :
+    polynomialOfPairs (weightedPairs n as) =
+      Polynomial.C (n : ℂ) * polynomialOfPairs as + Polynomial.X * (polynomialOfPairs as).derivative := by
+  induction as generalizing n with
+  | nil => simp [weightedPairs, polynomialOfPairs]
+  | cons a as ih =>
+    simp only [weightedPairs, polynomialOfPairs, castPair_times, castPair_real,
+      Polynomial.derivative_add, Polynomial.derivative_C, Polynomial.derivative_mul,
+      Polynomial.derivative_X, zero_add, one_mul]
+    rw [ih]
+    push_cast
+    simp only [map_mul, map_add, map_one]
+    ring
+
+theorem polynomialOfPairs_derivative (as : List (ℤ × ℤ)) :
+    (polynomialOfPairs as).derivative = polynomialOfPairs (weightedPairs 1 as.tail) := by
+  cases as with
+  | nil => simp [polynomialOfPairs, weightedPairs]
+  | cons a as =>
+    simpa [polynomialOfPairs] using (polynomialOfPairs_weighted 1 as).symm
+
+theorem polynomialOfPairs_derivative_norm_le {as : List (ℤ × ℤ)} {U : List ℝ}
+    (h : List.Forall₂ (fun a u => ‖castPair a‖ ≤ u) (weightedPairs 1 as.tail) U)
+    {r : ℝ} (hr : 0 ≤ r) (z : ℂ) (hz : ‖z‖ ≤ r) :
+    ‖(polynomialOfPairs as).derivative.eval z‖ ≤ normHorner U r := by
+  rw [polynomialOfPairs_derivative, polynomialOfPairs_eval]
+  exact evalPairs_norm_le h hr z hz
+
 end
 end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.castPair_plus
@@ -164,3 +224,13 @@ end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_shiftStep
 
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.translation_value_sound
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_eval
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_norm_le
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_weighted
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_derivative
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_derivative_norm_le
