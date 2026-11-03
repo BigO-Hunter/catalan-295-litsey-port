@@ -5,6 +5,8 @@ public import CatalanMeasure.Cert.Norm
 public import CatalanMeasure.Cert.SplitNorm
 
 @[expose] public section
+set_option Elab.async false
+set_option profiler true
 
 /-!
 # The weighted norm of a scale-`2^40` trial sequence in closed form
@@ -237,10 +239,10 @@ def rowTerms (tail : List TailQ) (a : TailQ) : List LogTerm :=
 theorem pairTerms_eq_rows (tail : List TailQ) :
     pairTerms tail = tail.flatMap (rowTerms tail) := rfl
 
-theorem pair_le_of_row_chunks (tail : List TailQ) (n : ℕ) (bs : List ℚ)
+theorem pair_le_of_row_chunk_bounds (tail : List TailQ) (n : ℕ) (bs : List ℚ)
     (hlen : tail.length ≤ n * bs.length)
     (h : ∀ g < bs.length,
-      logUpperOK (((tail.drop (n * g)).take n).flatMap (rowTerms tail)) (bs.getD g 0) = true) :
+      ((((tail.drop (n * g)).take n).flatMap (rowTerms tail)).map LogTerm.val).sum ≤ ((bs.getD g 0 : ℚ) : ℝ)) :
     ((pairTerms tail).map LogTerm.val).sum ≤ ((bs.sum : ℚ) : ℝ) := by
   have key : ((pairTerms tail).map LogTerm.val).sum =
       (tail.map (fun a => ((rowTerms tail a).map LogTerm.val).sum)).sum := by
@@ -254,14 +256,54 @@ theorem pair_le_of_row_chunks (tail : List TailQ) (n : ℕ) (bs : List ℚ)
     (bs.map (Rat.cast : ℚ → ℝ)) tail (by simpa using hlen) (by
       intro g hg
       rw [List.length_map] at hg
-      have hh := logUpper_le (h g hg)
+      have hh := h g hg
       rw [List.map_flatMap, lsum_flatMap] at hh
       rw [hget]
       simpa [List.map_map, Function.comp_def] using hh)
   rw [Rat.cast_list_sum]
   exact this
 
+/-- Compatibility interface for the original fixed-precision checker. -/
+theorem pair_le_of_row_chunks (tail : List TailQ) (n : ℕ) (bs : List ℚ)
+    (hlen : tail.length ≤ n * bs.length)
+    (h : ∀ g < bs.length,
+      logUpperOK (((tail.drop (n * g)).take n).flatMap (rowTerms tail)) (bs.getD g 0) = true) :
+    ((pairTerms tail).map LogTerm.val).sum ≤ ((bs.sum : ℚ) : ℝ) :=
+  pair_le_of_row_chunk_bounds tail n bs hlen (fun g hg => logUpper_le (h g hg))
+
+/-- Pair-log value for any list of outer tail rows. -/
+noncomputable def pairRowsValue (tail rows : List TailQ) : ℝ :=
+  ((rows.flatMap (rowTerms tail)).map LogTerm.val).sum
+
+theorem pairRowsValue_split (tail rows : List TailQ) (n : ℕ) :
+    pairRowsValue tail rows = pairRowsValue tail (rows.take n) + pairRowsValue tail (rows.drop n) := by
+  conv_lhs => rw [← List.take_append_drop n rows]
+  simp only [pairRowsValue, List.flatMap_append, List.map_append, List.sum_append]
+
 /-- The weighted norm of a trial is bounded by the finite part and the log chunk bounds. -/
+theorem normSq_le_of_shard_bounds {cs : List ℤ} {tail : List TailQ} (hd : tailsInDisk tail = true)
+    {B : ℚ} (nf : ℕ) (fubs : List ℚ) (sqUb : ℚ) (nl : ℕ) (bs : List ℚ)
+    (hsq : nSq cs 0 ≤ sqUb)
+    (hlenF : tail.length ≤ nf * fubs.length)
+    (hF : ∀ g < fubs.length,
+      (((tail.drop (nf * g)).take nf).map (nCross cs)).sum ≤ fubs.getD g 0)
+    (hlenL : tail.length ≤ nl * bs.length)
+    (hL : ∀ g < bs.length,
+      ((((tail.drop (nl * g)).take nl).flatMap (rowTerms tail)).map LogTerm.val).sum ≤ ((bs.getD g 0 : ℚ) : ℝ))
+    (hB : sqUb + 2 * fubs.sum + bs.sum ≤ B) :
+    barrierTrialNormSq (trialSeqS cs tail) ≤ (B : ℝ) := by
+  rw [trialSeqS_normSq hd, ← pairTerms_val]
+  have h1 : (tail.map (nCross cs)).sum ≤ fubs.sum :=
+    sum_le_of_chunks (nCross cs) nf fubs tail hlenF hF
+  have h2 := pair_le_of_row_chunk_bounds tail nl bs hlenL hL
+  have hfin : finNormQS cs tail ≤ sqUb + 2 * fubs.sum := by
+    unfold finNormQS; linarith
+  have hr := (Rat.cast_le (K := ℝ)).2 hB
+  rw [Rat.cast_add] at hr
+  have hf := (Rat.cast_le (K := ℝ)).2 hfin
+  linarith
+
+/-- Compatibility wrapper: all existing fixed-precision callers retain their types. -/
 theorem normSq_le_of_shards {cs : List ℤ} {tail : List TailQ} (hd : tailsInDisk tail = true)
     {B : ℚ} (nf : ℕ) (fubs : List ℚ) (sqUb : ℚ) (nl : ℕ) (bs : List ℚ)
     (hsq : nSq cs 0 ≤ sqUb)
@@ -272,16 +314,13 @@ theorem normSq_le_of_shards {cs : List ℤ} {tail : List TailQ} (hd : tailsInDis
     (hL : ∀ g < bs.length,
       logUpperOK (((tail.drop (nl * g)).take nl).flatMap (rowTerms tail)) (bs.getD g 0) = true)
     (hB : sqUb + 2 * fubs.sum + bs.sum ≤ B) :
-    barrierTrialNormSq (trialSeqS cs tail) ≤ (B : ℝ) := by
-  rw [trialSeqS_normSq hd, ← pairTerms_val]
-  have h1 : (tail.map (nCross cs)).sum ≤ fubs.sum :=
-    sum_le_of_chunks (nCross cs) nf fubs tail hlenF hF
-  have h2 := pair_le_of_row_chunks tail nl bs hlenL hL
-  have hfin : finNormQS cs tail ≤ sqUb + 2 * fubs.sum := by
-    unfold finNormQS; linarith
-  have hr := (Rat.cast_le (K := ℝ)).2 hB
-  rw [Rat.cast_add] at hr
-  have hf := (Rat.cast_le (K := ℝ)).2 hfin
-  linarith
+    barrierTrialNormSq (trialSeqS cs tail) ≤ (B : ℝ) :=
+  normSq_le_of_shard_bounds hd nf fubs sqUb nl bs hsq hlenF hF hlenL
+    (fun g hg => logUpper_le (hL g hg)) hB
 
 end CatalanMeasure.CellCert
+
+#print axioms CatalanMeasure.CellCert.pair_le_of_row_chunk_bounds
+#print axioms CatalanMeasure.CellCert.pairRowsValue_split
+#print axioms CatalanMeasure.CellCert.normSq_le_of_shard_bounds
+#print axioms CatalanMeasure.CellCert.normSq_le_of_shards
