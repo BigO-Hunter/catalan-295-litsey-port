@@ -36,6 +36,49 @@ def NodeCap (gs xc C1 n umin : ℝ) {J : ℕ} (Z : Fin J → ℝ) : Prop :=
   (∀ a, gs ≤ |Z a|) ∧ (∀ a, Z a ≤ 1 - umin) ∧
     ∀ a, xc ≤ Z a → ((Finset.univ.filter (fun b => Z a ≤ Z b)).card : ℝ) ≤ C1 * n * (1 - Z a) + 1
 
+/-- Node cap with independent negative and positive support cuts. The endpoint
+separation and top-count clause, including its discrete +1, are unchanged. -/
+def NodeCapAsym (gsN gsP xc C1 n umin : ℝ) {J : ℕ} (Z : Fin J → ℝ) : Prop :=
+  (∀ a, Z a ≤ -gsN ∨ gsP ≤ Z a) ∧ (∀ a, Z a ≤ 1 - umin) ∧
+    ∀ a, xc ≤ Z a → ((Finset.univ.filter (fun b => Z a ≤ Z b)).card : ℝ) ≤ C1 * n * (1 - Z a) + 1
+
+abbrev MarkedCapAsym (gsN gsP xc C1 n umin : ℝ) {m : ℕ} (y : Fin m → ℝ) : Prop :=
+  NodeCapAsym gsN gsP xc C1 n umin y
+
+theorem nodeCapAsym_self (gs xc C1 n umin : ℝ) {J : ℕ} (Z : Fin J → ℝ) :
+    NodeCapAsym gs gs xc C1 n umin Z ↔ NodeCap gs xc C1 n umin Z := by
+  constructor
+  · intro h
+    refine ⟨fun a => ?_, h.2⟩
+    rcases h.1 a with hn | hp
+    · exact (show gs ≤ -Z a by linarith).trans (neg_le_abs _)
+    · exact hp.trans (le_abs_self _)
+  · intro h
+    refine ⟨fun a => ?_, h.2⟩
+    by_cases hz : 0 ≤ Z a
+    · exact Or.inr (by simpa only [abs_of_nonneg hz] using h.1 a)
+    · apply Or.inl
+      have ha := h.1 a
+      rw [abs_of_neg (lt_of_not_ge hz)] at ha
+      linarith
+
+theorem markedCapAsym_self (gs xc C1 n umin : ℝ) {m : ℕ} (y : Fin m → ℝ) :
+    MarkedCapAsym gs gs xc C1 n umin y ↔ MarkedCap gs xc C1 n umin y :=
+  nodeCapAsym_self gs xc C1 n umin y
+
+theorem markedCapAsym_of_nodeCapAsym {gsN gsP xc C1 n umin : ℝ} {J m : ℕ} {Z : Fin J → ℝ}
+    (hZ : NodeCapAsym gsN gsP xc C1 n umin Z) {a : Fin m → Fin J} (ha : Function.Injective a) :
+    MarkedCapAsym gsN gsP xc C1 n umin (fun j => Z (a j)) := by
+  obtain ⟨h1, h2, h3⟩ := hZ
+  refine ⟨fun j => h1 _, fun j => h2 _, fun j hj => ?_⟩
+  have hc : (Finset.univ.filter (fun i : Fin m => Z (a j) ≤ Z (a i))).card ≤
+      (Finset.univ.filter (fun b : Fin J => Z (a j) ≤ Z b)).card := by
+    apply Finset.card_le_card_of_injOn a
+    · intro i hi
+      simpa using hi
+    · exact ha.injOn
+  exact (Nat.cast_le.2 hc).trans (h3 _ hj)
+
 /-- `MarkedCap` of an injective sub-family of a node set with `NodeCap`. -/
 theorem markedCap_of_nodeCap {gs xc C1 n umin : ℝ} {J m : ℕ} {Z : Fin J → ℝ}
     (hZ : NodeCap gs xc C1 n umin Z) {a : Fin m → Fin J} (ha : Function.Injective a) :
@@ -69,6 +112,19 @@ theorem markedCap_of_nodeSub {gs xc C1 n umin : ℝ} {J : ℕ → ℕ}
     exact (realCoordinate_left_inverse (hy j)).symm
   rw [hyz]
   exact markedCap_of_nodeCap hZ ha
+
+theorem markedCapAsym_of_nodeSub {gsN gsP xc C1 n umin : ℝ} {J : ℕ → ℕ}
+    {τ : (N : ℕ) → Fin (J N) → ℝ} {N m : ℕ} {y : Fin m → ℝ}
+    (hZ : NodeCapAsym gsN gsP xc C1 n umin (fun a => realCoordinate (τ N a)))
+    (hy : ∀ j, y j ∈ Ioo (-1 : ℝ) 1) (hN : NodeSub τ N m y) :
+    MarkedCapAsym gsN gsP xc C1 n umin y := by
+  obtain ⟨a, ha, hya⟩ := hN
+  have hyz : y = fun j => realCoordinate (τ N (a j)) := by
+    funext j
+    rw [← hya j]
+    exact (realCoordinate_left_inverse (hy j)).symm
+  rw [hyz]
+  exact markedCapAsym_of_nodeCapAsym hZ ha
 
 /-! ### The gap nodes: `NodeCap` of `realCoordinate ∘ gapNodesGen` -/
 
@@ -395,3 +451,11 @@ end GapCap
 end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.klTop
 #print axioms CatalanMeasure.Signed.nodeCap_gap
+
+#print axioms CatalanMeasure.Signed.nodeCapAsym_self
+
+#print axioms CatalanMeasure.Signed.markedCapAsym_self
+
+#print axioms CatalanMeasure.Signed.markedCapAsym_of_nodeCapAsym
+
+#print axioms CatalanMeasure.Signed.markedCapAsym_of_nodeSub
