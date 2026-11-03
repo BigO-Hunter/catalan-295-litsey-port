@@ -16,6 +16,7 @@ The R/J majorants close the infinite remainder; no fixed cutoff discards a tail.
 
 namespace CatalanMeasure.GenD.Signed.Data.Cells
 open Set CatalanMeasure.CellCert CatalanMeasure.GenD.Signed.TaylorCell
+open CatalanMeasure.GenD.Signed.LogEval
 open scoped BigOperators
 
 /-- Field addition before normalization of equal sites/poles. -/
@@ -984,6 +985,71 @@ theorem laurentMajorant_tail (t : LTerm) (c q0 qL L : ℚ) (M K : ℕ) (y : ℝ)
   unfold laurentTail
   push_cast
   linarith [ht]
+
+/-! ## Finite coefficient enclosure, reusing lTerm_approx -/
+
+def laurentPoly (t : LTerm) (c L : ℚ) (M P : ℕ) : List ℚ :=
+  (List.range (M+1)).map (fun k => dyRound P (lTermCoef t c L k))
+
+def laurentCoeffErr (t : LTerm) (c L ε r : ℚ) (M P : ℕ) : ℚ :=
+  ∑ k ∈ Finset.range (M+1),
+    (lEps t.2 ε*qabs' (zHat t.1 c k) + qabs' (lTermCoef t c L k-dyRound P (lTermCoef t c L k)))*r^k
+
+theorem polyApprox_error (f : ℕ → ℝ) (C E : ℕ → ℚ) (M : ℕ) (r y : ℝ)
+    (hy : |y| ≤ r) (hC : ∀ k, |f k-(C k : ℝ)| ≤ (E k : ℝ)) :
+    |(∑ k ∈ Finset.range (M+1), f k*y^k) -
+      polyTow ((List.range (M+1)).map C) 0 y| ≤
+        ∑ k ∈ Finset.range (M+1), (E k : ℝ)*r^k := by
+  rw [polyTow_mapRange]
+  have he : (∑ k ∈ Finset.range (M+1), f k*y^k) -
+      (∑ k ∈ Finset.range (M+1), (C k : ℝ)*y^k) =
+        ∑ k ∈ Finset.range (M+1), (f k-(C k : ℝ))*y^k := by
+    rw [← Finset.sum_sub_distrib]
+    apply Finset.sum_congr rfl
+    intro k _
+    ring
+  rw [he]
+  apply (Finset.abs_sum_le_sum_abs _ _).trans
+  apply Finset.sum_le_sum
+  intro k _
+  rw [abs_mul, abs_pow]
+  exact mul_le_mul (hC k) (pow_le_pow_left₀ (abs_nonneg y) hy k) (pow_nonneg (abs_nonneg y) _)
+    ((abs_nonneg _).trans (hC k))
+
+theorem laurentCoeffErr_spec (t : LTerm) (c L ε r : ℚ) (M P : ℕ) (hc : c ≠ 0) (y : ℝ)
+    (hy : |y| ≤ (r : ℝ))
+    (hne : ∀ ab, t.2 = some ab → ab.1*c-ab.2 ≠ 0)
+    (hL : ∀ ab, t.2 = some ab → |(L : ℝ)-Real.log (|(ab.1 : ℝ)*(c : ℝ)-ab.2|)| ≤ (ε : ℝ)) :
+    |(∑ k ∈ Finset.range (M+1),
+        mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k) -
+      polyTow (laurentPoly t c L M P) 0 y| ≤ (laurentCoeffErr t c L ε r M P : ℝ) := by
+  have hcoeff : ∀ k : ℕ,
+      |mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ) -
+        (dyRound P (lTermCoef t c L k) : ℝ)| ≤
+      ((lEps t.2 ε*qabs' (zHat t.1 c k) +
+        qabs' (lTermCoef t c L k-dyRound P (lTermCoef t c L k)) : ℚ) : ℝ) := by
+    intro k
+    have h := lTerm_approx t c hc L ε hne hL k
+    have he : mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ) -
+        (dyRound P (lTermCoef t c L k) : ℝ) =
+      (mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ) - (lTermCoef t c L k : ℝ)) +
+        ((lTermCoef t c L k : ℝ) - (dyRound P (lTermCoef t c L k) : ℝ)) := by ring
+    rw [he]
+    have hb := (abs_add_le _ _).trans (add_le_add h
+      (le_refl |(lTermCoef t c L k : ℝ)-(dyRound P (lTermCoef t c L k) : ℝ)|))
+    simp only [Rat.cast_add, qabs'_cast, Rat.cast_sub]
+    exact hb
+  have h := polyApprox_error
+    (fun k => mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ))
+    (fun k => dyRound P (lTermCoef t c L k))
+    (fun k => lEps t.2 ε*qabs' (zHat t.1 c k) +
+      qabs' (lTermCoef t c L k-dyRound P (lTermCoef t c L k))) M (r : ℝ) y hy hcoeff
+  unfold laurentPoly laurentCoeffErr
+  push_cast at h ⊢
+  exact h
+
+#print axioms polyApprox_error
+#print axioms laurentCoeffErr_spec
 
 #print axioms laurentCoarseCoefSeries
 #print axioms laurentCoarseTail_eq
