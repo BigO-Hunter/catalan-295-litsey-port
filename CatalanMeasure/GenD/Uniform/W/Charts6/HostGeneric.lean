@@ -4,7 +4,7 @@ public import CatalanMeasure.GenD.Uniform.W.Prof.PacketSparse
 public import CatalanMeasure.GenD.Uniform.W.Charts4.JetsGeneric
 public import CatalanMeasure.GenD.Uniform.W.Charts4.ThetaRep
 public import CatalanMeasure.GenD.Uniform.W.Charts.Rows
-public import CatalanMeasure.GenD.Uniform.W.Charts6.SourceNative
+public import CatalanMeasure.GenD.Uniform.W.Charts6.SourceSparse
 public import Mathlib.Tactic.FinCases
 @[expose] public section
 set_option Elab.async false
@@ -541,6 +541,128 @@ theorem source_phi_one_t_nat (n J : Nat) :
       simp only [Finset.mem_range, Int.toNat_natCast]
       omega
     exact (hnot hmem).elim
+
+
+def sourceUg (J : Nat) (k S : Int) : Rat :=
+  Charts.phiQ (fun i => (Polynomial.Chebyshev.U Int k).coeff i) (fun _ => 0) J S
+
+def sourceUt (J : Nat) (k S : Int) : Rat :=
+  Charts.phiQ (fun _ => 0) (fun i => (Polynomial.Chebyshev.U Int k).coeff i) J S
+
+theorem sourceUg_neg_one (J : Nat) (S : Int) : sourceUg J (-1) S = 0 := by
+  simpa only [sourceUg, Polynomial.Chebyshev.U_neg_one, Polynomial.coeff_zero] using source_phi_zero J S
+
+theorem sourceUt_neg_one (J : Nat) (S : Int) : sourceUt J (-1) S = 0 := by
+  simpa only [sourceUt, Polynomial.Chebyshev.U_neg_one, Polynomial.coeff_zero] using source_phi_zero J S
+
+theorem sourceUg_below (J : Nat) (k S : Int) (hS : S < -1) : sourceUg J k S = 0 :=
+  source_phi_zero_below _ _ J S hS
+
+theorem sourceUt_below (J : Nat) (k S : Int) (hS : S < -1) : sourceUt J k S = 0 :=
+  source_phi_zero_below _ _ J S hS
+
+theorem sourceUg_key_recurrence (J H : Nat) (hH : 0 < H) :
+    ∀ n, H ≤ n → sourceKey (sourceUg J) H n =
+      2 * (if n % H = 0 then 0 else sourceKey (sourceUg J) H (n - H - 1)) -
+        (if n < 2 * H then 0 else sourceKey (sourceUg J) H (n - 2 * H)) :=
+  source_key_recurrence (sourceUg J) H hH
+    (fun k S => source_phi_Ug_step k J S) (sourceUg_neg_one J) (sourceUg_below J)
+
+theorem sourceUt_key_recurrence (J H : Nat) (hH : 0 < H) :
+    ∀ n, H ≤ n → sourceKey (sourceUt J) H n =
+      2 * (if n % H = 0 then 0 else sourceKey (sourceUt J) H (n - H - 1)) -
+        (if n < 2 * H then 0 else sourceKey (sourceUt J) H (n - 2 * H)) :=
+  source_key_recurrence (sourceUt J) H hH
+    (fun k S => source_phi_Ut_step k J S) (sourceUt_neg_one J) (sourceUt_below J)
+
+/-- Certified native moments imply every first-coordinate source base. -/
+theorem sourceUg_key_base (d : IntMomentData) (hd : d.Sound p)
+    (J : Nat) (hJ : J < d.L) (hp2 : 2 < p) (hz : (d.scale : ZMod p) ≠ 0) :
+    ∀ n, n < d.H → ResRec.Gd p (sourceKey (sourceUg J) d.H n)
+      ((sourceBaseG d J n : ZMod p) / ((2 * d.scale : Int) : ZMod p)) := by
+  have hdim := hd.shape
+  simp only [IntMomentData.shape, Bool.and_eq_true, decide_eq_true_eq] at hdim
+  have hLH : d.L ≤ d.H := hdim.1.1.1.1
+  have hHN : d.H + 2 ≤ d.N := hdim.1.1.1.2
+  intro n hn
+  by_cases hn0 : n = 0
+  · subst n
+    have he : sourceKey (sourceUg J) d.H 0 = boundaryPlus (J + 1) := by
+      simpa only [sourceKey, sourceUg, Nat.zero_div, Nat.zero_mod, Nat.cast_zero,
+        zero_sub, Polynomial.Chebyshev.U_zero] using source_phi_one_g_boundary J
+    rw [he]
+    have hh := source_gd_double_scale d.scale (intAt d.bp (J + 1))
+      (boundaryPlus (J + 1)) hp2 hz (hd.bp (J + 1) (by omega))
+    simpa [sourceBaseG] using hh
+  · let m := n - 1
+    have hm : (n : Int) - 1 = (m : Int) := by dsimp [m]; omega
+    have he : sourceKey (sourceUg J) d.H n = momentRat m J := by
+      unfold sourceKey sourceUg
+      rw [Nat.div_eq_of_lt hn, Nat.mod_eq_of_lt hn]
+      simp only [Nat.cast_zero, Polynomial.Chebyshev.U_zero]
+      rw [hm]
+      exact source_phi_one_g_nat m J
+    rw [he]
+    have hh := source_gd_double_scale d.scale (intAt2 d.mt m J)
+      (momentRat m J) hp2 hz (hd.mt m J (by dsimp [m]; omega) hJ)
+    simpa [sourceBaseG, hn0, m] using hh
+
+/-- The certified zeta table supplies beta bases directly at scale2Z. -/
+theorem sourceUt_key_base (d : IntMomentData) (hd : d.Sound p)
+    (J : Nat) (hJ : J < d.L) (hp2 : 2 < p) (hz : (d.scale : ZMod p) ≠ 0) :
+    ∀ n, n < d.H → ResRec.Gd p (sourceKey (sourceUt J) d.H n)
+      ((sourceBaseT d J n : ZMod p) / ((2 * d.scale : Int) : ZMod p)) := by
+  intro n hn
+  by_cases hn0 : n = 0
+  · subst n
+    have he : sourceKey (sourceUt J) d.H 0 = 0 := by
+      simpa only [sourceKey, sourceUt, Nat.zero_div, Nat.zero_mod, Nat.cast_zero,
+        zero_sub, Polynomial.Chebyshev.U_zero] using source_phi_one_t_boundary J
+    rw [he]
+    simpa [sourceBaseT] using (ResRec.Gd.nat (p := p) 0)
+  · let m := n - 1
+    have hm : (n : Int) - 1 = (m : Int) := by dsimp [m]; omega
+    have he : sourceKey (sourceUt J) d.H n = -(3 / 2 : Rat) * zetaRat m J := by
+      unfold sourceKey sourceUt
+      rw [Nat.div_eq_of_lt hn, Nat.mod_eq_of_lt hn]
+      simp only [Nat.cast_zero, Polynomial.Chebyshev.U_zero]
+      rw [hm]
+      exact source_phi_one_t_nat m J
+    rw [he]
+    have hh := source_gd_beta_double_scale d.scale (intAt2 d.zt m J)
+      (zetaRat m J) hp2 hz (hd.zt m J (by dsimp [m]; omega) hJ)
+    simpa [sourceBaseT, hn0, m] using hh
+
+/-- Complete first-coordinate source theorem from actual finite native checks.
+No recurrence or source-correctness premise is supplied by the data caller. -/
+theorem sourceTreeUg_sound (d : IntMomentData) (tree : IntSourceTree)
+    (J : Nat) (hJ : J < d.L) (hp : d.N + 2 < p) (hz : (d.scale : ZMod p) ≠ 0)
+    (hd : d.check = true) (hc : tree.check d.H (sourceBaseG d J) = true) :
+    ∀ n v, tree.get? n = some v → ResRec.Gd p (sourceKey (sourceUg J) d.H n)
+      ((v : ZMod p) / ((2 * d.scale : Int) : ZMod p)) := by
+  have hd' := IntMomentData.check_sound d hp hz hd
+  have hp2 : 2 < p := by omega
+  have hc' := hc
+  simp only [IntSourceTree.check, Bool.and_eq_true, decide_eq_true_eq] at hc'
+  have hH : 0 < d.H := hc'.1
+  exact IntSourceTree.check_sound tree d.H hH (2 * d.scale) (sourceBaseG d J)
+    (sourceKey (sourceUg J) d.H) (source_double_scale_unit d.scale hp2 hz)
+    (sourceUg_key_base d hd' J hJ hp2 hz) (sourceUg_key_recurrence J d.H hH) hc
+
+/-- Complete second-coordinate source theorem from actual finite native checks. -/
+theorem sourceTreeUt_sound (d : IntMomentData) (tree : IntSourceTree)
+    (J : Nat) (hJ : J < d.L) (hp : d.N + 2 < p) (hz : (d.scale : ZMod p) ≠ 0)
+    (hd : d.check = true) (hc : tree.check d.H (sourceBaseT d J) = true) :
+    ∀ n v, tree.get? n = some v → ResRec.Gd p (sourceKey (sourceUt J) d.H n)
+      ((v : ZMod p) / ((2 * d.scale : Int) : ZMod p)) := by
+  have hd' := IntMomentData.check_sound d hp hz hd
+  have hp2 : 2 < p := by omega
+  have hc' := hc
+  simp only [IntSourceTree.check, Bool.and_eq_true, decide_eq_true_eq] at hc'
+  have hH : 0 < d.H := hc'.1
+  exact IntSourceTree.check_sound tree d.H hH (2 * d.scale) (sourceBaseT d J)
+    (sourceKey (sourceUt J) d.H) (source_double_scale_unit d.scale hp2 hz)
+    (sourceUt_key_base d hd' J hJ hp2 hz) (sourceUt_key_recurrence J d.H hH) hc
 
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
