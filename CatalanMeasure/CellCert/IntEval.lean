@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.Cert.FieldEval
+public import CatalanMeasure.Cert.FieldEvalCore
 
 @[expose] public section
 

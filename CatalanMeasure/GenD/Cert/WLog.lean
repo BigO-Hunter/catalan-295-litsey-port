@@ -2,7 +2,7 @@ module
 
 public import Mathlib.Analysis.Real.Pi.Bounds
 public import Mathlib.Analysis.Complex.ExponentialBounds
-public import CatalanMeasure.CellCert.EvalS
+public import CatalanMeasure.CellCert.IntEval
 
 @[expose] public section
 
@@ -128,7 +128,9 @@ def atChk (j : ℕ) : Bool :=
   let x : ℚ := (j : ℚ) / 128
   decide (qabs (atTab j - x * serH (-(x ^ 2)) 50 1) ≤ 1 / 2 ^ 96)
 
+-- kcost: 8.224 s estimated;257 nodes times32 Horner terms times10 rational/check operations at100us; shared once.
 theorem lnChk_all : ∀ j < 257, lnChk j = true := by decide +kernel
+-- kcost: 3.250 s estimated;65 nodes times50 Horner terms times10 rational/check operations at100us; shared once.
 theorem atChk_all : ∀ j < 65, atChk j = true := by decide +kernel
 
 theorem lnTab_spec {j : ℕ} (hj : j ≤ 256) :
