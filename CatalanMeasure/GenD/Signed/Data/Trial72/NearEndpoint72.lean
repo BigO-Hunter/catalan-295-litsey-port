@@ -52,19 +52,30 @@ private theorem sup_eventual (B : Regions) :
   filter_upwards [h] with N hN x hx
   exact (hN x hx).trans_eq (by ring)
 
-def data (B : Regions) :=
+/-- The exact consumer contract; producers may supply these finite-N
+regional bounds directly or use the limit-field adapter above. -/
+structure EventualRegions : Prop where
+  gap : ∀ᶠ N : ℕ in atTop, ∀ x : ℝ, 0 < |x| → |x| < 7/100 →
+    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-1/25
+  sup : ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (1-1/1000 : ℝ) 1,
+    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-17/100
+
+theorem Regions.eventual (B : Regions) : EventualRegions :=
+  ⟨gap_eventual B,sup_eventual B⟩
+
+def data (B : EventualRegions) :=
   LinkData72.data I (MXRef := secondMX) (targetOld := baseTarget72) (costOld := cost72)
     (c2 := 72*cost72) rfl
     (by intro i α hα; fin_cases i
         · exact ⟨hα.1,hα.2.trans (by norm_num : (1/200 : ℝ) ≤ 1/16)⟩
         · exact ⟨(by norm_num : (0 : ℝ) ≤ 1/200).trans hα.1,hα.2⟩)
     (fun _ => rfl) (fun _ => rfl) Inputs72.excess_cap Inputs72.excess_top
-    (gap_eventual B) (sup_eventual B)
+    B.gap B.sup
     (by change (999/1000 : ℝ) ≤ 1-1/1000; norm_num)
     (by change (0 : ℝ) ≤ 999/1000; norm_num)
     (by change (0 : ℝ) ≤ 467829/1000000; norm_num)
 
-theorem hnear (F : Rows72.FieldRows) (B : Regions)
+theorem hnear (F : Rows72.FieldRows) (B : EventualRegions)
     (E0 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T0.D N)))
     (E1 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T1.D N)))
     (E2 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T2.D N))) :

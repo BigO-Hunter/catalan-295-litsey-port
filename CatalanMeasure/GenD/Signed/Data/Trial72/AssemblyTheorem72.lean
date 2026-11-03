@@ -14,7 +14,7 @@ theorem of_covers (lb : NullityLB dc72.toParameters)
     (hcontent : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
       Real.log ((canonicalNormalizer dc72.toParameters dc72.admissible lb 98 dc72_normalizer_cut).D N) ≤
         (price72 + ε) * (N : ℝ) ^ 2)
-    (F : Rows72.FieldRows) (B : NearEndpoint72.Regions)
+    (F : Rows72.FieldRows) (B : NearEndpoint72.EventualRegions)
     (E0 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T0.D N)))
     (E1 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T1.D N)))
     (E2 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T2.D N))) :
