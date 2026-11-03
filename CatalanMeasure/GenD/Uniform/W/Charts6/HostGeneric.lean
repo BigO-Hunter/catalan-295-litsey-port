@@ -310,5 +310,66 @@ theorem zProfileData_realises {b ex K : Nat} (hK : K = b * 4 + 2 + ex)
 
 
 
+
+theorem source_cf_add (a b : Nat → Int) (s : Int) :
+    ZoneZ.Q.cf (fun i => a i + b i) s = ZoneZ.Q.cf a s + ZoneZ.Q.cf b s := by
+  by_cases hs : 0 ≤ s <;> simp [ZoneZ.Q.cf, hs]
+
+theorem source_cf_sub (a b : Nat → Int) (s : Int) :
+    ZoneZ.Q.cf (fun i => a i - b i) s = ZoneZ.Q.cf a s - ZoneZ.Q.cf b s := by
+  by_cases hs : 0 ≤ s <;> simp [ZoneZ.Q.cf, hs]
+
+theorem source_cf_mul (c : Int) (a : Nat → Int) (s : Int) :
+    ZoneZ.Q.cf (fun i => c * a i) s = c * ZoneZ.Q.cf a s := by
+  by_cases hs : 0 ≤ s <;> simp [ZoneZ.Q.cf, hs]
+
+theorem source_cf_mul_X (G : Polynomial Int) (s : Int) :
+    ZoneZ.Q.cf (G * Polynomial.X).coeff s = ZoneZ.Q.cf G.coeff (s - 1) := by
+  cases s with
+  | ofNat n =>
+    cases n with
+    | zero => norm_num [ZoneZ.Q.cf]
+    | succ n =>
+      have he : (((n + 1 : Nat) : Int) - 1) = (n : Int) := by omega
+      have hn0 : 0 ≤ (n : Int) + 1 := by omega
+      simp [ZoneZ.Q.cf, he, hn0, Polynomial.coeff_mul_X]
+  | negSucc n =>
+    have h0 : ¬ 0 ≤ Int.negSucc n := by omega
+    have h1 : ¬ 0 ≤ Int.negSucc n - 1 := by omega
+    simp [ZoneZ.Q.cf, h0, h1]
+
+/-- Extra source-sum terms are zero by signed coefficient support. -/
+theorem source_phi_extend (a b : Nat → Int) (J : Nat) (S : Int)
+    (B : Nat) (hB : S.toNat + 3 ≤ B) :
+    Charts.phiQ a b J S = ∑ u ∈ Finset.range B,
+      (ZoneZ.Q.alphaQ u J * (ZoneZ.Q.cf a (S + 1 - u) : Rat) +
+        ZoneZ.Q.betaQ u J * (ZoneZ.Q.cf b (S - u) : Rat)) := by
+  unfold Charts.phiQ
+  apply Finset.sum_subset (Finset.range_mono hB)
+  intro u hu hnot
+  have ht : S.toNat + 3 ≤ u :=
+    Nat.le_of_not_gt (fun hl => hnot (Finset.mem_range.mpr hl))
+  have hSn := Int.self_le_toNat S
+  have ha : ¬ 0 ≤ S + 1 - (u : Int) := by omega
+  have hb : ¬ 0 ≤ S - (u : Int) := by omega
+  simp only [ZoneZ.Q.cf, if_neg ha, if_neg hb, Int.cast_zero, mul_zero, zero_add]
+
+/-- Actual rational source functional shifts under multiplication by X,
+including all signed cutoffs; common padding avoids a hidden boundary term. -/
+theorem source_phi_mul_X (G T : Polynomial Int) (J : Nat) (S : Int) :
+    Charts.phiQ (G * Polynomial.X).coeff (T * Polynomial.X).coeff J S =
+      Charts.phiQ G.coeff T.coeff J (S - 1) := by
+  let B := (S.toNat + 3) + ((S - 1).toNat + 3)
+  refine (source_phi_extend (fun i => (G * Polynomial.X).coeff i)
+    (fun i => (T * Polynomial.X).coeff i) J S B (by dsimp [B]; omega)).trans
+      (Eq.trans ?_ (source_phi_extend (fun i => G.coeff i) (fun i => T.coeff i)
+        J (S - 1) B (by dsimp [B]; omega)).symm)
+  apply Finset.sum_congr rfl
+  intro u hu
+  rw [source_cf_mul_X, source_cf_mul_X]
+  have hg : S + 1 - (u : Int) - 1 = (S - 1) + 1 - (u : Int) := by ring
+  have ht : S - (u : Int) - 1 = (S - 1) - (u : Int) := by ring
+  rw [hg, ht]
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
