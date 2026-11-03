@@ -2021,6 +2021,25 @@ theorem roundMergeUBL_of_parts (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P
 #print axioms chebRoundPieceL_sound
 #print axioms roundMergeUBL_of_parts
 
+
+/-! Structural cleaning for kernel computation: sorting is unnecessary for piece semantics. -/
+def fieldClean (fq : FieldQ) : FieldQ :=
+  ⟨trimPoly fq.poly,siteClean (mergeSites fq.plogs),poleClean (mergePoles fq.poles)⟩
+
+theorem fieldClean_sound (fq : FieldQ) (x : ℝ) :
+    fieldTower (fieldClean fq) (poleF (fieldClean fq).poles) 0 x = fieldTower fq (poleF fq.poles) 0 x := by
+  simp only [fieldClean,fieldTower_zero]
+  rw [trimPoly_sound,siteClean_sound,mergeSites_eq,poleClean_sound,mergePoles_sound]
+
+def laurentClean (ts : List LTerm) : List LTerm := lfClean (mergeL ts)
+
+theorem laurentClean_sound (ts : List LTerm) (x : ℝ) :
+    lfieldTower (laurentClean ts) 0 x = lfieldTower ts 0 x := by
+  rw [laurentClean,lfClean_sound,lfieldTower_mergeL]
+
+#print axioms fieldClean_sound
+#print axioms laurentClean_sound
+
 #print axioms plogRoundTerm_bnd
 #print axioms poleRoundTerm_bnd
 #print axioms laurentRoundTerm_bnd
