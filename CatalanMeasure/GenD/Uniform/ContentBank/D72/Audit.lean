@@ -19,3 +19,7 @@ as their generic and data proofs are completed. -/
 
 #print axioms CatalanMeasure.GenD.Uniform.W.Prof.radixEval_zero
 #print axioms CatalanMeasure.GenD.Uniform.W.Prof.packed_kernel_kill
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.scaledResidues_at
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_ms_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.intScalarCheck_sound
