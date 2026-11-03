@@ -204,5 +204,46 @@ theorem IntSourceTree.check_sound (tree : IntSourceTree) (H : Nat) (hH : 0 < H)
           rw [← hvp]
           ring
 
+
+/-- Native first-coordinate base values at the doubled common scale. -/
+def sourceBaseG (d : IntMomentData) (J n : Nat) : Int :=
+  if n = 0 then 2 * intAt d.bp (J + 1) else 2 * intAt2 d.mt (n - 1) J
+
+/-- Native second-coordinate base values, avoiding a separate beta table. -/
+def sourceBaseT (d : IntMomentData) (J n : Nat) : Int :=
+  if n = 0 then 0 else -3 * intAt2 d.zt (n - 1) J
+
+theorem source_double_scale_unit (scale : Int) (hp2 : 2 < p)
+    (hz : (scale : ZMod p) ≠ 0) : ((2 * scale : Int) : ZMod p) ≠ 0 := by
+  have h2 : (2 : ZMod p) ≠ 0 := ResRec.natCast_ne_zero_of_lt (p := p) (n := 2) (by decide) hp2
+  push_cast
+  exact mul_ne_zero h2 hz
+
+/-- Doubling both native value and scale preserves the exact rational residue. -/
+theorem source_gd_double_scale (scale x : Int) (q : Rat) (hp2 : 2 < p)
+    (hz : (scale : ZMod p) ≠ 0)
+    (hq : ResRec.Gd p q ((x : ZMod p) / (scale : ZMod p))) :
+    ResRec.Gd p q (((2 * x : Int) : ZMod p) / ((2 * scale : Int) : ZMod p)) := by
+  have h2 : (2 : ZMod p) ≠ 0 := ResRec.natCast_ne_zero_of_lt (p := p) (n := 2) (by decide) hp2
+  refine ResRec.Gd.val ?_ hq
+  push_cast
+  field_simp [hz, h2] <;> ring
+
+/-- Actual beta=-3/2*zeta at scale2Z uses native numerator-3*ZT.
+The explicit odd-prime and scale-unit gates justify the cancellation. -/
+theorem source_gd_beta_double_scale (scale x : Int) (q : Rat) (hp2 : 2 < p)
+    (hz : (scale : ZMod p) ≠ 0)
+    (hq : ResRec.Gd p q ((x : ZMod p) / (scale : ZMod p))) :
+    ResRec.Gd p (-(3 / 2 : Rat) * q)
+      (((-3 * x : Int) : ZMod p) / ((2 * scale : Int) : ZMod p)) := by
+  have h2 : (2 : ZMod p) ≠ 0 := ResRec.natCast_ne_zero_of_lt (p := p) (n := 2) (by decide) hp2
+  have hm3 : ResRec.Gd p (-3 : Rat) (-3 : ZMod p) := by
+    simpa using ResRec.Gd.sub (ResRec.Gd.nat (p := p) 0) (ResRec.Gd.nat (p := p) 3)
+  have hg := ResRec.Gd.mul (ResRec.Gd.mul hm3
+    (ResRec.Gd.inv_nat (p := p) (n := 2) (by omega) hp2)) hq
+  refine ResRec.Gd.of_eq (y := (-3 : Rat) * (1 / 2) * q) (by ring) (ResRec.Gd.val ?_ hg)
+  push_cast
+  field_simp [hz, h2] <;> ring
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
