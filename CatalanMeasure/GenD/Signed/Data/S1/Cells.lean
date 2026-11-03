@@ -1,5 +1,6 @@
 module
 
+public import CatalanMeasure.GenD.Signed.DesignConst
 public import CatalanMeasure.GenD.Signed.Data.S1.Bridge
 public import CatalanMeasure.GenD.Analytic.WeightedAtom
 public import CatalanMeasure.GenD.Signed.LogEval
@@ -64,19 +65,31 @@ theorem binEntropy_le_tangent {q p : ℝ} (hq0 : 0 < q) (hq1 : q < 1) (hp0 : 0 �
     exact this
   nlinarith only [h1', h2']
 
+/-- Pieces of the cover: `[lo, hi]` of `kappa`, keyhole rate radius `r0`, circle radius `r1 > r0`,
+circle exponent `wc` (per `N`), tangent point `km`. -/
+structure S1Cell where
+  lo : ℚ
+  hi : ℚ
+  r0 : ℚ
+  r1 : ℚ
+  wc : ℚ
+  km : ℚ
+
+namespace Generic
+
 /-- Real core of a cell with `1/2 <= lo`. -/
-theorem cellB_real {lo hi km wc Ψ L Hm Hd Lu Hmu Hdv Hde : ℝ}
+theorem cellB_real {shift n0 : ℝ} {lo hi km wc Ψ L Hm Hd Lu Hmu Hdv Hde : ℝ}
     (hlh : lo ≤ hi) (hL0 : 0 ≤ L) (hLu : L ≤ Lu) (hHm : Hm ≤ Hmu) (hHd : |Hd - Hdv| ≤ Hde)
-    (hflo : max 0 (lo - 10 / 58) * Lu + wc / 58 + Hmu + Hdv * (lo - km) + |lo - km| * Hde ≤ Ψ)
-    (hfhi : max 0 (hi - 10 / 58) * Lu + wc / 58 + Hmu + Hdv * (hi - km) + |hi - km| * Hde ≤ Ψ)
+    (hflo : max 0 (lo - shift) * Lu + wc / n0 + Hmu + Hdv * (lo - km) + |lo - km| * Hde ≤ Ψ)
+    (hfhi : max 0 (hi - shift) * Lu + wc / n0 + Hmu + Hdv * (hi - km) + |hi - km| * Hde ≤ Ψ)
     (htan : ∀ κ ∈ Icc lo hi, Real.binEntropy κ ≤ Hm + Hd * (κ - km)) :
-    ∀ κ ∈ Icc lo hi, max 0 ((κ - 10 / 58) * L) + wc / 58 + Real.binEntropy κ ≤ Ψ := by
+    ∀ κ ∈ Icc lo hi, max 0 ((κ - shift) * L) + wc / n0 + Real.binEntropy κ ≤ Ψ := by
   have hLu0 : 0 ≤ Lu := hL0.trans hLu
   -- value of the affine-plus-max majorant at an endpoint
-  have hend : ∀ e : ℝ, max 0 (e - 10 / 58) * Lu + wc / 58 + Hmu + Hdv * (e - km) +
-      |e - km| * Hde ≤ Ψ → max 0 (e - 10 / 58) * L + wc / 58 + Hm + Hd * (e - km) ≤ Ψ := by
+  have hend : ∀ e : ℝ, max 0 (e - shift) * Lu + wc / n0 + Hmu + Hdv * (e - km) +
+      |e - km| * Hde ≤ Ψ → max 0 (e - shift) * L + wc / n0 + Hm + Hd * (e - km) ≤ Ψ := by
     intro e he
-    have h1 : max 0 (e - 10 / 58) * L ≤ max 0 (e - 10 / 58) * Lu :=
+    have h1 : max 0 (e - shift) * L ≤ max 0 (e - shift) * Lu :=
       mul_le_mul_of_nonneg_left hLu (le_max_left _ _)
     have h2 : Hd * (e - km) ≤ Hdv * (e - km) + |e - km| * Hde := by
       have : (Hd - Hdv) * (e - km) ≤ |(Hd - Hdv) * (e - km)| := le_abs_self _
@@ -88,80 +101,72 @@ theorem cellB_real {lo hi km wc Ψ L Hm Hd Lu Hmu Hdv Hde : ℝ}
   have hlo' := hend lo hflo
   have hhi' := hend hi hfhi
   intro κ hκ
-  have hmax : max 0 ((κ - 10 / 58) * L) = max 0 (κ - 10 / 58) * L := by
+  have hmax : max 0 ((κ - shift) * L) = max 0 (κ - shift) * L := by
     rw [max_mul_of_nonneg _ _ hL0, zero_mul]
   rw [hmax]
   have hT := htan κ hκ
-  have hconv : max 0 (κ - 10 / 58) * L + wc / 58 + Hm + Hd * (κ - km) ≤ Ψ := by
+  have hconv : max 0 (κ - shift) * L + wc / n0 + Hm + Hd * (κ - km) ≤ Ψ := by
     rcases hlh.eq_or_lt with h | h
     · have : κ = lo := le_antisymm (h ▸ hκ.2) hκ.1
       subst this; exact hlo'
     · have hd : 0 < hi - lo := sub_pos.mpr h
-      set Mlo := max 0 (lo - 10 / 58) with hMlo
-      set Mhi := max 0 (hi - 10 / 58) with hMhi
-      have hM : (hi - lo) * max 0 (κ - 10 / 58) ≤ (hi - κ) * Mlo + (κ - lo) * Mhi := by
+      set Mlo := max 0 (lo - shift) with hMlo
+      set Mhi := max 0 (hi - shift) with hMhi
+      have hM : (hi - lo) * max 0 (κ - shift) ≤ (hi - κ) * Mlo + (κ - lo) * Mhi := by
         have h0 : 0 ≤ (hi - κ) * Mlo + (κ - lo) * Mhi :=
           add_nonneg (mul_nonneg (sub_nonneg.mpr hκ.2) (le_max_left _ _))
             (mul_nonneg (sub_nonneg.mpr hκ.1) (le_max_left _ _))
-        rcases le_total κ (10 / 58) with hc | hc
+        rcases le_total κ (shift) with hc | hc
         · rw [max_eq_left (by linarith only [hc])]; simpa using h0
         · rw [max_eq_right (by linarith only [hc])]
-          have a1 : lo - 10 / 58 ≤ Mlo := le_max_right _ _
-          have a2 : hi - 10 / 58 ≤ Mhi := le_max_right _ _
+          have a1 : lo - shift ≤ Mlo := le_max_right _ _
+          have a2 : hi - shift ≤ Mhi := le_max_right _ _
           nlinarith only [mul_le_mul_of_nonneg_left a1 (sub_nonneg.mpr hκ.2),
             mul_le_mul_of_nonneg_left a2 (sub_nonneg.mpr hκ.1)]
       -- combine
-      have hLM : (hi - lo) * (max 0 (κ - 10 / 58) * L) ≤ ((hi - κ) * Mlo + (κ - lo) * Mhi) * L := by
+      have hLM : (hi - lo) * (max 0 (κ - shift) * L) ≤ ((hi - κ) * Mlo + (κ - lo) * Mhi) * L := by
         have := mul_le_mul_of_nonneg_right hM hL0
         linarith only [this]
-      have hlin : (hi - lo) * (wc / 58 + Hm + Hd * (κ - km)) =
-          (hi - κ) * (wc / 58 + Hm + Hd * (lo - km)) + (κ - lo) * (wc / 58 + Hm + Hd * (hi - km)) := by
+      have hlin : (hi - lo) * (wc / n0 + Hm + Hd * (κ - km)) =
+          (hi - κ) * (wc / n0 + Hm + Hd * (lo - km)) + (κ - lo) * (wc / n0 + Hm + Hd * (hi - km)) := by
         ring
-      have hA : (hi - κ) * (Mlo * L + (wc / 58 + Hm + Hd * (lo - km))) +
-          (κ - lo) * (Mhi * L + (wc / 58 + Hm + Hd * (hi - km))) ≤ (hi - lo) * Ψ := by
-        have e1 := mul_le_mul_of_nonneg_left (show Mlo * L + (wc / 58 + Hm + Hd * (lo - km)) ≤ Ψ by
+      have hA : (hi - κ) * (Mlo * L + (wc / n0 + Hm + Hd * (lo - km))) +
+          (κ - lo) * (Mhi * L + (wc / n0 + Hm + Hd * (hi - km))) ≤ (hi - lo) * Ψ := by
+        have e1 := mul_le_mul_of_nonneg_left (show Mlo * L + (wc / n0 + Hm + Hd * (lo - km)) ≤ Ψ by
           linarith only [hlo']) (sub_nonneg.mpr hκ.2)
-        have e2 := mul_le_mul_of_nonneg_left (show Mhi * L + (wc / 58 + Hm + Hd * (hi - km)) ≤ Ψ by
+        have e2 := mul_le_mul_of_nonneg_left (show Mhi * L + (wc / n0 + Hm + Hd * (hi - km)) ≤ Ψ by
           linarith only [hhi']) (sub_nonneg.mpr hκ.1)
         nlinarith only [e1, e2]
-      have : (hi - lo) * (max 0 (κ - 10 / 58) * L + wc / 58 + Hm + Hd * (κ - km)) ≤ (hi - lo) * Ψ := by
+      have : (hi - lo) * (max 0 (κ - shift) * L + wc / n0 + Hm + Hd * (κ - km)) ≤ (hi - lo) * Ψ := by
         nlinarith only [hLM, hlin, hA]
       exact le_of_mul_le_mul_left this hd
   linarith only [hT, hconv]
 
 /-- Real core of a cell with `hi <= 1/2` (`binomRate <= log 2` everywhere). -/
-theorem cellA_real {hi wc Ψ L Lu l2 : ℝ} (hL0 : 0 ≤ L) (hLu : L ≤ Lu) (hl2 : Real.log 2 ≤ l2)
-    (hf : max 0 (hi - 10 / 58) * Lu + wc / 58 + l2 ≤ Ψ) :
+theorem cellA_real {shift n0 : ℝ} {hi wc Ψ L Lu l2 : ℝ} (hL0 : 0 ≤ L) (hLu : L ≤ Lu) (hl2 : Real.log 2 ≤ l2)
+    (hf : max 0 (hi - shift) * Lu + wc / n0 + l2 ≤ Ψ) :
     ∀ κ ∈ Icc (0 : ℝ) hi, ∀ B : ℝ, B ≤ Real.log 2 →
-      max 0 ((κ - 10 / 58) * L) + wc / 58 + B ≤ Ψ := by
+      max 0 ((κ - shift) * L) + wc / n0 + B ≤ Ψ := by
   intro κ hκ B hB
-  have hmax : max 0 ((κ - 10 / 58) * L) = max 0 (κ - 10 / 58) * L := by
+  have hmax : max 0 ((κ - shift) * L) = max 0 (κ - shift) * L := by
     rw [max_mul_of_nonneg _ _ hL0, zero_mul]
   rw [hmax]
-  have h1 : max 0 (κ - 10 / 58) ≤ max 0 (hi - 10 / 58) := max_le_max le_rfl (by linarith only [hκ.2])
-  have h2 : max 0 (κ - 10 / 58) * L ≤ max 0 (hi - 10 / 58) * Lu :=
+  have h1 : max 0 (κ - shift) ≤ max 0 (hi - shift) := max_le_max le_rfl (by linarith only [hκ.2])
+  have h2 : max 0 (κ - shift) * L ≤ max 0 (hi - shift) * Lu :=
     mul_le_mul h1 hLu hL0 (le_max_left _ _)
   linarith only [h2, hB, hl2, hf]
 
-/-- Pieces of the cover: `[lo, hi]` of `kappa`, keyhole rate radius `r0`, circle radius `r1 > r0`,
-circle exponent `wc` (per `N`), tangent point `km`. -/
-structure S1Cell where
-  lo : ℚ
-  hi : ℚ
-  r0 : ℚ
-  r1 : ℚ
-  wc : ℚ
-  km : ℚ
+variable (dc : CatalanMeasure.GenD.Signed.DesignConst) (segRate : ℚ)
 
 /-- Checker for `1/2 <= lo` cells; `Ψ` is the bound per `n` (`Psi/58`). -/
 def cellB (Ψ : ℚ) (c : S1Cell) : Bool :=
   match LogEval.logQ 12 c.r0, LogEval.logQ 12 c.km, LogEval.logQ 12 (1 - c.km) with
   | some (v1, e1), some (v2, e2), some (v3, e3) =>
     decide (1 / 2 ≤ c.lo ∧ c.lo ≤ c.hi ∧ c.hi ≤ 1 ∧ 0 < c.km ∧ c.km < 1 ∧ 0 < c.r0 ∧ c.r0 ≤ 1 ∧
-      416 / 100 ≤ c.wc ∧
-      max 0 (c.lo - 10 / 58) * (e1 - v1) + c.wc / 58 + (c.km * (e2 - v2) + (1 - c.km) * (e3 - v3)) +
+      segRate ≤ c.wc ∧
+      max 0 (c.lo - (2 * (dc.g0 : ℚ) / dc.n0)) * (e1 - v1) + c.wc / (dc.n0 : ℚ) + (c.km * (e2 - v2) + (1 - c.km) * (e3 - v3)) +
         (v3 - v2) * (c.lo - c.km) + |c.lo - c.km| * (e2 + e3) ≤ Ψ ∧
-      max 0 (c.hi - 10 / 58) * (e1 - v1) + c.wc / 58 + (c.km * (e2 - v2) + (1 - c.km) * (e3 - v3)) +
+      max 0 (c.hi - (2 * (dc.g0 : ℚ) / dc.n0)) * (e1 - v1) + c.wc / (dc.n0 : ℚ) + (c.km * (e2 - v2) + (1 - c.km) * (e3 - v3)) +
         (v3 - v2) * (c.hi - c.km) + |c.hi - c.km| * (e2 + e3) ≤ Ψ)
   | _, _, _ => false
 
@@ -169,23 +174,22 @@ def cellB (Ψ : ℚ) (c : S1Cell) : Bool :=
 def cellA (Ψ : ℚ) (c : S1Cell) : Bool :=
   match LogEval.logQ 12 c.r0 with
   | some (v1, e1) =>
-    decide (c.lo = 0 ∧ c.hi ≤ 1 / 2 ∧ 0 < c.r0 ∧ c.r0 ≤ 1 ∧ 416 / 100 ≤ c.wc ∧
-      max 0 (c.hi - 10 / 58) * (e1 - v1) + c.wc / 58 + 6931471808 / 10 ^ 10 ≤ Ψ)
+    decide (c.lo = 0 ∧ c.hi ≤ 1 / 2 ∧ 0 < c.r0 ∧ c.r0 ≤ 1 ∧ segRate ≤ c.wc ∧
+      max 0 (c.hi - (2 * (dc.g0 : ℚ) / dc.n0)) * (e1 - v1) + c.wc / (dc.n0 : ℚ) + 6931471808 / 10 ^ 10 ≤ Ψ)
   | _ => false
 
 /-- The statement a cell certifies (`Ψ` per `n`). -/
 def CellStmt (Ψ : ℝ) (r0 wc lo hi : ℝ) : Prop :=
-  ∀ κ ∈ Icc lo hi, keyholeRate 5 58 r0 κ + max wc (416 / 100) / 58 + binomRate κ ≤ Ψ
+  ∀ κ ∈ Icc lo hi, keyholeRate dc.g0 dc.n0 r0 κ + max wc (segRate : ℝ) / (dc.n0 : ℝ) + binomRate κ ≤ Ψ
 
 theorem keyholeRate_eq (r0 κ : ℝ) :
-    keyholeRate 5 58 r0 κ = max 0 ((κ - 10 / 58) * (-Real.log r0)) := by
+    keyholeRate dc.g0 dc.n0 r0 κ =
+      max 0 ((κ - 2 * (dc.g0 : ℝ) / dc.n0) * (-Real.log r0)) := by
   unfold keyholeRate
   rw [one_div, Real.log_inv]
-  push_cast
-  norm_num
 
-theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB Ψ c = true) :
-    CellStmt (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
+theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB dc segRate Ψ c = true) :
+    CellStmt dc segRate (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
   unfold cellB at h
   split at h
   · rename_i v1 e1 v2 e2 v3 e3 h1 h2 h3
@@ -227,7 +231,7 @@ theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB Ψ c = true) :
     have hflo' := (Rat.cast_le (K := ℝ)).mpr hflo
     have hfhi' := (Rat.cast_le (K := ℝ)).mpr hfhi
     push_cast at hflo' hfhi'
-    have core := cellB_real (lo := (c.lo : ℝ)) (hi := c.hi) (km := c.km) (wc := c.wc) (Ψ := Ψ)
+    have core := cellB_real (shift := 2 * (dc.g0 : ℝ) / dc.n0) (n0 := (dc.n0 : ℝ)) (lo := (c.lo : ℝ)) (hi := c.hi) (km := c.km) (wc := c.wc) (Ψ := Ψ)
       (L := -Real.log (c.r0 : ℝ)) (Hm := -(c.km : ℝ) * Real.log c.km - (1 - c.km) * Real.log (1 - (c.km : ℝ)))
       (Hd := Real.log (1 - (c.km : ℝ)) - Real.log c.km)
       (Lu := (e1 : ℝ) - v1) (Hmu := (c.km : ℝ) * (e2 - v2) + (1 - c.km) * (e3 - v3))
@@ -237,10 +241,10 @@ theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB Ψ c = true) :
             linarith only [hκ.2, this]))
     intro κ hκ
     have := core κ hκ
-    have hwc' : (416 / 100 : ℝ) ≤ c.wc := by
+    have hwc' : (segRate : ℝ) ≤ c.wc := by
       have := (Rat.cast_le (K := ℝ)).mpr hwc
       push_cast at this; linarith only [this]
-    rw [max_eq_left hwc', keyholeRate_eq]
+    rw [max_eq_left hwc', keyholeRate_eq dc]
     have hbr : binomRate κ = Real.binEntropy κ := by
       unfold binomRate
       rw [if_pos (by linarith only [hκ.1, hlo'])]
@@ -248,8 +252,8 @@ theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB Ψ c = true) :
     exact this
   · simp at h
 
-theorem cellA_spec {Ψ : ℚ} {c : S1Cell} (h : cellA Ψ c = true) :
-    CellStmt (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
+theorem cellA_spec {Ψ : ℚ} {c : S1Cell} (h : cellA dc segRate Ψ c = true) :
+    CellStmt dc segRate (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
   unfold cellA at h
   split at h
   · rename_i v1 e1 h1
@@ -272,13 +276,13 @@ theorem cellA_spec {Ψ : ℚ} {c : S1Cell} (h : cellA Ψ c = true) :
       have := Real.log_two_lt_d9
       norm_num at this ⊢
       linarith only [this]
-    have core := cellA_real (hi := (c.hi : ℝ)) (wc := c.wc) (Ψ := Ψ) (L := -Real.log (c.r0 : ℝ))
+    have core := cellA_real (shift := 2 * (dc.g0 : ℝ) / dc.n0) (n0 := (dc.n0 : ℝ)) (hi := (c.hi : ℝ)) (wc := c.wc) (Ψ := Ψ) (L := -Real.log (c.r0 : ℝ))
       (Lu := (e1 : ℝ) - v1) (l2 := 6931471808 / 10 ^ 10) hL0 hLu hl2 hf'
     intro κ hκ
-    have hwc' : (416 / 100 : ℝ) ≤ c.wc := by
+    have hwc' : (segRate : ℝ) ≤ c.wc := by
       have := (Rat.cast_le (K := ℝ)).mpr hwc
       push_cast at this; linarith only [this]
-    rw [max_eq_left hwc', keyholeRate_eq]
+    rw [max_eq_left hwc', keyholeRate_eq dc]
     have hlo' : (c.lo : ℝ) = 0 := by exact_mod_cast hlo
     have hbr : binomRate κ ≤ Real.log 2 := by
       unfold binomRate
@@ -288,6 +292,57 @@ theorem cellA_spec {Ψ : ℚ} {c : S1Cell} (h : cellA Ψ c = true) :
     exact core κ ⟨by linarith only [hκ.1, hlo'], hκ.2⟩ _ hbr
   · simp at h
 
+end Generic
+
+theorem cellB_real {lo hi km wc Ψ L Hm Hd Lu Hmu Hdv Hde : ℝ}
+    (hlh : lo ≤ hi) (hL0 : 0 ≤ L) (hLu : L ≤ Lu) (hHm : Hm ≤ Hmu) (hHd : |Hd - Hdv| ≤ Hde)
+    (hflo : max 0 (lo - 10 / 58) * Lu + wc / 58 + Hmu + Hdv * (lo - km) + |lo - km| * Hde ≤ Ψ)
+    (hfhi : max 0 (hi - 10 / 58) * Lu + wc / 58 + Hmu + Hdv * (hi - km) + |hi - km| * Hde ≤ Ψ)
+    (htan : ∀ κ ∈ Icc lo hi, Real.binEntropy κ ≤ Hm + Hd * (κ - km)) :
+    ∀ κ ∈ Icc lo hi, max 0 ((κ - 10 / 58) * L) + wc / 58 + Real.binEntropy κ ≤ Ψ := by
+  exact Generic.cellB_real (shift := 10 / 58) (n0 := 58) hlh hL0 hLu hHm hHd hflo hfhi htan
+
+theorem cellA_real {hi wc Ψ L Lu l2 : ℝ} (hL0 : 0 ≤ L) (hLu : L ≤ Lu) (hl2 : Real.log 2 ≤ l2)
+    (hf : max 0 (hi - 10 / 58) * Lu + wc / 58 + l2 ≤ Ψ) :
+    ∀ κ ∈ Icc (0 : ℝ) hi, ∀ B : ℝ, B ≤ Real.log 2 →
+      max 0 ((κ - 10 / 58) * L) + wc / 58 + B ≤ Ψ := by
+  exact Generic.cellA_real (shift := 10 / 58) (n0 := 58) hL0 hLu hl2 hf
+
+/-- D58 specialization of the design-generic rational checker. -/
+def cellB (Ψ : ℚ) (c : S1Cell) : Bool := Generic.cellB dc58 (416 / 100) Ψ c
+
+/-- D58 specialization of the design-generic leftmost-cell checker. -/
+def cellA (Ψ : ℚ) (c : S1Cell) : Bool := Generic.cellA dc58 (416 / 100) Ψ c
+
+/-- The current D58 cell contract, specialized from its design-generic form. -/
+def CellStmt (Ψ : ℝ) (r0 wc lo hi : ℝ) : Prop :=
+  Generic.CellStmt dc58 (416 / 100) Ψ r0 wc lo hi
+
+theorem keyholeRate_eq (r0 κ : ℝ) :
+    keyholeRate 5 58 r0 κ = max 0 ((κ - 10 / 58) * (-Real.log r0)) := by
+  convert Generic.keyholeRate_eq dc58 r0 κ using 1 <;> norm_num
+
+theorem cellB_spec {Ψ : ℚ} {c : S1Cell} (h : cellB Ψ c = true) :
+    CellStmt (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
+  exact Generic.cellB_spec dc58 (416 / 100) h
+
+theorem cellA_spec {Ψ : ℚ} {c : S1Cell} (h : cellA Ψ c = true) :
+    CellStmt (Ψ : ℝ) (c.r0 : ℝ) (c.wc : ℝ) (c.lo : ℝ) (c.hi : ℝ) := by
+  exact Generic.cellA_spec dc58 (416 / 100) h
+
+
 end
 
 end CatalanMeasure.GenD.Signed.Data.S1
+
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.binEntropy_le_tangent
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.cellB_real
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.cellA_real
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.keyholeRate_eq
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.cellB_spec
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.cellA_spec
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.cellB_real
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.cellA_real
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.keyholeRate_eq
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.cellB_spec
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.cellA_spec
