@@ -2174,4 +2174,82 @@ theorem laurentClean_sound (ts : List LTerm) (x : ℝ) :
 #print axioms fieldNFCheck_eq
 #print axioms fieldNFCheck_sound
 
+
+/-! ## C9 certified parent pole polynomials and child transfer. -/
+
+/-- The mask only partitions a list; absent mask entries stay near. -/
+def poleCacheSplit : List PoleR → List Bool → List PoleR × List PoleR
+  | [], _ => ([],[])
+  | qs, [] => (qs,[])
+  | q :: qs, b :: bs =>
+      let s := poleCacheSplit qs bs
+      if b then (s.1,q :: s.2) else (q :: s.1,s.2)
+
+theorem poleCacheSplit_sound (qs : List PoleR) (bs : List Bool) (x : ℝ) :
+    poleF qs x = poleF (poleCacheSplit qs bs).1 x+poleF (poleCacheSplit qs bs).2 x := by
+  induction qs generalizing bs with
+  | nil => simp [poleCacheSplit,poleF]
+  | cons q qs ih =>
+      cases bs with
+      | nil => simp [poleCacheSplit,poleF]
+      | cons b bs =>
+          cases b <;> simp only [poleCacheSplit,Bool.false_eq_true,ite_false,ite_true]
+          · rw [poleF_cons,poleF_cons,ih bs]; ring
+          · rw [poleF_cons,poleF_cons,ih bs]; ring
+
+/-- Exact global-x polynomial for a polynomial in a parent unit coordinate. -/
+def poleCacheGlobal (lo hi : ℚ) (A : List ℚ) : List ℚ :=
+  let B := sclPow (1/((hi-lo)/2)) 0 A
+  shiftLK (-((lo+hi)/2)) B.length B
+
+theorem poleCacheGlobal_spec {lo hi : ℚ} (hlo : lo < hi) (A : List ℚ) (x : ℝ) :
+    polyTow (poleCacheGlobal lo hi A) 0 x =
+      polyTow A 0 ((x-(((lo+hi)/2 : ℚ) : ℝ))/(((hi-lo)/2 : ℚ) : ℝ)) := by
+  unfold poleCacheGlobal
+  rw [shiftLK_eq',polyTow_shiftL,polyTow_sclPow]
+  simp only [pow_zero,one_mul,Rat.cast_div,Rat.cast_one,Rat.cast_neg]
+  congr 1
+  ring
+
+/-- Parent error includes the original log, argument, Taylor and dyadic errors. -/
+theorem poleCacheParent_sound {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi)
+    (qs : List PoleR) (ds : List (ℚ × ℚ)) (A B : List ℚ) (E : ℚ)
+    (h : polesRoundM nL nA M P lo hi qs ds = some (A,E))
+    (hB : poleCacheGlobal lo hi A = B) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), poleF qs x ≤ polyTow B 0 x+(E : ℝ) := by
+  intro x hx
+  have hp := polesRoundM_bnd hlo qs ds A E h x hx
+  rw [← poleCacheGlobal_spec hlo A x,hB] at hp
+  exact hp
+
+/-- Surrogate field: original plogs, checked cached polynomial and remaining poles. -/
+def poleCacheField (fq : FieldQ) (near : List PoleR) (B : List ℚ) : FieldQ :=
+  ⟨vecAdd fq.poly B,fq.plogs,near⟩
+
+theorem poleCacheChild_sound (fq : FieldQ) (ts : List LTerm) (mask : List Bool)
+    (near far : List PoleR) (B : List ℚ) (E T lo hi parentLo parentHi : ℚ)
+    (hn : (poleCacheSplit fq.poles mask).1 = near)
+    (hf : (poleCacheSplit fq.poles mask).2 = far)
+    (hlo : parentLo ≤ lo) (hhi : hi ≤ parentHi)
+    (hp : ∀ x ∈ Icc (parentLo : ℝ) (parentHi : ℝ), poleF far x ≤ polyTow B 0 x+(E : ℝ))
+    (hc : ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower (poleCacheField fq near B) (poleF near) 0 x+lfieldTower ts 0 x ≤ ((T-E : ℚ) : ℝ)) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (T : ℝ) := by
+  intro x hx
+  have hL : (parentLo : ℝ) ≤ (lo : ℝ) := Rat.cast_le.mpr hlo
+  have hH : (hi : ℝ) ≤ (parentHi : ℝ) := Rat.cast_le.mpr hhi
+  have hparent := hp x ⟨hL.trans hx.1,hx.2.trans hH⟩
+  have hchild := hc x hx
+  have hs := poleCacheSplit_sound fq.poles mask x
+  rw [hn,hf] at hs
+  simp only [poleCacheField,fieldTower_zero,polyTow_vecAdd,Rat.cast_sub] at hchild ⊢
+  rw [hs]
+  linarith
+
+#print axioms poleCacheSplit_sound
+#print axioms poleCacheGlobal_spec
+#print axioms poleCacheParent_sound
+#print axioms poleCacheChild_sound
+
 end CatalanMeasure.GenD.Signed.Data.Cells
