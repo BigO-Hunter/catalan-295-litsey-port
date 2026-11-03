@@ -1,0 +1,36 @@
+module
+
+public import CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Data
+
+@[expose] public section
+set_option Elab.async false
+set_option profiler true
+set_option maxRecDepth 1000000
+set_option maxHeartbeats 0
+namespace CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Cross04
+open CatalanMeasure.Cert CatalanMeasure.CellCert OAI.InternalCatalan
+open CatalanMeasure.Signed.FieldForm CatalanMeasure.GenD.Signed.Data.Trial
+open CatalanMeasure.GenD.Signed.TaylorCell (vecAdd)
+open CatalanMeasure.GenD.Signed.Data.Consts.EvalNormCore
+open CatalanMeasure.GenD.Signed.Data.Trial72
+noncomputable section
+
+open RationalNormV2Data
+theorem cross16 : qCross f ((tails.drop 64).take 4) ≤ caps.getD 16 0 := by
+  -- kcost: 1.2468 s; conservative 3× operation model under TL.
+  decide +kernel
+
+theorem cross17 : qCross f ((tails.drop 68).take 4) ≤ caps.getD 17 0 := by
+  -- kcost: 1.2468 s; conservative 3× operation model under TL.
+  decide +kernel
+
+theorem cross18 : qCross f ((tails.drop 72).take 4) ≤ caps.getD 18 0 := by
+  -- kcost: 1.2468 s; conservative 3× operation model under TL.
+  decide +kernel
+
+
+end
+end CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Cross04
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Cross04.cross16
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Cross04.cross17
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.RationalNormV2Cross04.cross18
