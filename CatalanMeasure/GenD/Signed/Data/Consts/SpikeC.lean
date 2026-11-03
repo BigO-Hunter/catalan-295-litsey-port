@@ -166,6 +166,21 @@ theorem barrierTrialS_neg_mono {bs : List ℚ}
 
 /-! ### `costRem` of the count trial `l * b` -/
 
+/-- A global maximum supplies exactly the hDe family consumed by
+SpikeCostOK.of_even_cert (and the corresponding odd certificate),
+using the lower endpoint enclosure at rho. The consumer and caps are unchanged. -/
+theorem spikeCost_hDe_of_global {b : ℕ → ℝ} {B L ρ : ℝ} {M : ℕ}
+    (z : Fin M → ℝ)
+    (hmax : ∀ y ∈ Set.Icc (0 : ℝ) 1, 2 * barrierTrialS b (-y) ≤ 2 * B)
+    (hlo : L ≤ barrierTrialS b (-ρ))
+    (hz : ∀ p, z p ∈ Set.Icc (0 : ℝ) 1) :
+    ∀ p, barrierTrialS b (-(z p)) - barrierTrialS b (-ρ) ≤ B - L := by
+  intro p
+  have hm := hmax (z p) (hz p)
+  linarith only [hm, hlo]
+
+#print axioms spikeCost_hDe_of_global
+
 /-- The part of `costRem (l b)` that is independent of `m/s'`: with `S1 = Σ b²`, `S2 = Σ 2b²/k`,
 `Sp = Σ b (-ρ)^k`, `Sb = S_b(-ρ)`:  `c(l) = l² (2 S1 - S2) - 4 l Sp + 4 l Sb` (convex in `l`). -/
 def cq (bs : List ℚ) (ρ l : ℚ) : ℚ :=
