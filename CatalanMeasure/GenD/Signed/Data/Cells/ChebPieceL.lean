@@ -536,6 +536,114 @@ theorem invMajTail_eq (c q : ℚ) (K : ℕ) (hq : q ≠ 1) : ∀ (a : List ℚ) 
       unfold invTailQ
       linear_combination ih (s+1)
 
+/-! ## Log-factor and product coefficient majorants -/
+
+def lfMaj (o : Option (ℚ × ℚ)) (L q : ℚ) : ℕ → ℚ
+  | 0 => match o with | none => 1 | some _ => L
+  | k+1 => match o with
+    | none => 0
+    | some ab => if ab.1 = 0 then 0 else q^(k+1)/((k : ℚ)+1)
+
+def lfCoarse (o : Option (ℚ × ℚ)) (L q : ℚ) : ℕ → ℚ
+  | 0 => match o with | none => 1 | some _ => L
+  | k+1 => match o with
+    | none => 0
+    | some ab => if ab.1 = 0 then 0 else q^(k+1)
+
+theorem lf_scaled_eq (ab : ℚ × ℚ) (c : ℚ) (k : ℕ) (y : ℝ)
+    (hd : (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0) :
+    lfTower (some ab) (k+1) (c : ℝ)/((k+1).factorial : ℝ)*y^(k+1) =
+      (-1 : ℝ)^k * ((ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2))^(k+1)/((k : ℝ)+1) := by
+  simp only [lfTower, linLogTower, Nat.factorial_succ]
+  push_cast
+  have hk : (k.factorial : ℝ) ≠ 0 := by positivity
+  have hk1 : (k : ℝ)+1 ≠ 0 := by positivity
+  rw [div_pow, mul_pow]
+  field_simp [hd]
+  <;> ring
+
+theorem lfMaj_nonneg (o : Option (ℚ × ℚ)) (L q : ℚ) (hL : 0 ≤ L) (hq : 0 ≤ q) (k : ℕ) :
+    0 ≤ lfMaj o L q k := by
+  cases o with
+  | none => cases k <;> simp [lfMaj]
+  | some ab =>
+      cases k with
+      | zero => exact hL
+      | succ k =>
+          simp only [lfMaj]
+          split_ifs <;> positivity
+
+theorem lfMaj_le_coarse (o : Option (ℚ × ℚ)) (L q : ℚ) (hq : 0 ≤ q) (k : ℕ) :
+    lfMaj o L q k ≤ lfCoarse o L q k := by
+  cases o with
+  | none => cases k <;> simp [lfMaj, lfCoarse]
+  | some ab =>
+      cases k with
+      | zero => exact le_refl _
+      | succ k =>
+          simp only [lfMaj, lfCoarse]
+          split_ifs with ha
+          · exact le_refl _
+          · have hk : (0 : ℚ) < (k : ℚ)+1 := by positivity
+            apply (div_le_iff₀ hk).mpr
+            nlinarith [mul_nonneg (pow_nonneg hq (k+1)) (Nat.cast_nonneg k : (0 : ℚ) ≤ k)]
+
+theorem lfMaj_bound (o : Option (ℚ × ℚ)) (c L q : ℚ) (y : ℝ) (hq : 0 ≤ q)
+    (hne : ∀ ab, o = some ab → (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0)
+    (hL : ∀ ab, o = some ab → |Real.log (|(ab.1 : ℝ)*(c : ℝ)-ab.2|)| ≤ (L : ℝ))
+    (hR : ∀ ab, o = some ab → |(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| ≤ (q : ℝ))
+    (k : ℕ) :
+    |lfTower o k (c : ℝ)/(k.factorial : ℝ)*y^k| ≤ (lfMaj o L q k : ℝ) := by
+  cases o with
+  | none => cases k <;> simp [lfTower, oneTower, lfMaj]
+  | some ab =>
+      cases k with
+      | zero => simpa [lfTower, linLogTower, lfMaj] using hL ab rfl
+      | succ k =>
+          by_cases ha : ab.1 = 0
+          · simp [lfTower, linLogTower, lfMaj, ha]
+          · rw [lf_scaled_eq ab c k y (hne ab rfl)]
+            have hk : (0 : ℝ) < (k : ℝ)+1 := by positivity
+            have hp := pow_le_pow_left₀ (abs_nonneg ((ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)))
+              (hR ab rfl) (k+1)
+            have hd := div_le_div_of_nonneg_right hp hk.le
+            simpa only [lfMaj, if_neg ha, Rat.cast_div, Rat.cast_pow, Rat.cast_add, Rat.cast_natCast,
+              Rat.cast_one, abs_div, abs_mul, abs_pow, abs_neg, abs_one, one_pow, one_mul,
+              abs_of_pos hk] using hd
+
+/-- The normalized product coefficient is the finite convolution of normalized factors. -/
+theorem mulTower_scaled (z l : ℕ → ℝ → ℝ) (c y : ℝ) (k : ℕ) :
+    mulTower z l k c/(k.factorial : ℝ)*y^k =
+      ∑ i ∈ Finset.range (k+1),
+        (z i c/(i.factorial : ℝ)*y^i)*(l (k-i) c/((k-i).factorial : ℝ)*y^(k-i)) := by
+  rw [mulTower_div, Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+    (fun i j => (z i c/(i.factorial : ℝ))*(l j c/(j.factorial : ℝ))), Finset.sum_mul]
+  apply Finset.sum_congr rfl
+  intro i hi
+  have hik : i ≤ k := Nat.le_of_lt_succ (Finset.mem_range.mp hi)
+  have hp : y^i*y^(k-i) = y^k := by rw [← pow_add, Nat.add_sub_of_le hik]
+  rw [← hp]
+  ring
+
+theorem mulTower_scaled_bound (z l : ℕ → ℝ → ℝ) (c y : ℝ) (U V : ℕ → ℚ)
+    (hU : ∀ k, |z k c/(k.factorial : ℝ)*y^k| ≤ (U k : ℝ))
+    (hV : ∀ k, |l k c/(k.factorial : ℝ)*y^k| ≤ (V k : ℝ)) (k : ℕ) :
+    |mulTower z l k c/(k.factorial : ℝ)*y^k| ≤ (convQ U V k (k+1) : ℝ) := by
+  rw [mulTower_scaled, convQ_cast]
+  apply (Finset.abs_sum_le_sum_abs _ _).trans
+  apply Finset.sum_le_sum
+  intro i _
+  rw [abs_mul]
+  exact mul_le_mul (hU i) (hV (k-i)) (abs_nonneg _)
+    ((abs_nonneg _).trans (hU i))
+
+#print axioms lf_scaled_eq
+#print axioms lfMaj_nonneg
+#print axioms lfMaj_le_coarse
+#print axioms lfMaj_bound
+#print axioms mulTower_scaled
+#print axioms mulTower_scaled_bound
+
 #print axioms monoInv_scaled_eq
 #print axioms monoInv_scaled_bound
 #print axioms invMajAux_bound
