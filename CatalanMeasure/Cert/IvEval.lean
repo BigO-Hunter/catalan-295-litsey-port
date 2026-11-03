@@ -25,11 +25,14 @@ each step, so the operands stay near `log₂ S` bits and no gcd is taken.
 namespace CatalanMeasure.Cert.Iv
 
 set_option linter.dupNamespace false
+set_option Elab.async false
+set_option profiler true
 
 /-- An integer interval; at scale `S` it encloses `x` when `lo ≤ x S ≤ hi`. -/
 structure Iv where
   lo : ℤ
   hi : ℤ
+  deriving DecidableEq
 
 def Enc (S : ℚ) (I : Iv) (x : ℚ) : Prop := (I.lo : ℚ) ≤ x * S ∧ x * S ≤ (I.hi : ℚ)
 
@@ -263,6 +266,47 @@ theorem seqLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ)) (φ : ℕ → 
     simp only [seqLoop]
     rw [List.tail_drop, sum_shift (fun j => ψ j (useq g ps j)) k n, ← add_assoc]
     exact h
+
+
+/-! ### Shared geometric-tail tables
+
+A table is checked once against the same fixed-point recurrence as `seqLoop`.
+Consumers traverse the literal table, without evaluating any pole powers.
+-/
+
+/-- One rounded geometric-tail sum at each consecutive index. -/
+def tailTable (ps : List (ℚ × ℚ)) : ℕ → List Iv → List Iv
+  | 0, _ => []
+  | n + 1, Is => sumIv Is :: tailTable ps n (stepIv ps Is)
+
+/-- The existing sequence loop with its pole sums supplied by a shared table. -/
+def cachedLoop (S : ℕ) (φ : ℕ → Iv → Iv) : ℕ → List ℚ → List Iv → Iv → Iv
+  | _, _, [], acc => acc
+  | k, g, I :: Is, acc =>
+    cachedLoop S φ (k + 1) g.tail Is (add acc (φ k (add (ofQ S (g.headD 0)) I)))
+
+/-- Exact checker equality: caching introduces no new error estimate. -/
+theorem cachedLoop_tailTable (S : ℕ) (ps : List (ℚ × ℚ)) (φ : ℕ → Iv → Iv) :
+    ∀ (n k : ℕ) (g : List ℚ) (Is : List Iv) (acc : Iv),
+      cachedLoop S φ k g (tailTable ps n Is) acc = seqLoop S ps φ n k g Is acc
+  | 0, _, _, _, _ => rfl
+  | n + 1, k, g, Is, acc => by
+    simp only [tailTable, cachedLoop, seqLoop]
+    exact cachedLoop_tailTable S ps φ n (k + 1) g.tail (stepIv ps Is) _
+
+/-- Reuse a checked literal table with the original loop's soundness theorem. -/
+theorem cachedLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ))
+    (φ : ℕ → Iv → Iv) (ψ : ℕ → ℚ → ℚ)
+    (hφ : ∀ k I x, Enc (S : ℚ) I x → Enc S' (φ k I) (ψ k x))
+    (g : List ℚ) (n k : ℕ) (Is ts : List Iv) (acc : Iv) (a : ℚ)
+    (ht : ts = tailTable ps n Is) (hI : PolesEnc (S : ℚ) ps k Is) (ha : Enc S' acc a) :
+    Enc S' (cachedLoop S φ k (g.drop k) ts acc)
+      (a + ∑ j ∈ Finset.range n, ψ (k + j) (useq g ps (k + j))) := by
+  rw [ht, cachedLoop_tailTable]
+  exact seqLoop_enc ps φ ψ hφ g n k Is acc a hI ha
+
+#print axioms cachedLoop_tailTable
+#print axioms cachedLoop_enc
 
 /-! ### Stateless terms and moments -/
 
