@@ -172,11 +172,10 @@ theorem corner1Piece0 (x : ℝ) (hx : x ∈ Icc ((((999 : ℚ) / 1000) : ℚ) : 
   rw [corner1Identity]
   have h := envelope0 x hx
   have hxT : x ∈ Icc (d2WiderTransfer427Lo : ℝ) (d2WiderTransfer427Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer427Lo, d2WiderTransfer427Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer427Lo, d2WiderTransfer427Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer427Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1046698974472468061133 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer427Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer427C0, d2WiderTransfer427S0] using hD
+    norm_num [d2WiderTransfer427Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer427C0, d2WiderTransfer427S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273084816547567786957 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((1046698974472468061133 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-756905488599 : ℚ) / 549755813888) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -184,11 +183,10 @@ theorem corner1Piece1 (x : ℝ) (hx : x ∈ Icc ((((16760439 : ℚ) / 16777216) 
   rw [corner1Identity]
   have h := envelope1 x hx
   have hxT : x ∈ Icc (d2WiderTransfer431Lo : ℝ) (d2WiderTransfer431Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer431Lo, d2WiderTransfer431Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer431Lo, d2WiderTransfer431Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer431Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1046920323180841822905 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer431Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer431C0, d2WiderTransfer431S0] using hD
+    norm_num [d2WiderTransfer431Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer431C0, d2WiderTransfer431S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273306165255941548729 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((1046920323180841822905 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-756905488599 : ℚ) / 549755813888) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -207,11 +205,10 @@ theorem corner1Piece2 (x : ℝ) (hx : x ∈ Icc ((((1023 : ℚ) / 1024) : ℚ) :
   rw [corner1Identity]
   have h := envelope2 x hx
   have hxT : x ∈ Icc (d2WiderTransfer435Lo : ℝ) (d2WiderTransfer435Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer435Lo, d2WiderTransfer435Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer435Lo, d2WiderTransfer435Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer435Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1051533698690763017477 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer435Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer435C0, d2WiderTransfer435S0] using hD
+    norm_num [d2WiderTransfer435Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer435C0, d2WiderTransfer435S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593948605524285668963629 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1051533698690763017477 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -219,11 +216,10 @@ theorem corner1Piece3 (x : ℝ) (hx : x ∈ Icc ((((2047 : ℚ) / 2048) : ℚ) :
   rw [corner1Identity]
   have h := envelope3 x hx
   have hxT : x ∈ Icc (d2WiderTransfer439Lo : ℝ) (d2WiderTransfer439Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer439Lo, d2WiderTransfer439Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer439Lo, d2WiderTransfer439Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer439Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2107679927985260464173 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer439Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer439C0, d2WiderTransfer439S0] using hD
+    norm_num [d2WiderTransfer439Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer439C0, d2WiderTransfer439S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187938723824004947790229 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2107679927985260464173 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -231,11 +227,10 @@ theorem corner1Piece4 (x : ℝ) (hx : x ∈ Icc ((((4095 : ℚ) / 4096) : ℚ) :
   rw [corner1Identity]
   have h := envelope4 x hx
   have hxT : x ∈ Icc (d2WiderTransfer443Lo : ℝ) (d2WiderTransfer443Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer443Lo, d2WiderTransfer443Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer443Lo, d2WiderTransfer443Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer443Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2109985982120751838111 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer443Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer443C0, d2WiderTransfer443S0] using hD
+    norm_num [d2WiderTransfer443Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer443C0, d2WiderTransfer443S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187959478311224370155671 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2109985982120751838111 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -243,11 +238,10 @@ theorem corner1Piece5 (x : ℝ) (hx : x ∈ Icc ((((8191 : ℚ) / 8192) : ℚ) :
   rw [corner1Identity]
   have h := envelope5 x hx
   have hxT : x ∈ Icc (d2WiderTransfer447Lo : ℝ) (d2WiderTransfer447Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer447Lo, d2WiderTransfer447Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer447Lo, d2WiderTransfer447Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer447Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1055569478202211169405 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer447Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer447C0, d2WiderTransfer447S0] using hD
+    norm_num [d2WiderTransfer447Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer447C0, d2WiderTransfer447S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593984927539888702330981 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1055569478202211169405 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -255,11 +249,10 @@ theorem corner1Piece6 (x : ℝ) (hx : x ∈ Icc ((((16383 : ℚ) / 16384) : ℚ)
   rw [corner1Identity]
   have h := envelope6 x hx
   have hxT : x ∈ Icc (d2WiderTransfer451Lo : ℝ) (d2WiderTransfer451Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer451Lo, d2WiderTransfer451Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer451Lo, d2WiderTransfer451Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer451Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2111715430351178477989 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer451Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer451C0, d2WiderTransfer451S0] using hD
+    norm_num [d2WiderTransfer451Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer451C0, d2WiderTransfer451S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187975043345298209914573 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2111715430351178477989 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -267,11 +260,10 @@ theorem corner1Piece7 (x : ℝ) (hx : x ∈ Icc ((((32767 : ℚ) / 32768) : ℚ)
   rw [corner1Identity]
   have h := envelope7 x hx
   have hxT : x ∈ Icc (d2WiderTransfer455Lo : ℝ) (d2WiderTransfer455Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer455Lo, d2WiderTransfer455Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer455Lo, d2WiderTransfer455Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer455Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1056001832012952110189 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer455Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer455C0, d2WiderTransfer455S0] using hD
+    norm_num [d2WiderTransfer455Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer455C0, d2WiderTransfer455S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593988818724185370798037 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1056001832012952110189 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -279,11 +271,10 @@ theorem corner1Piece8 (x : ℝ) (hx : x ∈ Icc ((((65535 : ℚ) / 65536) : ℚ)
   rw [corner1Identity]
   have h := envelope8 x hx
   have hxT : x ∈ Icc (d2WiderTransfer459Lo : ℝ) (d2WiderTransfer459Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer459Lo, d2WiderTransfer459Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer459Lo, d2WiderTransfer459Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer459Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((132018243468848322021 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer459Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer459C0, d2WiderTransfer459S0] using hD
+    norm_num [d2WiderTransfer459Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer459C0, d2WiderTransfer459S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-949248764470728235123981 : ℚ) / 680020773533228910772224) : ℚ) : ℝ) + ((((132018243468848322021 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) = ((((-6898048743311 : ℚ) / 4947802324992) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -316,11 +307,10 @@ theorem corner2Piece0 (x : ℝ) (hx : x ∈ Icc ((((999 : ℚ) / 1000) : ℚ) : 
   rw [corner2Identity]
   have h := envelope0 x hx
   have hxT : x ∈ Icc (d2WiderTransfer428Lo : ℝ) (d2WiderTransfer428Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer428Lo, d2WiderTransfer428Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer428Lo, d2WiderTransfer428Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer428Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1046698765015502969805 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer428Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer428C0, d2WiderTransfer428S0] using hD
+    norm_num [d2WiderTransfer428Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer428C0, d2WiderTransfer428S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273084816547567786957 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((1046698765015502969805 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1513810977579 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -328,11 +318,10 @@ theorem corner2Piece1 (x : ℝ) (hx : x ∈ Icc ((((16760439 : ℚ) / 16777216) 
   rw [corner2Identity]
   have h := envelope1 x hx
   have hxT : x ∈ Icc (d2WiderTransfer432Lo : ℝ) (d2WiderTransfer432Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer432Lo, d2WiderTransfer432Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer432Lo, d2WiderTransfer432Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer432Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1046920113723876731577 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer432Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer432C0, d2WiderTransfer432S0] using hD
+    norm_num [d2WiderTransfer432Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer432C0, d2WiderTransfer432S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273306165255941548729 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((1046920113723876731577 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1513810977579 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -351,11 +340,10 @@ theorem corner2Piece2 (x : ℝ) (hx : x ∈ Icc ((((1023 : ℚ) / 1024) : ℚ) :
   rw [corner2Identity]
   have h := envelope2 x hx
   have hxT : x ∈ Icc (d2WiderTransfer436Lo : ℝ) (d2WiderTransfer436Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer436Lo, d2WiderTransfer436Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer436Lo, d2WiderTransfer436Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer436Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1051533489233797926149 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer436Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer436C0, d2WiderTransfer436S0] using hD
+    norm_num [d2WiderTransfer436Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer436C0, d2WiderTransfer436S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593948605524285668963629 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1051533489233797926149 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -363,11 +351,10 @@ theorem corner2Piece3 (x : ℝ) (hx : x ∈ Icc ((((2047 : ℚ) / 2048) : ℚ) :
   rw [corner2Identity]
   have h := envelope3 x hx
   have hxT : x ∈ Icc (d2WiderTransfer440Lo : ℝ) (d2WiderTransfer440Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer440Lo, d2WiderTransfer440Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer440Lo, d2WiderTransfer440Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer440Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2107679509071330281517 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer440Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer440C0, d2WiderTransfer440S0] using hD
+    norm_num [d2WiderTransfer440Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer440C0, d2WiderTransfer440S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187938723824004947790229 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2107679509071330281517 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -375,11 +362,10 @@ theorem corner2Piece4 (x : ℝ) (hx : x ∈ Icc ((((4095 : ℚ) / 4096) : ℚ) :
   rw [corner2Identity]
   have h := envelope4 x hx
   have hxT : x ∈ Icc (d2WiderTransfer444Lo : ℝ) (d2WiderTransfer444Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer444Lo, d2WiderTransfer444Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer444Lo, d2WiderTransfer444Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer444Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2109985563206821655455 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer444Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer444C0, d2WiderTransfer444S0] using hD
+    norm_num [d2WiderTransfer444Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer444C0, d2WiderTransfer444S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187959478311224370155671 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2109985563206821655455 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -387,11 +373,10 @@ theorem corner2Piece5 (x : ℝ) (hx : x ∈ Icc ((((8191 : ℚ) / 8192) : ℚ) :
   rw [corner2Identity]
   have h := envelope5 x hx
   have hxT : x ∈ Icc (d2WiderTransfer448Lo : ℝ) (d2WiderTransfer448Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer448Lo, d2WiderTransfer448Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer448Lo, d2WiderTransfer448Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer448Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1055569268745246078077 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer448Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer448C0, d2WiderTransfer448S0] using hD
+    norm_num [d2WiderTransfer448Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer448C0, d2WiderTransfer448S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593984927539888702330981 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1055569268745246078077 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -399,11 +384,10 @@ theorem corner2Piece6 (x : ℝ) (hx : x ∈ Icc ((((16383 : ℚ) / 16384) : ℚ)
   rw [corner2Identity]
   have h := envelope6 x hx
   have hxT : x ∈ Icc (d2WiderTransfer452Lo : ℝ) (d2WiderTransfer452Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer452Lo, d2WiderTransfer452Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer452Lo, d2WiderTransfer452Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer452Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((2111715011437248295333 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer452Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer452C0, d2WiderTransfer452S0] using hD
+    norm_num [d2WiderTransfer452Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer452C0, d2WiderTransfer452S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187975043345298209914573 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((2111715011437248295333 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -411,11 +395,10 @@ theorem corner2Piece7 (x : ℝ) (hx : x ∈ Icc ((((32767 : ℚ) / 32768) : ℚ)
   rw [corner2Identity]
   have h := envelope7 x hx
   have hxT : x ∈ Icc (d2WiderTransfer456Lo : ℝ) (d2WiderTransfer456Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer456Lo, d2WiderTransfer456Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer456Lo, d2WiderTransfer456Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer456Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1056001622555987018861 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer456Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer456C0, d2WiderTransfer456S0] using hD
+    norm_num [d2WiderTransfer456Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer456C0, d2WiderTransfer456S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593988818724185370798037 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((1056001622555987018861 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -423,11 +406,10 @@ theorem corner2Piece8 (x : ℝ) (hx : x ∈ Icc ((((65535 : ℚ) / 65536) : ℚ)
   rw [corner2Identity]
   have h := envelope8 x hx
   have hxT : x ∈ Icc (d2WiderTransfer460Lo : ℝ) (d2WiderTransfer460Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer460Lo, d2WiderTransfer460Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer460Lo, d2WiderTransfer460Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer460Bound x hxT
   have hd : ((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((132018217286727685605 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer460Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer460C0, d2WiderTransfer460S0] using hD
+    norm_num [d2WiderTransfer460Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer460C0, d2WiderTransfer460S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-949248764470728235123981 : ℚ) / 680020773533228910772224) : ℚ) : ℝ) + ((((132018217286727685605 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) = ((((-13796097490051 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -460,11 +442,10 @@ theorem corner3Piece0 (x : ℝ) (hx : x ∈ Icc ((((999 : ℚ) / 1000) : ℚ) : 
   rw [corner3Identity]
   have h := envelope0 x hx
   have hxT : x ∈ Icc (d2WiderTransfer429Lo : ℝ) (d2WiderTransfer429Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer429Lo, d2WiderTransfer429Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer429Lo, d2WiderTransfer429Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer429Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13083733079409200880589 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer429Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer429C0, d2WiderTransfer429S0] using hD
+    norm_num [d2WiderTransfer429Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer429C0, d2WiderTransfer429S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273084816547567786957 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((13083733079409200880589 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1491915739711 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -472,11 +453,10 @@ theorem corner3Piece1 (x : ℝ) (hx : x ∈ Icc ((((16760439 : ℚ) / 16777216) 
   rw [corner3Identity]
   have h := envelope1 x hx
   have hxT : x ∈ Icc (d2WiderTransfer433Lo : ℝ) (d2WiderTransfer433Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer433Lo, d2WiderTransfer433Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer433Lo, d2WiderTransfer433Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer433Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13083954428117574642361 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer433Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer433C0, d2WiderTransfer433S0] using hD
+    norm_num [d2WiderTransfer433Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer433C0, d2WiderTransfer433S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273306165255941548729 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((13083954428117574642361 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1491915739711 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -495,11 +475,10 @@ theorem corner3Piece2 (x : ℝ) (hx : x ∈ Icc ((((1023 : ℚ) / 1024) : ℚ) :
   rw [corner3Identity]
   have h := envelope2 x hx
   have hxT : x ∈ Icc (d2WiderTransfer437Lo : ℝ) (d2WiderTransfer437Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer437Lo, d2WiderTransfer437Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer437Lo, d2WiderTransfer437Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer437Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13088567803627495836933 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer437Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer437C0, d2WiderTransfer437S0] using hD
+    norm_num [d2WiderTransfer437Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer437C0, d2WiderTransfer437S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593948605524285668963629 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13088567803627495836933 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -507,11 +486,10 @@ theorem corner3Piece3 (x : ℝ) (hx : x ∈ Icc ((((2047 : ℚ) / 2048) : ℚ) :
   rw [corner3Identity]
   have h := envelope3 x hx
   have hxT : x ∈ Icc (d2WiderTransfer441Lo : ℝ) (d2WiderTransfer441Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer441Lo, d2WiderTransfer441Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer441Lo, d2WiderTransfer441Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer441Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26181748137858726103085 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer441Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer441C0, d2WiderTransfer441S0] using hD
+    norm_num [d2WiderTransfer441Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer441C0, d2WiderTransfer441S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187938723824004947790229 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26181748137858726103085 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -519,11 +497,10 @@ theorem corner3Piece4 (x : ℝ) (hx : x ∈ Icc ((((4095 : ℚ) / 4096) : ℚ) :
   rw [corner3Identity]
   have h := envelope4 x hx
   have hxT : x ∈ Icc (d2WiderTransfer445Lo : ℝ) (d2WiderTransfer445Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer445Lo, d2WiderTransfer445Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer445Lo, d2WiderTransfer445Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer445Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26184054191994217477023 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer445Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer445C0, d2WiderTransfer445S0] using hD
+    norm_num [d2WiderTransfer445Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer445C0, d2WiderTransfer445S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187959478311224370155671 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26184054191994217477023 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -531,11 +508,10 @@ theorem corner3Piece5 (x : ℝ) (hx : x ∈ Icc ((((8191 : ℚ) / 8192) : ℚ) :
   rw [corner3Identity]
   have h := envelope5 x hx
   have hxT : x ∈ Icc (d2WiderTransfer449Lo : ℝ) (d2WiderTransfer449Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer449Lo, d2WiderTransfer449Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer449Lo, d2WiderTransfer449Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer449Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13092603583138943988861 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer449Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer449C0, d2WiderTransfer449S0] using hD
+    norm_num [d2WiderTransfer449Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer449C0, d2WiderTransfer449S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593984927539888702330981 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13092603583138943988861 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -543,11 +519,10 @@ theorem corner3Piece6 (x : ℝ) (hx : x ∈ Icc ((((16383 : ℚ) / 16384) : ℚ)
   rw [corner3Identity]
   have h := envelope6 x hx
   have hxT : x ∈ Icc (d2WiderTransfer453Lo : ℝ) (d2WiderTransfer453Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer453Lo, d2WiderTransfer453Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer453Lo, d2WiderTransfer453Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer453Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26185783640224644116901 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer453Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer453C0, d2WiderTransfer453S0] using hD
+    norm_num [d2WiderTransfer453Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer453C0, d2WiderTransfer453S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187975043345298209914573 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26185783640224644116901 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -555,11 +530,10 @@ theorem corner3Piece7 (x : ℝ) (hx : x ∈ Icc ((((32767 : ℚ) / 32768) : ℚ)
   rw [corner3Identity]
   have h := envelope7 x hx
   have hxT : x ∈ Icc (d2WiderTransfer457Lo : ℝ) (d2WiderTransfer457Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer457Lo, d2WiderTransfer457Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer457Lo, d2WiderTransfer457Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer457Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13093035936949684929645 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer457Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer457C0, d2WiderTransfer457S0] using hD
+    norm_num [d2WiderTransfer457Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer457C0, d2WiderTransfer457S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593988818724185370798037 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13093035936949684929645 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -567,11 +541,10 @@ theorem corner3Piece8 (x : ℝ) (hx : x ∈ Icc ((((65535 : ℚ) / 65536) : ℚ)
   rw [corner3Identity]
   have h := envelope8 x hx
   have hxT : x ∈ Icc (d2WiderTransfer461Lo : ℝ) (d2WiderTransfer461Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer461Lo, d2WiderTransfer461Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer461Lo, d2WiderTransfer461Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer461Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1636647506585939924453 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer461Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer461C0, d2WiderTransfer461S0] using hD
+    norm_num [d2WiderTransfer461Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer461C0, d2WiderTransfer461S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-949248764470728235123981 : ℚ) / 680020773533228910772224) : ℚ) : ℝ) + ((((1636647506585939924453 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) = ((((-13599040349239 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -604,11 +577,10 @@ theorem corner4Piece0 (x : ℝ) (hx : x ∈ Icc ((((999 : ℚ) / 1000) : ℚ) : 
   rw [corner4Identity]
   have h := envelope0 x hx
   have hxT : x ∈ Icc (d2WiderTransfer430Lo : ℝ) (d2WiderTransfer430Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer430Lo, d2WiderTransfer430Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer430Lo, d2WiderTransfer430Hi, d2LitsNearWiderTransfers053.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer430Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13083733277321293880269 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer430Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer430C0, d2WiderTransfer430S0] using hD
+    norm_num [d2WiderTransfer430Cap, d2LitsNearWiderTransfers053.q2, d2WiderTransfer430C0, d2WiderTransfer430S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273084816547567786957 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((13083733277321293880269 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1491915739351 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -616,11 +588,10 @@ theorem corner4Piece1 (x : ℝ) (hx : x ∈ Icc ((((16760439 : ℚ) / 16777216) 
   rw [corner4Identity]
   have h := envelope1 x hx
   have hxT : x ∈ Icc (d2WiderTransfer434Lo : ℝ) (d2WiderTransfer434Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer434Lo, d2WiderTransfer434Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer434Lo, d2WiderTransfer434Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer434Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13083954626029667642041 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer434Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer434C0, d2WiderTransfer434S0] using hD
+    norm_num [d2WiderTransfer434Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer434C0, d2WiderTransfer434S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-833273306165255941548729 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) + ((((13083954626029667642041 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-1491915739351 : ℚ) / 1099511627776) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -639,11 +610,10 @@ theorem corner4Piece2 (x : ℝ) (hx : x ∈ Icc ((((1023 : ℚ) / 1024) : ℚ) :
   rw [corner4Identity]
   have h := envelope2 x hx
   have hxT : x ∈ Icc (d2WiderTransfer438Lo : ℝ) (d2WiderTransfer438Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer438Lo, d2WiderTransfer438Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer438Lo, d2WiderTransfer438Hi, d2LitsNearWiderTransfers054.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer438Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13088568001539588836613 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer438Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer438C0, d2WiderTransfer438S0] using hD
+    norm_num [d2WiderTransfer438Cap, d2LitsNearWiderTransfers054.q2, d2WiderTransfer438C0, d2WiderTransfer438S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593948605524285668963629 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13088568001539588836613 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -651,11 +621,10 @@ theorem corner4Piece3 (x : ℝ) (hx : x ∈ Icc ((((2047 : ℚ) / 2048) : ℚ) :
   rw [corner4Identity]
   have h := envelope3 x hx
   have hxT : x ∈ Icc (d2WiderTransfer442Lo : ℝ) (d2WiderTransfer442Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer442Lo, d2WiderTransfer442Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer442Lo, d2WiderTransfer442Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer442Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26181748533682912102445 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer442Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer442C0, d2WiderTransfer442S0] using hD
+    norm_num [d2WiderTransfer442Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer442C0, d2WiderTransfer442S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187938723824004947790229 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26181748533682912102445 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -663,11 +632,10 @@ theorem corner4Piece4 (x : ℝ) (hx : x ∈ Icc ((((4095 : ℚ) / 4096) : ℚ) :
   rw [corner4Identity]
   have h := envelope4 x hx
   have hxT : x ∈ Icc (d2WiderTransfer446Lo : ℝ) (d2WiderTransfer446Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer446Lo, d2WiderTransfer446Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer446Lo, d2WiderTransfer446Hi, d2LitsNearWiderTransfers055.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer446Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26184054587818403476383 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer446Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer446C0, d2WiderTransfer446S0] using hD
+    norm_num [d2WiderTransfer446Cap, d2LitsNearWiderTransfers055.q2, d2WiderTransfer446C0, d2WiderTransfer446S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187959478311224370155671 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26184054587818403476383 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -675,11 +643,10 @@ theorem corner4Piece5 (x : ℝ) (hx : x ∈ Icc ((((8191 : ℚ) / 8192) : ℚ) :
   rw [corner4Identity]
   have h := envelope5 x hx
   have hxT : x ∈ Icc (d2WiderTransfer450Lo : ℝ) (d2WiderTransfer450Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer450Lo, d2WiderTransfer450Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer450Lo, d2WiderTransfer450Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer450Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13092603781051036988541 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer450Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer450C0, d2WiderTransfer450S0] using hD
+    norm_num [d2WiderTransfer450Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer450C0, d2WiderTransfer450S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593984927539888702330981 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13092603781051036988541 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -687,11 +654,10 @@ theorem corner4Piece6 (x : ℝ) (hx : x ∈ Icc ((((16383 : ℚ) / 16384) : ℚ)
   rw [corner4Identity]
   have h := envelope6 x hx
   have hxT : x ∈ Icc (d2WiderTransfer454Lo : ℝ) (d2WiderTransfer454Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer454Lo, d2WiderTransfer454Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer454Lo, d2WiderTransfer454Hi, d2LitsNearWiderTransfers056.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer454Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((26185784036048830116261 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer454Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer454C0, d2WiderTransfer454S0] using hD
+    norm_num [d2WiderTransfer454Cap, d2LitsNearWiderTransfers056.q2, d2WiderTransfer454C0, d2WiderTransfer454S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-15187975043345298209914573 : ℚ) / 10880332376531662572355584) : ℚ) : ℝ) + ((((26185784036048830116261 : ℚ) / 1208925819614629174706176) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -699,11 +665,10 @@ theorem corner4Piece7 (x : ℝ) (hx : x ∈ Icc ((((32767 : ℚ) / 32768) : ℚ)
   rw [corner4Identity]
   have h := envelope7 x hx
   have hxT : x ∈ Icc (d2WiderTransfer458Lo : ℝ) (d2WiderTransfer458Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer458Lo, d2WiderTransfer458Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer458Lo, d2WiderTransfer458Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer458Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((13093036134861777929325 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer458Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer458C0, d2WiderTransfer458S0] using hD
+    norm_num [d2WiderTransfer458Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer458C0, d2WiderTransfer458S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-7593988818724185370798037 : ℚ) / 5440166188265831286177792) : ℚ) : ℝ) + ((((13093036134861777929325 : ℚ) / 604462909807314587353088) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
@@ -711,11 +676,10 @@ theorem corner4Piece8 (x : ℝ) (hx : x ∈ Icc ((((65535 : ℚ) / 65536) : ℚ)
   rw [corner4Identity]
   have h := envelope8 x hx
   have hxT : x ∈ Icc (d2WiderTransfer462Lo : ℝ) (d2WiderTransfer462Hi : ℝ) := by
-    norm_num [Set.mem_Icc, d2WiderTransfer462Lo, d2WiderTransfer462Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢
-    exact hx
+    norm_num [Set.mem_Icc, d2WiderTransfer462Lo, d2WiderTransfer462Hi, d2LitsNearWiderTransfers057.q2] at hx ⊢ <;> exact hx
   have hD := d2WiderTransfer462Bound x hxT
   have hd : ((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| ≤ ((((1636647531324951549413 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) := by
-    simpa [d2WiderTransfer462Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer462C0, d2WiderTransfer462S0] using hD
+    norm_num [d2WiderTransfer462Cap, d2LitsNearWiderTransfers057.q2, d2WiderTransfer462C0, d2WiderTransfer462S0, add_comm] at hD ⊢ <;> exact hD
   have hcap : ((((-949248764470728235123981 : ℚ) / 680020773533228910772224) : ℚ) : ℝ) + ((((1636647531324951549413 : ℚ) / 75557863725914323419136) : ℚ) : ℝ) = ((((-13599040345999 : ℚ) / 9895604649984) : ℚ) : ℝ) := by norm_num
   rw [← hcap]
   exact add_le_add h hd
