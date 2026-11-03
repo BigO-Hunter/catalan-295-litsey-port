@@ -9,6 +9,7 @@ public import CatalanMeasure.GenD.Signed.Data.Trial72.SpikeNormalized2
 
 @[expose] public section
 set_option Elab.async false
+set_option profiler true
 set_option maxRecDepth 1000000
 set_option maxHeartbeats 0
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeActualPolynomials
