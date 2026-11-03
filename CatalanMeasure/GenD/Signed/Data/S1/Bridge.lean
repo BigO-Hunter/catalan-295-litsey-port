@@ -135,10 +135,11 @@ theorem exists_sep_radius {K : ℕ} (p : Fin K → ℝ) {r0 r1 : ℝ} (h : r0 < 
     rw [e]
     exact key
 
-/-- For `a <= r` the real-segment estimate holds with `C' = 1`, `wc' = 416/100`
-(`g(H(x)) = 1` on `a <= |x| <= 1`, `|1 - x| <= 2`, `6 log 2 < 4.16`). -/
-theorem gapSegBound_triv (P : Parameters) {a r : ℝ} (ha0 : 0 < a) (ha1 : a < 1) (har : a ≤ r)
-    (hq : P.h0 + P.q0 = 6) : GapSegBound P a r 1 (416 / 100) := by
+namespace Generic
+
+/-- The segment estimate at any certified exponent for its actual log weight. -/
+theorem gapSegBound_triv (P : Parameters) {a r rate : ℝ} (ha0 : 0 < a) (ha1 : a < 1) (har : a ≤ r)
+    (hrate : ((P.h0 + P.q0 : ℕ) : ℝ) * Real.log 2 ≤ rate) : GapSegBound P a r 1 rate := by
   intro N x hN hrx hx1
   have hax : a ≤ |x| := le_trans har hrx
   have hx2 : x ^ 2 ≤ 1 := by
@@ -156,25 +157,41 @@ theorem gapSegBound_triv (P : Parameters) {a r : ℝ} (ha0 : 0 < a) (ha1 : a < 1
   have hG : gapG (gapHReal a x) = 1 := by
     rw [hH]; unfold gapG; simp
   rw [hG, one_pow, one_mul]
-  have hm : P.h N + P.q N = 6 * N := by
+  have hm : P.h N + P.q N = (P.h0 + P.q0) * N := by
     simp only [Parameters.h, Parameters.q]
-    rw [← add_mul, hq]
+    rw [← add_mul]
   rw [hm]
   have h1x : |1 - x| ≤ 2 := by
     have := abs_le.mp hx1
     rw [abs_le]; constructor <;> linarith only [this.1, this.2]
-  have h2 : |1 - x| ^ (6 * N) ≤ (2 : ℝ) ^ (6 * N) := pow_le_pow_left₀ (abs_nonneg _) h1x _
-  have h3 : (2 : ℝ) ^ (6 * N) ≤ Real.exp (416 / 100 * N) := by
-    have e : (2 : ℝ) ^ (6 * N) = Real.exp (((6 * N : ℕ) : ℝ) * Real.log 2) := by
+  have h2 : |1 - x| ^ ((P.h0 + P.q0) * N) ≤ (2 : ℝ) ^ ((P.h0 + P.q0) * N) := pow_le_pow_left₀ (abs_nonneg _) h1x _
+  have h3 : (2 : ℝ) ^ ((P.h0 + P.q0) * N) ≤ Real.exp (rate * N) := by
+    have e : (2 : ℝ) ^ ((P.h0 + P.q0) * N) = Real.exp ((((P.h0 + P.q0) * N : ℕ) : ℝ) * Real.log 2) := by
       rw [Real.exp_nat_mul, Real.exp_log (by norm_num)]
     rw [e]
     apply Real.exp_le_exp.mpr
-    have hl := Real.log_two_lt_d9
+    have hl := mul_le_mul_of_nonneg_right hrate (Nat.cast_nonneg (α := ℝ) N)
     have hN0 : (0 : ℝ) ≤ N := Nat.cast_nonneg _
-    push_cast
-    nlinarith only [hl, hN0]
+    push_cast at hl ⊢
+    nlinarith only [hl]
   linarith only [h2, h3]
+
+end Generic
+
+theorem gapSegBound_triv (P : Parameters) {a r : ℝ} (ha0 : 0 < a) (ha1 : a < 1) (har : a ≤ r)
+    (hq : P.h0 + P.q0 = 6) : GapSegBound P a r 1 (416 / 100) := by
+  apply Generic.gapSegBound_triv P ha0 ha1 har
+  rw [hq]
+  norm_num only [Nat.cast_ofNat]
+  linarith only [Real.log_two_lt_d9]
+
 
 end
 
 end CatalanMeasure.GenD.Signed.Data.S1
+
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.rat_le_exp_of_pow
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.gapCircleBound_mono
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.exists_sep_radius
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.Generic.gapSegBound_triv
+#print axioms CatalanMeasure.GenD.Signed.Data.S1.gapSegBound_triv
