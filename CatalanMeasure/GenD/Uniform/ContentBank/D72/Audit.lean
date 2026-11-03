@@ -43,3 +43,20 @@ as their generic and data proofs are completed. -/
 #print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.scalarValues_sound
 #print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.momentData_check
 #print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.momentData_sound
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_key_recurrence
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.IntSourceTree.all_get?
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.IntSourceTree.check_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_double_scale_unit
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_gd_double_scale
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_gd_beta_double_scale
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_Ug_step
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_Ut_step
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_one_g_boundary
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_one_t_boundary
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_one_g_nat
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_one_t_nat
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.sourceUg_key_base
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.sourceUt_key_base
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.sourceTreeUg_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.sourceTreeUt_sound
