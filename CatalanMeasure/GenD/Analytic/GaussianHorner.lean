@@ -206,6 +206,47 @@ theorem polynomialOfPairs_derivative_norm_le {as : List (ℤ × ℤ)} {U : List 
   rw [polynomialOfPairs_derivative, polynomialOfPairs_eval]
   exact evalPairs_norm_le h hr z hz
 
+def scaleIntCoefficients : ℤ → ℤ → List ℤ → List ℤ
+  | _, _, [] => []
+  | c, r, a :: as => c * a :: scaleIntCoefficients (c * r) r as
+
+theorem evalPairs_scaleIntCoefficients (c r : ℤ) (as : List ℤ) (z : ℂ) :
+    evalPairs ((scaleIntCoefficients c r as).map (fun a => (a, 0))) z =
+      (c : ℂ) * evalPairs (as.map (fun a => (a, 0))) ((r : ℂ) * z) := by
+  induction as generalizing c with
+  | nil => simp [scaleIntCoefficients, evalPairs]
+  | cons a as ih =>
+    simp only [scaleIntCoefficients, List.map_cons, evalPairs, castPair_real]
+    rw [ih]
+    push_cast
+    ring
+
+theorem reverse_fold_horner (as : List ℤ) (z : ℂ) :
+    as.reverse.foldl (fun (v : ℂ) (a : ℤ) => z * v + (a : ℂ)) 0 =
+      evalPairs (as.map (fun a => (a, 0))) z := by
+  induction as with
+  | nil => simp [evalPairs]
+  | cons a as ih =>
+    simp only [List.reverse_cons, List.foldl_append, List.foldl_cons, List.foldl_nil,
+      List.map_cons, evalPairs, castPair_real]
+    rw [ih]
+    ring
+
+theorem point_value_polynomial_sound (c : ℤ × ℤ) {q : ℤ} (hq : q ≠ 0) (as : List ℤ) :
+    castPair (as.reverse.foldl (valueStep c q) ((0, 0), 1)).1 * (q : ℂ) =
+      (q : ℂ) ^ as.length *
+        (polynomialOfPairs (as.map (fun a => (a, 0)))).eval (castPair c / (q : ℂ)) := by
+  have ht := point_value_sound c hq as.reverse
+  simpa only [List.length_reverse, reverse_fold_horner, polynomialOfPairs_eval] using ht
+
+theorem translation_polynomial_value_sound (c : ℤ × ℤ) {q : ℤ} (hq : q ≠ 0)
+    (as : List ℤ) (z : ℂ) :
+    (polynomialOfPairs (as.reverse.foldl (shiftStep c q) ([], 1)).1).eval z * (q : ℂ) =
+      (q : ℂ) ^ as.length *
+        (polynomialOfPairs (as.map (fun a => (a, 0)))).eval ((z + castPair c) / (q : ℂ)) := by
+  have ht := translation_value_sound c hq as.reverse z
+  simpa only [List.length_reverse, reverse_fold_horner, polynomialOfPairs_eval] using ht
+
 end
 end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.castPair_plus
@@ -234,3 +275,11 @@ end CatalanMeasure.GenD.Analytic.GaussianHorner
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_derivative
 
 #print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.polynomialOfPairs_derivative_norm_le
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.evalPairs_scaleIntCoefficients
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.reverse_fold_horner
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.point_value_polynomial_sound
+
+#print axioms CatalanMeasure.GenD.Analytic.GaussianHorner.translation_polynomial_value_sound
