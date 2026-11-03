@@ -92,6 +92,66 @@ theorem polynomial_circle_weight_le_of_block (p : ℂ[X]) {s : Set ℂ}
     (ellipseH_le_of_variation (polynomial_block_variation p hs hM0 hM hz hc hclose) hcenter)
     hHR hsq hne hW hpower
 
+/-- The two rational branches of the upper semicircle. -/
+def rationalCirclePoint (r side u : ℝ) : ℂ :=
+  ⟨r * side * (1 - u ^ 2) / (1 + u ^ 2), 2 * r * u / (1 + u ^ 2)⟩
+
+theorem rationalCirclePoint_norm_sq (r side u : ℝ) (hs : side = 1 ∨ side = -1) :
+    ‖rationalCirclePoint r side u‖ ^ 2 = r ^ 2 := by
+  have hd : 1 + u ^ 2 ≠ 0 := ne_of_gt (by positivity)
+  rcases hs with rfl | rfl <;>
+    simp only [Complex.sq_norm, Complex.normSq_apply, rationalCirclePoint,
+      Complex.re, Complex.im] <;> field_simp <;> ring
+
+theorem rationalCirclePoint_chord_sq (r side u v : ℝ) (hs : side = 1 ∨ side = -1) :
+    ‖rationalCirclePoint r side u - rationalCirclePoint r side v‖ ^ 2 =
+      4 * r ^ 2 * (u - v) ^ 2 / ((1 + u ^ 2) * (1 + v ^ 2)) := by
+  have hu : 1 + u ^ 2 ≠ 0 := ne_of_gt (by positivity)
+  have hv : 1 + v ^ 2 ≠ 0 := ne_of_gt (by positivity)
+  rcases hs with rfl | rfl <;>
+    simp only [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re,
+      Complex.sub_im, rationalCirclePoint, Complex.re, Complex.im] <;>
+    field_simp <;> ring
+
+theorem rationalCirclePoint_lipschitz {r : ℝ} (hr : 0 ≤ r) (side u v : ℝ)
+    (hs : side = 1 ∨ side = -1) :
+    ‖rationalCirclePoint r side u - rationalCirclePoint r side v‖ ≤ 2 * r * |u - v| := by
+  have hd : 0 < (1 + u ^ 2) * (1 + v ^ 2) := by positivity
+  have hd1 : 1 ≤ (1 + u ^ 2) * (1 + v ^ 2) := by
+    nlinarith [sq_nonneg u, sq_nonneg v, mul_nonneg (sq_nonneg u) (sq_nonneg v)]
+  have hn : 0 ≤ 4 * r ^ 2 * (u - v) ^ 2 := by positivity
+  have hsq : ‖rationalCirclePoint r side u - rationalCirclePoint r side v‖ ^ 2 ≤
+      4 * r ^ 2 * (u - v) ^ 2 := by
+    rw [rationalCirclePoint_chord_sq r side u v hs]
+    exact (div_le_iff₀ hd).mpr (by nlinarith [mul_nonneg hn (sub_nonneg.mpr hd1)])
+  have ht : 0 ≤ 2 * r * |u - v| := by positivity
+  have he : (2 * r * |u - v|) ^ 2 = 4 * r ^ 2 * (u - v) ^ 2 := by
+    rw [mul_pow, mul_pow, sq_abs]; ring
+  nlinarith [norm_nonneg (rationalCirclePoint r side u - rationalCirclePoint r side v)]
+
+theorem rationalCirclePoint_mem_block {r a b u : ℝ} (hr : 0 ≤ r)
+    (side : ℝ) (hs : side = 1 ∨ side = -1) (hu : u ∈ Set.Icc a b) :
+    rationalCirclePoint r side u ∈
+      Metric.closedBall (rationalCirclePoint r side ((a + b) / 2)) (r * (b - a)) := by
+  have habs : |u - (a + b) / 2| ≤ (b - a) / 2 := by
+    apply abs_le.mpr
+    constructor <;> linarith [hu.1, hu.2]
+  rw [Metric.mem_closedBall, dist_eq_norm]
+  calc
+    _ ≤ 2 * r * |u - (a + b) / 2| := rationalCirclePoint_lipschitz hr side _ _ hs
+    _ ≤ 2 * r * ((b - a) / 2) := mul_le_mul_of_nonneg_left habs (by positivity)
+    _ = r * (b - a) := by ring
+
+theorem filter_norm_sq_le_of_real_lower {z : ℂ} {r xmin : ℝ}
+    (hz : ‖z‖ ^ 2 = r ^ 2) (hx : xmin ≤ z.re) :
+    ‖(1 : ℂ) - z‖ ^ 2 ≤ 1 + r ^ 2 - 2 * xmin := by
+  have hid : ‖(1 : ℂ) - z‖ ^ 2 = 1 + ‖z‖ ^ 2 - 2 * z.re := by
+    simp only [Complex.sq_norm, Complex.normSq_apply, Complex.sub_re,
+      Complex.sub_im, Complex.one_re, Complex.one_im]
+    ring
+  rw [hid, hz]
+  linarith
+
 end
 end CatalanMeasure.GenD.Analytic
 
@@ -102,3 +162,13 @@ end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.ellipseLog_le_log_of_square
 #print axioms CatalanMeasure.GenD.Analytic.circle_weight_le_of_power
 #print axioms CatalanMeasure.GenD.Analytic.polynomial_circle_weight_le_of_block
+
+#print axioms CatalanMeasure.GenD.Analytic.rationalCirclePoint_norm_sq
+
+#print axioms CatalanMeasure.GenD.Analytic.rationalCirclePoint_chord_sq
+
+#print axioms CatalanMeasure.GenD.Analytic.rationalCirclePoint_lipschitz
+
+#print axioms CatalanMeasure.GenD.Analytic.rationalCirclePoint_mem_block
+
+#print axioms CatalanMeasure.GenD.Analytic.filter_norm_sq_le_of_real_lower
