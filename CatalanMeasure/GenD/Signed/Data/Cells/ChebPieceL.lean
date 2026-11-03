@@ -1135,6 +1135,141 @@ theorem laurentApx_spec {nL M P : ℕ} {c r : ℚ} {t : LTerm} {d : LaurentPiece
     have hb := (abs_add_le _ _).trans (add_le_add ht hp)
     linarith
 
+/-! ## Laurent list fold and the merged Chebyshev field checker -/
+
+def laurentM (nL M P : ℕ) (lo hi : ℚ) :
+    List LTerm → List LaurentPieceData → Option (List ℚ × ℚ)
+  | [], [] => some ([],0)
+  | t :: ts, d :: ds =>
+      match laurentApx nL M P ((lo+hi)/2) ((hi-lo)/2) t d, laurentM nL M P lo hi ts ds with
+      | some a, some b => some (vecAdd a.1 b.1, a.2+b.2)
+      | _, _ => none
+  | _, _ => none
+
+theorem laurentM_bnd {nL M P : ℕ} {lo hi : ℚ} :
+    ∀ (ts : List LTerm) (ds : List LaurentPieceData) (A : List ℚ) (B : ℚ),
+      laurentM nL M P lo hi ts ds = some (A,B) →
+        Bnd lo hi (fun x => lfieldTower ts 0 x) A B := by
+  intro ts
+  induction ts with
+  | nil =>
+      intro ds A B h
+      cases ds with
+      | nil =>
+          simp only [laurentM, Option.some.injEq, Prod.mk.injEq] at h
+          obtain ⟨rfl,rfl⟩ := h
+          simpa only [lfieldTower_nil_zero] using Bnd.zero lo hi
+      | cons d ds => simp [laurentM] at h
+  | cons t ts ih =>
+      intro ds A B h
+      cases ds with
+      | nil => simp [laurentM] at h
+      | cons d ds =>
+          unfold laurentM at h
+          split at h
+          · rename_i a b ha hb
+            simp only [Option.some.injEq, Prod.mk.injEq] at h
+            obtain ⟨rfl,rfl⟩ := h
+            have ht : Bnd lo hi (fun x => mulTower (zTow t.1) (lfTower t.2) 0 x) a.1 a.2 := by
+              intro x hx
+              have hA := laurentApx_spec ha (x-(((lo+hi)/2 : ℚ) : ℝ)) (hx_abs lo hi x hx)
+              have he : (((lo+hi)/2 : ℚ) : ℝ)+(x-(((lo+hi)/2 : ℚ) : ℝ)) = x := by ring
+              rw [he] at hA
+              have hu := (abs_le.mp hA).2
+              linarith
+            have hs := ht.add (ih ds b.1 b.2 hb)
+            intro x hx
+            simpa only [lfieldTower, List.map_cons, List.sum_cons] using hs x hx
+          · simp at h
+
+def mergeUBL (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) : Option ℚ :=
+  if lo < hi then
+    match plogsM nL nA Ml P lo hi (mergeSites fq.plogs) pd,
+      polesM nL nA Mp P lo hi fq.poles qd, laurentM nL ML P lo hi ts ld with
+    | some a, some b, some l =>
+        some (chebPolyUB (sclPow ((hi-lo)/2) 0
+          (vecAdd (shiftLK ((lo+hi)/2) fq.poly.length fq.poly) (vecAdd a.1 (vecAdd b.1 l.1)))) γ +
+          a.2+b.2+l.2)
+    | _, _, _ => none
+  else none
+
+def chebMergePieceL (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (T : ℚ) : Bool :=
+  match mergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ with
+  | some v => decide (v ≤ T)
+  | none => false
+
+theorem mergeUBL_spec (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (v : ℚ) (hv : mergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ = some v) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (v : ℝ) := by
+  unfold mergeUBL at hv
+  split_ifs at hv with hlo
+  · split at hv
+    · rename_i a b l ha hb hl
+      simp only [Option.some.injEq] at hv
+      subst v
+      intro x hx
+      have hr : (0 : ℝ) < (((hi-lo)/2 : ℚ) : ℝ) := by
+        have hh : (lo : ℝ) < (hi : ℝ) := (Rat.cast_lt (K := ℝ)).mpr hlo
+        push_cast
+        linarith
+      have hxc := hx_abs lo hi x hx
+      have hp := plogsM_bnd hlo (mergeSites fq.plogs) pd a.1 a.2 ha x hx
+      beta_reduce at hp
+      rw [mergeSites_eq] at hp
+      have hq := polesM_bnd hlo fq.poles qd b.1 b.2 hb x hx
+      beta_reduce at hq
+      have hL := laurentM_bnd ts ld l.1 l.2 hl x hx
+      have hpoly : polyTow fq.poly 0 x =
+          polyTow (shiftLK ((lo+hi)/2) fq.poly.length fq.poly) 0 (x-(((lo+hi)/2 : ℚ) : ℝ)) := by
+        rw [shiftLK_eq', polyTow_shiftL, sub_add_cancel]
+      have hcheb := polyTow_le_cheb
+        (vecAdd (shiftLK ((lo+hi)/2) fq.poly.length fq.poly) (vecAdd a.1 (vecAdd b.1 l.1))) γ
+        ((lo+hi)/2) ((hi-lo)/2) hr x hxc
+      rw [polyTow_vecAdd, polyTow_vecAdd, polyTow_vecAdd] at hcheb
+      rw [fieldTower_zero, hpoly]
+      simp only [Rat.cast_add]
+      beta_reduce at hL
+      linarith
+    · simp at hv
+
+theorem chebMergePieceL_sound (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ : List ℚ) (T : ℚ)
+    (hchk : chebMergePieceL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ T = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (T : ℝ) := by
+  unfold chebMergePieceL at hchk
+  split at hchk
+  · rename_i v hv
+    simp only [decide_eq_true_eq] at hchk
+    intro x hx
+    exact (mergeUBL_spec fq ts nL nA Mp Ml ML P lo hi pd qd ld γ v hv x hx).trans
+      ((Rat.cast_le (K := ℝ)).mpr hchk)
+  · simp at hchk
+
+/-- Reconstruct the exact checker from separately checked shifts and term-list results. -/
+theorem mergeUBL_of_parts (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : ℕ) (lo hi : ℚ)
+    (pd : List (ℚ × (List ℚ × List ℚ))) (qd : List (ℚ × ℚ)) (ld : List LaurentPieceData)
+    (γ S Ap Aq Al : List ℚ) (Ep Eq El : ℚ) (hlo : lo < hi)
+    (hs : shiftLK ((lo+hi)/2) fq.poly.length fq.poly = S)
+    (hp : plogsM nL nA Ml P lo hi (mergeSites fq.plogs) pd = some (Ap,Ep))
+    (hq : polesM nL nA Mp P lo hi fq.poles qd = some (Aq,Eq))
+    (hl : laurentM nL ML P lo hi ts ld = some (Al,El)) :
+    mergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ =
+      some (chebPolyUB (sclPow ((hi-lo)/2) 0 (vecAdd S (vecAdd Ap (vecAdd Aq Al)))) γ+Ep+Eq+El) := by
+  simp only [mergeUBL, if_pos hlo, hp, hq, hl, hs]
+
+#print axioms laurentM_bnd
+#print axioms mergeUBL_spec
+#print axioms chebMergePieceL_sound
+#print axioms mergeUBL_of_parts
+
 #print axioms laurentApx_spec
 
 #print axioms polyApprox_error
