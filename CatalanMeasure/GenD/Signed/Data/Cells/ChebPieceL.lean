@@ -1048,6 +1048,95 @@ theorem laurentCoeffErr_spec (t : LTerm) (c L ε r : ℚ) (M P : ℕ) (hc : c �
   push_cast at h ⊢
   exact h
 
+/-! ## The untrusted Laurent piece data and Boolean approximation checker -/
+
+structure LaurentPieceData where
+  q0 : ℚ
+  qL : ℚ
+  L : ℚ
+  eps : ℚ
+  K : ℕ
+
+/-- Ignore the supplied log ratio for constant factors. -/
+def laurentQL (t : LTerm) (d : LaurentPieceData) : ℚ :=
+  match t.2 with
+  | none => 0
+  | some ab => if ab.1 = 0 then 0 else d.qL
+
+def laurentGeom (c r : ℚ) (M : ℕ) (t : LTerm) (d : LaurentPieceData) : Bool :=
+  decide (0 ≤ r ∧ c ≠ 0 ∧ 0 ≤ d.q0 ∧ d.q0 ≤ 1/2 ∧ r ≤ d.q0*qabs' c ∧
+    0 ≤ laurentQL t d ∧ laurentQL t d ≤ 1/2 ∧ M ≤ d.K ∧ 0 ≤ d.eps) &&
+  match t.2 with
+  | none => true
+  | some ab => decide (ab.1*c-ab.2 ≠ 0 ∧
+      qabs' ab.1*r ≤ laurentQL t d*qabs' (ab.1*c-ab.2))
+
+def laurentApx (nL M P : ℕ) (c r : ℚ) (t : LTerm) (d : LaurentPieceData) : Option (List ℚ × ℚ) :=
+  if laurentGeom c r M t d && llogsCheck nL c [t] [(d.L,d.eps)] then
+    some (laurentPoly t c d.L M P,
+      laurentCoeffErr t c d.L d.eps r M P +
+        laurentTail c d.q0 (laurentQL t d) (qabs' d.L+d.eps) M d.K t)
+  else none
+
+theorem laurentApx_spec {nL M P : ℕ} {c r : ℚ} {t : LTerm} {d : LaurentPieceData}
+    {A : List ℚ} {E : ℚ}
+    (h : laurentApx nL M P c r t d = some (A,E)) (y : ℝ) (hy : |y| ≤ (r : ℝ)) :
+    |mulTower (zTow t.1) (lfTower t.2) 0 ((c : ℝ)+y) - polyTow A 0 y| ≤ (E : ℝ) := by
+  unfold laurentApx at h
+  split_ifs at h with hchk
+  · simp only [Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨rfl,rfl⟩ := h
+    simp only [Bool.and_eq_true] at hchk
+    obtain ⟨hg,hl⟩ := hchk
+    simp only [laurentGeom, Bool.and_eq_true, decide_eq_true_eq] at hg
+    obtain ⟨⟨hr,hc,hq0,hq0',hry,hqL,hqL',hMK,hε⟩,haff⟩ := hg
+    have hguard : ∀ ab, t.2 = some ab → ab.1*c-ab.2 ≠ 0 ∧
+        qabs' ab.1*r ≤ laurentQL t d*qabs' (ab.1*c-ab.2) := by
+      intro ab hab
+      rw [hab] at haff
+      exact of_decide_eq_true haff
+    have hneQ : ∀ ab, t.2 = some ab → ab.1*c-ab.2 ≠ 0 := fun ab hab => (hguard ab hab).1
+    have hne : ∀ ab, t.2 = some ab → (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0 := by
+      intro ab hab
+      have hn := hneQ ab hab
+      exact_mod_cast hn
+    have hLv := llogsCheck_spec nL c [t] [(d.L,d.eps)] hl
+    have hL : ∀ ab, t.2 = some ab →
+        |(d.L : ℝ)-Real.log (|(ab.1 : ℝ)*(c : ℝ)-ab.2|)| ≤ (d.eps : ℝ) := hLv.1
+    have hLB : ∀ ab, t.2 = some ab →
+        |Real.log (|(ab.1 : ℝ)*(c : ℝ)-ab.2|)| ≤ ((qabs' d.L+d.eps : ℚ) : ℝ) := by
+      intro ab hab
+      have he := abs_le.mp (hL ab hab)
+      rw [Rat.cast_add, qabs'_cast, abs_le]
+      constructor <;> linarith [he.1, he.2, le_abs_self (d.L : ℝ), neg_abs_le (d.L : ℝ)]
+    have hy0 : |y| ≤ (d.q0 : ℝ)*|(c : ℝ)| := by
+      have hh := (Rat.cast_le (K := ℝ)).mpr hry
+      simp only [Rat.cast_mul, qabs'_cast] at hh
+      exact hy.trans hh
+    have hR : ∀ ab, t.2 = some ab →
+        |(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| ≤ (laurentQL t d : ℝ) := by
+      intro ab hab
+      have hh := (Rat.cast_le (K := ℝ)).mpr (hguard ab hab).2
+      simp only [Rat.cast_mul, qabs'_cast] at hh
+      push_cast at hh
+      rw [abs_div, abs_mul]
+      apply (div_le_iff₀ (abs_pos.mpr (hne ab hab))).mpr
+      exact (mul_le_mul_of_nonneg_left hy (abs_nonneg (ab.1 : ℝ))).trans hh
+    have ht := laurentMajorant_tail t c d.q0 (laurentQL t d) (qabs' d.L+d.eps) M d.K y
+      hc hq0 hq0' hqL hqL' hMK hy0 hne hLB hR
+    have hp := laurentCoeffErr_spec t c d.L d.eps r M P hc y hy hneQ hL
+    have he : mulTower (zTow t.1) (lfTower t.2) 0 ((c : ℝ)+y) -
+        polyTow (laurentPoly t c d.L M P) 0 y =
+      (mulTower (zTow t.1) (lfTower t.2) 0 ((c : ℝ)+y) -
+        ∑ k ∈ Finset.range (M+1), mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k) +
+      ((∑ k ∈ Finset.range (M+1), mulTower (zTow t.1) (lfTower t.2) k (c : ℝ)/(k.factorial : ℝ)*y^k) -
+        polyTow (laurentPoly t c d.L M P) 0 y) := by ring
+    rw [he, Rat.cast_add]
+    have hb := (abs_add_le _ _).trans (add_le_add ht hp)
+    linarith
+
+#print axioms laurentApx_spec
+
 #print axioms polyApprox_error
 #print axioms laurentCoeffErr_spec
 
