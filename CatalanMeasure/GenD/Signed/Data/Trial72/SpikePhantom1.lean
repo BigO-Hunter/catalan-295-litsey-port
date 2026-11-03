@@ -35,7 +35,9 @@ theorem ref_bound : brQ T1.RF ≤ BRq := by
   decide +kernel
 theorem scalar : 72*(2*A1q+BRq+Lθ) + 40*B1q + 5/4 + Lθ ≤ 72*14 := by decide +kernel
 theorem phantom_bound : (72 : ℝ)*(2*(A1q : ℝ)+BRq+Lθ) + 40*B1q + 5/4 + Lθ ≤ 72*14 := by
-  exact_mod_cast scalar
+  have h := (Rat.cast_le (K := ℝ)).mpr scalar
+  push_cast at h ⊢
+  exact h
 
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.SpikePhantom1

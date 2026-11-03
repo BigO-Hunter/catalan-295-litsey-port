@@ -3,7 +3,7 @@ public import CatalanMeasure.GenD.Signed.Data.Consts.SpikeCount
 @[expose] public section
 set_option Elab.async false
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeRemainder72
-open CatalanMeasure.Signed CatalanMeasure.Signed.Consts Filter
+open CatalanMeasure.Signed CatalanMeasure.Signed.Consts OAI.InternalCatalan Filter
 noncomputable section
 
 /-- The frozen real root stays fixed within a q-piece, so the two remainder

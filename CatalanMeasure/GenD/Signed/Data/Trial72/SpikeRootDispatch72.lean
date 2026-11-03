@@ -8,7 +8,7 @@ set_option Elab.async false
 set_option maxHeartbeats 0
 set_option maxRecDepth 100000
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeRootDispatch72
-open Set CatalanMeasure.Signed CatalanMeasure.Signed.Consts SpikeEndpoint72 RhoGlobal72
+open Set CatalanMeasure.Signed CatalanMeasure.Signed.Consts OAI.InternalCatalan SpikeEndpoint72 RhoGlobal72
 noncomputable section
 
 def ap (a : Fin 27) : ℚ := [CostRootData.A00.ap, CostRootData.A01.ap, CostRootData.A02.ap, CostRootData.A03.ap, CostRootData.A04.ap, CostRootData.A05.ap, CostRootData.A06.ap, CostRootData.A07.ap, CostRootData.A08.ap, CostRootData.A09.ap, CostRootData.A10.ap, CostRootData.A11.ap, CostRootData.A12.ap, CostRootData.A13.ap, CostRootData.A14.ap, CostRootData.A15.ap, CostRootData.A16.ap, CostRootData.A17.ap, CostRootData.A18.ap, CostRootData.A19.ap, CostRootData.A20.ap, CostRootData.A21.ap, CostRootData.A22.ap, CostRootData.A23.ap, CostRootData.A24.ap, CostRootData.A25.ap, CostRootData.A26.ap].getD a.val 0
