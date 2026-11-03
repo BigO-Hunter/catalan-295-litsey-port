@@ -50,6 +50,22 @@ theorem actualMarginCp {α : ℝ} (hα : α ∈ Icc ((0 : ℚ) : ℝ) ((1/16 : �
   rw [physical_eq]
   exact LRows00.Row0.selected_row hα
 
+theorem actualCpMean : certMean LRows00.Row0.g.length (gcertG (LRows00.Row0.e : ℝ) LRows00.Row0.g) ReferenceData.secondP = (LRows00.Row0.m : ℝ) := by
+  unfold certMean
+  have h := certMean_eval LRows00.Row0.e LRows00.Row0.g NormData.secondPInt ReferenceData.secondPData.tail (n := 60)
+    (G := gcertG (LRows00.Row0.e : ℝ) LRows00.Row0.g) (pp := ReferenceData.secondP)
+    (by decide +kernel) rfl (fun _ => rfl) (fun k => congrFun physical_eq k)
+  rw [← LRows00.Row0.table_checked, ← LRows00.Row0.mean_checked] at h
+  exact h
+
+theorem actualCpHalf {α : ℝ} (hα : 0 ≤ α) : 1-α - ((1-α)*(LRows00.Row0.c0 : ℝ) +
+    certMean LRows00.Row0.g.length (gcertG (LRows00.Row0.e : ℝ) LRows00.Row0.g) ReferenceData.secondP - (LRows00.Row0.s : ℝ)) ≤ 1/2 := by
+  rw [actualCpMean]
+  have hc : (LRows00.Row0.c0 : ℝ) ≤ 1 := by exact_mod_cast (show LRows00.Row0.c0 ≤ 1 by decide +kernel)
+  have hd : 1 - (LRows00.Row0.c0 : ℝ) - (LRows00.Row0.m : ℝ) + (LRows00.Row0.s : ℝ) ≤ 1/2 := by
+    exact_mod_cast (show 1 - LRows00.Row0.c0 - LRows00.Row0.m + LRows00.Row0.s ≤ (1/2 : ℚ) by decide +kernel)
+  linarith only [hd, mul_nonneg hα (sub_nonneg.mpr hc)]
+
 theorem actualCp_neg {y : ℝ} (hy : y ∈ Icc (-1 : ℝ) 1) (hy0 : y < 0) :
     evalCert (LRows00.Row0.e : ℝ) LRows00.Row0.g.length (gcertG (LRows00.Row0.e : ℝ) LRows00.Row0.g) (LRows00.Row0.c0 : ℝ) y ≤ 0 := by
   have he : (LRows00.Row0.e : ℝ) ∈ Ioo (0 : ℝ) (1 / 8) := by constructor <;> norm_num [LRows00.Row0.e]
@@ -597,6 +613,8 @@ end
 end CatalanMeasure.GenD.Signed.Data.Trial72.LControl72
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualStatCp
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualMarginCp
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualCpMean
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualCpHalf
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualCp_neg
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualCp_pos
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.LControl72.actualStatCm
