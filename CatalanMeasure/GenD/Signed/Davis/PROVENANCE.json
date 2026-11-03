@@ -457,11 +457,11 @@
     },
     {
       "source": "Submission/Improvement/Fields/ResidualDomain.lean",
-      "source_git_blob": "bc99d70a03b2eae9e97dc9ff4d380c63b1af5868",
-      "source_sha256": "206f8ca3ec3606f8ec06e6d9439b2e376fbc36fbec2c01c339f6b46b816baeea",
-      "source_bytes": 344,
+      "source_git_blob": "9be79c5d1f255f436309166edf1f4181b92c554a",
+      "source_sha256": "6d8f1f53d916b690a467834b1dfad02b35c9268becd69bc0786f9607a749aae0",
+      "source_bytes": 343,
       "local": "CatalanMeasure/GenD/Signed/Davis/ResidualDomain.lean",
-      "local_sha256": "c3672272be5ac0891d6a9d38fba82fa134e7473c9626afc111403a3e68d941e3",
+      "local_sha256": "d679d454fbb2c0cbfe604ac1cbb61c35b2cde06167569302bcbb762f9d62df6b",
       "exports": [
         "CatalanMeasure.Improvement.Fields.trimmedResidualCap",
         "CatalanMeasure.Improvement.Fields.trimmedResidualSupport"
@@ -481,5 +481,25 @@
       ]
     }
   ],
-  "changes": "Import relocation, provenance and kcost comments, exported declaration axiom audit commands only. Original declarations and proofs preserved."
+  "changes": "Import relocation, provenance and kcost comments, exported declaration axiom audit commands only. Original declarations and proofs preserved.",
+  "extra_original_sources": [
+    {
+      "source": "LICENSE",
+      "source_git_blob": "57bc88a15a0ee8266c259b2667e64608d3f7e292",
+      "source_sha256": "c95bae1d1ce0235ecccd3560b772ec1efb97f348a79f0fbe0a634f0c2ccefe2c",
+      "source_bytes": 11358
+    },
+    {
+      "source": "NOTICE",
+      "source_git_blob": "79cd18a32214eafa474a9b1794bd21b39776239b",
+      "source_sha256": "f5de9190fbb97b8e4d2670f5bc6d745e3c7eada635f80e97366fa5bcacbb83a1",
+      "source_bytes": 2808
+    },
+    {
+      "source": "Submission/Improvement/Fields/ResidualDomain.lean",
+      "source_git_blob": "9be79c5d1f255f436309166edf1f4181b92c554a",
+      "source_sha256": "6d8f1f53d916b690a467834b1dfad02b35c9268becd69bc0786f9607a749aae0",
+      "source_bytes": 343
+    }
+  ]
 }

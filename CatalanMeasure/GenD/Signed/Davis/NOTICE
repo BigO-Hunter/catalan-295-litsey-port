@@ -46,7 +46,6 @@ additions in this repository. The trusted CatalanStatement.lean is copied
 unchanged from bigospeedrun/verifier.
 
 
-
 Local port: C. Davis inverse-image node and finite branch certificate modules,
 commit 3c4515314bda407d032cb55f60bfc56b03c1d3f9 (2026).
 Relocated to CatalanMeasure.GenD.Signed.Davis for the D72 design.
