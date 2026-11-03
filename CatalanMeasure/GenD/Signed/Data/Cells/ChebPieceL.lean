@@ -1657,6 +1657,149 @@ theorem pieceCover_bound (hi : ℚ) (f : ℝ → ℝ) (T : ℝ) :
 #print axioms pieceCover_bound
 
 /-! Exhaustive axiom audit of this module's exported theorems. -/
+/-! ## C3 normalized dyadic approximation boundaries -/
+
+def ceilGrid (P : ℕ) (q : ℚ) : ℚ := -dyRound P (-q)
+
+theorem le_ceilGrid (P : ℕ) (q : ℚ) : q ≤ ceilGrid P q := by
+  have h := (dyRound_spec P (-q)).1
+  unfold ceilGrid
+  linarith
+
+def unitRound (P : ℕ) (A : List ℚ) : List ℚ := A.map (dyRound P)
+
+theorem unitRound_zero (P : ℕ) : dyRound P 0 = 0 := by
+  simp [dyRound]
+
+theorem unitRound_length (P : ℕ) (A : List ℚ) : (unitRound P A).length = A.length := by
+  simp [unitRound]
+
+theorem unitRound_getD (P : ℕ) (A : List ℚ) (k : ℕ) :
+    (unitRound P A).getD k 0 = dyRound P (A.getD k 0) := by
+  simpa only [unitRound, unitRound_zero] using (List.getD_map A 0 (dyRound P) (n := k))
+
+/-- Existing finite coefficient-error theorem, specialized to the unit interval. -/
+theorem unitRound_error (P : ℕ) (A : List ℚ) (u : ℝ) (hu : |u| ≤ 1) :
+    |polyTow A 0 u-polyTow (unitRound P A) 0 u| ≤ (A.length : ℝ)/2^P := by
+  have hc : ∀ k < A.length,
+      |((A.getD k 0 : ℚ) : ℝ)-(((unitRound P A).getD k 0 : ℚ) : ℝ)| ≤ (1 : ℝ)/2^P := by
+    intro k _
+    rw [unitRound_getD]
+    obtain ⟨h0,h1⟩ := dyRound_spec P (A.getD k 0)
+    have h0r := (Rat.cast_le (K := ℝ)).mpr h0
+    have h1r := (Rat.cast_le (K := ℝ)).mpr h1
+    push_cast at h0r h1r
+    rw [abs_of_nonneg h0r]
+    exact h1r
+  have h := round_poly_err (fun k => ((A.getD k 0 : ℚ) : ℝ))
+    (fun k => (((unitRound P A).getD k 0 : ℚ) : ℝ)) (fun _ => (1 : ℝ)/2^P)
+    A.length u 1 hu hc
+  have hp : (∑ k ∈ Finset.range A.length, (((unitRound P A).getD k 0 : ℚ) : ℝ)*u^k) =
+      polyTow (unitRound P A) 0 u := by
+    rw [polyTow_sum,unitRound_length]
+  rw [← polyTow_sum A u,hp] at h
+  simpa only [one_pow,mul_one,Finset.sum_const,Finset.card_range,nsmul_eq_mul,mul_one_div] using h
+
+theorem cellRound_sclPow_length (r : ℚ) : ∀ (A : List ℚ) (k : ℕ),
+    (sclPow r k A).length = A.length := by
+  intro A
+  induction A with
+  | nil => intro k; rfl
+  | cons a as ih => intro k; simp only [sclPow,List.length_cons,ih]
+
+/-- Upper bound in the common coordinate u=(x-c)/r. -/
+def BndU (lo hi : ℚ) (g : ℝ → ℝ) (A : List ℚ) (E : ℚ) : Prop :=
+  ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+    g x ≤ polyTow A 0 ((x-(((lo+hi)/2 : ℚ) : ℝ))/(((hi-lo)/2 : ℚ) : ℝ))+(E : ℝ)
+
+theorem cellRadius_pos {lo hi : ℚ} (hlo : lo < hi) : (0 : ℝ) < (((hi-lo)/2 : ℚ) : ℝ) := by
+  have h := (Rat.cast_lt (K := ℝ)).mpr hlo
+  push_cast
+  linarith
+
+theorem hx_unit {lo hi : ℚ} (hlo : lo < hi) (x : ℝ) (hx : x ∈ Icc (lo : ℝ) (hi : ℝ)) :
+    |(x-(((lo+hi)/2 : ℚ) : ℝ))/(((hi-lo)/2 : ℚ) : ℝ)| ≤ 1 := by
+  have hr := cellRadius_pos hlo
+  rw [abs_div,abs_of_pos hr,div_le_one hr]
+  exact hx_abs lo hi x hx
+
+def cellRound (P : ℕ) (lo hi : ℚ) (v : List ℚ × ℚ) : List ℚ × ℚ :=
+  (unitRound P (sclPow ((hi-lo)/2) 0 v.1),ceilGrid P (v.2+(v.1.length : ℚ)/2^P))
+
+theorem BndU.round {lo hi : ℚ} {g : ℝ → ℝ} {A : List ℚ} {E : ℚ}
+    (hlo : lo < hi) (P : ℕ) (h : Bnd lo hi g A E) :
+    BndU lo hi g (cellRound P lo hi (A,E)).1 (cellRound P lo hi (A,E)).2 := by
+  intro x hx
+  have hr := cellRadius_pos hlo
+  let u : ℝ := (x-(((lo+hi)/2 : ℚ) : ℝ))/(((hi-lo)/2 : ℚ) : ℝ)
+  have hu : |u| ≤ 1 := hx_unit hlo x hx
+  have hp := unitRound_error P (sclPow ((hi-lo)/2) 0 A) u hu
+  rw [cellRound_sclPow_length] at hp
+  have he : ((((hi-lo)/2 : ℚ) : ℝ))*u = x-(((lo+hi)/2 : ℚ) : ℝ) := by
+    dsimp only [u]
+    field_simp [ne_of_gt hr]
+  rw [polyTow_sclPow,pow_zero,one_mul,he] at hp
+  have hc := (Rat.cast_le (K := ℝ)).mpr (le_ceilGrid P (E+(A.length : ℚ)/2^P))
+  push_cast at hc
+  have hv := h x hx
+  have hb := (abs_le.mp hp).2
+  change g x ≤ polyTow (unitRound P (sclPow ((hi-lo)/2) 0 A)) 0 u+
+    ((ceilGrid P (E+(A.length : ℚ)/2^P) : ℚ) : ℝ)
+  linarith
+
+theorem BndU.zero (lo hi : ℚ) : BndU lo hi (fun _ => 0) [] 0 := by
+  intro x _
+  simp [polyTow]
+
+theorem BndU.add {lo hi : ℚ} {f g : ℝ → ℝ} {A B : List ℚ} {E F : ℚ}
+    (hf : BndU lo hi f A E) (hg : BndU lo hi g B F) :
+    BndU lo hi (fun x => f x+g x) (vecAdd A B) (E+F) := by
+  intro x hx
+  have h1 := hf x hx
+  have h2 := hg x hx
+  rw [polyTow_vecAdd,Rat.cast_add]
+  linarith
+
+def cellRoundApx (P : ℕ) (lo hi : ℚ) (v : Option (List ℚ × ℚ)) : Option (List ℚ × ℚ) :=
+  v.map (cellRound P lo hi)
+
+theorem cellRoundApx_bnd {lo hi : ℚ} {P : ℕ} {v : Option (List ℚ × ℚ)}
+    {g : ℝ → ℝ} {A : List ℚ} {E : ℚ} (hlo : lo < hi)
+    (hs : ∀ B F, v = some (B,F) → Bnd lo hi g B F)
+    (h : cellRoundApx P lo hi v = some (A,E)) : BndU lo hi g A E := by
+  cases hv : v with
+  | none => simp [cellRoundApx,hv] at h
+  | some b =>
+      rcases b with ⟨B,F⟩
+      simp only [cellRoundApx,hv,Option.map_some,Option.some.injEq] at h
+      have hb := BndU.round hlo P (hs B F hv)
+      rw [h] at hb
+      exact hb
+
+def polyRoundApx (P : ℕ) (lo hi : ℚ) (p : List ℚ) : List ℚ × ℚ :=
+  cellRound P lo hi (shiftLK ((lo+hi)/2) p.length p,0)
+
+theorem polyRoundApx_bnd {lo hi : ℚ} (hlo : lo < hi) (P : ℕ) (p : List ℚ) :
+    BndU lo hi (fun x => polyTow p 0 x) (polyRoundApx P lo hi p).1 (polyRoundApx P lo hi p).2 := by
+  apply BndU.round (A := shiftLK ((lo+hi)/2) p.length p) (E := 0) hlo P
+  intro x _
+  simpa only [shiftLK_eq',polyTow_shiftL,sub_add_cancel,Rat.cast_zero,add_zero] using
+    (le_rfl : polyTow p 0 x ≤ polyTow p 0 x)
+
+#print axioms le_ceilGrid
+#print axioms unitRound_zero
+#print axioms unitRound_length
+#print axioms unitRound_getD
+#print axioms unitRound_error
+#print axioms cellRound_sclPow_length
+#print axioms cellRadius_pos
+#print axioms hx_unit
+#print axioms BndU.round
+#print axioms BndU.zero
+#print axioms BndU.add
+#print axioms cellRoundApx_bnd
+#print axioms polyRoundApx_bnd
+
 #print axioms fieldTower_add
 #print axioms lfieldTower_add
 #print axioms invBinom_nonneg
