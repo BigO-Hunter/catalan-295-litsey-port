@@ -8,9 +8,9 @@ This is the first production source table and its check-class calibration. -/
 namespace CatalanMeasure.GenD.Uniform.ContentBank.D72.Source
 open CatalanMeasure.GenD.Uniform.W.Charts6 OAI.InternalCatalan
 
-def sourceScale : Int := 6440755335035039829226159204238433976320000
+#time def sourceScale : Int := 6440755335035039829226159204238433976320000
 
-def scalarValues : List Int := [
+#time def scalarValues : List Int := [
   12881510670070079658452318408476867952640000,
   0,
   8587673780046719772301545605651245301760000,
@@ -56,10 +56,10 @@ def scalarValues : List Int := [
 
 -- kcost: 0.30s estimated (1500 provisional structural/arithmetic units *0.0002s/unit).
 -- Includes zero-default list traversal; first measured check-class rate is pending.
-theorem scalarValues_check : intScalarCheck 42 sourceScale scalarValues = true := by
+#time theorem scalarValues_check : intScalarCheck 42 sourceScale scalarValues = true := by
   decide +kernel
 
-theorem scalarValues_sound {p : Nat} [Fact p.Prime] (hp : 44 < p)
+#time theorem scalarValues_sound {p : Nat} [Fact p.Prime] (hp : 44 < p)
     (hz : (sourceScale : ZMod p) ≠ 0) :
     ∀ i, i < 42 → ResRec.Gd p (momentScalar i)
       ((intAt scalarValues i : ZMod p) / (sourceScale : ZMod p)) :=
