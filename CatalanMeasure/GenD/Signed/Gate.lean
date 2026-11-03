@@ -1,26 +1,17 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.ContentBank.Gate
+public import CatalanMeasure.GenD.Signed.DesignConst
+public import CatalanMeasure.GenD.PayW
+public import Mathlib.Tactic.FieldSimp
+public import Mathlib.Tactic.Linarith
 
 @[expose] public section
 set_option Elab.async false
 
-/-!
-# Gate for the signed (Theorem A) bound: window `w` as a parameter, `B = 417`, `w = 3/5`
-
-`payB_of_w` is `Bank535.payB_of` with the window `w` a parameter and no `460 ≤ B`; its hypotheses
-are the `PayW` clauses cleared of the denominator `kappa = B / rho`.  `pay417_w35` is the instance
-`w = 3/5`, `B = 417`, `eta = 38.3257` (threshold `53 rho / 417 + 4 * 53 * delta = 38.32562...`).
-`gain_ok417`: `eta < tD - gDg g` where `tD = tDelta + A` is the improved decay budget.
-
-`B = 410` (the S1 column cost): `pay410_w35` is the instance `w = 3/5`, `B = 410`,
-`rho' = K590.rhoEnd 87.9663 = 296.586094` (`rhoEnd_val`), `eta = 38.33924` (threshold
-`53 rho' / 410 + 4 * 53 * delta = 38.33923948...`); `gain_ok410` needs the Theorem A gain
-`A = 58^2 (target0 - K590.target) >= 8.29824` (then `eta - A = 30.041 = 22.05325 + 7.98775`).
--/
+/-! Generic payment gates, with concrete D58 wrappers in Gate410. -/
 
 namespace CatalanMeasure.GenD.Signed
-open CatalanMeasure.GenD D58 Uniform Uniform.Bank540.Ledger Uniform.Bank535
+open CatalanMeasure.GenD
 noncomputable section
 
 /-- Generic payment gate with window `w`. -/
@@ -73,48 +64,57 @@ theorem payB'_of_w (w d0 rho eta delta B : ℝ) (hrho : 0 < rho) (hw : 0 < w) (h
       rw [this, e2]; exact hpay
     exact lt_of_mul_lt_mul_right h2 hrho.le
 
-/-- `w = 3/5`, `B = 417`, `eta = 38.3257`. -/
-theorem pay417_w35 :
-    PayW (3 / 5) D58.d0 Bank540.rho (383257 / 10000) (417 / Bank540.rho) D58.delta 417 := by
-  have hr : Bank540.rho = 301.54258 := by
-    norm_num [Bank540.rho, K590.rho, K590.secondCost, D58.wcap, D58.t]
-  have hd : D58.delta = 29 / 100000000 := by norm_num [D58.delta, D58.t, D58.deltaRef]
-  have h0 : D58.d0 = 53 := rfl
-  rw [hr, hd, h0]
-  exact payB_of_w _ _ _ _ _ _ (by norm_num) (by norm_num) (by norm_num) (by norm_num)
-    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+namespace Generic
 
-/-- Gate inequality for the improved budget `tD = tDelta + A`, with `A >= 8.2847` the Theorem A
-gain per `N^2` (`A = 58^2 (target0 - target)`), and `g >= 22.05325` the ledger gain. -/
-theorem gain_ok417 (g A tD : ℝ) (hT : tD = Bank540.tDelta + A) (h : 2205325 / 100000 ≤ g)
-    (hA : 82847 / 10000 ≤ A) : (383257 / 10000 : ℝ) < tD - gDg g := by
-  have := eta_lt_of_gain (383257 / 10000 - A) g (by norm_num; linarith)
-  rw [hT]; linarith
+/-- The payment criterion instantiated at the determinant degree of a shared design. -/
+theorem payB (dc : DesignConst) (w rho eta delta B : ℝ)
+    (hrho : 0 < rho) (hw : 0 < w) (hd : 0 < delta)
+    (he : 0 < eta) (he2 : eta < 2 * (dc.d0 : ℝ)) (hk : 2 * w * rho < B)
+    (hwin : rho < 2 * (w * rho - delta * (2 * B - w * rho)))
+    (hpay : (dc.d0 : ℝ) * rho + 4 * (dc.d0 : ℝ) * delta * B < eta * B) :
+    PayW w (dc.d0 : ℝ) rho eta (B / rho) delta B :=
+  payB_of_w w dc.d0 rho eta delta B hrho hw hd he he2 hk hwin hpay
 
-/-- `w = 3/5`, `B = 410`, `rho' = K590.rhoEnd 87.9663`, `eta = 38.33924`. -/
-theorem pay410_w35 :
-    PayW (3 / 5) D58.d0 (K590.rhoEnd (879663 / 10000)) (3833924 / 100000)
-      (410 / K590.rhoEnd (879663 / 10000)) D58.delta 410 := by
-  have hr : K590.rhoEnd (879663 / 10000) = 296586094 / 1000000 := by
-    rw [K590.rhoEnd_val]; norm_num
-  have hd : D58.delta = 29 / 100000000 := by norm_num [D58.delta, D58.t, D58.deltaRef]
-  have h0 : D58.d0 = 53 := rfl
-  rw [hr, hd, h0]
-  exact payB_of_w _ _ _ _ _ _ (by norm_num) (by norm_num) (by norm_num) (by norm_num)
-    (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+/-- The primed criterion remains separate; concrete public wrappers keep `PayW`. -/
+theorem payB' (dc : DesignConst) (w rho eta delta B : ℝ)
+    (hrho : 0 < rho) (hw : 0 < w) (hd : 0 < delta) (hd3 : delta < 1 / 3)
+    (he : 0 < eta) (he2 : eta < 2 * (dc.d0 : ℝ)) (hk : w * rho < B)
+    (hs2 : (dc.d0 : ℝ) * rho ≤ (B - w * rho) * (eta + 2 * (dc.d0 : ℝ) * (1 - 3 * delta)))
+    (hwin : rho < 2 * (w * rho - delta * (2 * B - w * rho)))
+    (hpay : (dc.d0 : ℝ) * rho + 4 * (dc.d0 : ℝ) * delta * B < eta * B) :
+    PayW' w (dc.d0 : ℝ) rho eta (B / rho) delta B :=
+  payB'_of_w w dc.d0 rho eta delta B hrho hw hd hd3 he he2 hk hs2 hwin hpay
 
-/-- Gate inequality for `B = 410`: with the Theorem A gain `A >= 8.29824` per `N^2`
-(`A = 58^2 (target0 - K590.target)`) and the ledger gain `g >= 22.05325`. -/
-theorem gain_ok410 (g A tD : ℝ) (hT : tD = Bank540.tDelta + A) (h : 2205325 / 100000 ≤ g)
-    (hA : 829824 / 100000 ≤ A) : (3833924 / 100000 : ℝ) < tD - gDg g := by
-  have := eta_lt_of_gain (3833924 / 100000 - A) g (by norm_num; linarith)
-  rw [hT]; linarith
+/-- A certified baseline budget and gain leave the requested decay margin. -/
+theorem gain_ok (base eta A tD price : ℝ) (hT : tD = base + A)
+    (hgain : eta - A < base - price) : eta < tD - price := by
+  rw [hT]
+  linarith only [hgain]
+
+end Generic
+
+/-- D72 payment instance; certificate-dependent inequalities remain named inputs. -/
+theorem pay400_w2750 (rho eta : ℝ) (hrho : 0 < rho) (heta : 0 < eta)
+    (heta2 : eta < 132) (hk : 2 * (27 / 50) * rho < 400)
+    (hwin : rho < 2 * ((27 / 50) * rho -
+      (29 / 100000000) * (800 - (27 / 50) * rho)))
+    (hpay : 66 * rho + 4 * 66 * (29 / 100000000) * 400 < eta * 400) :
+    PayW (27 / 50) (dc72.d0 : ℝ) rho eta (400 / rho) (29 / 100000000) 400 := by
+  apply Generic.payB dc72 (27 / 50) rho eta (29 / 100000000) 400 hrho
+    (by norm_num) (by norm_num) heta
+  · simpa only [dc72_d0, Nat.cast_ofNat, show (2 : ℝ) * 66 = 132 by norm_num] using heta2
+  · exact hk
+  · simpa only [show (2 : ℝ) * 400 = 800 by norm_num] using hwin
+  · simpa using hpay
+
 
 end
 end CatalanMeasure.GenD.Signed
 #print axioms CatalanMeasure.GenD.Signed.payB_of_w
-#print axioms CatalanMeasure.GenD.Signed.pay417_w35
-#print axioms CatalanMeasure.GenD.Signed.gain_ok417
-#print axioms CatalanMeasure.GenD.Signed.pay410_w35
-#print axioms CatalanMeasure.GenD.Signed.gain_ok410
 #print axioms CatalanMeasure.GenD.Signed.payB'_of_w
+
+#print axioms CatalanMeasure.GenD.Signed.Generic.payB
+#print axioms CatalanMeasure.GenD.Signed.Generic.payB'
+#print axioms CatalanMeasure.GenD.Signed.Generic.gain_ok
+
+#print axioms CatalanMeasure.GenD.Signed.pay400_w2750
