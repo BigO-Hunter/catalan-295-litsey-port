@@ -1,0 +1,54 @@
+This project studies upper bounds on the irrationality exponent of Catalan's constant.
+
+The determinant construction and its original irrationality proof are due to
+OpenAI (2026). The design (58,9,3,5,3), the uniform nonvanishing and denominator
+theorems, the 102-piece rank-deficiency profile, the trial sequences, and the
+generic quadrature and energy lemmas used here come from Sean Litsey's
+catalan-irrationality-measure repository, under Apache License 2.0.
+
+Upstream repository: https://github.com/slitsey/catalan-irrationality-measure
+Pinned revision: aa2a42f4f3835347ad46608779e22dd52c2dc7bf
+
+certificates/rank_profile.json transcribes the wins532 data from
+CatalanMeasure/GenD/Uniform/Bank532/Ledger532.lean. It does not replace the
+upstream proof that these functions bound the prime-by-prime nullities.
+
+certificates/trial_data.json transcribes the unchanged second-case P trial
+from CatalanMeasure/GenD/D58/Cert590/Data.lean, Git blob
+c401f993810de11834f6db6ce5eda4064be09021. Its source and data hashes are recorded
+and verified by scripts/residual_certificate.py.
+
+New code in scripts/ checks the new rational certificates and numerical
+implications. These scripts are not Lean kernel checks of the complete proof.
+
+See LICENSE for the Apache License 2.0.
+
+The Lean dependency closure under Submission/ is copied from the pinned
+upstream project, with imports of vendored roots prefixed by Submission.
+The guarded compatibility patch in scripts/vendor_lean.py changes one proof
+step in CatalanMeasure/GenD/Cert/Assembly.lean for Lean 4.34.1: an existing
+Boolean equality hypothesis is used directly. No mathematical statement or
+definition changes. The provenance manifest records this patch and both hashes.
+Two further proof-only dependency changes import elementary helper lemmas from
+Submission/Refinement/PrimeDenominator.lean and
+Submission/Improvement/Fields/AtomMeasureFacts.lean. These helpers preserve
+the upstream denominator, determinant, and measure arguments while avoiding
+unrelated fixed-design numerical developments. The guarded converter records
+the import and lemma-name changes; all generic theorem statements are unchanged.
+A further import-only scheduling change orders the fourteen inherited NormLogP
+and NormLogV modules into two dependency chains. It preserves every theorem,
+definition, and finite witness while limiting simultaneous heavy norm checks.
+The converter guards each of the twelve added imports and records them in the
+provenance manifest. See proofs/dependency_refactors.md for the exact order.
+The original upstream NOTICE is preserved in third_party/UPSTREAM_NOTICE.
+New modules under Submission/Refinement/ and Submission/Improvement/ are
+additions in this repository. The trusted CatalanStatement.lean is copied
+unchanged from bigospeedrun/verifier.
+
+
+
+Local port: C. Davis inverse-image node and finite branch certificate modules,
+commit 3c4515314bda407d032cb55f60bfc56b03c1d3f9 (2026).
+Relocated to CatalanMeasure.GenD.Signed.Davis for the D72 design.
+Original source provenance and local hashes are in PROVENANCE.json.
+The original declaration namespaces and mathematical proofs are preserved.
