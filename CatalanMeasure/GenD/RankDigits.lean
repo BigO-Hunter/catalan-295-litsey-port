@@ -31,6 +31,112 @@ structure DigitSeq (p a L TQ TD TY e : ℕ) [Fact p.Prime] (q d y : ℕ → ZMod
 section
 variable {p a L TQ TD TY e : ℕ} [Fact p.Prime] {q d y : ℕ → ZMod p}
 
+/-- Indexed Theorem S. The polynomial support hypothesis used by `digitSeq_design`
+remains independent of this selected digit index. -/
+theorem digits_vanish_Sk (D : DigitSeq p a L TQ TD TY e q d y) {k : ℕ} (hk : 2 ≤ k)
+    (h2 : (2 : ZMod p) ≠ 0) {m0 m1 : ℕ}
+    (hm1p : m1 ≤ p) (hm1a : m1 ≤ a + 1) (hL : (k - 1) * p + m1 ≤ L)
+    (hTQ : TQ < (k + 1) * p + m0) (hTY : TY < (k + 1) * p + m0)
+    (hTD : TD < k * p + m0) (he : m0 + e ≤ m1)
+    (hD : ∀ j, 1 ≤ j → j < k → ∀ mu, m0 ≤ mu → mu < m1 → d (j * p + mu) = 0)
+    (hQ : ∀ mu, m0 ≤ mu → mu < m0 + e → q (k * p + mu) = 0) :
+    ∀ mu, m0 ≤ mu → mu < m1 → ∀ u, q (u * p + mu) = 0 ∧ d (u * p + mu) = 0 := by
+  have hlow : ∀ j, j < k → ∀ mu, m0 ≤ mu → mu < m1 → q (j * p + mu) = 0 := by
+    intro j hj mu h0 h1
+    rcases Nat.eq_zero_or_pos j with rfl | hj0
+    · simpa using D.q_lo mu (by omega)
+    have hjp := Nat.mul_le_mul_right p (show j ≤ k - 1 by omega)
+    have h6 := D.k6 (j * p + mu) (by omega)
+    have hdj := hD j hj0 hj mu h0 h1
+    by_cases hj1 : j = 1
+    · subst j
+      simp only [one_mul] at h6 hdj
+      rw [if_neg (by omega), hdj] at h6
+      exact (mul_eq_zero.mp (by simpa using h6)).resolve_left h2
+    · have hj2 : 2 ≤ j := by omega
+      have heq : j * p = (j - 2) * p + 2 * p := by
+        rw [← Nat.add_mul, Nat.sub_add_cancel hj2]
+      have hsub : j * p + mu - 2 * p = (j - 2) * p + mu := by omega
+      have hdprev : d ((j - 2) * p + mu) = 0 := by
+        by_cases hjz : j - 2 = 0
+        · simpa [hjz] using D.d_lo mu (by omega)
+        · exact hD (j - 2) (by omega) (by omega) mu h0 h1
+      rw [if_pos (by omega), hsub, hdj, hdprev] at h6
+      exact (mul_eq_zero.mp (by simpa using h6)).resolve_left h2
+  have hrec : ∀ mu, m0 + e ≤ mu → mu < m1 →
+      ∑ t ∈ Finset.range (e + 1), (-1 : ZMod p) ^ t * (e.choose t : ZMod p) *
+        q (k * p + mu - t) = 0 := by
+    intro mu h0 h1
+    let C : ℕ → ZMod p := fun j =>
+      ∑ t ∈ Finset.range (e + 1), (-1 : ZMod p) ^ t * (e.choose t : ZMod p) *
+        q (j * p + mu - t)
+    have htel : ∀ n, ∑ j ∈ Finset.range (n + 1), C j = y (n * p + mu) := by
+      intro n
+      induction n with
+      | zero =>
+        have hf := D.frob mu (by omega)
+        rw [if_neg (by omega)] at hf
+        simpa [C] using hf
+      | succ n ih =>
+        rw [Finset.sum_range_succ, ih]
+        have heq : (n + 1) * p = n * p + p := by rw [Nat.add_mul, Nat.one_mul]
+        have hf := D.frob ((n + 1) * p + mu) (by omega)
+        rw [if_pos (by omega), show (n + 1) * p + mu - p = n * p + mu by omega] at hf
+        change y (n * p + mu) + C (n + 1) = y ((n + 1) * p + mu)
+        dsimp only [C]
+        rw [hf]
+        ring
+    have hsum : ∑ j ∈ Finset.range (k + 2), C j = C k := by
+      apply Finset.sum_eq_single k
+      · intro j hj hjk
+        apply Finset.sum_eq_zero
+        intro t ht
+        have ht' := Finset.mem_range.mp ht
+        have hmu : m0 ≤ mu - t := by omega
+        have hmu1 : mu - t < m1 := by omega
+        have hqt : q (j * p + (mu - t)) = 0 := by
+          by_cases hjlow : j < k
+          · exact hlow j hjlow (mu - t) hmu hmu1
+          · have hjhi : k + 1 ≤ j := by omega
+            have hjp := Nat.mul_le_mul_right p hjhi
+            exact D.q_hi _ (by omega)
+        rw [show j * p + mu - t = j * p + (mu - t) by omega, hqt, mul_zero]
+      · intro hnot
+        exact False.elim (hnot (Finset.mem_range.mpr (by omega)))
+    have hy : y ((k + 1) * p + mu) = 0 := D.y_hi _ (by omega)
+    have hh := htel (k + 1)
+    rw [show k + 1 + 1 = k + 2 by omega, hsum, hy] at hh
+    exact hh
+  have hseed := alt_binom_vanish (fun mu => if mu < m1 then q (k * p + mu) else 0)
+    e m0 m1
+    (by
+      intro mu h0 h1
+      refine Eq.trans ?_ (hrec mu h0 h1)
+      apply Finset.sum_congr rfl
+      intro t ht
+      have ht' := Finset.mem_range.mp ht
+      simp only [show mu - t < m1 by omega, if_true]
+      rw [show k * p + mu - t = k * p + (mu - t) by omega])
+    (by
+      intro mu h0 h1
+      simp only [show mu < m1 by omega, if_true]
+      exact hQ mu h0 h1)
+  intro mu h0 h1 u
+  constructor
+  · by_cases huk : u < k
+    · exact hlow u huk mu h0 h1
+    · by_cases hueq : u = k
+      · subst u
+        simpa [h1] using hseed mu h0 h1
+      · have hup := Nat.mul_le_mul_right p (show k + 1 ≤ u by omega)
+        exact D.q_hi _ (by omega)
+  · rcases Nat.eq_zero_or_pos u with rfl | hu0
+    · simpa using D.d_lo mu (by omega)
+    · by_cases huk : u < k
+      · exact hD u hu0 huk mu h0 h1
+      · have hup := Nat.mul_le_mul_right p (show k ≤ u by omega)
+        exact D.d_hi _ (by omega)
+
 /-- **Theorem S, digit part.**  Constraints: `Dh_j(mu) = 0` for `j = 1,2,3` on `[m0,m1)` and
 `Qh_4(mu) = 0` on the first `e` residues.  Conclusion: every digit of `Qh` and `Dh` vanishes. -/
 theorem digits_vanish_S (D : DigitSeq p a L TQ TD TY e q d y) (h2 : (2 : ZMod p) ≠ 0)
@@ -266,3 +372,5 @@ theorem digits_vanish_U6 (D : DigitSeq p a L TQ TD TY e q d y) (h2 : (2 : ZMod p
 end
 end
 end CatalanMeasure.GenD
+
+#print axioms CatalanMeasure.GenD.digits_vanish_Sk
