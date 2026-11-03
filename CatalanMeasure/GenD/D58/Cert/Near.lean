@@ -226,6 +226,7 @@ theorem trialSeqS_one (cs : List ℤ) (tail : List TailQ) :
   push_cast
   rfl
 
+-- BEGIN GENERATED FIRSTQ (phase2-data/consts/firstq_emit.py)
 -- kcost: 0.067 s estimated; first coefficient plus 56 tails, about 12 rational operations/tail.
 theorem firstQ_data : (9 / 50 : ℚ) ≤ firstQ Pc P := by
   unfold firstQ; decide +kernel
@@ -235,6 +236,7 @@ theorem first_lower : (9 / 50 : ℝ) ≤ trialSeqS Pc P 1 := by
   have h : (((9 / 50 : ℚ)) : ℝ) ≤ ((firstQ Pc P : ℚ) : ℝ) := Rat.cast_le.mpr firstQ_data
   push_cast at h
   exact h
+-- END GENERATED FIRSTQ
 
 end
 end CatalanMeasure.GenD.D58.Cert
