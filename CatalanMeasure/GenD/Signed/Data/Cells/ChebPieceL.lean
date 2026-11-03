@@ -1786,6 +1786,168 @@ theorem polyRoundApx_bnd {lo hi : ℚ} (hlo : lo < hi) (P : ℕ) (p : List ℚ) 
   simpa only [shiftLK_eq',polyTow_shiftL,sub_add_cancel,Rat.cast_zero,add_zero] using
     (le_rfl : polyTow p 0 x ≤ polyTow p 0 x)
 
+
+/-! ## Per-term rounded folds: all additions occur on dyadic boundaries. -/
+
+def plogRoundTerm (nL nA M P : ℕ) (lo hi : ℚ) (t : List ℚ × ℚ)
+    (d : ℚ × (List ℚ × List ℚ)) : Option (List ℚ × ℚ) :=
+  cellRoundApx P lo hi (plogTerm nL nA M P lo hi t d)
+
+theorem plogRoundTerm_bnd {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi)
+    {t : List ℚ × ℚ} {d : ℚ × (List ℚ × List ℚ)} {A : List ℚ} {E : ℚ}
+    (h : plogRoundTerm nL nA M P lo hi t d = some (A,E)) :
+    BndU lo hi (fun x => polyTow t.1 0 x * Real.log |x-(t.2 : ℝ)|) A E := by
+  exact cellRoundApx_bnd hlo (fun _ _ ht => plogTerm_bnd hlo ht) h
+
+def poleRoundTerm (nL nA M P : ℕ) (lo hi : ℚ) (q : PoleR) (d : ℚ × ℚ) :
+    Option (List ℚ × ℚ) := cellRoundApx P lo hi (poleTerm nL nA M P lo hi q d)
+
+theorem poleRoundTerm_bnd {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi)
+    {q : PoleR} {d : ℚ × ℚ} {A : List ℚ} {E : ℚ}
+    (h : poleRoundTerm nL nA M P lo hi q d = some (A,E)) :
+    BndU lo hi (fun x => (q.rho * Complex.log ((x : ℂ)-q.pc)).re) A E := by
+  exact cellRoundApx_bnd hlo (fun _ _ ht => poleTerm_bnd hlo ht) h
+
+def laurentRoundTerm (nL M P : ℕ) (lo hi : ℚ) (t : LTerm) (d : LaurentPieceData) :
+    Option (List ℚ × ℚ) :=
+  cellRoundApx P lo hi (laurentApx nL M P ((lo+hi)/2) ((hi-lo)/2) t d)
+
+theorem laurentRoundTerm_bnd {nL M P : ℕ} {lo hi : ℚ} (hlo : lo < hi)
+    {t : LTerm} {d : LaurentPieceData} {A : List ℚ} {E : ℚ}
+    (h : laurentRoundTerm nL M P lo hi t d = some (A,E)) :
+    BndU lo hi (fun x => mulTower (zTow t.1) (lfTower t.2) 0 x) A E := by
+  apply cellRoundApx_bnd hlo ?_ h
+  intro B F hb x hx
+  have hA := laurentApx_spec hb (x-(((lo+hi)/2 : ℚ) : ℝ)) (hx_abs lo hi x hx)
+  have he : (((lo+hi)/2 : ℚ) : ℝ)+(x-(((lo+hi)/2 : ℚ) : ℝ)) = x := by ring
+  rw [he] at hA
+  have hu := (abs_le.mp hA).2
+  linarith
+def plogsRoundM (nL nA Ml P : ℕ) (lo hi : ℚ) :
+    List (List ℚ × ℚ) → List (ℚ × (List ℚ × List ℚ)) → Option (List ℚ × ℚ)
+  | [], [] => some ([], 0)
+  | t :: ts, d :: ds =>
+    match plogRoundTerm nL nA Ml P lo hi t d, plogsRoundM nL nA Ml P lo hi ts ds with
+    | some a, some b => some (vecAdd a.1 b.1, a.2 + b.2)
+    | _, _ => none
+  | _, _ => none
+
+theorem plogsRoundM_bnd {nL nA Ml P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
+    ∀ (ts : List (List ℚ × ℚ)) (ds : List (ℚ × (List ℚ × List ℚ))) (A : List ℚ) (B : ℚ),
+      plogsRoundM nL nA Ml P lo hi ts ds = some (A, B) →
+      BndU lo hi (fun x => (ts.map (fun t => polyTow t.1 0 x * Real.log |x - (t.2 : ℝ)|)).sum) A B := by
+  intro ts
+  induction ts with
+  | nil =>
+    intro ds A B h
+    cases ds with
+    | nil =>
+      simp only [plogsRoundM, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      simpa using BndU.zero lo hi
+    | cons d ds => simp [plogsRoundM] at h
+  | cons t ts ih =>
+    intro ds A B h
+    cases ds with
+    | nil => simp [plogsRoundM] at h
+    | cons d ds =>
+      unfold plogsRoundM at h
+      split at h
+      · rename_i a b ha hb
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have := (plogRoundTerm_bnd hlo ha).add (ih ds b.1 b.2 hb)
+        simpa using this
+      · simp at h
+
+def polesRoundM (nL nA M P : ℕ) (lo hi : ℚ) : List PoleR → List (ℚ × ℚ) → Option (List ℚ × ℚ)
+  | [], [] => some ([], 0)
+  | q :: qs, d :: ds =>
+    match poleRoundTerm nL nA M P lo hi q d, polesRoundM nL nA M P lo hi qs ds with
+    | some a, some b => some (vecAdd a.1 b.1, a.2 + b.2)
+    | _, _ => none
+  | _, _ => none
+
+theorem polesRoundM_bnd {nL nA M P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
+    ∀ (qs : List PoleR) (ds : List (ℚ × ℚ)) (A : List ℚ) (B : ℚ),
+      polesRoundM nL nA M P lo hi qs ds = some (A, B) → BndU lo hi (fun x => poleF qs x) A B := by
+  intro qs
+  induction qs with
+  | nil =>
+    intro ds A B h
+    cases ds with
+    | nil =>
+      simp only [polesRoundM, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨rfl, rfl⟩ := h
+      have := BndU.zero lo hi
+      simpa [poleF] using this
+    | cons d ds => simp [polesRoundM] at h
+  | cons q qs ih =>
+    intro ds A B h
+    cases ds with
+    | nil => simp [polesRoundM] at h
+    | cons d ds =>
+      unfold polesRoundM at h
+      split at h
+      · rename_i a b ha hb
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have := (poleRoundTerm_bnd hlo ha).add (ih ds b.1 b.2 hb)
+        intro x hx
+        show poleF (q :: qs) x ≤ _
+        have h2 := this x hx
+        have e : poleF (q :: qs) x = (q.rho * Complex.log ((x : ℂ) - q.pc)).re + poleF qs x := by
+          simp [poleF]
+        rw [e]
+        exact h2
+      · simp at h
+
+def laurentRoundM (nL M P : ℕ) (lo hi : ℚ) :
+    List LTerm → List LaurentPieceData → Option (List ℚ × ℚ)
+  | [], [] => some ([],0)
+  | t :: ts, d :: ds =>
+      match laurentRoundTerm nL M P lo hi t d, laurentRoundM nL M P lo hi ts ds with
+      | some a, some b => some (vecAdd a.1 b.1, a.2+b.2)
+      | _, _ => none
+  | _, _ => none
+
+theorem laurentRoundM_bnd {nL M P : ℕ} {lo hi : ℚ} (hlo : lo < hi) :
+    ∀ (ts : List LTerm) (ds : List LaurentPieceData) (A : List ℚ) (B : ℚ),
+      laurentRoundM nL M P lo hi ts ds = some (A,B) →
+        BndU lo hi (fun x => lfieldTower ts 0 x) A B := by
+  intro ts
+  induction ts with
+  | nil =>
+      intro ds A B h
+      cases ds with
+      | nil =>
+          simp only [laurentRoundM, Option.some.injEq, Prod.mk.injEq] at h
+          obtain ⟨rfl,rfl⟩ := h
+          simpa only [lfieldTower_nil_zero] using BndU.zero lo hi
+      | cons d ds => simp [laurentRoundM] at h
+  | cons t ts ih =>
+      intro ds A B h
+      cases ds with
+      | nil => simp [laurentRoundM] at h
+      | cons d ds =>
+          unfold laurentRoundM at h
+          split at h
+          · rename_i a b ha hb
+            simp only [Option.some.injEq, Prod.mk.injEq] at h
+            obtain ⟨rfl,rfl⟩ := h
+            have ht := laurentRoundTerm_bnd hlo ha
+            have hs := ht.add (ih ds b.1 b.2 hb)
+            intro x hx
+            simpa only [lfieldTower, List.map_cons, List.sum_cons] using hs x hx
+          · simp at h
+
+#print axioms plogRoundTerm_bnd
+#print axioms poleRoundTerm_bnd
+#print axioms laurentRoundTerm_bnd
+#print axioms plogsRoundM_bnd
+#print axioms polesRoundM_bnd
+#print axioms laurentRoundM_bnd
+
 #print axioms le_ceilGrid
 #print axioms unitRound_zero
 #print axioms unitRound_length
