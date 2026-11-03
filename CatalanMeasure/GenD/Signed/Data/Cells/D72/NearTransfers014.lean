@@ -1,6 +1,8 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPieceL
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LaurentCache
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.RootScale
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LogTransfer
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.NearLogCache004
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.NearLogCache005
