@@ -1350,13 +1350,140 @@ theorem laurent_eq_of_nf (a b : List LTerm) (h : laurentNF a = laurentNF b) (x :
     lfieldTower a 0 x = lfieldTower b 0 x := by
   rw [← laurentNF_sound a x, h, laurentNF_sound b x]
 
-#print axioms trimPoly_sound
-#print axioms map_sum_mergeSort
-#print axioms siteClean_sound
-#print axioms siteNF_sound
-#print axioms lfClean_sound
-#print axioms laurentNF_sound
-#print axioms laurent_eq_of_nf
+/-! ## Checked order-one regular bounds for existing end windows -/
+
+structure EndLipData where
+  nLc : ℕ
+  Pc : ℕ
+  nLp : ℕ
+  nAp : ℕ
+  Pp : ℕ
+  nLL : ℕ
+  AQ : ℚ
+  BQ : ℚ
+  BL : ℚ
+  G0 : ℚ
+  Gamma : ℚ
+  CbP : List ℚ
+  pb : List PlogBlk
+  ks : List ℕ
+  mx : ℚ
+  bs : List LBlk
+  lks : List ℕ
+  Lv : List (ℚ × ℚ)
+
+def endLipCheck (fq : FieldQ) (ts : List LTerm) (e lo hi TR : ℚ) (d : EndLipData) : Bool :=
+  decide (lo ≤ e ∧ e ≤ hi ∧ 0 ≤ d.BQ ∧ 0 ≤ d.BL ∧ 0 ≤ d.Gamma ∧
+    (ts = [] ∨ e ≠ 0) ∧
+    d.AQ+lCoef ts d.Lv e 0+lErr ts d.Lv e 0 ≤ d.G0 ∧
+    d.BQ+d.BL ≤ d.Gamma ∧ d.G0+d.Gamma*max (e-lo) (hi-e) ≤ TR) &&
+  decide (anchorUB2 d.nLc d.Pc d.nLp d.nAp d.Pp fq e = some d.AQ) &&
+  blockOK3 fq ((lo+hi)/2) lo hi 1 d.CbP d.pb d.ks d.BQ &&
+  llogsCheck d.nLL e ts d.Lv &&
+  if ts = [] then decide (d.BL = 0) else lBlockOK ts lo hi d.mx 1 d.bs d.lks d.BL
+
+theorem endLipCheck_sound (fq : FieldQ) (ts : List LTerm) (e lo hi TR : ℚ) (d : EndLipData)
+    (hchk : endLipCheck fq ts e lo hi TR d = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ),
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (TR : ℝ) := by
+  simp only [endLipCheck, Bool.and_eq_true, decide_eq_true_eq] at hchk
+  obtain ⟨⟨⟨⟨hmain,ha⟩,hb⟩,hlogs⟩,hLaur⟩ := hchk
+  obtain ⟨heLo,heHi,hBQ,hBL,hGamma,he0,hG0,hB,hT⟩ := hmain
+  have he : (e : ℝ) ∈ Icc (lo : ℝ) (hi : ℝ) :=
+    ⟨(Rat.cast_le (K := ℝ)).mpr heLo,(Rat.cast_le (K := ℝ)).mpr heHi⟩
+  have hlow : (((lo+hi)/2 : ℚ) : ℝ)-(((hi-lo)/2 : ℚ) : ℝ) = (lo : ℝ) := by push_cast; ring
+  have hhigh : (((lo+hi)/2 : ℚ) : ℝ)+(((hi-lo)/2 : ℚ) : ℝ) = (hi : ℝ) := by push_cast; ring
+  have hbf := blockFacts_of_ok3 fq ((lo+hi)/2) lo hi 1 d.CbP d.pb d.ks d.BQ hb
+  have hTq := isTower_fieldTower fq (poleF fq.poles)
+    (((lo+hi)/2 : ℚ) : ℝ) (((hi-lo)/2 : ℚ) : ℝ) 1
+    (fun t ht x hx => hbf.plog t ht x (by simpa only [hlow,hhigh] using hx))
+    (fun x hx q hq => hbf.pole q hq x (by simpa only [hlow,hhigh] using hx))
+    (fun x hx => hbf.deriv x (by simpa only [hlow,hhigh] using hx))
+  have hLT : IsTower (lfieldTower ts) (((lo+hi)/2 : ℚ) : ℝ) (((hi-lo)/2 : ℚ) : ℝ) 1 ∧
+      (∀ x ∈ Icc (lo : ℝ) (hi : ℝ), |lfieldTower ts 1 x| ≤ (d.BL : ℝ)) ∧
+      (lfieldTower ts 0 (e : ℝ) ≤ ((lCoef ts d.Lv e 0+lErr ts d.Lv e 0 : ℚ) : ℝ)) := by
+    by_cases hn : ts = []
+    · have hz : lfieldTower ts = fun (_ : ℕ) (_ : ℝ) => 0 := by
+        subst ts
+        funext j x
+        simp [lfieldTower]
+      rw [hz]
+      refine ⟨⟨fun _ _ => continuousOn_const,fun _ _ x _ => hasDerivAt_const x 0⟩,?_,?_⟩
+      · intro x hx
+        simpa using (Rat.cast_le (K := ℝ)).mpr hBL
+      · subst ts
+        simp [lCoef,lErr]
+    · have hLb : lBlockOK ts lo hi d.mx 1 d.bs d.lks d.BL = true := by
+        simpa only [if_neg hn] using hLaur
+      have hlf := lBlockFacts_of_ok ts lo hi d.mx 1 d.bs d.lks d.BL hLb
+      have hTL := isTower_lfieldTower ts (((lo+hi)/2 : ℚ) : ℝ) (((hi-lo)/2 : ℚ) : ℝ) 1
+        (fun x hx => hlf.avoid0 x (by simpa only [hlow,hhigh] using hx))
+        (fun t ht ab hab x hx => hlf.avoidL t ht ab hab x (by simpa only [hlow,hhigh] using hx))
+      have hne : ∀ t ∈ ts, ∀ ab, t.2 = some ab → ab.1*e-ab.2 ≠ 0 := by
+        intro t ht ab hab
+        have h := hlf.avoidL t ht ab hab (e : ℝ) he
+        exact_mod_cast h
+      have hc : e ≠ 0 := he0.resolve_left hn
+      have hp := lfield_approx e hc ts d.Lv (llogsCheck_spec d.nLL e ts d.Lv hlogs) hne 0
+      simp only [Nat.factorial_zero,Nat.cast_one,div_one] at hp
+      have hupper : lfieldTower ts 0 (e : ℝ) ≤ ((lCoef ts d.Lv e 0+lErr ts d.Lv e 0 : ℚ) : ℝ) := by
+        rw [Rat.cast_add]
+        linarith [(abs_le.mp hp).2]
+      refine ⟨hTL,?_,hupper⟩
+      intro x hx
+      simpa using hlf.tail x hx
+  have hAQ := anchorUB2_spec d.nLc d.Pc d.nLp d.nAp d.Pp fq e d.AQ ha
+  have hpoint : fieldTower fq (poleF fq.poles) 0 (e : ℝ)+lfieldTower ts 0 (e : ℝ) ≤ (d.G0 : ℝ) := by
+    have hG := (Rat.cast_le (K := ℝ)).mpr hG0
+    push_cast at hG
+    have hp := hLT.2.2
+    rw [Rat.cast_add] at hp
+    linarith
+  apply endLip lo hi e d.G0 d.Gamma TR
+    (fun x => fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x)
+    (fun x => fieldTower fq (poleF fq.poles) 1 x+lfieldTower ts 1 x) he
+  · have hq := hTq.cont 0 (by decide)
+    have hl := hLT.1.cont 0 (by decide)
+    have hsum := hq.add hl
+    rw [hlow,hhigh] at hsum
+    convert hsum using 1 <;> (funext x; simp only [Pi.add_apply])
+  · intro x hx
+    have hx' : x ∈ Ioo
+        ((((lo+hi)/2 : ℚ) : ℝ)-(((hi-lo)/2 : ℚ) : ℝ))
+        ((((lo+hi)/2 : ℚ) : ℝ)+(((hi-lo)/2 : ℚ) : ℝ)) := by
+      simpa only [hlow,hhigh] using hx
+    exact (hTq.der 0 (by decide) x hx').add (hLT.1.der 0 (by decide) x hx')
+  · intro x hx
+    have hq : |fieldTower fq (poleF fq.poles) 1 x| ≤ (d.BQ : ℝ) := by simpa using hbf.tail x hx
+    have hl := hLT.2.1 x hx
+    have hsum := (abs_add_le _ _).trans (add_le_add hq hl)
+    have hB' := (Rat.cast_le (K := ℝ)).mpr hB
+    rw [Rat.cast_add] at hB'
+    exact hsum.trans hB'
+  · exact hpoint
+  · exact hGamma
+  · exact hT
+
+theorem endULipChecked_sound (fq : FieldQ) (ts : List LTerm) (e lo hi : ℚ)
+    (k kR : ℕ) (U TR T : ℚ) (d : EndLipData)
+    (he : endUOK fq ts e lo hi k kR U TR T = true)
+    (hr : endLipCheck (regQ fq e) (regL ts e) e lo hi TR d = true) :
+    ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), x ≠ (e : ℝ) →
+      fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤ (T : ℝ) :=
+  endUOK_sound fq ts e lo hi k kR U TR T he
+    (endLipCheck_sound (regQ fq e) (regL ts e) e lo hi TR d hr)
+
+theorem endL0LipChecked_sound (fq : FieldQ) (ts : List LTerm) (hi : ℚ) (k n : ℕ) (U TR : ℚ)
+    (d : EndLipData) (he : endL0OK fq ts hi k n U = true)
+    (hr : endLipCheck (regQ fq 0) [] 0 0 hi TR d = true) :
+    ∀ x ∈ Ioc (0 : ℝ) (hi : ℝ), fieldTower fq (poleF fq.poles) 0 x+lfieldTower ts 0 x ≤
+      (TR : ℝ)+(U : ℝ)+(l0Const ts hi n : ℝ)+
+        ((endC fq [] 0+l0C ts : ℚ) : ℝ)*Real.log |x| := by
+  apply endL0_sound fq ts hi k n U TR he
+  have h := endLipCheck_sound (regQ fq 0) [] 0 0 hi TR d hr
+  simpa only [lfieldTower_nil_zero,add_zero] using h
+
+
 
 /-! Pole normalization: equal positions add residues without changing a log branch. -/
 
@@ -1490,63 +1617,29 @@ theorem fieldNFCheck_sound {a b : FieldQ} (h : fieldNFCheck a b = true) (x : ℝ
     fieldTower a (poleF a.poles) 0 x = fieldTower b (poleF b.poles) 0 x :=
   field_eq_of_nf a b (fieldNFCheck_eq h) x
 
-#print axioms poleJoin_term
-#print axioms poleInsert_sound
-#print axioms mergePoles_sound
-#print axioms poleClean_sound
-#print axioms poleNF_sound
-#print axioms fieldNF_sound
-#print axioms fieldNFCheck_eq
-#print axioms fieldNFCheck_sound
 
-#print axioms laurentM_bnd
-#print axioms mergeUBL_spec
-#print axioms chebMergePieceL_sound
-#print axioms mergeUBL_of_parts
 
-#print axioms laurentApx_spec
 
-#print axioms polyApprox_error
-#print axioms laurentCoeffErr_spec
 
-#print axioms laurentCoarseCoefSeries
-#print axioms laurentCoarseTail_eq
-#print axioms laurentMajorant_tail
 
-#print axioms geoMajAuxSeries
-#print axioms geoMajTail_eq
-#print axioms convQ_add_left
-#print axioms convQ_scale_left
-#print axioms invMajAux_conv
-#print axioms convQ_delta_right
 
-#print axioms invBinom_sum
-#print axioms logInvCoefSeries
-#print axioms logInvTailQ_eq
-#print axioms geoInvCoefSeries
-#print axioms geoInvTail_eq
-#print axioms convQ_fin
-#print axioms invGeo_conv
 
-#print axioms lf_scaled_eq
-#print axioms lfMaj_nonneg
-#print axioms lfMaj_le_coarse
-#print axioms lfMaj_bound
-#print axioms mulTower_scaled
-#print axioms mulTower_scaled_bound
 
-#print axioms monoInv_scaled_eq
-#print axioms monoInv_scaled_bound
-#print axioms invMajAux_bound
-#print axioms invMajAux_nonneg
-#print axioms invMajAuxSeries
-#print axioms invMajTail_eq
 
-#print axioms monoInvSeries
-#print axioms zTowAuxSeries
-#print axioms lfTowerSeries
-#print axioms laurentTaylor_ident
 
+
+
+/-! Exhaustive axiom audit of this module's exported theorems. -/
+#print axioms fieldTower_add
+#print axioms lfieldTower_add
+#print axioms invBinom_nonneg
+#print axioms invPowerSeries
+#print axioms invTailQ_spec
+#print axioms invTailQ_nonneg
+#print axioms endLip
+#print axioms endULip_sound
+#print axioms pieceCover_sound
+#print axioms invBinom_at_zero
 #print axioms invBinom_step
 #print axioms invBinom_asc
 #print axioms invPrefix_step
@@ -1555,14 +1648,68 @@ theorem fieldNFCheck_sound {a b : FieldQ} (h : fieldNFCheck a b = true) (x : ℝ
 #print axioms logInvTailQ_nonneg
 #print axioms series_tail_error
 #print axioms series_refined_tail_error
-
-#print axioms fieldTower_add
-#print axioms lfieldTower_add
-#print axioms invPowerSeries
-#print axioms invTailQ_spec
-#print axioms invTailQ_nonneg
-#print axioms endLip
-#print axioms endULip_sound
-#print axioms pieceCover_sound
+#print axioms monoInv_scaled_eq
+#print axioms monoInvSeries
+#print axioms zTowAuxSeries
+#print axioms lfTowerSeries
+#print axioms laurentTaylor_ident
+#print axioms monoInv_scaled_bound
+#print axioms invMajAux_bound
+#print axioms invMajAux_nonneg
+#print axioms invMajAuxSeries
+#print axioms invMajTail_eq
+#print axioms lf_scaled_eq
+#print axioms lfMaj_nonneg
+#print axioms lfMaj_le_coarse
+#print axioms lfMaj_bound
+#print axioms mulTower_scaled
+#print axioms mulTower_scaled_bound
+#print axioms invBinom_sum
+#print axioms logInvCoefSeries
+#print axioms logInvTailQ_eq
+#print axioms geoInvCoefSeries
+#print axioms geoInvTail_eq
+#print axioms convQ_fin
+#print axioms invGeo_conv
+#print axioms geoMajAuxSeries
+#print axioms geoMajTail_eq
+#print axioms convQ_add_left
+#print axioms convQ_scale_left
+#print axioms invMajAux_conv
+#print axioms convQ_delta_right
+#print axioms laurentCoarseCoefSeries
+#print axioms laurentCoarseTail_eq
+#print axioms laurentMajorant_tail
+#print axioms polyApprox_error
+#print axioms laurentCoeffErr_spec
+#print axioms laurentApx_spec
+#print axioms laurentM_bnd
+#print axioms mergeUBL_spec
+#print axioms chebMergePieceL_sound
+#print axioms mergeUBL_of_parts
+#print axioms trimPoly_sound
+#print axioms map_sum_mergeSort
+#print axioms siteClean_sound
+#print axioms siteNF_sound
+#print axioms lfClean_sound
+#print axioms laurentNF_sound
+#print axioms laurent_eq_of_nf
+#print axioms endLipCheck_sound
+#print axioms endULipChecked_sound
+#print axioms endL0LipChecked_sound
+#print axioms poleJoin_term
+#print axioms poleF_cons
+#print axioms poleInsert_sound
+#print axioms mergePoles_fold
+#print axioms mergePoles_sound
+#print axioms poleClean_sound
+#print axioms poleNF_sound
+#print axioms fieldNF_sound
+#print axioms field_eq_of_nf
+#print axioms poleCode_inj
+#print axioms poleListCode_inj
+#print axioms fieldQ_eq_of_parts
+#print axioms fieldNFCheck_eq
+#print axioms fieldNFCheck_sound
 
 end CatalanMeasure.GenD.Signed.Data.Cells
