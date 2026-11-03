@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Signed.DesignConst
 public import CatalanMeasure.GenD.Analytic.GapWeights
+public import CatalanMeasure.GenD.Signed.MarkedCap
 
 @[expose] public section
 namespace CatalanMeasure.GenD.Signed.Data.Assembly
@@ -57,6 +58,35 @@ theorem cast_nodes (N : ℕ) : ((dc.d0 * N : ℕ) : ℝ) = (dc.d0 : ℝ) * N := 
   simp only [Nat.cast_mul]
 
 
+/-- Actual node geometry, independent of the fitted trial-density break.
+The cap is eventual: the Davis certificate starts at N>=10. -/
+structure NodeGeometryData (dc : CatalanMeasure.GenD.Signed.DesignConst) where
+  tau : (N : ℕ) → Fin (dc.d0 * N) → ℝ
+  gsN : ℝ
+  gsP : ℝ
+  xc : ℝ
+  C1 : ℝ
+  umin : ℕ → ℝ
+  gsN_pos : 0 < gsN
+  gsP_pos : 0 < gsP
+  umin_pos : ∀ N, 0 < umin N
+  umin_le_one : ∀ N, umin N ≤ 1
+  hlogu : Tendsto (fun N : ℕ => -Real.log (umin N) / ((dc.n0 * N : ℕ) : ℝ)) atTop (nhds 0)
+  cap : ∀ᶠ N : ℕ in atTop,
+    CatalanMeasure.Signed.NodeCapAsym gsN gsP xc C1 ((dc.n0 * N : ℕ) : ℝ) (umin N)
+      (fun a => realCoordinate (tau N a))
+
+def NodeGeometryData.support {dc : CatalanMeasure.GenD.Signed.DesignConst}
+    (H : NodeGeometryData dc) : ℝ → Prop := fun x => x ≤ -H.gsN ∨ H.gsP ≤ x
+
+theorem NodeGeometryData.marked_cap {dc : CatalanMeasure.GenD.Signed.DesignConst}
+    (H : NodeGeometryData dc) : ∀ᶠ N : ℕ in atTop, ∀ m (y : Fin m → ℝ),
+      (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → CatalanMeasure.Signed.NodeSub H.tau N m y →
+      CatalanMeasure.Signed.MarkedCapAsym H.gsN H.gsP H.xc H.C1
+        ((dc.n0 * N : ℕ) : ℝ) (H.umin N) y := by
+  filter_upwards [H.cap] with N hN m y hy hsub
+  exact CatalanMeasure.Signed.markedCapAsym_of_nodeSub hN hy hsub
+
 end Generic
 end
 end CatalanMeasure.GenD.Signed.Data.Assembly
@@ -67,3 +97,5 @@ end CatalanMeasure.GenD.Signed.Data.Assembly
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.umin_pos
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.umin_le_one
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.cast_nodes
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.NodeGeometryData.marked_cap
