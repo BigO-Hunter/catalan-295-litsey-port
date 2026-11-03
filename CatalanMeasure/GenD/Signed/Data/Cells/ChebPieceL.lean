@@ -171,6 +171,133 @@ theorem pieceCover_sound (hi : ℚ) : ∀ (lo : ℚ) (ps : List (ℚ × ℚ)),
         · exact Or.inl hxhi
         · exact Or.inr ⟨p, List.mem_cons_of_mem _ hp, hxp⟩
 
+/-! ## Finite R/J evaluation and the generic analytic remainder bridge -/
+
+@[simp] theorem invBinom_at_zero (s : ℕ) : invBinom s 0 = 1 := by
+  cases s <;> simp [invBinom]
+
+theorem invBinom_step (s k : ℕ) :
+    invBinom (s+1) (k+1) = invBinom (s+1) k + invBinom s (k+1) := by
+  cases s with
+  | zero => simp [invBinom]
+  | succ s =>
+      simpa [invBinom, Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using
+        (Nat.choose_succ_succ (k+s+1) s)
+
+theorem invBinom_asc (s k : ℕ) :
+    (invBinom s k : ℚ) = (s.ascFactorial k : ℚ) / (k.factorial : ℚ) := by
+  cases s with
+  | zero => cases k <;> simp [invBinom, Nat.zero_ascFactorial]
+  | succ s =>
+      rw [Nat.ascFactorial_eq_factorial_mul_choose]
+      have hf : (k.factorial : ℚ) ≠ 0 := by exact_mod_cast Nat.factorial_ne_zero k
+      simp only [invBinom, Nat.cast_mul]
+      rw [mul_div_cancel_left₀ _ hf]
+      congr 1
+      simpa [Nat.add_comm] using (Nat.choose_symm_add (a := s) (b := k))
+
+/-- Exact finite-prefix telescoping, used to prove the positive recurrence. -/
+theorem invPrefix_step (s K : ℕ) (q : ℚ) :
+    (1-q) * (∑ k ∈ Finset.range (K+1), (invBinom (s+1) k : ℚ)*q^k) =
+      (∑ k ∈ Finset.range (K+1), (invBinom s k : ℚ)*q^k) -
+        (invBinom (s+1) K : ℚ)*q^(K+1) := by
+  induction K with
+  | zero => simp
+  | succ K ih =>
+      rw [Finset.sum_range_succ (fun k => (invBinom (s+1) k : ℚ)*q^k) (K+1),
+        Finset.sum_range_succ (fun k => (invBinom s k : ℚ)*q^k) (K+1)]
+      have he : (invBinom (s+1) (K+1) : ℚ) =
+          (invBinom (s+1) K : ℚ) + (invBinom s (K+1) : ℚ) := by
+        exact_mod_cast invBinom_step s K
+      rw [he, pow_succ q (K+1)]
+      linear_combination ih
+
+theorem invTailQ_step (s K : ℕ) (q : ℚ) (hq : q ≠ 1) :
+    (1-q) * invTailQ (s+1) K q =
+      invTailQ s K q + (invBinom (s+1) K : ℚ)*q^(K+1) := by
+  have hq' : 1-q ≠ 0 := sub_ne_zero.mpr (Ne.symm hq)
+  have hp := invPrefix_step s K q
+  have hi : (1-q) * (1 / (1-q)^(s+1)) = 1 / (1-q)^s := by
+    rw [pow_succ]
+    field_simp
+  unfold invTailQ
+  rw [mul_sub, hi]
+  linarith [hp]
+
+/-- Positive evaluator for R_s(K,q), structurally recursive in s. -/
+def invTailPosQ (K : ℕ) (q : ℚ) : ℕ → ℚ
+  | 0 => 0
+  | s+1 => (invTailPosQ K q s + (invBinom (s+1) K : ℚ)*q^(K+1))/(1-q)
+
+theorem invTailPosQ_eq (K : ℕ) (q : ℚ) (hq : q ≠ 1) :
+    ∀ s : ℕ, invTailPosQ K q s = invTailQ s K q := by
+  intro s
+  induction s with
+  | zero =>
+      simp [invTailPosQ, invTailQ, invBinom, Finset.sum_ite_eq', Finset.mem_range]
+  | succ s ih =>
+      rw [invTailPosQ, ih]
+      symm
+      apply (eq_div_iff (sub_ne_zero.mpr (Ne.symm hq))).mpr
+      have h := invTailQ_step s K q hq
+      linarith
+
+/-- J_s(K,q): the tail of q*z*(1-q*z)^(-(s+1)) at z=1. -/
+def logInvTailQ (s K : ℕ) (q : ℚ) : ℚ :=
+  q * (invTailPosQ K q (s+1) + (invBinom (s+1) K : ℚ)*q^K)
+
+theorem logInvTailQ_nonneg (s K : ℕ) (q : ℚ) (hq0 : 0 ≤ q) (hq1 : q < 1) :
+    0 ≤ logInvTailQ s K q := by
+  unfold logInvTailQ
+  rw [invTailPosQ_eq K q (ne_of_lt hq1)]
+  exact mul_nonneg hq0 (add_nonneg (invTailQ_nonneg (s+1) K q hq0 hq1)
+    (mul_nonneg (Nat.cast_nonneg _) (pow_nonneg hq0 _)))
+
+/-- A known convergent majorant controls every term past a finite prefix.
+This is the generic bridge used for the Laurent R/J tails. -/
+theorem series_tail_error (f d : ℕ → ℝ) (F D : ℝ) (N : ℕ)
+    (hf : HasSum f F) (hd : HasSum d D) (hb : ∀ k, |f k| ≤ d k) :
+    |F - ∑ k ∈ Finset.range N, f k| ≤ D - ∑ k ∈ Finset.range N, d k := by
+  have hf' := hf.summable.sum_add_tsum_nat_add N
+  have hd' := hd.summable.sum_add_tsum_nat_add N
+  rw [hf.tsum_eq] at hf'
+  rw [hd.tsum_eq] at hd'
+  have hdt : HasSum (fun k => d (k+N)) (D - ∑ k ∈ Finset.range N, d k) := by
+    convert ((summable_nat_add_iff N).2 hd.summable).hasSum using 1
+    linarith
+  have hbound := tsum_of_norm_bounded hdt (f := fun k => f (k+N))
+    (fun k => by simpa only [Real.norm_eq_abs] using hb (k+N))
+  have he : F - ∑ k ∈ Finset.range N, f k = ∑' k, f (k+N) := by linarith
+  rw [he]
+  simpa only [Real.norm_eq_abs] using hbound
+
+/-- Precise coefficients through K, a closed majorant only beyond K. -/
+theorem series_refined_tail_error (f c d : ℕ → ℝ) (F D : ℝ) (M K : ℕ)
+    (hMK : M ≤ K) (hf : HasSum f F) (hd : HasSum d D)
+    (hc : ∀ k, |f k| ≤ c k) (hb : ∀ k, |f k| ≤ d k) :
+    |F - ∑ k ∈ Finset.range (M+1), f k| ≤
+      (∑ k ∈ Finset.Ico (M+1) (K+1), c k) +
+        (D - ∑ k ∈ Finset.range (K+1), d k) := by
+  have ht := series_tail_error f d F D (K+1) hf hd hb
+  have hp := Finset.sum_range_add_sum_Ico f (Nat.add_le_add_right hMK 1)
+  have hbfin : |∑ k ∈ Finset.Ico (M+1) (K+1), f k| ≤
+      ∑ k ∈ Finset.Ico (M+1) (K+1), c k := by
+    exact (Finset.abs_sum_le_sum_abs _ _).trans (Finset.sum_le_sum (fun k _ => hc k))
+  have he : F - ∑ k ∈ Finset.range (M+1), f k =
+      (∑ k ∈ Finset.Ico (M+1) (K+1), f k) + (F - ∑ k ∈ Finset.range (K+1), f k) := by
+    linarith
+  rw [he]
+  exact (abs_add_le _ _).trans (add_le_add hbfin ht)
+
+#print axioms invBinom_step
+#print axioms invBinom_asc
+#print axioms invPrefix_step
+#print axioms invTailQ_step
+#print axioms invTailPosQ_eq
+#print axioms logInvTailQ_nonneg
+#print axioms series_tail_error
+#print axioms series_refined_tail_error
+
 #print axioms fieldTower_add
 #print axioms lfieldTower_add
 #print axioms invPowerSeries
