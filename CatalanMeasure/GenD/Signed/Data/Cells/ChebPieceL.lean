@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPiece
 public import CatalanMeasure.GenD.Signed.FieldForm
 public import Mathlib.Analysis.SpecificLimits.Normed
 public import Mathlib.Analysis.Calculus.Deriv.MeanValue
+public import Mathlib.Data.List.Sort
 
 @[expose] public section
 
@@ -1264,6 +1265,239 @@ theorem mergeUBL_of_parts (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P : �
     mergeUBL fq ts nL nA Mp Ml ML P lo hi pd qd ld γ =
       some (chebPolyUB (sclPow ((hi-lo)/2) 0 (vecAdd S (vecAdd Ap (vecAdd Aq Al)))) γ+Ep+Eq+El) := by
   simp only [mergeUBL, if_pos hlo, hp, hq, hl, hs]
+
+/-! ## Exact normal forms for checked trial differences -/
+
+def trimPoly : List ℚ → List ℚ
+  | [] => []
+  | a :: as => let t := trimPoly as; if t = [] ∧ a = 0 then [] else a :: t
+
+theorem trimPoly_sound (a : List ℚ) (x : ℝ) : polyTow (trimPoly a) 0 x = polyTow a 0 x := by
+  induction a with
+  | nil => rfl
+  | cons a as ih =>
+      simp only [trimPoly]
+      split_ifs with h
+      · have hz : polyTow as 0 x = 0 := by rw [← ih, h.1]; rfl
+        simp [polyTow, h.2, hz]
+      · simp only [polyTow, ih]
+
+theorem map_sum_mergeSort {α : Type} (l : List α) (r : α → α → Bool) (f : α → ℝ) :
+    ((l.mergeSort r).map f).sum = (l.map f).sum :=
+  ((List.mergeSort_perm l r).map f).sum_eq
+
+def siteClean : List (List ℚ × ℚ) → List (List ℚ × ℚ)
+  | [] => []
+  | t :: ts => if trimPoly t.1 = [] then siteClean ts else (trimPoly t.1,t.2) :: siteClean ts
+
+theorem siteClean_sound (ts : List (List ℚ × ℚ)) (x : ℝ) :
+    ((siteClean ts).map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum =
+      (ts.map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum := by
+  induction ts with
+  | nil => rfl
+  | cons t ts ih =>
+      rcases t with ⟨P,e⟩
+      simp only [siteClean]
+      split_ifs with h
+      · have hz : polyTow P 0 x = 0 := by rw [← trimPoly_sound P x, h]; rfl
+        simp only [List.map_cons, List.sum_cons, ih, hz, zero_mul, zero_add]
+      · simp only [List.map_cons, List.sum_cons, trimPoly_sound, ih]
+
+def siteNF (ts : List (List ℚ × ℚ)) : List (List ℚ × ℚ) :=
+  (siteClean (mergeSites ts)).mergeSort (fun a b => decide (a.2 ≤ b.2))
+
+theorem siteNF_sound (ts : List (List ℚ × ℚ)) (x : ℝ) :
+    ((siteNF ts).map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum =
+      (ts.map (fun t => polyTow t.1 0 x*Real.log |x-(t.2 : ℝ)|)).sum := by
+  unfold siteNF
+  rw [map_sum_mergeSort, siteClean_sound, mergeSites_eq]
+
+def ratPairLE (a b : ℚ × ℚ) : Bool := decide (a.1 < b.1 ∨ a.1 = b.1 ∧ a.2 ≤ b.2)
+
+def lFactorLE : Option (ℚ × ℚ) → Option (ℚ × ℚ) → Bool
+  | none, _ => true
+  | some _, none => false
+  | some a, some b => ratPairLE a b
+
+def lfClean : List LTerm → List LTerm
+  | [] => []
+  | t :: ts => if trimPoly t.1 = [] then lfClean ts else (trimPoly t.1,t.2) :: lfClean ts
+
+theorem lfClean_sound (ts : List LTerm) (x : ℝ) :
+    lfieldTower (lfClean ts) 0 x = lfieldTower ts 0 x := by
+  induction ts with
+  | nil => rfl
+  | cons t ts ih =>
+      rcases t with ⟨P,o⟩
+      simp only [lfClean]
+      split_ifs with h
+      · have hz : polyTow P 0 x⁻¹ = 0 := by rw [← trimPoly_sound P x⁻¹, h]; rfl
+        rw [lf_cons, ih, hz]
+        ring
+      · simp only [lf_cons, trimPoly_sound, ih]
+
+def laurentNF (ts : List LTerm) : List LTerm :=
+  (lfClean (mergeL ts)).mergeSort (fun a b => lFactorLE a.2 b.2)
+
+theorem laurentNF_sound (ts : List LTerm) (x : ℝ) :
+    lfieldTower (laurentNF ts) 0 x = lfieldTower ts 0 x := by
+  unfold laurentNF lfieldTower
+  rw [map_sum_mergeSort]
+  change lfieldTower (lfClean (mergeL ts)) 0 x = lfieldTower ts 0 x
+  rw [lfClean_sound, lfieldTower_mergeL]
+
+theorem laurent_eq_of_nf (a b : List LTerm) (h : laurentNF a = laurentNF b) (x : ℝ) :
+    lfieldTower a 0 x = lfieldTower b 0 x := by
+  rw [← laurentNF_sound a x, h, laurentNF_sound b x]
+
+#print axioms trimPoly_sound
+#print axioms map_sum_mergeSort
+#print axioms siteClean_sound
+#print axioms siteNF_sound
+#print axioms lfClean_sound
+#print axioms laurentNF_sound
+#print axioms laurent_eq_of_nf
+
+/-! Pole normalization: equal positions add residues without changing a log branch. -/
+
+def poleJoin (s q : PoleR) : PoleR := ⟨s.rr+q.rr,s.ri+q.ri,s.pr,s.pi⟩
+
+theorem poleJoin_term (s q : PoleR) (hpr : s.pr = q.pr) (hpi : s.pi = q.pi) (x : ℝ) :
+    ((poleJoin s q).rho*Complex.log ((x : ℂ)-(poleJoin s q).pc)).re =
+      (s.rho*Complex.log ((x : ℂ)-s.pc)).re + (q.rho*Complex.log ((x : ℂ)-q.pc)).re := by
+  have hp : q.pc = s.pc := by apply Complex.ext <;> simp [PoleR.pc, hpr, hpi]
+  have hr : (poleJoin s q).rho = s.rho+q.rho := by
+    apply Complex.ext <;> simp [poleJoin, PoleR.rho]
+  have hs : (poleJoin s q).pc = s.pc := rfl
+  rw [hs, hr, hp, add_mul, Complex.add_re]
+
+def poleInsert (q : PoleR) : List PoleR → List PoleR
+  | [] => [q]
+  | s :: ss => if s.pr = q.pr ∧ s.pi = q.pi then poleJoin s q :: ss else s :: poleInsert q ss
+
+theorem poleF_cons (q : PoleR) (qs : List PoleR) (x : ℝ) :
+    poleF (q :: qs) x = (q.rho*Complex.log ((x : ℂ)-q.pc)).re+poleF qs x := by simp [poleF]
+
+theorem poleInsert_sound (q : PoleR) (x : ℝ) : ∀ qs : List PoleR,
+    poleF (poleInsert q qs) x = poleF qs x+(q.rho*Complex.log ((x : ℂ)-q.pc)).re := by
+  intro qs
+  induction qs with
+  | nil => simp [poleInsert, poleF]
+  | cons s ss ih =>
+      simp only [poleInsert]
+      split_ifs with h
+      · rw [poleF_cons, poleF_cons, poleJoin_term s q h.1 h.2 x]
+        ring
+      · rw [poleF_cons, poleF_cons, ih]
+        ring
+
+def mergePoles (qs : List PoleR) : List PoleR := qs.foldl (fun acc q => poleInsert q acc) []
+
+theorem mergePoles_fold (x : ℝ) : ∀ (qs acc : List PoleR),
+    poleF (qs.foldl (fun a q => poleInsert q a) acc) x = poleF qs x+poleF acc x := by
+  intro qs
+  induction qs with
+  | nil => intro acc; simp [poleF]
+  | cons q qs ih =>
+      intro acc
+      rw [List.foldl_cons, ih, poleInsert_sound, poleF_cons]
+      ring
+
+theorem mergePoles_sound (qs : List PoleR) (x : ℝ) : poleF (mergePoles qs) x = poleF qs x := by
+  unfold mergePoles
+  rw [mergePoles_fold]
+  simp [poleF]
+
+def poleClean : List PoleR → List PoleR
+  | [] => []
+  | q :: qs => if q.rr = 0 ∧ q.ri = 0 then poleClean qs else q :: poleClean qs
+
+theorem poleClean_sound (qs : List PoleR) (x : ℝ) : poleF (poleClean qs) x = poleF qs x := by
+  induction qs with
+  | nil => rfl
+  | cons q qs ih =>
+      simp only [poleClean]
+      split_ifs with h
+      · have hz : q.rho = 0 := by apply Complex.ext <;> simp [PoleR.rho, h.1, h.2]
+        rw [ih, poleF_cons, hz, zero_mul, Complex.zero_re, zero_add]
+      · simp only [poleF_cons, ih]
+
+def poleNF (qs : List PoleR) : List PoleR :=
+  (poleClean (mergePoles qs)).mergeSort (fun a b => ratPairLE (a.pr,a.pi) (b.pr,b.pi))
+
+theorem poleNF_sound (qs : List PoleR) (x : ℝ) : poleF (poleNF qs) x = poleF qs x := by
+  unfold poleNF poleF
+  rw [map_sum_mergeSort]
+  change poleF (poleClean (mergePoles qs)) x = poleF qs x
+  rw [poleClean_sound, mergePoles_sound]
+
+def fieldNF (fq : FieldQ) : FieldQ := ⟨trimPoly fq.poly,siteNF fq.plogs,poleNF fq.poles⟩
+
+theorem fieldNF_sound (fq : FieldQ) (x : ℝ) :
+    fieldTower (fieldNF fq) (poleF (fieldNF fq).poles) 0 x = fieldTower fq (poleF fq.poles) 0 x := by
+  simp only [fieldNF, fieldTower_zero, poleF]
+  rw [trimPoly_sound, siteNF_sound]
+  have hp := poleNF_sound fq.poles x
+  simp only [poleF] at hp
+  rw [hp]
+
+theorem field_eq_of_nf (a b : FieldQ) (h : fieldNF a = fieldNF b) (x : ℝ) :
+    fieldTower a (poleF a.poles) 0 x = fieldTower b (poleF b.poles) 0 x := by
+  rw [← fieldNF_sound a x, h, fieldNF_sound b x]
+
+/-- A rational code avoids importing trial-specific DecidableEq instances. -/
+def poleCode (q : PoleR) : ℚ × ℚ × ℚ × ℚ := (q.rr,q.ri,q.pr,q.pi)
+
+theorem poleCode_inj {a b : PoleR} (h : poleCode a = poleCode b) : a = b := by
+  cases a
+  cases b
+  simp only [poleCode, Prod.mk.injEq] at h
+  obtain ⟨h1,h2,h3,h4⟩ := h
+  subst_vars
+  rfl
+
+theorem poleListCode_inj : ∀ (a b : List PoleR), a.map poleCode = b.map poleCode → a = b := by
+  intro a
+  induction a with
+  | nil => intro b h; cases b <;> simp_all
+  | cons q qs ih =>
+      intro b h
+      cases b with
+      | nil => simp at h
+      | cons r rs =>
+          simp only [List.map_cons, List.cons.injEq] at h
+          rw [poleCode_inj h.1, ih rs h.2]
+
+def fieldNFCode (fq : FieldQ) : List ℚ × List (List ℚ × ℚ) × List (ℚ × ℚ × ℚ × ℚ) :=
+  ((fieldNF fq).poly,(fieldNF fq).plogs,(fieldNF fq).poles.map poleCode)
+
+def fieldNFCheck (a b : FieldQ) : Bool := decide (fieldNFCode a = fieldNFCode b)
+
+theorem fieldQ_eq_of_parts (a b : FieldQ) (hp : a.poly = b.poly) (hl : a.plogs = b.plogs)
+    (hq : a.poles = b.poles) : a = b := by
+  cases a
+  cases b
+  cases hp
+  cases hl
+  cases hq
+  rfl
+
+theorem fieldNFCheck_eq {a b : FieldQ} (h : fieldNFCheck a b = true) : fieldNF a = fieldNF b := by
+  simp only [fieldNFCheck, decide_eq_true_eq, fieldNFCode, Prod.mk.injEq] at h
+  exact fieldQ_eq_of_parts _ _ h.1 h.2.1 (poleListCode_inj _ _ h.2.2)
+
+theorem fieldNFCheck_sound {a b : FieldQ} (h : fieldNFCheck a b = true) (x : ℝ) :
+    fieldTower a (poleF a.poles) 0 x = fieldTower b (poleF b.poles) 0 x :=
+  field_eq_of_nf a b (fieldNFCheck_eq h) x
+
+#print axioms poleJoin_term
+#print axioms poleInsert_sound
+#print axioms mergePoles_sound
+#print axioms poleClean_sound
+#print axioms poleNF_sound
+#print axioms fieldNF_sound
+#print axioms fieldNFCheck_eq
+#print axioms fieldNFCheck_sound
 
 #print axioms laurentM_bnd
 #print axioms mergeUBL_spec
