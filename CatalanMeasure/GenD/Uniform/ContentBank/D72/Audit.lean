@@ -23,3 +23,7 @@ as their generic and data proofs are completed. -/
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.scaledResidues_at
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_ms_sound
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.intScalarCheck_sound
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_bm_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_inverse_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_bp_sound
