@@ -537,6 +537,23 @@ theorem refEnergy_enc_merged (μ : SRef) (R Rm : RefQ) {cT cF : List ℚ}
   rw [refEnergy_eq_refBil]
   exact refBil_enc_merged μ μ R R Rm Rm hμ hμ hR hR hm hm hl n h
 
+/-- Apply an exact normalized cache on merged pieces to the original signed reference. -/
+theorem refBil_cached_enc_merged (μ ν : SRef) (R S Rm Sm : RefQ) {cT cF cT' cF' : List ℚ}
+    (hμ : IsRefQ μ R) (hν : IsRefQ ν S) (hR : R.OK) (hS : S.OK)
+    (hm : MergeOK cT cF R Rm) (hn : MergeOK cT' cF' S Sm)
+    {lits : List LF} (hl : List.Forall₂ (fun (j : Job) (l : LF) => j.lf.normalize = l) (refPlan Rm Sm) lits)
+    (n : ℕ) {p : ℚ × ℚ} (h : (LF.sumL lits).enc n = some p) : Enc (refBil μ ν) p := by
+  have hv := LF.enc_spec n _ p h
+  rw [eval_cached_sum hl, eval_refPlan, ← refBilLF_merge R S Rm Sm hm hn] at hv
+  rwa [refBil_eval μ ν R S hμ hν hR hS]
+
+theorem refEnergy_cached_enc_merged (μ : SRef) (R Rm : RefQ) {cT cF : List ℚ}
+    (hμ : IsRefQ μ R) (hR : R.OK) (hm : MergeOK cT cF R Rm)
+    {lits : List LF} (hl : List.Forall₂ (fun (j : Job) (l : LF) => j.lf.normalize = l) (refPlan Rm Rm) lits)
+    (n : ℕ) {p : ℚ × ℚ} (h : (LF.sumL lits).enc n = some p) : Enc (refEnergy μ) p := by
+  rw [refEnergy_eq_refBil]
+  exact refBil_cached_enc_merged μ μ R R Rm Rm hμ hμ hR hR hm hm hl n h
+
 /-! ### 9. The plan of a merged reference (empty negative parts) -/
 
 theorem jobsEnt_nil_inner (sg : ℚ) (r : Bool) : ∀ A : List PieceQ, jobsEnt sg r [] A = []
@@ -565,3 +582,6 @@ end CatalanMeasure.GenD.Signed.Data.Consts.EvalRef
 #print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refBil_enc_merged
 #print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refEnergy_enc_merged
 #print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.sameDens_of_refines
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refBil_cached_enc_merged
+#print axioms CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.refEnergy_cached_enc_merged
