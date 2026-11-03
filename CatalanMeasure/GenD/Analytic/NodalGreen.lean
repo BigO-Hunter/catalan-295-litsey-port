@@ -177,6 +177,43 @@ theorem chebyshev_comp_norm_le_green (p : ℝ[X]) {m : ℕ} (hm : 0 < m) (K : �
   rw [he, Polynomial.map_comp, Chebyshev.map_T, Polynomial.eval_comp]
   exact norm_T_eval_le_exp_ellipseLog K _
 
+theorem continuous_ellipseLog : Continuous ellipseLog := by
+  apply Real.continuousOn_arcosh.comp_continuous
+  · unfold ellipseH
+    fun_prop
+  · intro v
+    exact ellipseH_ge_one v
+
+theorem continuous_nodalGreen (p : ℝ[X]) (m : ℕ) : Continuous (nodalGreen p m) := by
+  unfold nodalGreen
+  exact (continuous_ellipseLog.comp (p.map (algebraMap ℝ ℂ)).continuous).div_const _
+
+theorem nodalGreen_compact_upper (p : ℝ[X]) (m : ℕ) {s : Set ℂ} (hs : IsCompact s) :
+    ∃ B : ℝ, 0 ≤ B ∧ ∀ z ∈ s, nodalGreen p m z ≤ B := by
+  obtain ⟨B, hB⟩ := hs.bddAbove_image (continuous_nodalGreen p m).continuousOn
+  refine ⟨max 0 B, le_max_left _ _, fun z hz => ?_⟩
+  exact (hB (Set.mem_image_of_mem _ hz)).trans (le_max_right _ _)
+
+/-- Padding a multiple of the degree by a bounded amount costs one fixed factor. -/
+theorem chebyshev_comp_norm_le_green_padded (p : ℝ[X]) {m : ℕ} (hm : 0 < m)
+    {s : Set ℂ} (hs : IsCompact s) (padding : ℕ) :
+    ∃ A : ℝ, 0 < A ∧ ∀ (J K : ℕ), m * K ≤ J + padding → ∀ z ∈ s,
+      ‖(((Chebyshev.T ℝ (K : ℤ)).comp p).map (algebraMap ℝ ℂ)).eval z‖ ≤
+        A * Real.exp ((J : ℝ) * nodalGreen p m z) := by
+  obtain ⟨B, hB0, hB⟩ := nodalGreen_compact_upper p m hs
+  refine ⟨Real.exp ((padding : ℝ) * B), Real.exp_pos _, fun J K hJK z hz => ?_⟩
+  have hJKR : ((m * K : ℕ) : ℝ) ≤ (J : ℝ) + (padding : ℝ) := by exact_mod_cast hJK
+  have hnonneg := nodalGreen_nonneg p m z
+  have he : ((m * K : ℕ) : ℝ) * nodalGreen p m z ≤
+      (J : ℝ) * nodalGreen p m z + (padding : ℝ) * B := by
+    have h1 := mul_le_mul_of_nonneg_right hJKR hnonneg
+    have h2 := mul_le_mul_of_nonneg_left (hB z hz) (Nat.cast_nonneg padding)
+    nlinarith
+  calc
+    _ ≤ Real.exp (((m * K : ℕ) : ℝ) * nodalGreen p m z) := chebyshev_comp_norm_le_green p hm K z
+    _ ≤ Real.exp ((J : ℝ) * nodalGreen p m z + (padding : ℝ) * B) := Real.exp_le_exp.mpr he
+    _ = _ := by rw [Real.exp_add]; ring
+
 end
 end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.one_add_half_sq_le_cosh
@@ -199,3 +236,11 @@ end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.nodalGreen_scaled_perturbation
 
 #print axioms CatalanMeasure.GenD.Analytic.chebyshev_comp_norm_le_green
+
+#print axioms CatalanMeasure.GenD.Analytic.continuous_ellipseLog
+
+#print axioms CatalanMeasure.GenD.Analytic.continuous_nodalGreen
+
+#print axioms CatalanMeasure.GenD.Analytic.nodalGreen_compact_upper
+
+#print axioms CatalanMeasure.GenD.Analytic.chebyshev_comp_norm_le_green_padded
