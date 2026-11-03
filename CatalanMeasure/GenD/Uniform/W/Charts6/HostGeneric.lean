@@ -371,5 +371,53 @@ theorem source_phi_mul_X (G T : Polynomial Int) (J : Nat) (S : Int) :
   have ht : S - (u : Int) - 1 = (S - 1) - (u : Int) := by ring
   rw [hg, ht]
 
+
+theorem source_phi_add (a b c d : Nat → Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => a i + c i) (fun i => b i + d i) J S =
+      Charts.phiQ a b J S + Charts.phiQ c d J S := by
+  unfold Charts.phiQ
+  rw [← Finset.sum_add_distrib]
+  apply Finset.sum_congr rfl
+  intro u hu
+  rw [source_cf_add, source_cf_add]
+  push_cast
+  ring
+
+theorem source_phi_sub (a b c d : Nat → Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => a i - c i) (fun i => b i - d i) J S =
+      Charts.phiQ a b J S - Charts.phiQ c d J S := by
+  unfold Charts.phiQ
+  rw [← Finset.sum_sub_distrib]
+  apply Finset.sum_congr rfl
+  intro u hu
+  rw [source_cf_sub, source_cf_sub]
+  push_cast
+  ring
+
+theorem source_phi_mul (c : Int) (a b : Nat → Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => c * a i) (fun i => c * b i) J S =
+      (c : Rat) * Charts.phiQ a b J S := by
+  unfold Charts.phiQ
+  rw [Finset.mul_sum]
+  apply Finset.sum_congr rfl
+  intro u hu
+  rw [source_cf_mul, source_cf_mul]
+  push_cast
+  ring
+
+theorem source_phi_zero (J : Nat) (S : Int) :
+    Charts.phiQ (fun _ => 0) (fun _ => 0) J S = 0 := by
+  simp [Charts.phiQ, ZoneZ.Q.cf]
+
+/-- Arbitrary source polynomials vanish below the signed lower cutoff. -/
+theorem source_phi_zero_below (a b : Nat → Int) (J : Nat) (S : Int) (hS : S < -1) :
+    Charts.phiQ a b J S = 0 := by
+  unfold Charts.phiQ
+  apply Finset.sum_eq_zero
+  intro u hu
+  have ha : ¬ 0 ≤ S + 1 - (u : Int) := by omega
+  have hb : ¬ 0 ≤ S - (u : Int) := by omega
+  simp only [ZoneZ.Q.cf, if_neg ha, if_neg hb, Int.cast_zero, mul_zero, zero_add]
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
