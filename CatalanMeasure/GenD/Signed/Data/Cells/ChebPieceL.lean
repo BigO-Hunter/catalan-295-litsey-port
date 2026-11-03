@@ -289,6 +289,143 @@ theorem series_refined_tail_error (f c d : ℕ → ℝ) (F D : ℝ) (M K : ℕ)
   rw [he]
   exact (abs_add_le _ _).trans (add_le_add hbfin ht)
 
+/-! ## Laurent analytic identity at a nonzero centre -/
+
+theorem monoInvSeries (s : ℕ) (c : ℚ) (hc : c ≠ 0) (y : ℝ)
+    (hy : |y| < |(c : ℝ)|) :
+    HasSum (fun k : ℕ => monoInv s k (c : ℝ) / (k.factorial : ℝ) * y^k)
+      (monoInv s 0 ((c : ℝ)+y)) := by
+  have hc' : (c : ℝ) ≠ 0 := by exact_mod_cast hc
+  have hcy : (c : ℝ)+y ≠ 0 := by
+    intro h
+    have he : y = -(c : ℝ) := by linarith
+    rw [he, abs_neg] at hy
+    exact (lt_irrefl _) hy
+  have hu : |-y/(c : ℝ)| < 1 := by
+    rw [abs_div, abs_neg]
+    exact (div_lt_one (abs_pos.mpr hc')).mpr hy
+  have hs := (invPowerSeries s (-y/(c : ℝ)) hu).mul_left (1/(c : ℝ)^s)
+  convert hs using 1
+  · funext k
+    have hb : (invBinom s k : ℝ) = (s.ascFactorial k : ℝ) / (k.factorial : ℝ) := by
+      have h := congrArg (fun v : ℚ => (v : ℝ)) (invBinom_asc s k)
+      push_cast at h
+      exact h
+    have hpow : (-y/(c : ℝ))^k = (-1 : ℝ)^k*y^k/(c : ℝ)^k := by
+      rw [div_pow, neg_pow]
+    rw [hb, hpow]
+    simp only [monoInv, pow_add]
+    field_simp [hc']
+    <;> ring
+  · have he : 1-(-y/(c : ℝ)) = ((c : ℝ)+y)/(c : ℝ) := by
+      field_simp
+      <;> ring
+    simp only [monoInv, pow_zero, Nat.ascFactorial_zero, Nat.cast_one, one_mul, Nat.add_zero]
+    rw [he, div_pow]
+    field_simp
+    <;> ring
+
+theorem zTowAuxSeries (c : ℚ) (hc : c ≠ 0) (y : ℝ) (hy : |y| < |(c : ℝ)|) :
+    ∀ (a : List ℚ) (s : ℕ),
+      HasSum (fun k : ℕ => zTowAux s a k (c : ℝ) / (k.factorial : ℝ) * y^k)
+        (zTowAux s a 0 ((c : ℝ)+y)) := by
+  intro a
+  induction a with
+  | nil => intro s; simpa [zTowAux] using (hasSum_zero : HasSum (fun _ : ℕ => (0 : ℝ)) 0)
+  | cons a as ih =>
+      intro s
+      convert ((monoInvSeries s c hc y hy).mul_left (a : ℝ)).add (ih (s+1)) using 1
+      · funext k
+        simp only [zTowAux]
+        ring
+      · rfl
+
+theorem lfTowerSeries (o : Option (ℚ × ℚ)) (c : ℚ) (y : ℝ)
+    (hne : ∀ ab, o = some ab → (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0)
+    (hy : ∀ ab, o = some ab → |-(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| < 1) :
+    HasSum (fun k : ℕ => lfTower o k (c : ℝ) / (k.factorial : ℝ) * y^k)
+      (lfTower o 0 ((c : ℝ)+y)) := by
+  cases o with
+  | none =>
+      have he : (fun k : ℕ => lfTower none k (c : ℝ) / (k.factorial : ℝ) * y^k) =
+          (fun k : ℕ => if k = 0 then (1 : ℝ) else 0) := by
+        funext k
+        cases k <;> simp [lfTower, oneTower]
+      rw [he]
+      simpa [lfTower, oneTower] using (hasSum_ite_eq (0 : ℕ) (1 : ℝ))
+  | some ab =>
+      let a : ℝ := ab.1
+      let b : ℝ := ab.2
+      let d : ℝ := a*(c : ℝ)-b
+      let u : ℝ := -a*y/d
+      have hd : d ≠ 0 := hne ab rfl
+      have hd' : a*(c : ℝ)-b ≠ 0 := hd
+      have hu : |u| < 1 := hy ab rfl
+      let f : ℕ → ℝ := fun k => linLogTower a b k (c : ℝ)/(k.factorial : ℝ)*y^k
+      have hs : HasSum (fun n => f (n+1)) (Real.log (1-u)) := by
+        have h := (Real.hasSum_pow_div_log_of_abs_lt_one hu).neg
+        convert h using 1
+        · funext n
+          dsimp [f, u, d, linLogTower]
+          rw [Nat.factorial_succ]
+          push_cast
+          have hn : (n.factorial : ℝ) ≠ 0 := by positivity
+          have hn1 : (n : ℝ)+1 ≠ 0 := by positivity
+          have hpow : (-a*y/(a*(c : ℝ)-b))^(n+1) =
+              (-1 : ℝ)^(n+1)*a^(n+1)*y^(n+1)/(a*(c : ℝ)-b)^(n+1) := by
+            rw [div_pow, mul_pow, neg_pow]
+          rw [hpow, pow_succ (-1 : ℝ) n]
+          field_simp [hd']
+          <;> ring
+        · ring
+      have hf := (hasSum_nat_add_iff (f := f) 1).mp hs
+      have hp : 0 < 1-u := by linarith [(le_abs_self u).trans_lt hu]
+      have he : a*((c : ℝ)+y)-b = d*(1-u) := by
+        dsimp [d, u]
+        field_simp [hd']
+        <;> ring
+      change HasSum f (linLogTower a b 0 ((c : ℝ)+y))
+      convert hf using 1
+      simp only [Finset.sum_range_one, f, linLogTower, Nat.factorial_zero, Nat.cast_one,
+        div_one, pow_zero, mul_one]
+      rw [Real.log_abs, he, Real.log_mul hd hp.ne', Real.log_abs]
+      dsimp [d]
+      ring
+
+theorem laurentTaylor_ident (t : LTerm) (c : ℚ) (hc : c ≠ 0) (y : ℝ)
+    (hy0 : |y| < |(c : ℝ)|)
+    (hne : ∀ ab, t.2 = some ab → (ab.1 : ℝ)*(c : ℝ)-ab.2 ≠ 0)
+    (hyL : ∀ ab, t.2 = some ab → |-(ab.1 : ℝ)*y/((ab.1 : ℝ)*(c : ℝ)-ab.2)| < 1) :
+    HasSum (fun k : ℕ => mulTower (zTow t.1) (lfTower t.2) k (c : ℝ) /
+      (k.factorial : ℝ)*y^k) (mulTower (zTow t.1) (lfTower t.2) 0 ((c : ℝ)+y)) := by
+  have hz := zTowAuxSeries c hc y hy0 t.1 0
+  have hl := lfTowerSeries t.2 c y hne hyL
+  have hz' : Summable (fun k : ℕ => ‖zTow t.1 k (c : ℝ)/(k.factorial : ℝ)*y^k‖) := by
+    simpa only [Real.norm_eq_abs, zTow] using hz.summable.abs
+  have hl' : Summable (fun k : ℕ => ‖lfTower t.2 k (c : ℝ)/(k.factorial : ℝ)*y^k‖) := by
+    simpa only [Real.norm_eq_abs] using hl.summable.abs
+  have hm := hasSum_sum_range_mul_of_summable_norm hz' hl'
+  have hzt : ∑' k : ℕ, zTow t.1 k (c : ℝ)/(k.factorial : ℝ)*y^k =
+      zTow t.1 0 ((c : ℝ)+y) := hz.tsum_eq
+  rw [hzt, hl.tsum_eq] at hm
+  convert hm using 1
+  · funext k
+    rw [mulTower_div, Finset.Nat.sum_antidiagonal_eq_sum_range_succ
+      (fun i j => (zTow t.1 i (c : ℝ)/(i.factorial : ℝ))*
+        (lfTower t.2 j (c : ℝ)/(j.factorial : ℝ))), Finset.sum_mul]
+    apply Finset.sum_congr rfl
+    intro i hi
+    have hik : i ≤ k := Nat.le_of_lt_succ (Finset.mem_range.mp hi)
+    have hp : y^i * y^(k-i) = y^k := by rw [← pow_add, Nat.add_sub_of_le hik]
+    rw [← hp]
+    ring
+  · rw [mulTower_zero]
+
+#print axioms monoInvSeries
+#print axioms zTowAuxSeries
+#print axioms lfTowerSeries
+#print axioms laurentTaylor_ident
+
 #print axioms invBinom_step
 #print axioms invBinom_asc
 #print axioms invPrefix_step
