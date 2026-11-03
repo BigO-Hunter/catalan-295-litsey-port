@@ -1629,6 +1629,33 @@ theorem fieldNFCheck_sound {a b : FieldQ} (h : fieldNFCheck a b = true) (x : ℝ
 
 
 
+
+/-- Assemble closed-interval bounds from the checked adjacent partition.
+Nonemptiness discharges the final right endpoint as well as the interiors. -/
+theorem pieceCover_bound (hi : ℚ) (f : ℝ → ℝ) (T : ℝ) :
+    ∀ (lo : ℚ) (ps : List (ℚ × ℚ)), ps ≠ [] → pieceCover hi lo ps = true →
+      (∀ p ∈ ps, ∀ x ∈ Icc (p.1 : ℝ) (p.2 : ℝ), f x ≤ T) →
+        ∀ x ∈ Icc (lo : ℝ) (hi : ℝ), f x ≤ T := by
+  intro lo ps
+  induction ps generalizing lo with
+  | nil => intro hn; exact (hn rfl).elim
+  | cons p ps ih =>
+      intro hn hc hp x hx
+      rcases p with ⟨a,b⟩
+      simp only [pieceCover, Bool.and_eq_true, decide_eq_true_eq] at hc
+      obtain ⟨⟨rfl,hab⟩,hr⟩ := hc
+      by_cases hxb : x ≤ (b : ℝ)
+      · exact hp (a,b) (by simp) x ⟨hx.1,hxb⟩
+      · by_cases hps : ps = []
+        · rw [hps] at hr
+          simp only [pieceCover, decide_eq_true_eq] at hr
+          have he : (b : ℝ) = (hi : ℝ) := congrArg (fun q : ℚ => (q : ℝ)) hr
+          exact (hxb (by rw [he]; exact hx.2)).elim
+        · exact ih b hps hr (fun p hm => hp p (List.mem_cons_of_mem _ hm))
+            x ⟨(lt_of_not_ge hxb).le,hx.2⟩
+
+#print axioms pieceCover_bound
+
 /-! Exhaustive axiom audit of this module's exported theorems. -/
 #print axioms fieldTower_add
 #print axioms lfieldTower_add
