@@ -2,6 +2,9 @@ module
 public import CatalanMeasure.GenD.Uniform.W.Charts6.Check.MonoT
 public import CatalanMeasure.GenD.Uniform.W.Prof.PacketSparse
 public import CatalanMeasure.GenD.Uniform.W.Charts4.JetsGeneric
+public import CatalanMeasure.GenD.Uniform.W.Charts4.ThetaRep
+public import CatalanMeasure.GenD.Uniform.W.Charts.Rows
+public import Mathlib.Tactic.FinCases
 @[expose] public section
 set_option Elab.async false
 set_option maxRecDepth 100000
@@ -211,6 +214,98 @@ def monoHostKernel {pk : Packet} {K : ℕ} (M : MonoData P N p K)
     · intro h; exact absurd (Finset.mem_univ e0) h
 
 
+
+
+/-! Universal integer profile source lift; source normalization is proved once. -/
+-- Intended insertion into canonical HostGeneric after its current build closes.
+-- Additional generic imports: Charts4.ThetaRep, Charts.Rows, Mathlib.Tactic.FinCases.
+open Polynomial.Chebyshev
+
+def zCoefC {b ex : Nat} (k0 : Int) (a : Nat)
+    (fA fC : Int → Polynomial Int) (fZ : Polynomial Int) :
+    Charts4.CK b ex → Polynomial Int
+  | .inl (k, u) =>
+    match u.val with
+    | 0 => fA (k0 + k) * (X - 1) ^ a
+    | 1 => fA (k0 + k) * (X - 1) ^ a * (X - 1)
+    | 2 => fC (k0 + k) * (X - 1) ^ a
+    | _ => fC (k0 + k) * (X - 1) ^ a * (X - 1)
+  | .inr (.inl z) => if z.val = 0 then fZ * (X - 1) ^ a
+      else fZ * (X - 1) ^ a * (X - 1)
+  | .inr (.inr _) => 0
+
+theorem map_zCoefC {b ex : Nat} (k0 : Int) (a : Nat)
+    (fA fC : Int → Polynomial Int) (fZ : Polynomial Int)
+    (k : Charts4.CK b ex) :
+    Polynomial.map (Int.castRingHom (ZMod p)) (zCoefC k0 a fA fC fZ k) =
+      Charts4.coefC k0 a
+        (fun q => Polynomial.map (Int.castRingHom (ZMod p)) (fA q))
+        (fun q => Polynomial.map (Int.castRingHom (ZMod p)) (fC q))
+        (Polynomial.map (Int.castRingHom (ZMod p)) fZ) k := by
+  rcases k with ⟨k, u⟩ | z
+  · fin_cases u <;> simp [zCoefC, Charts4.coefC]
+  · rcases z with z | j
+    · fin_cases z <;> simp [zCoefC, Charts4.coefC]
+    · simp [zCoefC, Charts4.coefC]
+
+def zTy {b ex : Nat} (k0 : Int) (a : Nat) :
+    Charts4.CK b ex → Polynomial Int :=
+  zCoefC k0 a (fun q => U Int q + U Int (q - 1))
+    (fun q => U Int q - U Int (q - 1)) (U Int (k0 - 1))
+
+def zGy {b ex : Nat} (k0 : Int) (a : Nat) :
+    Charts4.CK b ex → Polynomial Int :=
+  zCoefC k0 a (fun q => (1 + X) * (U Int q - U Int (q - 1)))
+    (fun q => (X - 1) * (U Int q + U Int (q - 1))) (T Int k0)
+
+theorem map_zTy {b ex : Nat} (k0 : Int) (a : Nat) (k : Charts4.CK b ex) :
+    Polynomial.map (Int.castRingHom (ZMod p)) (zTy k0 a k) =
+      Charts4.uCoefs k0 a k := by
+  unfold zTy Charts4.uCoefs
+  rw [map_zCoefC]
+  simp only [Polynomial.map_add, Polynomial.map_sub, map_U]
+
+theorem map_zGy {b ex : Nat} (k0 : Int) (a : Nat) (k : Charts4.CK b ex) :
+    Polynomial.map (Int.castRingHom (ZMod p)) (zGy k0 a k) =
+      Charts4.tCoefs k0 a k := by
+  unfold zGy Charts4.tCoefs
+  rw [map_zCoefC]
+  simp only [Polynomial.map_add, Polynomial.map_sub, Polynomial.map_mul,
+    Polynomial.map_one, Polynomial.map_X, map_U, map_T]
+
+def zProfileData {b ex K : Nat} (hK : K = b * 4 + 2 + ex)
+    (k0 : Int) (a : Nat) : Charts.ProfData where
+  g := fun c i => if hc : c < K then
+    (zGy k0 a (Charts4.ckEquiv hK ⟨c, hc⟩)).coeff i else 0
+  t := fun c i => if hc : c < K then
+    (zTy k0 a (Charts4.ckEquiv hK ⟨c, hc⟩)).coeff i else 0
+
+theorem zProfileData_realises {b ex K : Nat} (hK : K = b * 4 + 2 + ex)
+    (k0 : Int) (a : Nat) :
+    (zProfileData hK k0 a).Realises
+      (⟨Charts4.sumProf hK (Charts4.uCoefs k0 a),
+        Charts4.sumProf hK (Charts4.tCoefs k0 a)⟩ : Prof p K) := by
+  intro k i
+  change ((Charts4.sumProf hK (Charts4.tCoefs k0 a)) (Pi.single k 1)).coeff i = _ ∧
+    ((Charts4.sumProf hK (Charts4.uCoefs k0 a)) (Pi.single k 1)).coeff i = _
+  have hsingle (G : Charts4.CK b ex → Polynomial (ZMod p)) :
+      Charts4.sumProf hK G (Pi.single k 1) = G (Charts4.ckEquiv hK k) := by
+    rw [Charts4.sumProf_apply, Finset.sum_eq_single k]
+    · simp
+    · intro b _ hb
+      simp [Pi.single_apply, hb]
+    · intro h
+      exact absurd (Finset.mem_univ _) h
+  rw [hsingle, hsingle]
+  constructor
+  · have hmap := congrArg (fun f : Polynomial (ZMod p) => f.coeff i)
+      (map_zGy k0 a (Charts4.ckEquiv hK k))
+    simp only [Polynomial.coeff_map] at hmap
+    simpa [zProfileData, k.isLt] using hmap.symm
+  · have hmap := congrArg (fun f : Polynomial (ZMod p) => f.coeff i)
+      (map_zTy k0 a (Charts4.ckEquiv hK k))
+    simp only [Polynomial.coeff_map] at hmap
+    simpa [zProfileData, k.isLt] using hmap.symm
 
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
