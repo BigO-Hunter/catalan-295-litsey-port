@@ -758,6 +758,102 @@ theorem invGeo_conv (s k : ℕ) (q L : ℚ) (ab : ℚ × ℚ) (ha : ab.1 ≠ 0) 
       simp only [Nat.sub_self, lfCoarse, geoInvCoef, logInvCoef]
       ring
 
+/-! ## Summing the scalar R/J formulas over a Laurent polynomial -/
+
+def geoMajAux (c q L : ℚ) : ℕ → List ℚ → ℕ → ℚ
+  | _, [], _ => 0
+  | s, a :: as, k => qabs' a/(qabs' c)^s*geoInvCoef s L q k + geoMajAux c q L (s+1) as k
+
+def geoMajTotal (c q L : ℚ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | s, a :: as => qabs' a/(qabs' c)^s*geoInvTotal s L q + geoMajTotal c q L (s+1) as
+
+def geoMajTail (c q L : ℚ) (K : ℕ) : ℕ → List ℚ → ℚ
+  | _, [] => 0
+  | s, a :: as => qabs' a/(qabs' c)^s*geoInvTail s K L q + geoMajTail c q L K (s+1) as
+
+theorem geoMajAuxSeries (c q L : ℚ) (hq0 : 0 ≤ q) (hq1 : q < 1) : ∀ (a : List ℚ) (s : ℕ),
+    HasSum (fun k : ℕ => (geoMajAux c q L s a k : ℝ)) (geoMajTotal c q L s a : ℝ) := by
+  intro a
+  induction a with
+  | nil => intro s; simpa [geoMajAux, geoMajTotal] using (hasSum_zero : HasSum (fun _ : ℕ => (0 : ℝ)) 0)
+  | cons a as ih =>
+      intro s
+      have ht := (geoInvCoefSeries s L q hq0 hq1).mul_left ((qabs' a/(qabs' c)^s : ℚ) : ℝ)
+      convert ht.add (ih (s+1)) using 1
+      · funext k
+        simp only [geoMajAux]
+        push_cast <;> ring
+      · simp only [geoMajTotal]
+        push_cast <;> ring
+
+theorem geoMajTail_eq (c q L : ℚ) (K : ℕ) (hq : q ≠ 1) : ∀ (a : List ℚ) (s : ℕ),
+    geoMajTotal c q L s a - (∑ k ∈ Finset.range (K+1), geoMajAux c q L s a k) =
+      geoMajTail c q L K s a := by
+  intro a
+  induction a with
+  | nil => intro s; simp [geoMajTotal, geoMajAux, geoMajTail]
+  | cons a as ih =>
+      intro s
+      have hp : (∑ k ∈ Finset.range (K+1), geoMajAux c q L s (a :: as) k) =
+          qabs' a/(qabs' c)^s*(∑ k ∈ Finset.range (K+1), geoInvCoef s L q k) +
+            ∑ k ∈ Finset.range (K+1), geoMajAux c q L (s+1) as k := by
+        simp only [geoMajAux, Finset.sum_add_distrib, Finset.mul_sum]
+      rw [hp, geoMajTotal, geoMajTail]
+      linear_combination (qabs' a/(qabs' c)^s) * (geoInvTail_eq s K L q hq) + ih (s+1)
+
+theorem convQ_add_left (U W V : ℕ → ℚ) (k : ℕ) : ∀ n : ℕ,
+    convQ (fun i => U i+W i) V k n = convQ U V k n + convQ W V k n := by
+  intro n
+  induction n with
+  | zero => simp [convQ]
+  | succ n ih => simp only [convQ, ih]; ring
+
+theorem convQ_scale_left (U V : ℕ → ℚ) (b : ℚ) (k : ℕ) : ∀ n : ℕ,
+    convQ (fun i => b*U i) V k n = b*convQ U V k n := by
+  intro n
+  induction n with
+  | zero => simp [convQ]
+  | succ n ih => simp only [convQ, ih]; ring
+
+theorem invMajAux_conv (c q L : ℚ) (ab : ℚ × ℚ) (ha : ab.1 ≠ 0) :
+    ∀ (a : List ℚ) (s k : ℕ),
+    convQ (invMajAux c q s a) (lfCoarse (some ab) L q) k (k+1) = geoMajAux c q L s a k := by
+  intro a
+  induction a with
+  | nil => intro s k; simp [convQ_fin, invMajAux, geoMajAux]
+  | cons a as ih =>
+      intro s k
+      have he : invMajAux c q s (a :: as) = fun i =>
+          qabs' a/(qabs' c)^s*((invBinom s i : ℚ)*q^i) + invMajAux c q (s+1) as i := by
+        funext i
+        simp only [invMajAux]
+        ring
+      rw [he, convQ_add_left, convQ_scale_left, invGeo_conv s k q L ab ha, ih (s+1) k]
+      rfl
+
+theorem convQ_delta_right (U : ℕ → ℚ) (L : ℚ) (k : ℕ) :
+    convQ U (fun j => if j = 0 then L else 0) k (k+1) = U k*L := by
+  rw [convQ_fin]
+  calc
+    (∑ i ∈ Finset.range (k+1), U i*(if k-i = 0 then L else 0)) =
+        U k*(if k-k = 0 then L else 0) := by
+      apply Finset.sum_eq_single k
+      · intro i hi hik
+        have hi' : i < k := by have := Finset.mem_range.mp hi; omega
+        have hs : k-i ≠ 0 := by omega
+        simp [hs]
+      · intro hk
+        exact (hk (Finset.mem_range.mpr (Nat.lt_succ_self k))).elim
+    _ = U k*L := by simp
+
+#print axioms geoMajAuxSeries
+#print axioms geoMajTail_eq
+#print axioms convQ_add_left
+#print axioms convQ_scale_left
+#print axioms invMajAux_conv
+#print axioms convQ_delta_right
+
 #print axioms invBinom_sum
 #print axioms logInvCoefSeries
 #print axioms logInvTailQ_eq
