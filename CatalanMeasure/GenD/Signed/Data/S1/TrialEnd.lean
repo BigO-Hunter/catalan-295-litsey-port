@@ -4,8 +4,8 @@ public import CatalanMeasure.GenD.Signed.Phase2Contract
 public import CatalanMeasure.GenD.Analytic.DeltaChain
 public import CatalanMeasure.GenD.Analytic.FirstGlue
 public import CatalanMeasure.GenD.Analytic.Instances
-public import CatalanMeasure.GenD.D58.Budget590
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.PositiveBudget
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 
 @[expose] public section
 

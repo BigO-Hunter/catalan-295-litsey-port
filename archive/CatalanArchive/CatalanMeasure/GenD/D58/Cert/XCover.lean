@@ -26,7 +26,7 @@ public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.XM022
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.XM023
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.XTab
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.XZ
-public import CatalanMeasure.GenD.D58.Cert.Data
+public import CatalanMeasure.GenD.DesignInstance.PositiveControl.Data
 public import CatalanMeasure.GenD.Cert.WLogSpec
 public import CatalanMeasure.GenD.Cert.Assembly
 

@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank532.Gate
+public import CatalanMeasure.GenD.Uniform.ContentBank.Gate
 
 @[expose] public section
 set_option Elab.async false

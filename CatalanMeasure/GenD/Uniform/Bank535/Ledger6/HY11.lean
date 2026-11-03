@@ -1,7 +1,7 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger4.Win
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger4.MWins
+public import CatalanMeasure.GenD.Uniform.BaselineBank.GlueMZH.Win
+public import CatalanMeasure.GenD.Uniform.BaselineBank.GlueMZH.MWins
 public import CatalanMeasure.GenD.Uniform.W.HYPlus.HyLB
 
 @[expose] public section

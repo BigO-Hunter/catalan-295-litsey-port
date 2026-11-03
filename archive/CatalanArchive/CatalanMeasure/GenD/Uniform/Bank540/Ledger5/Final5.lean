@@ -1,9 +1,9 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger5.Merge5
-public import CatalanMeasure.GenD.Uniform.Bank540.Decay.Providers540
-public import CatalanMeasure.GenD.D58.C3.Cert
-public import CatalanMeasure.GenD.D58.Final
+public import CatalanMeasure.GenD.Uniform.BaselineBank.ZL.Merge
+public import CatalanMeasure.GenD.Uniform.BaselineBank.Decay.Providers
+public import CatalanMeasure.GenD.DesignInstance.C3.Cert
+public import CatalanMeasure.GenD.DesignInstance.Final
 public import CatalanMeasure.GenD.Final
 
 @[expose] public section

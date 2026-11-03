@@ -2,7 +2,7 @@ module
 
 public import CatalanMeasure.G728.ZNorm
 public import CatalanMeasure.G728.RawInts
-public import CatalanMeasure.GenD.D58.Cert.Data
+public import CatalanMeasure.GenD.DesignInstance.PositiveControl.Data
 
 @[expose] public section
 

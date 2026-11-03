@@ -1,8 +1,8 @@
 module
 
 public import CatalanMeasure.GenD.Uniform.W.Tier3.HP2LB
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger2.CellsHP2
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger4.Win
+public import CatalanMeasure.GenD.Uniform.BaselineBank.ExactHP.CellsHP
+public import CatalanMeasure.GenD.Uniform.BaselineBank.GlueMZH.Win
 
 @[expose] public section
 set_option Elab.async false

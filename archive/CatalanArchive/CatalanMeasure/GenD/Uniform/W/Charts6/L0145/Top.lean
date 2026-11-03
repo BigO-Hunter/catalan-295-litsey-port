@@ -4,7 +4,7 @@ public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0145.BaseN
 public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0145.Psi
 public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0145.Graph
 public import CatalanMeasure.GenD.Uniform.W.Charts6.Unit13
-public import CatalanMeasure.GenD.Uniform.Bank532.Final534
+public import CatalanMeasure.GenD.Uniform.ContentBank.Final534
 public import CatalanMeasure.GenD.Uniform.W.Charts6.MonoHost3
 @[expose] public section
 set_option Elab.async false

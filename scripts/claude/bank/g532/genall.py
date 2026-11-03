@@ -7,7 +7,7 @@ D = os.path.dirname(os.path.abspath(__file__))
 sel = json.load(open(D + '/sel532.json'))
 byk = {}
 for g, k, a, b, c0, c1 in sel: byk.setdefault(k, []).append((F(a), F(b), F(c0), F(c1)))
-OUT = 'CatalanMeasure/GenD/Uniform/Bank532/Pk/'
+OUT = 'CatalanMeasure/GenD/Uniform/ContentBank/Pk/'
 res = {}
 final = {}
 only = sys.argv[1:]

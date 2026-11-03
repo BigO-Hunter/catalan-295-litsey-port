@@ -10,7 +10,7 @@ public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB0
 public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB1
 public import CatalanMeasure.GenD.Signed.Data.Consts.TrialB2
 public import CatalanMeasure.GenD.Signed.Data.Consts.Umin
-public import CatalanMeasure.GenD.D58.Budget590
+public import CatalanMeasure.GenD.DesignInstance.PositiveBudget
 
 @[expose] public section
 

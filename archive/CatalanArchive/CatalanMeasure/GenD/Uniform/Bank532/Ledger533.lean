@@ -1,12 +1,12 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank532.MergeUtil
-public import CatalanMeasure.GenD.Uniform.Bank532.Gate
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger5.Final5
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0145_k280_47
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0146_k152_25
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0179_k89_8
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0135_left
+public import CatalanMeasure.GenD.Uniform.ContentBank.MergeUtil
+public import CatalanMeasure.GenD.Uniform.ContentBank.Gate
+public import CatalanMeasure.GenD.Uniform.BaselineBank.ZL.Final
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0145_k280_47
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0146_k152_25
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0179_k89_8
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0135_left
 
 @[expose] public section
 set_option Elab.async false

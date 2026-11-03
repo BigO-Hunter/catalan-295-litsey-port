@@ -9,7 +9,7 @@ from fractions import Fraction as F
 import rowgen as RG, spec as SP
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', '..'))
-PKDIR = os.path.join(ROOT, 'CatalanMeasure', 'GenD', 'Uniform', 'Bank532', 'Pk')
+PKDIR = os.path.join(ROOT, 'CatalanMeasure', 'GenD', 'Uniform', 'ContentBank', 'Pk')
 
 # ---------------------------------------------------------------- affine forms (a N + b hp + c)
 def aadd(f, g): return (f[0] + g[0], f[1] + g[1], f[2] + g[2])

@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.D58.Cert.Data
+public import CatalanMeasure.GenD.DesignInstance.PositiveControl.Data
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.RTab
 public import CatalanMeasure.GenD.Cert.WLogSpec
 public import CatalanMeasure.GenD.Cert.Assembly

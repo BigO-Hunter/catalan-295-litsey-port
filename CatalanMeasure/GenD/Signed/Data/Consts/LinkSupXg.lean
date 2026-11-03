@@ -1,8 +1,8 @@
 module
 
-public import CatalanMeasure.GenD.D58.Cert590.XM011
-public import CatalanMeasure.GenD.D58.Cert590.XM012
-public import CatalanMeasure.GenD.D58.Cert590.XZ
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.XM011
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.XM012
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.XZ
 public import CatalanMeasure.GenD.Cert.WLogSpec
 public import CatalanMeasure.GenD.Cert.Assembly
 

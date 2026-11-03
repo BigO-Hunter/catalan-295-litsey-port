@@ -2,8 +2,8 @@ module
 
 public import CatalanMeasure.Cert.Norm
 public import CatalanMeasure.CellCert.Scaled
-public import CatalanMeasure.GenD.D58.Cert590.NormV
-public import CatalanMeasure.GenD.D58.Cert590.NormP
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.NormV
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.NormP
 public import CatalanMeasure.GenD.Signed.TaylorCell
 
 @[expose] public section

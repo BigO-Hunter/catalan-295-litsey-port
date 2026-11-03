@@ -1,3 +1,3 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank532.Hosts532Inst
+public import CatalanMeasure.GenD.Uniform.ContentBank.HostsInst

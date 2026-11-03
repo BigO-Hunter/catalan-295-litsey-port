@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank532.Ledger534
+public import CatalanMeasure.GenD.Uniform.ContentBank.Ledger534
 
 @[expose] public section
 set_option Elab.async false

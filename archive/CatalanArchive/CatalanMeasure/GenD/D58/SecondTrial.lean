@@ -5,7 +5,7 @@ public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.XCover
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.YCover
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.RCover
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.Norm
-public import CatalanMeasure.GenD.D58.Cert.Near
+public import CatalanMeasure.GenD.DesignInstance.PositiveControl.Near
 
 @[expose] public section
 

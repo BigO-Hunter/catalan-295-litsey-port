@@ -3,7 +3,7 @@ module
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupXg
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupXs
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupLim
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 
 @[expose] public section
 

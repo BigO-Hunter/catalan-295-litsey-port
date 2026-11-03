@@ -3,7 +3,7 @@ public import CatalanMeasure.GenD.Uniform.W.Charts5.Final
 public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0145.Top
 public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0135.Top
 public import CatalanArchive.CatalanMeasure.GenD.Uniform.W.Charts6.L0179.Top
-public import CatalanMeasure.GenD.Uniform.Bank532.Final533
+public import CatalanMeasure.GenD.Uniform.ContentBank.Final533
 @[expose] public section
 set_option Elab.async false
 

@@ -1,8 +1,8 @@
 module
 
-public import CatalanMeasure.GenD.D58.SecondTrial590
-public import CatalanMeasure.GenD.D58.Circle
-public import CatalanMeasure.GenD.D58.FirstTrialCert
+public import CatalanMeasure.GenD.DesignInstance.SecondTrial590
+public import CatalanMeasure.GenD.DesignInstance.Circle
+public import CatalanMeasure.GenD.DesignInstance.FirstTrialCert
 
 @[expose] public section
 

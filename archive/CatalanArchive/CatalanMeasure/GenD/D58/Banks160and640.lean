@@ -1,11 +1,11 @@
 module
 
-public import CatalanMeasure.GenD.D58.Final
+public import CatalanMeasure.GenD.DesignInstance.Final
 public import CatalanMeasure.GenD.Analytic.DeltaChain
 public import CatalanMeasure.GenD.Analytic.Instances
-public import CatalanMeasure.GenD.D58.C3.Cert
-public import CatalanMeasure.GenD.D58.FirstTrialCert
-public import CatalanMeasure.GenD.D58.Circle
+public import CatalanMeasure.GenD.DesignInstance.C3.Cert
+public import CatalanMeasure.GenD.DesignInstance.FirstTrialCert
+public import CatalanMeasure.GenD.DesignInstance.Circle
 public import CatalanMeasure.GenD.PayW
 
 @[expose] public section

@@ -52,7 +52,7 @@ def emit(key, out):
     L = []
     A = L.append
     A('module')
-    A('public import CatalanMeasure.GenD.Uniform.Bank532.Pk.%s' % nm)
+    A('public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.%s' % nm)
     A('public import CatalanMeasure.GenD.Uniform.W.Charts6.Check.Host')
     A('@[expose] public section')
     A('set_option Elab.async false')

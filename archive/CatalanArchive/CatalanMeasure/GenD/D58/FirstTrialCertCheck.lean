@@ -1,7 +1,7 @@
 module
 
 public import CatalanArchive.CatalanMeasure.GenD.D58.Banks160and640
-public import CatalanMeasure.GenD.D58.FirstTrialCert
+public import CatalanMeasure.GenD.DesignInstance.FirstTrialCert
 #print axioms CatalanMeasure.GenD.D58.hrow_D58
 #print axioms CatalanMeasure.GenD.D58.hcol_D58
 #print axioms CatalanMeasure.GenD.D58.K160.firstTrialCert

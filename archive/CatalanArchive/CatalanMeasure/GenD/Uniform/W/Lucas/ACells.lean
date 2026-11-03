@@ -1,7 +1,7 @@
 module
 public import CatalanMeasure.GenD.Uniform.W.Lucas.ALB
 public import CatalanMeasure.GenD.Uniform.W.LStar.Cells
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 @[expose] public section
 set_option Elab.async false
 

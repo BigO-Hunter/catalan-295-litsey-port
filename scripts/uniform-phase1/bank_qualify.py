@@ -24,7 +24,7 @@ def parse(path):
   data[name]=rows
  return data
 started=time.time()
-trial=SRC/'G-displacement-2026-10-23/w590/q/data_k160_gi.json';j=json.loads(trial.read_text());lp=WORK/'CatalanMeasure/GenD/D58/Cert590/Data.lean';l=parse(lp)
+trial=SRC/'G-displacement-2026-10-23/w590/q/data_k160_gi.json';j=json.loads(trial.read_text());lp=WORK/'CatalanMeasure/GenD/DesignInstance/PositiveCert/Data.lean';l=parse(lp)
 for name in ('Pc','Vc'):assert l[name]==j[name]
 for name,jn in (('P','tailsP'),('V','tailsV')):
  assert l[name]==[[Q(*t[k])for k in ('zr','zi','rr','ri')]for t in j[jn]]

@@ -1,5 +1,5 @@
 module
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0145_k280_47
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0145_k280_47
 public import CatalanMeasure.GenD.Uniform.W.Charts4.Pilot.Geom146
 public import CatalanMeasure.GenD.Uniform.W.Charts4.JetsGeneric
 public import CatalanMeasure.GenD.Uniform.W.Charts4.Extras

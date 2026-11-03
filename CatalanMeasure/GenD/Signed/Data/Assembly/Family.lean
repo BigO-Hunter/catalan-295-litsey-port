@@ -5,7 +5,7 @@ public import CatalanMeasure.GenD.Signed.DesignConst
 public import CatalanMeasure.GenD.Signed.Interp
 public import CatalanMeasure.GenD.Signed.Data.Trial.Hid
 public import CatalanMeasure.GenD.Signed.Data.Consts.PolyPos
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 public import CatalanMeasure.Parametric.PopulationPhysicalValue
 
 @[expose] public section

@@ -1,6 +1,6 @@
 module
 public import CatalanMeasure.GenD.Uniform.W.Charts5.Phys
-public import CatalanMeasure.GenD.Uniform.Bank532.Pk.L0146_k152_25
+public import CatalanMeasure.GenD.Uniform.ContentBank.Pk.L0146_k152_25
 @[expose] public section
 set_option Elab.async false
 

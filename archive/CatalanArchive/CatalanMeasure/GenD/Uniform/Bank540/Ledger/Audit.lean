@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger.Gate
+public import CatalanMeasure.GenD.Uniform.BaselineBank.Partial.Gate
 
 @[expose] public section
 

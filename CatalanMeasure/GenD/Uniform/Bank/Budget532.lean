@@ -1,5 +1,5 @@
 module
-public import CatalanMeasure.GenD.D58.Budget590
+public import CatalanMeasure.GenD.DesignInstance.PositiveBudget
 public import CatalanMeasure.GenD.PayW
 @[expose] public section
 set_option Elab.async false

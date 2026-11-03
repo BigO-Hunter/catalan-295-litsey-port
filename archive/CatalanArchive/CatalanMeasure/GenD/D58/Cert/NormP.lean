@@ -3,7 +3,7 @@ module
 public import CatalanMeasure.G728.NormClosed
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.NormFinBounds
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.NormLogBounds
-public import CatalanMeasure.GenD.D58.Cert.Data
+public import CatalanMeasure.GenD.DesignInstance.PositiveControl.Data
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.NormFinP0
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.NormFinP1
 public import CatalanArchive.CatalanMeasure.GenD.D58.Cert.NormLogP0

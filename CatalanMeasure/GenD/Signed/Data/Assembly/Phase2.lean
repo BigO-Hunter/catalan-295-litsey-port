@@ -1,7 +1,7 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Data
-public import CatalanMeasure.GenD.D58.Budget590
+public import CatalanMeasure.GenD.DesignInstance.PositiveBudget
 
 @[expose] public section
 

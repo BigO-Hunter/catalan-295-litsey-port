@@ -1,13 +1,13 @@
 module
 public import CatalanMeasure.GenD.Uniform.Bank.Budget532
-public import CatalanMeasure.GenD.D58.FirstTrialCert
-public import CatalanMeasure.GenD.D58.Circle
+public import CatalanMeasure.GenD.DesignInstance.FirstTrialCert
+public import CatalanMeasure.GenD.DesignInstance.Circle
 public import CatalanMeasure.GenD.Analytic.DeltaChain
-public import CatalanMeasure.GenD.D58.Cert590.XCover
-public import CatalanMeasure.GenD.D58.Cert590.YCover
-public import CatalanMeasure.GenD.D58.Cert590.RCover
-public import CatalanMeasure.GenD.D58.Cert590.Norm
-public import CatalanMeasure.GenD.D58.Cert590.Near
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.XCover
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.YCover
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.RCover
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.Norm
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.Near
 @[expose] public section
 set_option Elab.async false
 namespace CatalanMeasure.GenD.Uniform.Bank532

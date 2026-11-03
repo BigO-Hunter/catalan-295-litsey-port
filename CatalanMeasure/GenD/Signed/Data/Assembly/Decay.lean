@@ -5,7 +5,7 @@ public import CatalanMeasure.GenD.Signed.Data.S1.Psi
 public import CatalanMeasure.GenD.Signed.Data.S1.TrialEnd
 public import CatalanMeasure.GenD.Analytic.DeltaChain
 public import CatalanMeasure.GenD.Analytic.WeightedAtom
-public import CatalanMeasure.GenD.D58.Budget590
+public import CatalanMeasure.GenD.DesignInstance.PositiveBudget
 
 @[expose] public section
 

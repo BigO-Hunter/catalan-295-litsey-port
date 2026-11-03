@@ -5,7 +5,7 @@ public import CatalanMeasure.GenD.Signed.Glue410
 public import CatalanMeasure.GenD.Signed.MarkedCap
 public import CatalanMeasure.GenD.Signed.Data.S1.Gap
 public import CatalanMeasure.GenD.Analytic.GapWeights
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 
 @[expose] public section
 

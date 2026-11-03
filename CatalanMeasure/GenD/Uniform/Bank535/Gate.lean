@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger5.Merge5
+public import CatalanMeasure.GenD.Uniform.BaselineBank.ZL.Merge
 
 @[expose] public section
 set_option Elab.async false

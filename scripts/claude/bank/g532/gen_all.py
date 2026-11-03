@@ -1,6 +1,4 @@
-"""G8f: emit all instance files Bank532/Host_<NM>.lean and the final module Hosts532Inst.lean.
-usage: gen_all.py [--emit KEY...]   (default: all keys)
-       gen_all.py --final           (write Hosts532Inst.lean from the existing Host_* files)"""
+'G8f: emit all instance files ContentBank/Host_<NM>.lean and the final module Hosts532Inst.lean.\nusage: gen_all.py [--emit KEY...]   (default: all keys)\n       gen_all.py --final           (write HostsInst.lean from the existing Host_* files)'
 import os, sys, re, json
 sys.dont_write_bytecode = True
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -8,7 +6,7 @@ from gencheck2 import *
 from gencheck4 import *
 from gencheck5 import *
 
-B532 = os.path.join(ROOT, 'CatalanMeasure', 'GenD', 'Uniform', 'Bank532')
+B532 = os.path.join(ROOT, 'CatalanMeasure', 'GenD', 'Uniform', 'ContentBank')
 
 def host_path(key): return os.path.join(B532, 'Host_%s.lean' % modname(key))
 
@@ -23,9 +21,9 @@ if __name__ == '__main__':
                 fields.append('  h_%s := CatalanMeasure.GenD.Uniform.W.Charts5.physHost_pilot' % nm)
             else:
                 assert os.path.exists(host_path(k)), k
-                mods.append('public import CatalanMeasure.GenD.Uniform.Bank532.Host_%s' % nm)
+                mods.append('public import CatalanMeasure.GenD.Uniform.ContentBank.Host_%s' % nm)
                 fields.append('  h_%s := CatalanMeasure.GenD.Uniform.Bank532.Pk.%s.phys' % (nm, nm))
-        L = ['module', 'public import CatalanMeasure.GenD.Uniform.Bank532.Final532',
+        L = ['module', 'public import CatalanMeasure.GenD.Uniform.ContentBank.Measure',
              'public import CatalanMeasure.GenD.Uniform.W.Charts5.Phys'] + mods + [
              '@[expose] public section', 'set_option Elab.async false', '',
              '/-! The 34 packet hosts, from the verified checker `checkHost` (33 packets) and the pilot host (L0146):',
@@ -40,7 +38,7 @@ if __name__ == '__main__':
              '  catalan_irrationalityMeasure_532_of_hosts hosts532', '',
              'end', 'end CatalanMeasure.GenD.Uniform.Bank532', '',
              '#print axioms CatalanMeasure.GenD.Uniform.Bank532.catalan_irrationalityMeasure_532']
-        out = os.path.join(B532, 'Hosts532Inst.lean')
+        out = os.path.join(B532, 'HostsInst.lean')
         open(out, 'w', encoding='utf-8').write('\n'.join(L) + '\n')
         print('wrote', out)
         sys.exit(0)

@@ -5,7 +5,7 @@ public import CatalanMeasure.GenD.Signed.Data.Assembly.Link
 public import CatalanMeasure.GenD.Signed.Data.Assembly.RowsInst
 public import CatalanMeasure.GenD.Signed.Data.S1.TrialEnd590
 public import CatalanMeasure.GenD.Signed.Gate
-public import CatalanMeasure.GenD.Uniform.Bank532.Hosts532Inst
+public import CatalanMeasure.GenD.Uniform.ContentBank.HostsInst
 
 @[expose] public section
 set_option Elab.async false

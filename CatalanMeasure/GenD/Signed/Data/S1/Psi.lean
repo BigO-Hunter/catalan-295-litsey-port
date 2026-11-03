@@ -15,7 +15,7 @@ public import CatalanMeasure.GenD.Signed.Data.S1.Circ10
 public import CatalanMeasure.GenD.Signed.Data.S1.Circ11
 public import CatalanMeasure.GenD.Signed.Data.S1.Circ12
 public import CatalanMeasure.GenD.Signed.Data.S1.Circ13
-public import CatalanMeasure.GenD.D58.OddProfile
+public import CatalanMeasure.GenD.DesignInstance.OddProfile
 
 @[expose] public section
 

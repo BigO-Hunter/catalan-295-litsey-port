@@ -1,7 +1,7 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.S1.TrialEnd
-public import CatalanMeasure.GenD.Uniform.Bank540.Decay.Providers540
+public import CatalanMeasure.GenD.Uniform.BaselineBank.Decay.Providers
 
 @[expose] public section
 

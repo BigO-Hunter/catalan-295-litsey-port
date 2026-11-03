@@ -1,6 +1,6 @@
 module
 
-public import CatalanMeasure.GenD.Uniform.Bank540.Ledger2.Gate2
+public import CatalanMeasure.GenD.Uniform.BaselineBank.ExactHP.Gate
 
 @[expose] public section
 

@@ -1,7 +1,7 @@
 module
 
 public import CatalanMeasure.GenD.Signed.Data.Trial.Hid
-public import CatalanMeasure.GenD.D58.Cert590.Data
+public import CatalanMeasure.GenD.DesignInstance.PositiveCert.Data
 public import CatalanMeasure.CellCert.RawInts
 
 /-! Trial 1 (alpha = 1/200, K120, eta 9/20): the exact rational data `trial : TrialQ` (NOTES-TRIAL.md, data conventions). -/
