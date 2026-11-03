@@ -51,7 +51,7 @@ theorem hcert : ∀ i, ∀ᶠ N : ℕ in atTop, ∀ x m : ℕ, (I.DA i N).sp ≤
   have hmR : 2*(m : ℝ) ≤ (Mmax N : ℝ)+1 := by exact_mod_cast hm
   have hqcut : q ≤ countCut72 := (div_le_iff₀ hNr).2 (hmR.trans hcut)
   have hq' : q ≤ 142/125 := hqcut
-  obtain ⟨j,a,ha,hlo,hhi⟩ := SpikeQCover72.selected hq hqcut
+  obtain ⟨j,a,ha,hlo,hhi⟩ := SpikeQCover72.selected hq hq'
   have c0 := cert0 hN0 hx0 j a ha hlo hhi hq' (p0 a)
   have c1 := cert1 hN0 hx0 j a ha hlo hhi hq' (p1 a)
   have c2 := cert2 hN0 hx0 j a ha hlo hhi hq' (p2 a)

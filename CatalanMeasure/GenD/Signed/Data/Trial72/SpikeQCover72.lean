@@ -1,26 +1,25 @@
 module
 public import CatalanMeasure.GenD.Signed.Data.Trial72.RhoQAliases72
-public import CatalanMeasure.GenD.Signed.Davis.ScalarInstance72
 @[expose] public section
 set_option Elab.async false
 set_option profiler true
 set_option maxRecDepth 100000
 set_option maxHeartbeats 0
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeQCover72
-open Set Davis.ScalarInstance72
+open Set
 noncomputable section
 
 theorem qhi_eq : ∀ i : Fin 200, RhoQAliases72.qhi.getD i.val 0 = 71*((i.val+1 : ℕ) : ℚ)/12500 := by
   decide +kernel
 
-theorem cover {q : ℝ} (hq : 0 ≤ q) (hcut : q ≤ countCut72) :
+theorem cover {q : ℝ} (hq : 0 ≤ q) (hcut : q ≤ (142/125 : ℝ)) :
     ∃ i : Fin 200, (71*(i.val : ℝ)/12500) ≤ q ∧
       q ≤ (RhoQAliases72.qhi.getD i.val 0 : ℝ) := by
   let t : ℝ := q * 12500 / 71
   have ht : 0 ≤ t := by dsimp [t]; positivity
   have htop : t ≤ (200 : ℕ) := by
     dsimp [t]
-    norm_num [countCut72] at hcut ⊢
+    norm_num at hcut ⊢
     linarith only [hcut]
   let k := ⌈t⌉₊
   have hk : k ≤ 200 := Nat.ceil_le.mpr htop
@@ -43,7 +42,7 @@ theorem cover {q : ℝ} (hq : 0 ≤ q) (hcut : q ≤ countCut72) :
     dsimp [t] at htk
     linarith only [htk,hhi']
 
-theorem selected {q : ℝ} (hq : 0 ≤ q) (hcut : q ≤ countCut72) :
+theorem selected {q : ℝ} (hq : 0 ≤ q) (hcut : q ≤ (142/125 : ℝ)) :
     ∃ (i : Fin 200) (a : Fin 27), a.val = RhoQAliases72.indices.getD i.val 0 ∧
       (71*(i.val : ℝ)/12500) ≤ q ∧ q ≤ (RhoQAliases72.qmax.getD a.val 0 : ℝ) := by
   obtain ⟨i,hlo,hhi⟩ := cover hq hcut
