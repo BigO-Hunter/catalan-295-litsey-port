@@ -1,5 +1,5 @@
 module
-public import CatalanMeasure.GenD.Uniform.W.Charts6.HostGeneric
+public import CatalanMeasure.GenD.Uniform.W.Charts6.SourceNative
 @[expose] public section
 set_option Elab.async false
 set_option maxRecDepth 100000
