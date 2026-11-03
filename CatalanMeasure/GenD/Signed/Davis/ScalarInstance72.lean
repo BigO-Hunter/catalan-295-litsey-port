@@ -13,11 +13,12 @@ set_option profiler.threshold 10
 /-! Scalar-only D72 instance, pinned to producer bytes. Hashes are provenance,
 not a claim that numerical field/energy certificates have been proved in Lean.
 The remaining hypotheses are the exact content and three sheet producers.
-C14 authorizes payment eta = old boundary eta + 1/1000000; trial eta stays 9/20.
+C14 refresh already includes old boundary eta + 1/1000000; do not add twice.
+Trial eta stays 9/20. The frozen eta literal and chosen eta are now identical.
 Content price is (1057/2) log2 + 19129/2 - archived full-area + snapshot loss.
 Rebinding replaces the generated scalar literal block and source hash block together.
 No Trial/Consts/DesignInstance or held compatibility module is imported. -/
--- SHA256 trials72/frozen-margin72.json: af562776bb932091bcfb3b70a71ecfd776a0ec70273d35079ab6bf68e464dfb8
+-- SHA256 trials72/frozen-margin72.json: a52dcc638d9e6a934b1ef3a694096ed086b40449ec152b187e1608064435b5bf
 -- SHA256 trials72/thresholds72.json: 67a92d1bb51c4091f4da71038742b567f0cb9d6d237ae0d094dda53db9e938fd
 -- SHA256 trials72/side-config72.json: 6d592858ed57b0dab79bae0ec974b7e7110ac288bdd267746e28121b6e3e4701
 -- SHA256 trials72/spike-costs72.json: 8e9ac7e44cf42bc5d4dfcbaf65a5c0fd5d127c55a9c822e9b23bad25ec2f2417
@@ -28,7 +29,7 @@ No Trial/Consts/DesignInstance or held compatibility module is imported. -/
 -- SHA256 trials72/trial72-1.json: 169530579087d051e245d7283b88c65a4b3835c62bffb88300b0ffbc56fb2c77
 -- SHA256 trials72/trial72-2.json: e8288ccfec96cdd36417e1c5673680bc153f7d72616a6ae1e9142bea3494c345
 -- SHA256 trials72/gen_emit.py: fadbd5d602e4d368673422af640e5e740449db31302213ce4a0d07fd57775d0d
--- SHA256 trials72/frozen_margin72.py: fe6f75cdfc32c5390e28b9fab2cb2aac635e2878e345781a522c51261eac8655
+-- SHA256 trials72/frozen_margin72.py: 3eb7ca4426feb3300043d22a9bbf37114e26b0aad72edabc16372e779c0f89d3
 
 namespace CatalanMeasure.GenD.Signed.Davis.ScalarInstance72
 open Filter Polynomial CatalanMeasure.Parametric OAI.InternalCatalan CatalanMeasure.Signed
@@ -39,13 +40,13 @@ local notation "P72" => dc72.toParameters
 
 def cost72 : ℝ := 3604373 / 1000000
 def psi72 : ℝ := 54377 / 500
-def frozenEta72 : ℝ := 303822189 / 5000000
+def frozenEta72 : ℝ := 151911097 / 2500000
 def eta72 : ℝ := 151911097 / 2500000
 def baseTarget72 : ℝ := 1132420467 / 500000000
 def gain72 : ℝ := 639543 / 50000
-def contentLoss72 : ℝ := 37541613836424378244158288102311499062611 / 337851324779492441244927600000000000000000
-def contentBeta72 : ℝ := 2467350148401945156242109978913528381298333 / 258903586359571936582800000000000000000
-def snapshotS72 : ℝ := 16207938807145268273247368517241032500937389 / 337851324779492441244927600000000000000000
+def contentLoss72 : ℝ := 11111874115390747 / 100000000000000000
+def contentBeta72 : ℝ := 4291778436568158111689440044740051097612623 / 450344200156521455970900000000000000000
+def snapshotS72 : ℝ := 4797358369884609253 / 100000000000000000
 def window72 : ℝ := 27 / 50
 def gateDelta72 : ℝ := 29 / 100000000
 def csp72 : ℝ := 5 / 4
