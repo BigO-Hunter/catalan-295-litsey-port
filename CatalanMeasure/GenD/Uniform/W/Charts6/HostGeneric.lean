@@ -482,5 +482,65 @@ theorem source_phi_Ut_step (k : Int) (J : Nat) (S : Int) :
       (Polynomial.Chebyshev.U Int (k + 1)) (Polynomial.Chebyshev.U Int (k + 2))
       J S (by simp) hu
 
+
+theorem source_cf_zero (s : Int) : ZoneZ.Q.cf (fun _ => 0) s = 0 := by
+  simp [ZoneZ.Q.cf]
+
+theorem source_cf_one (s : Int) :
+    ZoneZ.Q.cf (1 : Polynomial Int).coeff s = if s = 0 then 1 else 0 := by
+  by_cases hs : s = 0
+  · subst s
+    simp [ZoneZ.Q.cf]
+  · by_cases hn : 0 ≤ s
+    · have hsn := Int.toNat_of_nonneg hn
+      have hz : s.toNat ≠ 0 := by omega
+      simp [ZoneZ.Q.cf, hn, Polynomial.coeff_one, hz, hs]
+    · simp [ZoneZ.Q.cf, hn, hs]
+
+/-- The signed first-coordinate constant source at its lower boundary. -/
+theorem source_phi_one_g_boundary (J : Nat) :
+    Charts.phiQ (1 : Polynomial Int).coeff (fun _ => 0) J (-1) = boundaryPlus (J + 1) := by
+  norm_num [Charts.phiQ, Finset.sum_range_succ, source_cf_one, source_cf_zero,
+    ZoneZ.Q.alphaQ, momentRatNegOne_eq]
+
+/-- The second-coordinate constant source has no lower-boundary term. -/
+theorem source_phi_one_t_boundary (J : Nat) :
+    Charts.phiQ (fun _ => 0) (1 : Polynomial Int).coeff J (-1) = 0 := by
+  norm_num [Charts.phiQ, Finset.sum_range_succ, source_cf_one, source_cf_zero]
+
+/-- Constant first-coordinate source at every nonnegative signed cutoff. -/
+theorem source_phi_one_g_nat (n J : Nat) :
+    Charts.phiQ (1 : Polynomial Int).coeff (fun _ => 0) J (n : Int) = momentRat n J := by
+  unfold Charts.phiQ
+  simp only [source_cf_one, source_cf_zero, Int.cast_zero, mul_zero, add_zero]
+  rw [Finset.sum_eq_single (n + 1)]
+  · have he : (n : Int) + 1 - ((n + 1 : Nat) : Int) = 0 := by omega
+    have hi : ((n + 1 : Nat) : Int) - 1 = (n : Int) := by omega
+    simp [he, ZoneZ.Q.alphaQ, hi]
+  · intro u hu hne
+    have he : (n : Int) + 1 - (u : Int) ≠ 0 := by omega
+    simp [he]
+  · intro hnot
+    have hmem : n + 1 ∈ Finset.range ((n : Int).toNat + 3) := by
+      simp only [Finset.mem_range, Int.toNat_natCast]
+      omega
+    exact (hnot hmem).elim
+
+/-- Constant second-coordinate source is the actual beta moment. -/
+theorem source_phi_one_t_nat (n J : Nat) :
+    Charts.phiQ (fun _ => 0) (1 : Polynomial Int).coeff J (n : Int) = ZoneZ.Q.betaQ n J := by
+  unfold Charts.phiQ
+  simp only [source_cf_one, source_cf_zero, Int.cast_zero, zero_add, mul_zero]
+  rw [Finset.sum_eq_single n]
+  · simp
+  · intro u hu hne
+    have he : (n : Int) - (u : Int) ≠ 0 := by omega
+    simp [he]
+  · intro hnot
+    have hmem : n ∈ Finset.range ((n : Int).toNat + 3) := by
+      simp only [Finset.mem_range, Int.toNat_natCast]
+      omega
+    exact (hnot hmem).elim
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
