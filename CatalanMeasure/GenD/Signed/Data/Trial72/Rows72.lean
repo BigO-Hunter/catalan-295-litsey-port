@@ -163,9 +163,9 @@ def rows (F : FieldRows)
   err_small := by
     intro i ε hε
     fin_cases i
-    · filter_upwards [Generic.err_small dc72 X0 hε] with N hN α _
+    · filter_upwards [Generic.err_small dc72 AssemblyBindings.X0 hε] with N hN α _
       exact hN
-    · filter_upwards [Generic.err_small dc72 X1 hε] with N hN α _
+    · filter_upwards [Generic.err_small dc72 AssemblyBindings.X1 hε] with N hN α _
       exact hN
   cp_theta := by intro i N α; fin_cases i <;> exact le_rfl
   hCls := SpikeClassifier72.hCls E0 E1 E2
