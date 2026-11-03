@@ -419,5 +419,68 @@ theorem source_phi_zero_below (a b : Nat → Int) (J : Nat) (S : Int) (hS : S < 
   have hb : ¬ 0 ≤ S - (u : Int) := by omega
   simp only [ZoneZ.Q.cf, if_neg ha, if_neg hb, Int.cast_zero, mul_zero, zero_add]
 
+
+theorem source_phi_poly_sub (G0 G1 T0 T1 : Polynomial Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => (G0 - G1).coeff i) (fun i => (T0 - T1).coeff i) J S =
+      Charts.phiQ (fun i => G0.coeff i) (fun i => T0.coeff i) J S -
+        Charts.phiQ (fun i => G1.coeff i) (fun i => T1.coeff i) J S := by
+  simpa only [Polynomial.coeff_sub] using
+    source_phi_sub (fun i => G0.coeff i) (fun i => T0.coeff i)
+      (fun i => G1.coeff i) (fun i => T1.coeff i) J S
+
+theorem source_phi_C_mul (c : Int) (G T : Polynomial Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => (Polynomial.C c * G).coeff i)
+      (fun i => (Polynomial.C c * T).coeff i) J S =
+        (c : Rat) * Charts.phiQ (fun i => G.coeff i) (fun i => T.coeff i) J S := by
+  simpa only [Polynomial.coeff_C_mul] using
+    source_phi_mul c (fun i => G.coeff i) (fun i => T.coeff i) J S
+
+/-- Any pair of polynomial X recurrences transports to the actual source
+functional, with the signed cutoff shifted by one. -/
+theorem source_phi_recurrence (G0 G1 G2 T0 T1 T2 : Polynomial Int)
+    (J : Nat) (S : Int)
+    (hG : G2 = Polynomial.C 2 * (G1 * Polynomial.X) - G0)
+    (hT : T2 = Polynomial.C 2 * (T1 * Polynomial.X) - T0) :
+    Charts.phiQ (fun i => G2.coeff i) (fun i => T2.coeff i) J S =
+      2 * Charts.phiQ (fun i => G1.coeff i) (fun i => T1.coeff i) J (S - 1) -
+        Charts.phiQ (fun i => G0.coeff i) (fun i => T0.coeff i) J S := by
+  rw [hG, hT, source_phi_poly_sub, source_phi_C_mul]
+  rw [source_phi_mul_X]
+  norm_num
+
+/-- Chebyshev-U source recurrence in the first profile coordinate. -/
+theorem source_phi_Ug_step (k : Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun i => (Polynomial.Chebyshev.U Int (k + 2)).coeff i) (fun _ => 0) J S =
+      2 * Charts.phiQ (fun i => (Polynomial.Chebyshev.U Int (k + 1)).coeff i)
+        (fun _ => 0) J (S - 1) -
+          Charts.phiQ (fun i => (Polynomial.Chebyshev.U Int k).coeff i) (fun _ => 0) J S := by
+  have hu : Polynomial.Chebyshev.U Int (k + 2) =
+      Polynomial.C 2 * (Polynomial.Chebyshev.U Int (k + 1) * Polynomial.X) -
+        Polynomial.Chebyshev.U Int k := by
+    rw [Polynomial.Chebyshev.U_add_two]
+    norm_num only [Polynomial.C_ofNat]
+    ring
+  simpa only [Polynomial.coeff_zero] using
+    source_phi_recurrence (Polynomial.Chebyshev.U Int k)
+      (Polynomial.Chebyshev.U Int (k + 1)) (Polynomial.Chebyshev.U Int (k + 2))
+      0 0 0 J S hu (by simp)
+
+/-- Chebyshev-U source recurrence in the second profile coordinate. -/
+theorem source_phi_Ut_step (k : Int) (J : Nat) (S : Int) :
+    Charts.phiQ (fun _ => 0) (fun i => (Polynomial.Chebyshev.U Int (k + 2)).coeff i) J S =
+      2 * Charts.phiQ (fun _ => 0)
+        (fun i => (Polynomial.Chebyshev.U Int (k + 1)).coeff i) J (S - 1) -
+          Charts.phiQ (fun _ => 0) (fun i => (Polynomial.Chebyshev.U Int k).coeff i) J S := by
+  have hu : Polynomial.Chebyshev.U Int (k + 2) =
+      Polynomial.C 2 * (Polynomial.Chebyshev.U Int (k + 1) * Polynomial.X) -
+        Polynomial.Chebyshev.U Int k := by
+    rw [Polynomial.Chebyshev.U_add_two]
+    norm_num only [Polynomial.C_ofNat]
+    ring
+  simpa only [Polynomial.coeff_zero] using
+    source_phi_recurrence 0 0 0 (Polynomial.Chebyshev.U Int k)
+      (Polynomial.Chebyshev.U Int (k + 1)) (Polynomial.Chebyshev.U Int (k + 2))
+      J S (by simp) hu
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
