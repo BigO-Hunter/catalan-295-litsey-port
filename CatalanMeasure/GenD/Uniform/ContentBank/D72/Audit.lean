@@ -1,4 +1,5 @@
 module
+public import CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.Table001
 public import CatalanMeasure.GenD.Uniform.W.Prof.PacketSparse
 public import CatalanMeasure.GenD.Uniform.W.Charts6.HostGeneric
 @[expose] public section
@@ -31,3 +32,14 @@ as their generic and data proofs are completed. -/
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_h1_sound
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_moment_sound
 #print axioms CatalanMeasure.GenD.Uniform.W.Charts6.int_zeta_sound
+
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.IntMomentData.check_sound
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_mul_X
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_add
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_sub
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_mul
+#print axioms CatalanMeasure.GenD.Uniform.W.Charts6.source_phi_zero_below
+#print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.scalarValues_check
+#print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.scalarValues_sound
+#print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.momentData_check
+#print axioms CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.momentData_sound
