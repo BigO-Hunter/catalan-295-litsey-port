@@ -218,10 +218,19 @@ theorem neg_log_le_seven {y : ℝ} (h0 : 0 ≤ y) (hy : y ≤ 1023 / 1024) : -Re
   have := Real.log_two_lt_d9
   linarith
 
-theorem tail_log_le (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ} (hx : |x| ≤ 1023 / 1024) :
+namespace Generic
+
+/-- A supplied logarithm enclosure bounds every point in a Laurent window. -/
+theorem neg_log_le {θ L y : ℝ} (hθ : 0 < θ) (hlog : -Real.log θ ≤ L)
+    (_h0 : 0 ≤ y) (hy : y ≤ 1 - θ) : -Real.log (1 - y) ≤ L := by
+  have hθy : θ ≤ 1 - y := by linarith only [hy]
+  have h := Real.log_le_log hθ hθy
+  linarith only [h, hlog]
+
+theorem tail_log_le {θ L : ℝ} (hθ : 0 < θ) (hlog : -Real.log θ ≤ L) (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ} (hx : |x| ≤ 1 - θ) :
     (tl.map fun t => (((|t.rr| + |t.ri| : ℚ)) : ℝ) *
         (-Real.log (1 - (((|t.zr| + |t.zi| : ℚ)) : ℝ) * |x|))).sum ≤
-      7 * (tl.map fun t => (((|t.rr| + |t.ri| : ℚ)) : ℝ)).sum := by
+      L * (tl.map fun t => (((|t.rr| + |t.ri| : ℚ)) : ℝ)).sum := by
   induction tl with
   | nil => simp
   | cons t tl ih =>
@@ -229,17 +238,19 @@ theorem tail_log_le (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ} (hx : |x
     have ht' : (((|t.zr| + |t.zi| : ℚ)) : ℝ) ≤ 1 := by exact_mod_cast ht.le
     have h0 : (0 : ℝ) ≤ (((|t.zr| + |t.zi| : ℚ)) : ℝ) := by positivity
     have hw0 : (0 : ℝ) ≤ (((|t.rr| + |t.ri| : ℚ)) : ℝ) := by positivity
-    have hy := neg_log_le_seven (y := (((|t.zr| + |t.zi| : ℚ)) : ℝ) * |x|) (by positivity)
-      (by nlinarith [abs_nonneg x])
+    have hprod : (((|t.zr| + |t.zi| : ℚ)) : ℝ) * |x| ≤ |x| := by
+      simpa only [one_mul] using mul_le_mul_of_nonneg_right ht' (abs_nonneg x)
+    have hy := neg_log_le hθ hlog (y := (((|t.zr| + |t.zi| : ℚ)) : ℝ) * |x|)
+      (by positivity) (hprod.trans hx)
     have := ih hZ'
     simp only [List.map_cons, List.sum_cons]
     nlinarith [mul_le_mul_of_nonneg_left hy hw0]
 
-theorem abs_barrierTrialS_tseq_le (fa : List ℚ) (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ}
-    (hx : |x| ≤ 1023 / 1024) :
-    |barrierTrialS (tseq (bSeq fa) (tl.map TailQ.toC)) x| ≤ (absSq fa : ℝ) + 7 * (tailW tl : ℝ) := by
+theorem abs_barrierTrialS_tseq_le {θ L : ℝ} (hθ : 0 < θ) (hlog : -Real.log θ ≤ L) (fa : List ℚ) (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ}
+    (hx : |x| ≤ 1 - θ) :
+    |barrierTrialS (tseq (bSeq fa) (tl.map TailQ.toC)) x| ≤ (absSq fa : ℝ) + L * (tailW tl : ℝ) := by
   have hx1 : |x| < 1 := by linarith
-  have hlog := hasSum_tail_log tl hZ hx1
+  have hseries := hasSum_tail_log tl hZ hx1
   have hfs : Summable (fun k : ℕ => |bSeq fa (k + 1)| / ((k + 1 : ℕ) : ℝ)) := by
     refine summable_of_ne_finset_zero (s := Finset.range fa.length) fun j hj => ?_
     have hk : fa.length ≤ j := by simpa using hj
@@ -247,7 +258,7 @@ theorem abs_barrierTrialS_tseq_le (fa : List ℚ) (tl : List TailQ) (hZ : tailZB
   have hfv : ∑' k : ℕ, |bSeq fa (k + 1)| / ((k + 1 : ℕ) : ℝ) = (absSq fa : ℝ) := by
     have := tsum_bSeq fa (fun k t => |t| / ((k + 1 : ℕ) : ℝ)) (fun _ => by simp)
     rw [this, absSq, idxSum_cast]; push_cast; simp
-  have hgs := hfs.hasSum.add hlog
+  have hgs := hfs.hasSum.add hseries
   rw [hfv] at hgs
   have hterm : ∀ k : ℕ, ‖tseq (bSeq fa) (tl.map TailQ.toC) (k + 1) * x ^ (k + 1) /
       ((k + 1 : ℕ) : ℝ)‖ ≤ |bSeq fa (k + 1)| / ((k + 1 : ℕ) : ℝ) +
@@ -281,8 +292,52 @@ theorem abs_barrierTrialS_tseq_le (fa : List ℚ) (tl : List TailQ) (hZ : tailZB
   rw [← Real.norm_eq_abs]
   refine (norm_tsum_le_tsum_norm hnorm).trans ?_
   refine (hasSum_le hterm hnorm.hasSum hgs).trans ?_
-  have := tail_log_le tl hZ hx
+  have := tail_log_le hθ hlog tl hZ hx
   rw [tailW_cast]
   linarith
 
+end Generic
+
+theorem tail_log_le (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ} (hx : |x| ≤ 1023 / 1024) :
+    (tl.map fun t => (((|t.rr| + |t.ri| : ℚ)) : ℝ) *
+        (-Real.log (1 - (((|t.zr| + |t.zi| : ℚ)) : ℝ) * |x|))).sum ≤
+      7 * (tl.map fun t => (((|t.rr| + |t.ri| : ℚ)) : ℝ)).sum := by
+  have hlog : -Real.log (1 / 1024 : ℝ) ≤ 7 := by
+    have h := neg_log_le_seven (y := (1023 / 1024 : ℝ)) (by norm_num) (by norm_num)
+    norm_num at h
+    exact h
+  have hwin : |x| ≤ 1 - (1 / 1024 : ℝ) := by linarith only [hx]
+  exact Generic.tail_log_le (θ := 1 / 1024) (L := 7) (by norm_num) hlog tl hZ hwin
+
+theorem abs_barrierTrialS_tseq_le (fa : List ℚ) (tl : List TailQ) (hZ : tailZB tl = true) {x : ℝ}
+    (hx : |x| ≤ 1023 / 1024) :
+    |barrierTrialS (tseq (bSeq fa) (tl.map TailQ.toC)) x| ≤ (absSq fa : ℝ) + 7 * (tailW tl : ℝ) := by
+  have hlog : -Real.log (1 / 1024 : ℝ) ≤ 7 := by
+    have h := neg_log_le_seven (y := (1023 / 1024 : ℝ)) (by norm_num) (by norm_num)
+    norm_num at h
+    exact h
+  have hwin : |x| ≤ 1 - (1 / 1024 : ℝ) := by linarith only [hx]
+  exact Generic.abs_barrierTrialS_tseq_le (θ := 1 / 1024) (L := 7) (by norm_num) hlog fa tl hZ hwin
+
 end CatalanMeasure.Signed.Consts
+
+#print axioms CatalanMeasure.Signed.Consts.bSeq_zero
+#print axioms CatalanMeasure.Signed.Consts.tsum_abs_bSeq
+#print axioms CatalanMeasure.Signed.Consts.abs_barrierTrialS_le
+#print axioms CatalanMeasure.Signed.Consts.divAll
+#print axioms CatalanMeasure.Signed.Consts.tailW_cast
+#print axioms CatalanMeasure.Signed.Consts.tailMaj_cast
+#print axioms CatalanMeasure.Signed.Consts.tq_norm_z
+#print axioms CatalanMeasure.Signed.Consts.tq_norm_w
+#print axioms CatalanMeasure.Signed.Consts.tail_term_le
+#print axioms CatalanMeasure.Signed.Consts.tseq_succ_abs_le
+#print axioms CatalanMeasure.Signed.Consts.tailZB_cons
+#print axioms CatalanMeasure.Signed.Consts.hasSum_tail_geom
+#print axioms CatalanMeasure.Signed.Consts.tsum_abs_tseq_le
+#print axioms CatalanMeasure.Signed.Consts.hasSum_tail_log
+#print axioms CatalanMeasure.Signed.Consts.neg_log_le_seven
+#print axioms CatalanMeasure.Signed.Consts.Generic.neg_log_le
+#print axioms CatalanMeasure.Signed.Consts.Generic.tail_log_le
+#print axioms CatalanMeasure.Signed.Consts.Generic.abs_barrierTrialS_tseq_le
+#print axioms CatalanMeasure.Signed.Consts.tail_log_le
+#print axioms CatalanMeasure.Signed.Consts.abs_barrierTrialS_tseq_le
