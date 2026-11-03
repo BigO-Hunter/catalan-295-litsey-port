@@ -1,5 +1,6 @@
 module
 public import CatalanMeasure.GenD.Signed.DesignConst
+public import CatalanMeasure.GenD.Analytic.RationalNodeScale
 public import CatalanMeasure.GenD.Signed.Davis.InverseImageWeights
 public import CatalanMeasure.GenD.Signed.Davis.Trimmed130Branches
 public import CatalanMeasure.GenD.Signed.Davis.Trimmed130Support
@@ -54,6 +55,17 @@ theorem umin72_le_one (N : ℕ) : umin72 N ≤ 1 := by
   have h : (0 : ℝ) ≤ N := Nat.cast_nonneg N
   linarith
 
+theorem umin72_log_sublinear :
+    Filter.Tendsto (fun N : ℕ => -Real.log (umin72 N) / ((72 * N : ℕ) : ℝ))
+      Filter.atTop (nhds 0) := by
+  have h := rational_node_scale_log_sublinear (s := (1 : ℝ)) (A := 132)
+    (B := 260) (n0 := 72) (by norm_num) (by norm_num) (by norm_num) (by norm_num)
+  convert h using 1
+  funext N
+  unfold umin72
+  push_cast
+  congr 2 <;> ring
+
 end
 end CatalanMeasure.GenD.Signed.Davis
 #print axioms CatalanMeasure.GenD.Signed.Davis.tau72_injective
@@ -64,3 +76,5 @@ end CatalanMeasure.GenD.Signed.Davis
 #print axioms CatalanMeasure.GenD.Signed.Davis.tau72_support
 #print axioms CatalanMeasure.GenD.Signed.Davis.umin72_pos
 #print axioms CatalanMeasure.GenD.Signed.Davis.umin72_le_one
+
+#print axioms CatalanMeasure.GenD.Signed.Davis.umin72_log_sublinear
