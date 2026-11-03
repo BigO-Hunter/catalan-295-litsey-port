@@ -1,5 +1,5 @@
 module
-public import CatalanMeasure.GenD.Uniform.W.Charts6.SourceNative
+public import CatalanMeasure.GenD.Uniform.ContentBank.D72.Source.Encoding
 @[expose] public section
 set_option Elab.async false
 set_option maxRecDepth 100000
@@ -8,54 +8,54 @@ This is the first production source table and its check-class calibration. -/
 namespace CatalanMeasure.GenD.Uniform.ContentBank.D72.Source
 open CatalanMeasure.GenD.Uniform.W.Charts6 OAI.InternalCatalan
 
-#time def sourceScale : Int := 6440755335035039829226159204238433976320000
+#time def sourceScale : Int := sourceLit (List.headD (raw_ints% [46862662821040720367645256950625]) 0) 37 false
 
 #time def scalarValues : List Int := [
-  12881510670070079658452318408476867952640000,
-  0,
-  8587673780046719772301545605651245301760000,
-  0,
-  6870139024037375817841236484520996241408000,
-  0,
-  5888690592032036415292488415303711064064000,
-  0,
-  5234391637361810146926656369158854279168000,
-  0,
-  4758537852147100133569687608326231162880000,
-  0,
-  4392496478905015507910480869224213381120000,
-  0,
-  4099663380311347807383115477942599155712000,
-  0,
-  3858506710881268524595873391004799205376000,
-  0,
-  3655427410308570181196090580951915036672000,
-  0,
-  3481359438389114458281991029478014320640000,
-  0,
-  3329995984546109481834947941239839784960000,
-  0,
-  3196796145164265102561550023590246193561600,
-  0,
-  3078396287935958987651862985679496334540800,
-  0,
-  2972244691800236263939729779276755081625600,
-  0,
-  2876365830774422190909415915429117820928000,
-  0,
-  2789203229841863942700039675567629402112000,
-  0,
-  2709511708989239258622895684837125704908800,
-  0,
-  2636281662800340900281736342003689875046400,
-  0,
-  2568684697087511646428358487080518339788800,
-  0,
-  2506033850817084533100837548371237404672000,
-  0]
+  sourceLit (List.headD (raw_ints% [46862662821040720367645256950625]) 0) 38 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [15620887607013573455881752316875]) 0) 39 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [3124177521402714691176350463375]) 0) 41 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [1338933223458306296218435912875]) 0) 42 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [148770358162034032913159545875]) 0) 45 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [67622890073651833142345248125]) 0) 46 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [15605282324688884571310441875]) 0) 48 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [7282465084854812799944872875]) 0) 49 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [428380299109106635290874875]) 0) 53 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [202916983788524195664098625]) 0) 54 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [48313567568696237062880625]) 0) 56 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [23106488837202548160508125]) 0) 57 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [2772778660464305779260975]) 0) 60 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [1335041577260591671496025]) 0) 61 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [322251415200832472430075]) 0) 63 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [155928104129435067304875]) 0) 64 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [4725094064528335372875]) 0) 69 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [2295045688485191466825]) 0) 70 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [558254356658560086525]) 0) 72 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [271970071192631837025]) 0) 73 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false,
+  sourceLit (List.headD (raw_ints% [33167081852759980125]) 0) 76 false,
+  sourceLit (List.headD (raw_ints% [0]) 0) 0 false]
 
--- kcost: 0.30s estimated (1500 provisional structural/arithmetic units *0.0002s/unit).
--- Includes zero-default list traversal; first measured check-class rate is pending.
+-- kcost: 2s estimated (10000 provisional decoder/structural/arithmetic units *0.0002s/unit).
+-- Includes zero-default list traversal; rescaled literal check-class rate is pending.
 #time theorem scalarValues_check : intScalarCheck 42 sourceScale scalarValues = true := by
   decide +kernel
 
