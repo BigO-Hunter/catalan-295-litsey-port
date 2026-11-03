@@ -537,5 +537,68 @@ theorem int_moment_sound (H L : Nat) (hH : H + 3 < p) (hLH : L ≤ H)
     exact hbp j hj
 
 
+
+/-- Cleared zeta table, retaining both the denominator unit and actual residue. -/
+theorem int_zeta_sound (H L : Nat) (hH : H + 3 < p) (hLH : L ≤ H)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (H1 : List Int) (ZT : List (List Int))
+    (hh1 : ∀ n, n < H + 1 → ResRec.Gd p (harmonicRat 1 n)
+      ((intAt H1 n : ZMod p) / (Z : ZMod p)))
+    (hz00 : intAt2 ZT 0 0 = 0)
+    (hcol : ∀ i, 0 < i → i < H → (i : Int) * intAt2 ZT i 0 = intAt H1 i)
+    (hrow : ∀ j, j < L → intAt2 ZT 0 j = intAt2 ZT j 0)
+    (hdiag : ∀ i j, i + 1 < H → j + 1 < L →
+      (i + 1 : Int) * (j + 1 : Int) *
+        (intAt2 ZT i j - intAt2 ZT (i + 1) (j + 1)) = Z) :
+    ∀ i j, i < H → j < L → ResRec.Gd p (zetaRat i j)
+      ((intAt2 ZT i j : ZMod p) / (Z : ZMod p)) := by
+  have col0 : ∀ i, i < H → ResRec.Gd p (zetaRat i 0)
+      ((intAt2 ZT i 0 : ZMod p) / (Z : ZMod p)) := by
+    intro i hi
+    rcases Nat.eq_zero_or_pos i with rfl | hpos
+    · rw [hz00]
+      simpa [zetaRat_diagonal] using (ResRec.Gd.nat (p := p) 0)
+    · have e : zetaRat i 0 = harmonicRat 1 i * (1 / (i : Rat)) := by
+        rw [zetaRat_of_ne (by omega)]
+        simp [harmonicRat_zero, div_eq_mul_inv]
+      refine ResRec.Gd.of_eq e (ResRec.Gd.val ?_
+        (ResRec.Gd.mul (hh1 i (by omega)) (ResRec.Gd.inv_nat hpos (by omega))))
+      have hn : (i : ZMod p) ≠ 0 := ResRec.natCast_ne_zero_of_lt hpos (by omega)
+      rw [eq_comm, eq_mul_inv_iff_mul_eq₀ hn]
+      have ec := congrArg (fun z : Int => (z : ZMod p)) (hcol i hpos hi)
+      push_cast at ec
+      have ed := congrArg (fun z : ZMod p => z / (Z : ZMod p)) ec
+      convert ed using 1 <;> ring
+  refine ResRec.diag_sound zetaRat
+    (fun i j => 1 / (((i + 1 : Nat) : Rat) * ((j + 1 : Nat) : Rat)))
+    (fun i j => (intAt2 ZT i j : ZMod p) / (Z : ZMod p))
+    (fun i j => (((i + 1 : Nat) : ZMod p)⁻¹) * (((j + 1 : Nat) : ZMod p)⁻¹))
+    H L zetaRat_step ?_ ?_ ?_ ?_
+  · intro i j hi hj
+    refine ResRec.Gd.of_eq (by rw [one_div_mul_one_div])
+      (ResRec.Gd.mul
+        (ResRec.Gd.inv_nat (p := p) (n := i + 1) (by omega) (by omega))
+        (ResRec.Gd.inv_nat (p := p) (n := j + 1) (by omega) (by omega)))
+  · intro i j hi hj
+    have hn : ((i + 1 : Nat) : ZMod p) ≠ 0 :=
+      ResRec.natCast_ne_zero_of_lt (by omega) (by omega)
+    have hm : ((j + 1 : Nat) : ZMod p) ≠ 0 :=
+      ResRec.natCast_ne_zero_of_lt (by omega) (by omega)
+    apply (mul_right_inj' (mul_ne_zero hn hm)).mp
+    have ec := congrArg (fun z : Int => (z : ZMod p)) (hdiag i j hi hj)
+    push_cast at ec
+    have ed := congrArg (fun z : ZMod p => z / (Z : ZMod p)) ec
+    calc
+      _ = ((((i + 1 : Nat) : ZMod p) * ((j + 1 : Nat) : ZMod p)) *
+          ((intAt2 ZT i j : ZMod p) - (intAt2 ZT (i + 1) (j + 1) : ZMod p))) /
+            (Z : ZMod p) := by push_cast; ring
+      _ = (Z : ZMod p) / (Z : ZMod p) := by
+        simpa only [Nat.cast_add, Nat.cast_one] using ed
+      _ = 1 := div_self hZ
+      _ = _ := by field_simp [hn, hm]
+  · exact col0
+  · intro j hj
+    rw [zetaRat_symm, hrow j hj]
+    exact col0 j (by omega)
+
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
