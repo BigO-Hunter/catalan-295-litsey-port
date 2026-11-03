@@ -308,6 +308,85 @@ theorem cachedLoop_enc {S : ℕ} {S' : ℚ} (ps : List (ℚ × ℚ))
 #print axioms cachedLoop_tailTable
 #print axioms cachedLoop_enc
 
+
+/-- A short consumer reuses the prefix of a longer checked table. -/
+theorem tailTable_take (ps : List (ℚ × ℚ)) :
+    ∀ (n m : ℕ) (Is : List Iv),
+      (tailTable ps (n + m) Is).take n = tailTable ps n Is
+  | 0, m, Is => by simp [tailTable]
+  | n + 1, m, Is => by
+    rw [show n + 1 + m = (n + m) + 1 by omega]
+    simp only [tailTable, List.take_succ_cons, tailTable_take ps n m]
+
+/-- Enclosures of consecutive values of an abstract scalar sequence. -/
+def TableEnc (S : ℚ) (f : ℕ → ℚ) : ℕ → List Iv → Prop
+  | _, [] => True
+  | k, I :: Is => Enc S I (f k) ∧ TableEnc S f (k + 1) Is
+
+theorem tailTable_enc {S : ℚ} (ps : List (ℚ × ℚ)) :
+    ∀ (n k : ℕ) (Is : List Iv), PolesEnc S ps k Is →
+      TableEnc S (fun j => pv ps (j + 1)) k (tailTable ps n Is)
+  | 0, _, _, _ => True.intro
+  | n + 1, k, Is, h =>
+    ⟨polesEnc_sum h, tailTable_enc ps n (k + 1) _ (polesEnc_step h)⟩
+
+/-- An independent shared table may feed any certified pointwise consumer. -/
+theorem cachedLoop_tableEnc {S : ℕ} {S' : ℚ}
+    (φ : ℕ → Iv → Iv) (ψ : ℕ → ℚ → ℚ)
+    (hφ : ∀ k I x, Enc (S : ℚ) I x → Enc S' (φ k I) (ψ k x))
+    (g : List ℚ) (f : ℕ → ℚ) :
+    ∀ (ts : List Iv) (k : ℕ) (acc : Iv) (a : ℚ),
+      TableEnc (S : ℚ) f k ts → Enc S' acc a →
+      Enc S' (cachedLoop S φ k (g.drop k) ts acc)
+        (a + ∑ j ∈ Finset.range ts.length, ψ (k + j) (g.getD (k + j) 0 + f (k + j)))
+  | [], k, acc, a, _, ha => by simpa [cachedLoop] using ha
+  | I :: ts, k, acc, a, ht, ha => by
+    have hd : Enc (S : ℚ) (add (ofQ S ((g.drop k).headD 0)) I) (g.getD k 0 + f k) := by
+      rw [headD_drop]
+      exact enc_add (enc_ofQ S _) ht.1
+    have h := cachedLoop_tableEnc φ ψ hφ g f ts (k + 1) _ _ ht.2
+      (enc_add ha (hφ k _ _ hd))
+    simp only [cachedLoop, List.length_cons]
+    rw [List.tail_drop, sum_shift (fun j => ψ j (g.getD j 0 + f j)) k ts.length, ← add_assoc]
+    exact h
+
+/-- Interval subtraction, at the unchanged scale. -/
+def sub (I J : Iv) : Iv := add I (mulC J (-1))
+
+theorem enc_sub {S : ℚ} {I J : Iv} {x y : ℚ} (hx : Enc S I x) (hy : Enc S J y) :
+    Enc S (sub I J) (x - y) := by
+  simpa [sub, sub_eq_add_neg] using enc_add hx (enc_mulC hy (-1))
+
+/-- Difference of two shared tables, traversed together. -/
+def diffTable : List Iv → List Iv → List Iv
+  | I :: Is, J :: Js => sub I J :: diffTable Is Js
+  | _, _ => []
+
+theorem tableEnc_diff {S : ℚ} (f g : ℕ → ℚ) :
+    ∀ (a b : List Iv) (k : ℕ), TableEnc S f k a → TableEnc S g k b →
+      TableEnc S (fun j => f j - g j) k (diffTable a b)
+  | [], _, _, _, _ => True.intro
+  | _ :: _, [], _, _, _ => True.intro
+  | I :: Is, J :: Js, k, ha, hb =>
+    ⟨enc_sub ha.1 hb.1, tableEnc_diff f g Is Js (k + 1) ha.2 hb.2⟩
+
+theorem tailTable_length (ps : List (ℚ × ℚ)) :
+    ∀ (n : ℕ) (Is : List Iv), (tailTable ps n Is).length = n
+  | 0, _ => rfl
+  | n + 1, Is => by simp only [tailTable, List.length_cons, tailTable_length ps n]
+
+theorem diffTable_length : ∀ (a b : List Iv), a.length = b.length → (diffTable a b).length = a.length
+  | [], [], _ => rfl
+  | [], _ :: _, h => by simp at h
+  | _ :: _, [], h => by simp at h
+  | I :: Is, J :: Js, h => by
+    simp only [List.length_cons, Nat.add_right_cancel_iff] at h
+    simpa only [diffTable, List.length_cons] using congrArg (· + 1) (diffTable_length Is Js h)
+
+#print axioms tailTable_enc
+#print axioms cachedLoop_tableEnc
+#print axioms tableEnc_diff
+
 /-! ### Stateless terms and moments -/
 
 /-- `acc + Σ_{j<n} φ_{k+j}(T_{k+j})`. -/
