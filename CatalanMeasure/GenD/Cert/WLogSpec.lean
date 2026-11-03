@@ -3,8 +3,11 @@ module
 public import CatalanMeasure.GenD.Cert.WLog
 public import CatalanMeasure.GenD.Cert.ResW
 public import CatalanMeasure.CellCert.CellSound
+public import CatalanMeasure.CellCert.NormClosed
 
 @[expose] public section
+set_option Elab.async false
+set_option profiler true
 
 namespace CatalanMeasure.CellCert
 open CatalanMeasure.Cert OAI.InternalCatalan Polynomial Set
@@ -244,4 +247,59 @@ theorem resSpecW_sound (ρ : ℚ) {Pc : List ℤ} {P : List TailQ} (hP : tailsIn
 
 
 end
+
+/-! ### Weighted norm-log upper bounds (C24)
+The zero filter preserves the exact analytic sum; WLog supplies its already-proved
+node table, per-weight series/error budget, tiny-weight cutoff and dyadic rounding.
+No old numeric norm cap or new analytic approximation is assumed. -/
+def nonzeroLogTerms : List LogTerm → List LogTerm
+  | [] => []
+  | t :: l => if t.c = 0 ∧ t.d = 0 then nonzeroLogTerms l else t :: nonzeroLogTerms l
+
+theorem nonzeroLogTerms_sum (l : List LogTerm) :
+    ((nonzeroLogTerms l).map LogTerm.val).sum = (l.map LogTerm.val).sum := by
+  induction l with
+  | nil => rfl
+  | cons t l ih =>
+    by_cases h : t.c = 0 ∧ t.d = 0
+    · have hz : t.val = 0 := by simp [LogTerm.val, barrierComplex, h.1, h.2]
+      simp only [nonzeroLogTerms, if_pos h, List.map_cons, List.sum_cons, hz, zero_add, ih]
+    · simp only [nonzeroLogTerms, if_neg h, List.map_cons, List.sum_cons, ih]
+
+def logUpperWOK (terms : List LogTerm) (B : ℚ) : Bool :=
+  match CatalanMeasure.WLog.sumLogsWI (nonzeroLogTerms terms) with
+  | some ve => decide (ve.1+ve.2 ≤ B)
+  | none => false
+
+theorem logUpperW_le {terms : List LogTerm} {B : ℚ} (h : logUpperWOK terms B = true) :
+    (terms.map LogTerm.val).sum ≤ (B : ℝ) := by
+  unfold logUpperWOK at h
+  split at h
+  · rename_i ve he
+    have hs := CatalanMeasure.WLog.sumLogsWI_spec he
+    rw [nonzeroLogTerms_sum] at hs
+    have hq : ve.1+ve.2 ≤ B := of_decide_eq_true h
+    have hr := (Rat.cast_le (K := ℝ)).mpr hq
+    push_cast at hr
+    linarith only [(abs_le.mp hs).2, hr]
+  · simp at h
+
+theorem normSq_le_of_shardsW {cs : List ℤ} {tail : List TailQ} (hd : tailsInDisk tail = true)
+    {B : ℚ} (nf : ℕ) (fubs : List ℚ) (sqUb : ℚ) (nl : ℕ) (bs : List ℚ)
+    (hsq : nSq cs 0 ≤ sqUb)
+    (hlenF : tail.length ≤ nf * fubs.length)
+    (hF : ∀ g < fubs.length,
+      (((tail.drop (nf * g)).take nf).map (nCross cs)).sum ≤ fubs.getD g 0)
+    (hlenL : tail.length ≤ nl * bs.length)
+    (hL : ∀ g < bs.length,
+      logUpperWOK (((tail.drop (nl * g)).take nl).flatMap (rowTerms tail)) (bs.getD g 0) = true)
+    (hB : sqUb + 2 * fubs.sum + bs.sum ≤ B) :
+    barrierTrialNormSq (trialSeqS cs tail) ≤ (B : ℝ) :=
+  normSq_le_of_shard_bounds hd nf fubs sqUb nl bs hsq hlenF hF hlenL
+    (fun g hg => logUpperW_le (hL g hg)) hB
+
 end CatalanMeasure.CellCert
+
+#print axioms CatalanMeasure.CellCert.nonzeroLogTerms_sum
+#print axioms CatalanMeasure.CellCert.logUpperW_le
+#print axioms CatalanMeasure.CellCert.normSq_le_of_shardsW
