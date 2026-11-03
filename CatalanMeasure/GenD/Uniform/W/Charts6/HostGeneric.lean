@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Uniform.W.Prof.PacketSparse
 public import CatalanMeasure.GenD.Uniform.W.Charts4.JetsGeneric
 public import CatalanMeasure.GenD.Uniform.W.Charts4.ThetaRep
 public import CatalanMeasure.GenD.Uniform.W.Charts.Rows
+public import CatalanMeasure.GenD.ResRec
 public import Mathlib.Tactic.FinCases
 @[expose] public section
 set_option Elab.async false
@@ -306,6 +307,77 @@ theorem zProfileData_realises {b ex K : Nat} (hK : K = b * 4 + 2 + ex)
       (map_zTy k0 a (Charts4.ckEquiv hK k))
     simp only [Polynomial.coeff_map] at hmap
     simpa [zProfileData, k.isLt] using hmap.symm
+
+
+/-- Integer table getter with the same zero-default convention as ResRec. -/
+def intAt : List Int → Nat → Int
+  | [], _ => 0
+  | x :: _, 0 => x
+  | _ :: xs, i + 1 => intAt xs i
+
+/-- Residue view used only by the generic proof; data checks stay in Int. -/
+def scaledResidues (p : Nat) [Fact p.Prime] (Z : Int) (xs : List Int) : List Nat :=
+  xs.map (fun x => (((x : ZMod p) / (Z : ZMod p)).val))
+
+theorem scaledResidues_at (Z : Int) (xs : List Int) (i : Nat) :
+    (ResRec.tl (scaledResidues p Z xs) i : ZMod p) =
+      (intAt xs i : ZMod p) / (Z : ZMod p) := by
+  induction xs generalizing i with
+  | nil => simp [scaledResidues, ResRec.tl, ResRec.nth, intAt]
+  | cons x xs ih =>
+    cases i with
+    | zero => simp [scaledResidues, ResRec.tl, ResRec.nth, intAt]
+    | succ i => simpa [scaledResidues, ResRec.tl, ResRec.nth, intAt] using ih i
+
+/-- Checked cleared scalar moments give their actual rational residues at every
+prime avoiding the explicit common scale. This does not test a single prime. -/
+theorem int_ms_sound (N : Nat) (hN : N + 2 < p)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (MS : List Int)
+    (h0 : intAt MS 0 = 2 * Z)
+    (hodd : ∀ i, i < N → i % 2 = 1 → intAt MS i = 0)
+    (hev : ∀ m, 2 * m + 2 < N →
+      (2 * m + 3 : Int) * intAt MS (2 * m + 2) =
+        (2 * m + 2 : Int) * intAt MS (2 * m)) :
+    ∀ i, i < N → ResRec.Gd p (momentScalar i)
+      ((intAt MS i : ZMod p) / (Z : ZMod p)) := by
+  have hbase : (ResRec.tl (scaledResidues p Z MS) 0 : ZMod p) = 2 := by
+    rw [scaledResidues_at, h0]
+    simp [hZ]
+  have ho : ∀ i, i < N → i % 2 = 1 →
+      (ResRec.tl (scaledResidues p Z MS) i : ZMod p) = 0 := by
+    intro i hi hod
+    rw [scaledResidues_at, hodd i hi hod]
+    simp
+  have he : ∀ m, 2 * m + 2 < N →
+      (((2 * m + 3) * ResRec.tl (scaledResidues p Z MS) (2 * m + 2) : Nat) : ZMod p) =
+        (((2 * m + 2) * ResRec.tl (scaledResidues p Z MS) (2 * m) : Nat) : ZMod p) := by
+    intro m hm
+    have e := congrArg (fun z : Int => (z : ZMod p)) (hev m hm)
+    push_cast at e ⊢
+    rw [scaledResidues_at, scaledResidues_at]
+    simpa only [mul_div_assoc] using congrArg (fun z : ZMod p => z / (Z : ZMod p)) e
+  intro i hi
+  exact ResRec.Gd.val (scaledResidues_at Z MS i)
+    (ResRec.ms_sound N hN (scaledResidues p Z MS) hbase ho he i hi)
+
+/-- Native integer-only scalar table checker. The length and positive scale are
+part of the finite certificate; all odd entries are explicitly checked. -/
+def intScalarCheck (N : Nat) (Z : Int) (MS : List Int) : Bool :=
+  decide (0 < Z) && decide (MS.length = N) && decide (intAt MS 0 = 2 * Z) &&
+    (List.range N).all (fun i => decide (i % 2 = 1 → intAt MS i = 0)) &&
+    (List.range N).all (fun m => decide (2 * m + 2 < N →
+      (2 * m + 3 : Int) * intAt MS (2 * m + 2) =
+        (2 * m + 2 : Int) * intAt MS (2 * m)))
+
+theorem intScalarCheck_sound (N : Nat) (hN : N + 2 < p)
+    (Z : Int) (hZ : (Z : ZMod p) ≠ 0) (MS : List Int)
+    (hc : intScalarCheck N Z MS = true) :
+    0 < Z ∧ MS.length = N ∧ ∀ i, i < N →
+      ResRec.Gd p (momentScalar i) ((intAt MS i : ZMod p) / (Z : ZMod p)) := by
+  simp only [intScalarCheck, Bool.and_eq_true, decide_eq_true_eq,
+    List.all_eq_true, List.mem_range] at hc
+  refine ⟨hc.1.1.1.1, hc.1.1.1.2, ?_⟩
+  exact int_ms_sound N hN Z hZ MS hc.1.1.2 hc.1.2 (fun m hm => hc.2 m (by omega) hm)
 
 end
 end CatalanMeasure.GenD.Uniform.W.Charts6
