@@ -16,6 +16,8 @@ Only `Int` arithmetic is used in the kernel (all cell endpoints are dyadic).
 namespace CatalanMeasure.Signed.Consts
 
 open Set CatalanMeasure.Cert
+set_option Elab.async false
+set_option profiler true
 
 def zAdd : List ℤ → List ℤ → List ℤ
   | [], q => q
@@ -53,6 +55,30 @@ theorem zv_smul (c : ℤ) (p : List ℤ) (x : ℝ) : zv (zSmul c p) x = c * zv p
   | cons a p ih =>
     have : zSmul c (a :: p) = (c * a) :: zSmul c p := rfl
     rw [this, zv_cons, zv_cons, ih]; push_cast; ring
+
+/-- Position scaling by a geometric factor, carrying the factor structurally. -/
+def zDilateAux (a : ℤ) : ℤ → List ℤ → List ℤ
+  | _, [] => []
+  | t, c :: p => t * c :: zDilateAux a (t * a) p
+
+def zDilate (a : ℤ) (p : List ℤ) : List ℤ := zDilateAux a 1 p
+
+theorem zv_dilateAux (a : ℤ) (p : List ℤ) (x : ℝ) :
+    ∀ t : ℤ, zv (zDilateAux a t p) x = (t : ℝ) * zv p ((a : ℝ) * x) := by
+  induction p with
+  | nil => intro t; simp [zDilateAux, zv_nil]
+  | cons c p ih =>
+    intro t
+    simp only [zDilateAux, zv_cons, ih]
+    push_cast
+    ring
+
+/-- Factoring a_j = a^j v_j preserves the polynomial by x ↦ a*x. -/
+theorem zv_dilate (a : ℤ) (p : List ℤ) (x : ℝ) :
+    zv (zDilate a p) x = zv p ((a : ℝ) * x) := by
+  simpa only [zDilate, Int.cast_one, one_mul] using zv_dilateAux a p x 1
+
+#print axioms zv_dilate
 
 theorem zv_mulAff (A D : ℤ) (r : List ℤ) (t : ℝ) :
     zv (zMulAff A D r) t = (A + D * t) * zv r t := by
