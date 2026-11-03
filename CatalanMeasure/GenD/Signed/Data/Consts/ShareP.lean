@@ -80,6 +80,37 @@ theorem zCompS_length (s : ℕ) (A D : ℤ) : ∀ L : List ℤ, (zCompS s A D L)
     rw [hz, hm, ih]
     simp
 
+/-- Restore per-position powers of two from small signed mantissas. -/
+def powRestore : List ℤ → List ℕ → List ℤ
+  | m :: ms, e :: es => m * 2 ^ e :: powRestore ms es
+  | _, _ => []
+
+/-- Check each supplied exponent/mantissa against the original exact integer. -/
+def powTapeOK : List ℤ → List ℤ → List ℕ → Bool
+  | [], [], [] => true
+  | x :: xs, m :: ms, e :: es => decide (x = m * 2 ^ e) && powTapeOK xs ms es
+  | _, _, _ => false
+
+theorem powTapeOK_eq (xs : List ℤ) : ∀ (ms : List ℤ) (es : List ℕ),
+    powTapeOK xs ms es = true → xs = powRestore ms es := by
+  induction xs with
+  | nil =>
+    intro ms es h
+    cases ms <;> cases es <;> simp_all [powTapeOK, powRestore]
+  | cons x xs ih =>
+    intro ms es h
+    cases ms with
+    | nil => simp [powTapeOK] at h
+    | cons m ms =>
+      cases es with
+      | nil => simp [powTapeOK] at h
+      | cons e es =>
+        simp only [powTapeOK, Bool.and_eq_true, decide_eq_true_eq] at h
+        simp only [powRestore]
+        exact congrArg₂ List.cons h.1 (ih ms es h.2)
+
+#print axioms powTapeOK_eq
+
 /-- The shared cell transform. -/
 def mobCell (Pn : List ℤ) (S : ℕ) (A B : ℤ) : List ℤ := zCompS 0 1 1 (zCompS S A (B - A) Pn).reverse
 
