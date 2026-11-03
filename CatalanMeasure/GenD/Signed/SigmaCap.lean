@@ -486,6 +486,16 @@ top cell `[x_c, 1)`, the number of nodes of the family at least as large is at m
 cap `ν ≤ κ` of the paper holding with its constant `C₁`), and all positives satisfy
 `x ≤ 1 - umin` (the node gap at 1).  This is the whole content of `FixAdm` that the σ bound
 needs; a contract `FixAdm` only has to imply it (no cap cells, no `κᵢ` table). -/
+def FixAdmCapAsym (gsN gsP xc C1 n umin : ℝ) {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ)
+    (zp : Fin s → ℝ) : Prop :=
+  (∀ j, yn j ≤ -gsN) ∧ (∀ j, gsP ≤ yp j) ∧ (∀ j, gsP ≤ zp j) ∧
+    (∀ j, yp j ≤ 1 - umin) ∧ (∀ j, zp j ≤ 1 - umin) ∧
+    (∀ j, xc ≤ yp j →
+      ((Finset.univ.filter (fun i => yp j ≤ yp i)).card : ℝ) ≤ C1 * n * (1 - yp j) + 1) ∧
+    (∀ j, xc ≤ zp j →
+      ((Finset.univ.filter (fun i => zp j ≤ zp i)).card : ℝ) ≤ C1 * n * (1 - zp j) + 1)
+
+
 def FixAdmCap (gs xc C1 n umin : ℝ) {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ)
     (zp : Fin s → ℝ) : Prop :=
   (∀ j, yn j ≤ -gs) ∧ (∀ j, gs ≤ yp j) ∧ (∀ j, gs ≤ zp j) ∧
@@ -494,6 +504,12 @@ def FixAdmCap (gs xc C1 n umin : ℝ) {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp 
       ((Finset.univ.filter (fun i => yp j ≤ yp i)).card : ℝ) ≤ C1 * n * (1 - yp j) + 1) ∧
     (∀ j, xc ≤ zp j →
       ((Finset.univ.filter (fun i => zp j ≤ zp i)).card : ℝ) ≤ C1 * n * (1 - zp j) + 1)
+
+
+/-- The symmetric legacy admissibility predicate is exactly the two-gap diagonal. -/
+theorem fixAdmCapAsym_self (gs xc C1 n umin : ℝ) {m1 m2 s : ℕ}
+    (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ) :
+    FixAdmCapAsym gs gs xc C1 n umin yn yp zp ↔ FixAdmCap gs xc C1 n umin yn yp zp := Iff.rfl
 
 /-- The data of the σ bound of one α-interval: `gs = g*`, the start `xc` of the top cell, the cap
 density `C1` (per unit of `n`), and the field bounds as functions of the fixed fraction `α`
@@ -525,14 +541,14 @@ top cell `fPosMS ≤ gP + ε` (so `fPosMR ≤ gP + ε + rP (-log (1 - x²))` as 
 `fNearMS ≤ gS + ε + rS (-log (1 - x²))`.  With the top cap of `FixAdmCap`:
 `Σ fNegM + Σ fPosMR + Σ fNearMS ≤ m₁(lamN+ε) + m₂(lamP+ε) + s(lamS+ε) + C₁ ν (capInt + capInt)`
 plus the two one-node terms `topPhi … umin` (each `(g0 - lam + r log (1/umin))^+`). -/
-theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → ℝ)
+theorem fixed_sum_le_cap_asym (S : SigmaCapData) (gsN : ℝ) (D : SignedData) (Rm Rn : ℝ → ℝ)
     {rc α β ε umin : ℝ} {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
     (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hν : 0 < D.ν)
     (hrc : 0 ≤ rc) (hα : 0 ≤ α) (hrP : rc * α ≤ S.rP α) (hrS : 0 ≤ S.rS α β)
     (hyn : ∀ j, yn j ∈ Ioo (-1 : ℝ) 0) (hyp : ∀ j, yp j ∈ Ioo (0 : ℝ) 1)
     (hzp : ∀ j, zp j ∈ Ioo (0 : ℝ) 1)
-    (humin : 0 < umin) (hadm : FixAdmCap S.gs S.xc S.C1 D.ν umin yn yp zp)
-    (hneg : ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → D.fNegM Rm x ≤ S.lamN α + ε)
+    (humin : 0 < umin) (hadm : FixAdmCapAsym gsN S.gs S.xc S.C1 D.ν umin yn yp zp)
+    (hneg : ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -gsN → D.fNegM Rm x ≤ S.lamN α + ε)
     (hpos : ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
       D.fPosMR Rm rc α x ≤ S.lamP α + ε)
     (hposTop : ∀ x ∈ Ioo (0 : ℝ) 1, S.xc ≤ x → D.fPosMS Rm x ≤ S.gP α + ε)
@@ -582,6 +598,31 @@ theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → �
   linarith [A, B, C, e]
 
 /-- The algebra of the normalisation `1/n`. -/
+
+theorem fixed_sum_le_cap (S : SigmaCapData) (D : SignedData) (Rm Rn : ℝ → ℝ)
+    {rc α β ε umin : ℝ} {m1 m2 s : ℕ} (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ)
+    (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hν : 0 < D.ν)
+    (hrc : 0 ≤ rc) (hα : 0 ≤ α) (hrP : rc * α ≤ S.rP α) (hrS : 0 ≤ S.rS α β)
+    (hyn : ∀ j, yn j ∈ Ioo (-1 : ℝ) 0) (hyp : ∀ j, yp j ∈ Ioo (0 : ℝ) 1)
+    (hzp : ∀ j, zp j ∈ Ioo (0 : ℝ) 1)
+    (humin : 0 < umin) (hadm : FixAdmCap S.gs S.xc S.C1 D.ν umin yn yp zp)
+    (hneg : ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → D.fNegM Rm x ≤ S.lamN α + ε)
+    (hpos : ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
+      D.fPosMR Rm rc α x ≤ S.lamP α + ε)
+    (hposTop : ∀ x ∈ Ioo (0 : ℝ) 1, S.xc ≤ x → D.fPosMS Rm x ≤ S.gP α + ε)
+    (hnear : ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
+      D.fNearMS Rn α β x ≤ S.lamS α β + ε)
+    (hnearTop : ∀ x ∈ Ioo (0 : ℝ) 1, S.xc ≤ x →
+      D.fNearMS Rn α β x ≤ S.gS α β + ε + S.rS α β * (-Real.log (1 - x ^ 2))) :
+    (∑ j, D.fNegM Rm (yn j)) + (∑ j, D.fPosMR Rm rc α (yp j)) +
+        ∑ j, D.fNearMS Rn α β (zp j) ≤
+      (m1 : ℝ) * (S.lamN α + ε) + (m2 : ℝ) * (S.lamP α + ε) + (s : ℝ) * (S.lamS α β + ε) +
+        S.C1 * D.ν * (capInt (S.gP α - S.lamP α) (S.rP α) (1 - S.xc) +
+          capInt (S.gS α β - S.lamS α β) (S.rS α β) (1 - S.xc)) +
+        topPhi (S.gP α - S.lamP α) (S.rP α) (1 - S.xc) umin +
+        topPhi (S.gS α β - S.lamS α β) (S.rS α β) (1 - S.xc) umin := by
+  exact fixed_sum_le_cap_asym S S.gs D Rm Rn yn yp zp hxc0 hxc1 hC1 hν hrc hα hrP hrS hyn hyp hzp humin hadm hneg hpos hposTop hnear hnearTop
+
 theorem assemble_aux {n m1 m2 s a b c P Q C1 ε : ℝ} (hn : 0 < n) :
     (1 / n) * (m1 * (a + ε) + m2 * (b + ε) + s * (c + ε) + C1 * n * (P + Q)) =
       m1 / n * a + m2 / n * b + s / n * c + C1 * (P + Q) + (m1 + m2 + s) / n * ε := by
@@ -616,7 +657,7 @@ theorem fixedSumAt_conform {I : ℕ} (T : SignedNearBounds I) (i : Fin I) :
 top-cell bounds without the log term (`hposTop`, `hnearTop`), and a `FixAdm` that implies the top
 cap (`hFix`), the field `fixedSum` holds with any `ZB ≥ zbCap S`.  No cell LP; the top cap is
 the single count of `FixAdmCap`.  Use: `fixedSum := fun i {ε} hε => fixedSumAt_of_cap (S i) … ε hε`. -/
-theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ → ℝ → SignedData}
+theorem fixedSumAt_of_cap_asym (S : SigmaCapData) (gsN : ℝ) {ncount : ℕ → ℕ} {D : ℕ → ℝ → SignedData}
     {Rm Rn : ℕ → ℝ → ℝ} {rc lo hi : ℝ} {ZB : ℝ → ℝ → ℝ → ℝ}
     {FixAdm : ∀ (N m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop}
     (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hrc : 0 ≤ rc) (hlo : 0 ≤ lo)
@@ -634,10 +675,10 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
       (nhds 0))
     (hFix : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
       FixAdm N m1 m2 s yn yp zp →
-        FixAdmCap S.gs S.xc S.C1 (ncount N : ℝ) (umin N) yn yp zp)
+        FixAdmCapAsym gsN S.gs S.xc S.C1 (ncount N : ℝ) (umin N) yn yp zp)
     (hZB : ∀ c d β, 0 ≤ c → 0 ≤ d → 0 ≤ β → zbCap S c d β ≤ ZB c d β)
     (hneg : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
-      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → (D N α).fNegM (Rm N) x ≤ S.lamN α + ε)
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -gsN → (D N α).fNegM (Rm N) x ≤ S.lamN α + ε)
     (hpos : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
       ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
         (D N α).fPosMR (Rm N) rc α x ≤ S.lamP α + ε)
@@ -676,9 +717,9 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
   have hd0 : 0 ≤ (m2 : ℝ) / (ncount N : ℝ) := by positivity
   have hβ0 : 0 ≤ (s : ℝ) / (ncount N : ℝ) := by positivity
   have hβα : (s : ℝ) / (ncount N : ℝ) ≤ α := by linarith
-  have hadm' : FixAdmCap S.gs S.xc S.C1 (D N α).ν (umin N) yn yp zp := by
+  have hadm' : FixAdmCapAsym gsN S.gs S.xc S.C1 (D N α).ν (umin N) yn yp zp := by
     rw [hνN]; exact hFix N m1 m2 s yn yp zp hadm
-  have hmain := fixed_sum_le_cap S (D N α) (Rm N) (Rn N) (rc := rc) (α := α)
+  have hmain := fixed_sum_le_cap_asym S gsN (D N α) (Rm N) (Rn N) (rc := rc) (α := α)
     (β := (s : ℝ) / (ncount N : ℝ)) (ε := ε / 2) (umin := umin N) yn yp zp hxc0 hxc1 hC1
     (by rw [hνN]; exact hnN)
     hrc hα0 (hrP α hα) (hrS α hα _ ⟨hβ0, hβα⟩) hyn hyp hzp (hum0 N) hadm'
@@ -709,6 +750,44 @@ theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ →
         2 * Rbd * (-Real.log (umin N) / (ncount N : ℝ)) := by ring
   linarith [hmul, hid, hε2, hZ, hEs, hEe, hfN]
 
+
+theorem fixedSumAt_of_cap (S : SigmaCapData) {ncount : ℕ → ℕ} {D : ℕ → ℝ → SignedData}
+    {Rm Rn : ℕ → ℝ → ℝ} {rc lo hi : ℝ} {ZB : ℝ → ℝ → ℝ → ℝ}
+    {FixAdm : ∀ (N m1 m2 s : ℕ), (Fin m1 → ℝ) → (Fin m2 → ℝ) → (Fin s → ℝ) → Prop}
+    (hxc0 : 0 ≤ S.xc) (hxc1 : S.xc < 1) (hC1 : 0 < S.C1) (hrc : 0 ≤ rc) (hlo : 0 ≤ lo)
+    (hhi : hi ≤ 1)
+    (hn : ∀ N, 0 < N → 0 < ncount N) (hν : ∀ N α, (D N α).ν = (ncount N : ℝ))
+    (hrP : ∀ α ∈ Icc lo hi, rc * α ≤ S.rP α)
+    (hrS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, 0 ≤ S.rS α β)
+    (umin : ℕ → ℝ) (hum0 : ∀ N, 0 < umin N) (hum1 : ∀ N, umin N ≤ 1) (Bd Rbd : ℝ)
+    (hBdP : ∀ α ∈ Icc lo hi, S.gP α - S.lamP α ≤ Bd)
+    (hBdS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, S.gS α β - S.lamS α β ≤ Bd)
+    (hRP : ∀ α ∈ Icc lo hi, S.rP α ≤ Rbd)
+    (hRS : ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α, S.rS α β ≤ Rbd)
+    (hn_top : Filter.Tendsto (fun N => (ncount N : ℝ)) Filter.atTop Filter.atTop)
+    (hlogu : Filter.Tendsto (fun N => -Real.log (umin N) / (ncount N : ℝ)) Filter.atTop
+      (nhds 0))
+    (hFix : ∀ N m1 m2 s (yn : Fin m1 → ℝ) (yp : Fin m2 → ℝ) (zp : Fin s → ℝ),
+      FixAdm N m1 m2 s yn yp zp →
+        FixAdmCap S.gs S.xc S.C1 (ncount N : ℝ) (umin N) yn yp zp)
+    (hZB : ∀ c d β, 0 ≤ c → 0 ≤ d → 0 ≤ β → zbCap S c d β ≤ ZB c d β)
+    (hneg : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -S.gs → (D N α).fNegM (Rm N) x ≤ S.lamN α + ε)
+    (hpos : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
+        (D N α).fPosMR (Rm N) rc α x ≤ S.lamP α + ε)
+    (hposTop : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi,
+      ∀ x ∈ Ioo (0 : ℝ) 1, S.xc ≤ x → (D N α).fPosMS (Rm N) x ≤ S.gP α + ε)
+    (hnear : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, S.gs ≤ x → x < S.xc →
+        (D N α).fNearMS (Rn N) α β x ≤ S.lamS α β + ε)
+    (hnearTop : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in Filter.atTop, ∀ α ∈ Icc lo hi, ∀ β ∈ Icc 0 α,
+      ∀ x ∈ Ioo (0 : ℝ) 1, S.xc ≤ x →
+        (D N α).fNearMS (Rn N) α β x ≤
+          S.gS α β + ε + S.rS α β * (-Real.log (1 - x ^ 2))) :
+    FixedSumAt ncount D Rm Rn rc lo hi ZB FixAdm := by
+  exact fixedSumAt_of_cap_asym S S.gs hxc0 hxc1 hC1 hrc hlo hhi hn hν hrP hrS umin hum0 hum1 Bd Rbd hBdP hBdS hRP hRS hn_top hlogu hFix hZB hneg hpos hposTop hnear hnearTop
+
 end
 
 end CatalanMeasure.Signed
@@ -722,3 +801,7 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.fixed_sum_le_cap
 #print axioms CatalanMeasure.Signed.fixedSumAt_conform
 #print axioms CatalanMeasure.Signed.fixedSumAt_of_cap
+
+#print axioms CatalanMeasure.Signed.fixAdmCapAsym_self
+#print axioms CatalanMeasure.Signed.fixed_sum_le_cap_asym
+#print axioms CatalanMeasure.Signed.fixedSumAt_of_cap_asym
