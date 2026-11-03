@@ -2055,12 +2055,12 @@ theorem roundMergeUBL_of_parts (fq : FieldQ) (ts : List LTerm) (nL nA Mp Ml ML P
 
 /-! Structural cleaning for kernel computation: sorting is unnecessary for piece semantics. -/
 def fieldClean (fq : FieldQ) : FieldQ :=
-  ⟨trimPoly fq.poly,siteClean (mergeSites fq.plogs),poleClean (mergePoles fq.poles)⟩
+  ⟨trimPoly fq.poly,siteClean (mergeSites fq.plogs),poleClean fq.poles⟩
 
 theorem fieldClean_sound (fq : FieldQ) (x : ℝ) :
     fieldTower (fieldClean fq) (poleF (fieldClean fq).poles) 0 x = fieldTower fq (poleF fq.poles) 0 x := by
   simp only [fieldClean,fieldTower_zero]
-  rw [trimPoly_sound,siteClean_sound,mergeSites_eq,poleClean_sound,mergePoles_sound]
+  rw [trimPoly_sound,siteClean_sound,mergeSites_eq,poleClean_sound]
 
 def laurentClean (ts : List LTerm) : List LTerm := lfClean (mergeL ts)
 
