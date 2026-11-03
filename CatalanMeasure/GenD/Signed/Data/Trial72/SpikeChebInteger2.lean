@@ -10,7 +10,7 @@ set_option maxRecDepth 1000000
 set_option maxHeartbeats 0
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeChebInteger2
-open CatalanMeasure.Signed.Consts OAI.InternalCatalan CatalanMeasure.CellCert
+open CatalanMeasure.Signed CatalanMeasure.Cert CatalanMeasure.Signed.Consts OAI.InternalCatalan CatalanMeasure.CellCert
 open CatalanMeasure.GenD.Signed.Data.Trial72 CatalanMeasure.GenD.Signed.Data.Trial
 noncomputable section
 def sr : ℚ := (qlist (raw_ints% [1311314498851535, 35184372088832])).headD 0

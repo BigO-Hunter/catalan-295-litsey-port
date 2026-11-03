@@ -10,7 +10,7 @@ set_option maxHeartbeats 0
 set_option profiler true
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeChebInteger
-open CatalanMeasure.Signed.Consts OAI.InternalCatalan
+open CatalanMeasure.Signed CatalanMeasure.Cert CatalanMeasure.Signed.Consts OAI.InternalCatalan
 noncomputable section
 
 /-- Carry the Chebyshev recurrence in integers. The first two states are
@@ -55,7 +55,7 @@ end
 end CatalanMeasure.GenD.Signed.Data.Trial72.SpikeChebInteger
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeChebIntegerPilot
-open CatalanMeasure.Signed.Consts OAI.InternalCatalan CatalanMeasure.CellCert
+open CatalanMeasure.Signed CatalanMeasure.Cert CatalanMeasure.Signed.Consts OAI.InternalCatalan CatalanMeasure.CellCert
 open CatalanMeasure.GenD.Signed.Data.Trial72 CatalanMeasure.GenD.Signed.Data.Trial
 noncomputable section
 def sr : ℚ := (qlist (raw_ints% [5498093038080309, 140737488355328])).headD 0

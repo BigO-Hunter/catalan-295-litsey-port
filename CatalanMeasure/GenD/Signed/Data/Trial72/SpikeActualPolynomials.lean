@@ -13,7 +13,7 @@ set_option profiler true
 set_option maxRecDepth 1000000
 set_option maxHeartbeats 0
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.SpikeActualPolynomials
-open CatalanMeasure.Signed.Consts OAI.InternalCatalan
+open CatalanMeasure.Signed CatalanMeasure.Cert CatalanMeasure.Signed.Consts OAI.InternalCatalan
 noncomputable section
 
 theorem coeff0 : SpikeChebIntegerPilot.pn = SpikeNormalized0.Pn := by decide +kernel
