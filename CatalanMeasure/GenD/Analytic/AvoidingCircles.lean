@@ -60,8 +60,34 @@ theorem polynomial_norm_at_center_le_of_sphere (Q : ℂ[X]) {center : ℂ} {ρ B
   · rw [closure_ball _ hρ.ne']
     simp [hρ.le]
 
+/-- The exceptional-set separation costs a polynomial prefactor only. A local
+Green perturbation bound transfers the separated-point estimate to the center,
+including centers which themselves are roots. -/
+theorem polynomial_center_bound_of_exceptional_set {K N : ℕ}
+    (Q : ℂ[X]) (roots : Fin K → ℂ) (center : ℂ) (hN : 0 < N)
+    (g : ℂ → ℝ) {σ L B : ℝ} (hB : 0 ≤ B)
+    (hperturb : ∀ z : ℂ, (N : ℝ) ^ 2 * ‖z - center‖ ≤ 1 →
+      σ * g z ≤ σ * g center + L)
+    (hbound : ∀ z : ℂ, (N : ℝ) ^ 2 * ‖z - center‖ ≤ 1 →
+      (∀ i, 1 / (4 * ((K : ℝ) + 1) * (N : ℝ) ^ 2) ≤ ‖z - roots i‖) →
+      ‖Q.eval z‖ ≤ B * Real.exp (σ * g z)) :
+    ‖Q.eval center‖ ≤ (B * Real.exp L) * Real.exp (σ * g center) := by
+  obtain ⟨ρ, hρ, hsep⟩ := exists_separated_small_circle roots center hN
+  have hNR : (0 : ℝ) < N := by exact_mod_cast hN
+  have hρ0 : 0 < ρ := lt_of_lt_of_le (by positivity) hρ.1
+  apply polynomial_norm_at_center_le_of_sphere Q hρ0
+  intro z hz
+  obtain ⟨hclose, havoid⟩ := hsep z hz
+  calc
+    ‖Q.eval z‖ ≤ B * Real.exp (σ * g z) := hbound z hclose havoid
+    _ ≤ B * Real.exp (σ * g center + L) :=
+      mul_le_mul_of_nonneg_left (Real.exp_le_exp.mpr (hperturb z hclose)) hB
+    _ = _ := by rw [Real.exp_add]; ring
+
 end
 end CatalanMeasure.GenD.Analytic
 #print axioms CatalanMeasure.GenD.Analytic.exists_separated_circle
 #print axioms CatalanMeasure.GenD.Analytic.exists_separated_small_circle
 #print axioms CatalanMeasure.GenD.Analytic.polynomial_norm_at_center_le_of_sphere
+
+#print axioms CatalanMeasure.GenD.Analytic.polynomial_center_bound_of_exceptional_set
