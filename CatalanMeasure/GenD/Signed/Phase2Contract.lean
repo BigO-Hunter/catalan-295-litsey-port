@@ -1901,7 +1901,7 @@ or a pointwise inequality of one variable on `[-1, 1]` / a rational inequality i
 * `θ0, dsp, Mmax` (spike count) and `Kn, Tn`;
 * the sup certificates `hsup` (free field below its cap by `dsp` on `(1-θ0, 1)`) and `hgap` (by
   `dgap` on `(-a0, a0) \ {0}`) of the factor-free OLD trial (same fields as the 532 trial). -/
-structure LinkCert {I : ℕ} (D : Phase2Data I) (P : Parameters) (target residual nearCap cost : ℝ)
+structure LinkCert {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) (P : Parameters) (target residual nearCap cost : ℝ)
     (G : ℝ → Prop) (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G) (δ e t0 c2 : ℝ) where
   Dcap : Fin I → ℝ
   hDcap : ∀ i, ∀ α ∈ Icc (D.lo i) (D.hi i), excess target cost t0 c2 δ (P.n0 : ℝ) α ≤ Dcap i
@@ -2191,6 +2191,313 @@ theorem Phase2Data.signedSecondSheetNearNd_nearOpt_of_cert {I : ℕ} (D : Phase2
 
 end HL7
 
+/-! ### Independent negative-gap near-sheet bridge (eventual node cap)
+
+The original symmetric theorems above retain their explicit types. Their shared
+Phase2 record and SignedNearBounds assembly are reused. The new node route needs
+only an eventual cap, so it never asserts the N>=10 result at smaller N.
+-/
+open CatalanMeasure.Parametric CatalanMeasure.GenD CatalanMeasure.GenD.Analytic OAI.InternalCatalan
+theorem fixAdmCapAsym_of_marked {gsN gs xc C1 n umin : ℝ} (hgsN : 0 ≤ gsN) (hgsP : 0 ≤ gs) (hxc : 0 ≤ xc) {m m1 m2 r s' : ℕ}
+    {y : Fin m → ℝ} (hM : MarkedCapAsym gsN gs xc C1 n umin y) (σy : Fin m1 ⊕ Fin m2 ≃ Fin m)
+    (hyneg : ∀ b, y (σy (Sum.inl b)) < 0) (hypos : ∀ b, 0 < y (σy (Sum.inr b)))
+    (τ : Fin r ⊕ Fin s' ≃ Fin m2) :
+    FixAdmCapAsym gsN gs xc C1 n umin (fun b => y (σy (Sum.inl b)))
+      (fun j => y (σy (Sum.inr (τ (Sum.inl j))))) (fun j => y (σy (Sum.inr (τ (Sum.inr j))))) := by
+  obtain ⟨h1, h2, h3⟩ := hM
+  refine ⟨fun j => ?_, fun j => ?_, fun j => ?_, fun j => h2 _, fun j => h2 _, fun j hj => ?_,
+    fun j hj => ?_⟩
+  · rcases h1 (σy (Sum.inl j)) with hn | hp
+    · exact hn
+    · exfalso; linarith [hyneg j]
+  · rcases h1 (σy (Sum.inr (τ (Sum.inl j)))) with hn | hp
+    · exfalso; linarith [hypos (τ (Sum.inl j))]
+    · exact hp
+  · rcases h1 (σy (Sum.inr (τ (Sum.inr j)))) with hn | hp
+    · exfalso; linarith [hypos (τ (Sum.inr j))]
+    · exact hp
+  · have hinj : Function.Injective
+        (fun i : Fin r => σy (Sum.inr (τ (Sum.inl i)))) :=
+      fun a b hab => Sum.inl_injective (τ.injective (Sum.inr_injective (σy.injective hab)))
+    exact (Nat.cast_le.2 (count_sub_le y _ hinj j)).trans (h3 _ hj)
+  · have hinj : Function.Injective
+        (fun i : Fin s' => σy (Sum.inr (τ (Sum.inr i)))) :=
+      fun a b hab => Sum.inr_injective (τ.injective (Sum.inr_injective (σy.injective hab)))
+    exact (Nat.cast_le.2 (count_sub_le y _ hinj j)).trans (h3 _ hj)
+
+/-- The complete contract `SignedNearBounds I` from the Phase 2 data. -/
+
+theorem Phase2DataCore.toBounds_α1 {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.α1 = D.α1 := rfl
+
+theorem Phase2DataCore.toBounds_ncount {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.ncount = D.ncount := rfl
+
+theorem Phase2DataCore.toBounds_lo {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.lo = D.lo := rfl
+
+theorem Phase2DataCore.toBounds_hi {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.hi = D.hi := rfl
+
+theorem Phase2DataCore.toBounds_κlo {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.κlo = D.κlo := rfl
+
+theorem Phase2DataCore.toBounds_κhi {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.κhi = D.κhi := rfl
+
+theorem Phase2DataCore.toBounds_Clsf {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.Clsf = D.Clsf := rfl
+
+theorem Phase2DataCore.toBounds_FixAdm {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) : D.toBounds.FixAdm = D.FixAdm := rfl
+
+/-- **The class-link data** (`hlink` of `Phase2DataCore.signedSecondSheetNearNd_nearOpt` for the
+near-optimal class): the only things the data module supplies beyond the endpoint certificates are
+the named constants and one-sided polynomial certificates below, every one a finite rational datum
+or a pointwise inequality of one variable on `[-1, 1]` / a rational inequality in `α`.
+
+* `Dtop`, `Dcap i`: caps of `excess α` on `[0, α1]` / on the interval `[lo i, hi i]` (affine in `α`:
+  check the endpoints);
+* `Cp i`, `Cm i` (`sP i`, `sM i` with `H·Dcap ≤ s²`): polynomials below the positive / negative
+  indicator on `[-1,1] \ {0}`; with `hκlo`, `hκhi`, `hk0`, `hq2g` the κ-range, `0 < k`, `2 g < q`;
+* `a0, dgap, ts, ηT` and the grid `tg` with polynomials `Ct j` below `1 - k_{tg j} - hmesh/ts`
+  (Lemma T slope);
+* `θ0, dsp, Mmax` (spike count) and `Kn, Tn`;
+* the sup certificates `hsup` (free field below its cap by `dsp` on `(1-θ0, 1)`) and `hgap` (by
+  `dgap` on `(-a0, a0) \ {0}`) of the factor-free OLD trial (same fields as the 532 trial). -/
+
+theorem Phase2DataCore.signedSecondSheetNear {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) {P : Parameters}
+    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (Cls : ∀ (N r : ℕ), (Fin r → ℝ) → Prop)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (hnon : GroupedMarkedProductCostOnRestr P target0 c2 G
+      (fun N r _ _ z _ _ _ => ¬ Cls N r z))
+    (hlink : SignedNearClassLink P D.toBounds Cls G) :
+    SignedSecondSheetCore P G target0 c2 D.α1 :=
+  _root_.CatalanMeasure.Signed.signedSecondSheetNear hP G target0 c2 Cls D.toBounds hn hconst hRf hRm hRn hCf hLRf hB hcost
+    hnon hlink
+
+/-- **The near-optimal class (the dichotomy of PROOF-A 17.9(a), Lemma 4), factor-free form.**  A
+free configuration `z` is in the class when SOME marked selection `(x, y)` and column configuration
+`s` violate the FACTOR-FREE old-route bound at `(target, cost)`: the grouped product exceeds
+`(∏ (1 + s_i))^(a+b) · exp(n0² N² (-target + log 2/2) + cost N (a+b))`, with no `ε`.  The class is
+measured against the factor-free product because the statement (`SignedSecondSheetCore`, S1,
+PROOF-RHO §2.5) is about `markedSheetCore`, which has no factor `(∏ (1 + s))^m`; Lemma K
+(`free_facts`) then compares it with the factor-free old route (`SecondTrialBoundsEnd`), and the
+class excess is `(t0 - target) + (cost - c2/n0) α + δ`, constant in `α` at `c2 = n0 · cost`.  Off
+the class the factor-free old route holds by definition (`hnon_nearOpt`, `hnonC_nearOpt`). -/
+
+theorem Phase2DataCore.signedSecondSheetNearNd_nearOpt {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) {P : Parameters}
+    (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hlink : SignedNearClassLinkNd P D.toBounds (nearOptCls P target0 c2 G) G Nd) :
+    SignedSecondSheetCoreNd P G Nd target0 c2 D.α1 :=
+  _root_.CatalanMeasure.Signed.signedSecondSheetNearNd_core hP G target0 c2 _ D.toBounds hn
+    hconst hRf hRm hRn hCf hLRf hB hcost (hnonC_nearOpt hP target0 c2 G) Nd hlink
+
+set_option maxHeartbeats 1600000 in
+theorem Phase2DataCore.hlink_nearOpt {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap) {P : Parameters} (hP : Admissible P)
+    {target residual nearCap cost : ℝ} {G : ℝ → Prop}
+    (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G) {δ e : ℝ} (hδ : 0 < δ)
+    (he : e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
+    (t0 c2 : ℝ) (hn : ∀ N, D.ncount N = P.n N)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hgsN0 : 0 ≤ negativeGap.getD D.gs) (hgsP0 : 0 ≤ D.gs)
+    (hNd : ∀ᶠ N : ℕ in atTop, ∀ m y, (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → Nd N m y →
+      MarkedCapAsym (negativeGap.getD D.gs) D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
+    (L : LinkCert D P target residual nearCap cost G D0 δ e t0 c2) :
+    SignedNearClassLinkNd P D.toBounds (nearOptCls P t0 c2 G) G Nd := by
+  have hn0 : (0 : ℝ) < P.n0 := n0_pos hP
+  have hηev : ∀ᶠ N : ℕ in atTop, 1 < (P.n N : ℝ) * L.ηT := by
+    filter_upwards [D.hn_top.eventually_gt_atTop (1 / L.ηT)] with N hN
+    have h1 : (P.n N : ℝ) = (D.ncount N : ℝ) := by rw [hn N]
+    rw [h1]
+    exact (div_lt_iff₀ L.hηT).1 hN
+  unfold SignedNearClassLinkNd
+  filter_upwards [free_facts hP D0 hδ he hec t0 c2, L.hsup, L.hgap, hηev,
+    eventually_ge_atTop 2, hNd] with N hF hsup hgap hη hN2 hNdN p m hpm hmle x y hx hx0 hy hy0 hyG hNdy
+    hzi hc
+  have hνpos : (0 : ℝ) < P.n N := by exact_mod_cast n_pos hP (by omega : 0 < N)
+  have hνD : (D.ncount N : ℝ) = P.n N := by rw [hn N]
+  rw [Phase2DataCore.toBounds_α1, Phase2DataCore.toBounds_ncount, hνD] at hmle
+  set α : ℝ := (m : ℝ) / (P.n N : ℝ) with hαdef
+  have hα0 : 0 ≤ α := div_nonneg (Nat.cast_nonneg _) hνpos.le
+  have hα1 : α ≤ D.α1 := by
+    rw [hαdef, div_le_iff₀ hνpos]; linarith [hmle]
+  obtain ⟨hcap, hbr, hsqf⟩ := hF p m hpm x hc
+  have hΔ : excess target cost t0 c2 δ (P.n0 : ℝ) α ≤ L.Dtop := L.hDtop α ⟨hα0, hα1⟩
+  have hpmR : (p : ℝ) + m = P.n N := by exact_mod_cast hpm
+  have hpν : (p : ℝ) / (P.n N : ℝ) = 1 - α := by
+    rw [hαdef]; field_simp; linarith
+  have hNpos : (0 : ℝ) < N := by exact_mod_cast (by omega : 0 < N)
+  have hgr : 2 * (P.g N : ℝ) / (P.n N : ℝ) = 2 * (P.g0 : ℝ) / P.n0 := by
+    simp only [Parameters.g, n_cast]
+    push_cast
+    field_simp
+  have hreg : ∀ (dd : ℝ) (S : Finset (Fin p)), 0 < dd →
+      (∀ i ∈ S, freeRowX P N D0.p D0.v (x i) ≤ D0.MX + δ / 4 - dd) →
+      (S.card : ℝ) ≤ (P.n N : ℝ) * L.Dtop / dd := by
+    intro dd S hdd hS
+    have h1 := card_region_le hνpos (fun i => freeRowX P N D0.p D0.v (x i)) S hcap hS hbr
+    rw [le_div_iff₀ hdd]
+    exact h1.trans (mul_le_mul_of_nonneg_left hΔ hνpos.le)
+  have hM := hNdN m y hy hNdy
+  -- Lemma T
+  have hfree : ∀ t ∈ Ioc (0 : ℝ) 1, 2 * (P.g N : ℝ) + 1 < ∑ i, (1 - slopeKernel t (x i)) := by
+    refine free_slope_gt (ν := (P.n N : ℝ)) (e := e) (gg := (P.g N : ℝ)) hνpos he x hx hx0
+      D0.p D0.p_summable hsqf hΔ L.ha0 L.hts L.hdgap ?_ hη ?_ L.tg L.hmesh L.htg L.hcov L.Ct
+      L.sT L.hsT0 L.hsT L.hPt ?_
+    · exact hreg L.dgap _ L.hdgap (fun i hi => hgap (x i) (abs_pos.2 (hx0 i))
+        (by simpa using hi))
+    · rw [hgr, hpν]; exact L.hsmall α ⟨hα0, hα1⟩
+    · intro j; rw [hgr, hpν]; exact L.hmarg j α ⟨hα0, hα1⟩
+  refine ⟨lemmaT_of_free hP hN2 hpm x y hx hx0 hy hy0 hzi hfree, ?_⟩
+  intro k q m1 m2' σx σy hxneg hxpos hyneg hypos
+  have hm12 : m1 + m2' = m := by simpa using Fintype.card_congr σy
+  have hkq : k + q = p := by simpa using Fintype.card_congr σx
+  have hαeq : ((m1 + m2' : ℕ) : ℝ) / (D.toBounds.ncount N : ℝ) = α := by
+    rw [hm12, Phase2DataCore.toBounds_ncount, hνD]
+  have hsign : ∀ i, α ∈ Icc (D.lo i) (D.hi i) →
+      (1 - α) * (L.Cp i).c0 + certMean (L.Cp i).K (L.Cp i).G D0.p - L.sP i ≤
+        (q : ℝ) / (P.n N : ℝ) ∧
+      (1 - α) * (L.Cm i).c0 + certMean (L.Cm i).K (L.Cm i).G D0.p - L.sM i ≤
+        (k : ℝ) / (P.n N : ℝ) := by
+    intro i hi
+    have h := sign_lower hνpos he σx x hx hxneg hxpos D0.p D0.p_summable hsqf (L.hDcap i α hi)
+      (L.Cp i) (L.Cm i) (L.hsP0 i) (L.hsM0 i) (L.hsP i) (L.hsM i) (L.hCp_neg i) (L.hCp_pos i)
+      (L.hCm_neg i) (L.hCm_pos i)
+    rw [hpν] at h
+    exact h
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+    have hs := (hsign i0 ⟨h1, h2⟩).2
+    have hk := L.hκlo i0 α ⟨h1, h2⟩
+    have hk0 := L.hk0 i0
+    have : 0 < (k : ℝ) / (P.n N : ℝ) := by linarith
+    have hkpos : (0 : ℝ) < k := (div_pos_iff_of_pos_right hνpos).1 this
+    exact_mod_cast hkpos
+  · obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+    have hs := (hsign i0 ⟨h1, h2⟩).1
+    have hq := L.hq2g i0 α ⟨h1, h2⟩
+    have h3 : 2 * (P.g N : ℝ) / (P.n N : ℝ) < (q : ℝ) / (P.n N : ℝ) := by
+      rw [hgr]; linarith
+    have h4 : 2 * (P.g N : ℝ) < q := (div_lt_div_iff_of_pos_right hνpos).1 h3
+    exact_mod_cast h4
+  · intro i hlo hhi
+    rw [Phase2DataCore.toBounds_lo, hαeq] at hlo
+    rw [Phase2DataCore.toBounds_hi, hαeq] at hhi
+    have hs := hsign i ⟨hlo, hhi⟩
+    show D.κlo i ≤ (k : ℝ) / (D.ncount N : ℝ) ∧ (k : ℝ) / (D.ncount N : ℝ) ≤ D.κhi i
+    rw [hνD]
+    refine ⟨(L.hκlo i α ⟨hlo, hhi⟩).trans hs.2, ?_⟩
+    have hkq' : (k : ℝ) / (P.n N : ℝ) = (p : ℝ) / (P.n N : ℝ) - (q : ℝ) / (P.n N : ℝ) := by
+      have : (k : ℝ) = p - q := by
+        have : (k : ℝ) + q = p := by exact_mod_cast hkq
+        linarith
+      rw [this, sub_div]
+    rw [hkq', hpν]
+    have := L.hκhi i α ⟨hlo, hhi⟩
+    linarith [hs.1]
+  · intro r s' τ
+    refine ⟨?_, ?_⟩
+    · -- the canonical `Clsf`
+      show D.Clsf N k q m1 (r + s') _ _ _ _
+      refine L.hClsf N k q m1 (r + s') _ _ _ _ ?_
+      have hq2 : 2 * P.g N < q := by
+        obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+        have hs := (hsign i0 ⟨h1, h2⟩).1
+        have hq := L.hq2g i0 α ⟨h1, h2⟩
+        have h3 : 2 * (P.g N : ℝ) / (P.n N : ℝ) < (q : ℝ) / (P.n N : ℝ) := by
+          rw [hgr]; linarith
+        have h4 : 2 * (P.g N : ℝ) < q := (div_lt_div_iff_of_pos_right hνpos).1 h3
+        exact_mod_cast h4
+      refine canon_of_split (fun i N => (D.DA i N).θ) (fun i N => (D.DA i N).sp)
+        (fun i N => (D.DA i N).g) (fun i N => (D.DA i N).ν) L.Kn L.Tn L.Mmax N hpm x y hx hy
+        σx σy τ hxneg hxpos hyneg hypos (L.hKn N) (L.hTn N) ?_ ?_ ?_
+      rotate_left
+      · intro i
+        refine ⟨L.hspA i N (by omega), ?_⟩
+        rw [L.hgA i N]
+        obtain ⟨i0, h1, h2⟩ := D.cover α hα0 hα1
+        have hs := (hsign i0 ⟨h1, h2⟩).1
+        have hb := L.hspq i i0 N (by omega) α ⟨h1, h2⟩
+        have h3 : ((L.Cp i0).c0 * (1 - α) + certMean (L.Cp i0).K (L.Cp i0).G D0.p - L.sP i0) *
+            (P.n N : ℝ) ≤ q := by
+          have := mul_le_mul_of_nonneg_right hs hνpos.le
+          rw [div_mul_cancel₀ _ hνpos.ne'] at this
+          linarith
+        have h4 : ((D.DA i N).sp : ℝ) + P.g N ≤ q := by linarith
+        exact_mod_cast h4
+      · intro i
+        rw [D.hν i N, hνD]
+      intro i
+      have hcx0 : ((Finset.univ.filter (fun v => 1 - L.θ0 < x v)).card : ℝ) ≤
+          (P.n N : ℝ) * L.Dtop / L.dsp :=
+        hreg L.dsp _ L.hdsp (fun i hi => hsup (x i)
+          ⟨by simpa using hi, (hx i).2⟩)
+      have hcy0 := top_count_le y hM.2.2 L.hxcθ L.hθ0 L.hC1nn (Nat.cast_nonneg _)
+      rw [hνD] at hcy0
+      have hcx : (Finset.univ.filter (fun v => 1 - (D.DA i N).θ < x v)).card ≤
+          (Finset.univ.filter (fun v => 1 - L.θ0 < x v)).card := card_spike_mono x (L.hθi i N)
+      have hcy : (Finset.univ.filter (fun v => 1 - (D.DA i N).θ < y v)).card ≤
+          (Finset.univ.filter (fun v => 1 - L.θ0 < y v)).card := card_spike_mono y (L.hθi i N)
+      have hMm := L.hMmax N
+      have : (((Finset.univ.filter (fun v => 1 - (D.DA i N).θ < x v)).card +
+          (Finset.univ.filter (fun v => 1 - (D.DA i N).θ < y v)).card : ℕ) : ℝ) ≤
+          (L.Mmax N : ℝ) := by
+        push_cast
+        have e1 : (P.n N : ℝ) * L.Dtop / L.dsp = L.Dtop / L.dsp * (P.n N : ℝ) := by ring
+        have h1 : ((Finset.univ.filter (fun v => 1 - (D.DA i N).θ < x v)).card : ℝ) ≤
+            (Finset.univ.filter (fun v => 1 - L.θ0 < x v)).card := by exact_mod_cast hcx
+        have h2 : ((Finset.univ.filter (fun v => 1 - (D.DA i N).θ < y v)).card : ℝ) ≤
+            (Finset.univ.filter (fun v => 1 - L.θ0 < y v)).card := by exact_mod_cast hcy
+        nlinarith [hcx0, hcy0, hMm, h1, h2, e1]
+      exact_mod_cast this
+    · show D.FixAdm N m1 r s' _ _ _
+      exact fixAdmCapAsym_of_marked hgsN0 hgsP0 L.hxcnn hM σy hyneg hypos τ
+
+
+theorem Phase2DataCore.signedSecondSheetNearNd_nearOpt_of_cert {I : ℕ} {negativeGap : Option ℝ} (D : Phase2DataCore I negativeGap)
+    {P : Parameters} (hP : Admissible P) (G : ℝ → Prop) (target0 c2 : ℝ)
+    (hn : ∀ N, D.ncount N = P.n N)
+    (hconst : ∀ N r a b, r + a + b = P.n N →
+      D.constant N (((a + b : ℕ) : ℝ) / (P.n N : ℝ)) = groupedConstant P N r a b)
+    (hRf : ∀ N, D.Rf N = populationPhysicalFreeField P N)
+    (hRm : ∀ N, D.Rm N = groupedMarkedField P N)
+    (hRn : ∀ N, D.Rn N = groupedNearField P N)
+    (hCf : ∀ N, D.Cf N = populationPhysicalColumnField P N (0 + 0))
+    (hLRf : ∀ N k q m1 m2' xn gp yn yp', D.LRf N k q m1 m2' xn gp yn yp' =
+      logRatioZ (q + m2' - P.g N) (Fin.append xn yn) (Fin.append gp yp'))
+    (hB : D.B = -target0 + Real.log 2 / 2)
+    (hcost : D.cost * (P.n0 : ℝ) ≤ c2)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hgsN0 : 0 ≤ negativeGap.getD D.gs) (hgsP0 : 0 ≤ D.gs)
+    (hNd : ∀ᶠ N : ℕ in atTop, ∀ m y, (∀ j, y j ∈ Ioo (-1 : ℝ) 1) → Nd N m y →
+      MarkedCapAsym (negativeGap.getD D.gs) D.gs D.xc D.C1 (D.ncount N : ℝ) (D.umin N) y)
+    {target residual nearCap cost : ℝ} (D0 : SecondTrialBoundsEnd P 0 target residual nearCap cost G)
+    {δ e : ℝ} (hδ : 0 < δ) (he : e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
+    (L : LinkCert D P target residual nearCap cost G D0 δ e target0 c2) :
+    SignedSecondSheetCoreNd P G Nd target0 c2 D.α1 :=
+  D.signedSecondSheetNearNd_nearOpt hP G target0 c2 hn hconst hRf hRm hRn hCf hLRf hB hcost Nd
+    (D.hlink_nearOpt hP D0 hδ he hec target0 c2 hn Nd hgsN0 hgsP0 hNd L)
+
+
+
 end
 
 end CatalanMeasure.Signed
@@ -2226,3 +2533,13 @@ end CatalanMeasure.Signed
 #print axioms CatalanMeasure.Signed.FixAdmCapAsym_mono
 #print axioms CatalanMeasure.Signed.Phase2DataCore.hFix
 #print axioms CatalanMeasure.Signed.Phase2DataCore.toBounds
+
+#print axioms CatalanMeasure.Signed.fixAdmCapAsym_of_marked
+
+#print axioms CatalanMeasure.Signed.Phase2DataCore.signedSecondSheetNear
+
+#print axioms CatalanMeasure.Signed.Phase2DataCore.signedSecondSheetNearNd_nearOpt
+
+#print axioms CatalanMeasure.Signed.Phase2DataCore.hlink_nearOpt
+
+#print axioms CatalanMeasure.Signed.Phase2DataCore.signedSecondSheetNearNd_nearOpt_of_cert
