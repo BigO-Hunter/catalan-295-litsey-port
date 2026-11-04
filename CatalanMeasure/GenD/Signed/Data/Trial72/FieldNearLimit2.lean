@@ -31,10 +31,10 @@ theorem nearIdentity (a b : ℚ) {y : ℝ} (hy : y ∈ Ioo (0 : ℝ) 1) :
     ring
   have hσ : (20 : ℝ) / 72 = ((5/18 : ℚ) : ℝ) := by norm_num
   have h := T2.nearIdentityAt a b (csL := (AssemblyBindings.X2.CSP : ℝ) / 72) (θL := 1 / 1024) hy
-  change fNearMSLim T2.trial.form
-    (fun y : ℝ => -(((72 : ℝ) - 6) / 72) * Real.log (1 + y ^ 2) +
-      (((72 : ℝ) - 2 * 6) / 72) * Real.log |y|) a b ((20 : ℝ) / 72)
-      (fQ T2.bsL) T2.bsL.length ((AssemblyBindings.X2.CSP : ℝ) / 72) (1 / 1024) y = _
+  simp only [Generic.nearLim, dc72_n0, dc72_g0, Nat.cast_ofNat]
+  have hSp : dc72.sp = 20 := rfl
+  have hTheta : (dc72.thetaL : ℝ) = 1/1024 := by norm_num [dc72]
+  simp only [hSp, Nat.cast_ofNat, hTheta]
   have hR' : (fun y : ℝ => -(((72 : ℝ) - 6) / 72) * Real.log (1 + y ^ 2) +
       (((72 : ℝ) - 2 * 6) / 72) * Real.log |y|) = rnQ (11 / 12) (5 / 6) := by
     rw [← hR]

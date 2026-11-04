@@ -12,11 +12,11 @@ open Inputs72 AssemblyBindings RowsCaps72
 noncomputable section
 
 structure EndpointA (i : Fin 2) : Prop where
-  hSn : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSn : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, (I.DA i N).fNeg x ≤ SnA i + ε
-  hSp : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSp : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (0 : ℝ) 1, (I.DA i N).fPosS x ≤ SpA i + ε
-  hSy : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSy : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (0 : ℝ) 1, (I.DA i N).fCol x ≤ SyA i + ε
   hneg : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ α ∈ Icc (I.lo i) (I.hi i), ∀ x ∈ Ioo (-1 : ℝ) 0,
@@ -35,11 +35,11 @@ structure EndpointA (i : Fin 2) : Prop where
       (capE i).xc ≤ x → (I.DA i N).fNearMS (groupedNearField dc72.toParameters N) α β x ≤ (capE i).gSA α β + ε + (capE i).rSA α β * (-Real.log (1-x^2))
 
 structure EndpointB (i : Fin 2) : Prop where
-  hSn : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSn : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, (I.DB i N).fNeg x ≤ SnB i + ε
-  hSp : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSp : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (0 : ℝ) 1, (I.DB i N).fPosS x ≤ SpB i + ε
-  hSy : {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
+  hSy : ∀ {ε : ℝ}, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (0 : ℝ) 1, (I.DB i N).fCol x ≤ SyB i + ε
   hneg : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ α ∈ Icc (I.lo i) (I.hi i), ∀ x ∈ Ioo (-1 : ℝ) 0,
