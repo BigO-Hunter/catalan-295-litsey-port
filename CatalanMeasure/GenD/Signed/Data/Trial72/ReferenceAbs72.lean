@@ -29,7 +29,7 @@ private theorem absolute_sum (fa : List ℚ) (tl : List TailQ) (rho : List ℚ)
   have hM := hasSum_rad_geom L hL
   have hcast := radBound_cast [] L
   rw [h1, h2] at hcast
-  simp at hcast
+  simp only [List.map_nil, List.sum_nil, zero_div, zero_add] at hcast
   rw [← hcast] at hM
   have hF := (tsum_abs_bSeq fa)
   have hsF : Summable (fun j : ℕ => |bSeq fa (j+1)|) := by
@@ -37,7 +37,7 @@ private theorem absolute_sum (fa : List ℚ) (tl : List TailQ) (rho : List ℚ)
     have hk : fa.length ≤ j := by simpa using hj
     rw [bSeq_succ, getD_zero_of_le fa hk]
     simp
-  have hsF0 := (summable_nat_add_iff 1).mp hsF
+  have hsF0 := (summable_nat_add_iff 1 (f := fun j : ℕ => |bSeq fa j|)).mp hsF
   rw [hsF0.tsum_eq_zero_add] at hF
   simp [bSeq] at hF
   have hm := hsF.hasSum.add hM
@@ -48,18 +48,24 @@ private theorem absolute_sum (fa : List ℚ) (tl : List TailQ) (rho : List ℚ)
     have ht := tail_term_le_rad L hL (j+1)
     rw [h1] at ht
     rw [tseq, if_neg (Nat.succ_ne_zero j)]
-    exact (abs_add_le _ _).trans (add_le_add_left ht _)
+    exact (abs_add_le _ _).trans (add_le_add (le_refl _) ht)
   have hs := Summable.of_nonneg_of_le (fun _ => abs_nonneg _) hle hm.summable
-  have hs0 := (summable_nat_add_iff 1).mp hs
+  have hs0 := (summable_nat_add_iff 1 (f := fun x : ℕ => |tseq (bSeq fa) (List.map TailQ.toC tl) x|)).mp hs
   rw [hs0.tsum_eq_zero_add]
   simp only [tseq, if_pos rfl, abs_zero, zero_add]
   have hb := hasSum_le hle hs.hasSum hm
-  rw [← hs.hasSum.tsum_eq, hF] at hb
-  exact hb
+  rw [← hs.hasSum.tsum_eq] at hb
+  have hF' : ∑' j : ℕ, |bSeq fa (j+1)| = (absq fa : ℝ) := by
+    have h0 := tsum_abs_bSeq fa
+    rw [hsF0.tsum_eq_zero_add] at h0
+    simpa [bSeq] using h0
+  rw [hF'] at hb
+  simpa [tseq] using hb
 
 private def rhoP : List ℚ := (raw_ints% [800000000000, 800000000000, 900000000000, 900000000000, 950000000000, 950000000000, 970000000000, 970000000000, 980000000000, 980000000000, 990000000000, 990000000000, 995000000000, 995000000000, 997000000000, 997000000000, 999000000000, 999000000000, 999300000000, 999300000000, 999700000000, 999700000000, 999900000000, 999900000000, 999930000000, 999930000000, 999970000000, 999970000000, 999990000000, 999990000000, 999993000000, 999993000000, 999997000000, 999997000000, 989920814600, 989933632267, 989945747456, 989957167540, 989967899427, 989977949572, 989987323987, 989996028248, 990004067510, 990011446514, 990018169591, 990024240673, 990029663301, 990034440624, 990038575413, 990042070057, 990044926573, 990047146607, 990048731434, 990049681967, 990049998750, 990049681967, 990048731434, 990047146607, 990044926573, 990042070057, 990038575413, 990034440624, 990029663301, 990024240673, 990018169591, 990011446514, 990004067510, 989996028248, 989987323987, 989977949572, 989967899427, 989957167540, 989945747456, 989933632267, 989920814600]).map fun n => (n : ℚ) / 1000000000000
 private theorem radP : radOK secondPData.tail rhoP = true := by decide +kernel
 private theorem scalarP : absq secondPData.f + radBound [] secondPData.tail rhoP ≤ (1032 : ℚ) := by
+  -- kcost: 0.511 s measured. 160 finite coefficient absolute values and 75 geometric tail terms.
   decide +kernel
 theorem sumP : (∑' j, |secondP j|) ≤ (1032 : ℝ) := by
   have h := absolute_sum secondPData.f secondPData.tail rhoP radP
@@ -70,6 +76,7 @@ theorem sumP : (∑' j, |secondP j|) ≤ (1032 : ℝ) := by
 private def rhoV : List ℚ := (raw_ints% [800000000000, 800000000000, 900000000000, 900000000000, 950000000000, 950000000000, 970000000000, 970000000000, 980000000000, 980000000000, 990000000000, 990000000000, 995000000000, 995000000000, 997000000000, 997000000000, 999000000000, 999000000000, 999300000000, 999300000000, 999700000000, 999700000000, 999900000000, 999900000000, 999930000000, 999930000000, 999970000000, 999970000000, 999990000000, 999990000000, 999993000000, 999993000000, 999997000000, 999997000000, 989920814600, 989933632267, 989945747456, 989957167540, 989967899427, 989977949572, 989987323987, 989996028248, 990004067510, 990011446514, 990018169591, 990024240673, 990029663301, 990034440624, 990038575413, 990042070057, 990044926573, 990047146607, 990048731434, 990049681967, 990049998750, 990049681967, 990048731434, 990047146607, 990044926573, 990042070057, 990038575413, 990034440624, 990029663301, 990024240673, 990018169591, 990011446514, 990004067510, 989996028248, 989987323987, 989977949572, 989967899427, 989957167540, 989945747456, 989933632267, 989920814600]).map fun n => (n : ℚ) / 1000000000000
 private theorem radV : radOK secondVData.tail rhoV = true := by decide +kernel
 private theorem scalarV : absq secondVData.f + radBound [] secondVData.tail rhoV ≤ (5544 : ℚ) := by
+  -- kcost: 0.446 s measured. 160 finite coefficient absolute values and 75 geometric tail terms.
   decide +kernel
 theorem sumV : (∑' j, |secondV j|) ≤ (5544 : ℝ) := by
   have h := absolute_sum secondVData.f secondVData.tail rhoV radV

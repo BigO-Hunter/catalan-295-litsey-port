@@ -48,7 +48,7 @@ theorem constant_bound (ε : ℝ) (hε : 0 < ε) : ∀ᶠ N : ℕ in atTop,
   have hcap := (Rat.cast_le (K := ℝ)).mpr (le_trans (anti hd hi) scalar)
   filter_upwards [h] with N hN
   rw [family_eq, g72, s72, rLim_cast] at hN
-  exact hN.trans (add_le_add_right hcap ε)
+  exact hN.trans (add_le_add hcap (le_refl ε))
 
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.RAssembly0

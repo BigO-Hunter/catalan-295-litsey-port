@@ -218,7 +218,7 @@ structure Rows410 where
 namespace Generic
 
 /-- Actual endpoint/certificate choices for the same determinant design. -/
-structure Inputs (dc : DesignConst) where
+structure InputsCore (dc : DesignConst) (geometry : Option (NodeGeometryData dc)) where
   XA : Fin 2 → FamPar
   XB : Fin 2 → FamPar
   DA : Fin 2 → ℕ → SignedData
@@ -248,22 +248,66 @@ structure Inputs (dc : DesignConst) where
   gs : ℝ
   xc : ℝ
   C1 : ℝ
-  gs_eq : gs = (dc.gstar : ℝ)
-  xc_eq : xc = (dc.xc : ℝ)
-  hC : (dc.d0 : ℝ) / ((dc.n0 : ℝ) *
-    (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) ≤ C1
+  gs_eq : gs = (geometry.map (fun H => H.gsP)).getD (dc.gstar : ℝ)
+  xc_eq : xc = (geometry.map (fun H => H.xc)).getD (dc.xc : ℝ)
+  hC : match geometry with
+    | none => (dc.d0 : ℝ) / ((dc.n0 : ℝ) *
+        (2 * (dc.xc : ℝ) * Real.sqrt (1 - (dc.astar : ℝ) ^ 2))) ≤ C1
+    | some H => C1 = H.C1
   umin : ℕ → ℝ
-  humin : ∀ N, umin N = Generic.umin dc N
+  humin : ∀ N, umin N = (geometry.map (fun H => H.umin N)).getD (Generic.umin dc N)
+
+abbrev Inputs (dc : DesignConst) := InputsCore dc none
+abbrev InputsAsym (dc : DesignConst) (H : NodeGeometryData dc) := InputsCore dc (some H)
+abbrev Inputs.mk {dc : DesignConst} := @InputsCore.mk dc none
+abbrev Inputs.XA {dc : DesignConst} (I : Inputs dc) := InputsCore.XA I
+abbrev Inputs.XB {dc : DesignConst} (I : Inputs dc) := InputsCore.XB I
+abbrev Inputs.DA {dc : DesignConst} (I : Inputs dc) := InputsCore.DA I
+abbrev Inputs.DB {dc : DesignConst} (I : Inputs dc) := InputsCore.DB I
+abbrev Inputs.hDA {dc : DesignConst} (I : Inputs dc) := InputsCore.hDA I
+abbrev Inputs.hDB {dc : DesignConst} (I : Inputs dc) := InputsCore.hDB I
+abbrev Inputs.target {dc : DesignConst} (I : Inputs dc) := InputsCore.target I
+abbrev Inputs.cost {dc : DesignConst} (I : Inputs dc) := InputsCore.cost I
+abbrev Inputs.α1 {dc : DesignConst} (I : Inputs dc) := InputsCore.α1 I
+abbrev Inputs.α1_nonneg {dc : DesignConst} (I : Inputs dc) := InputsCore.α1_nonneg I
+abbrev Inputs.lo {dc : DesignConst} (I : Inputs dc) := InputsCore.lo I
+abbrev Inputs.hi {dc : DesignConst} (I : Inputs dc) := InputsCore.hi I
+abbrev Inputs.αA {dc : DesignConst} (I : Inputs dc) := InputsCore.αA I
+abbrev Inputs.αB {dc : DesignConst} (I : Inputs dc) := InputsCore.αB I
+abbrev Inputs.κlo {dc : DesignConst} (I : Inputs dc) := InputsCore.κlo I
+abbrev Inputs.κhi {dc : DesignConst} (I : Inputs dc) := InputsCore.κhi I
+abbrev Inputs.epsSplit {dc : DesignConst} (I : Inputs dc) := InputsCore.epsSplit I
+abbrev Inputs.epsSplit_pos {dc : DesignConst} (I : Inputs dc) := InputsCore.epsSplit_pos I
+abbrev Inputs.epsSplit_le {dc : DesignConst} (I : Inputs dc) := InputsCore.epsSplit_le I
+abbrev Inputs.cover {dc : DesignConst} (I : Inputs dc) := InputsCore.cover I
+abbrev Inputs.hlo0 {dc : DesignConst} (I : Inputs dc) := InputsCore.hlo0 I
+abbrev Inputs.hhi1 {dc : DesignConst} (I : Inputs dc) := InputsCore.hhi1 I
+abbrev Inputs.hends {dc : DesignConst} (I : Inputs dc) := InputsCore.hends I
+abbrev Inputs.massA {dc : DesignConst} (I : Inputs dc) := InputsCore.massA I
+abbrev Inputs.massB {dc : DesignConst} (I : Inputs dc) := InputsCore.massB I
+abbrev Inputs.etaA {dc : DesignConst} (I : Inputs dc) := InputsCore.etaA I
+abbrev Inputs.gs {dc : DesignConst} (I : Inputs dc) := InputsCore.gs I
+abbrev Inputs.xc {dc : DesignConst} (I : Inputs dc) := InputsCore.xc I
+abbrev Inputs.C1 {dc : DesignConst} (I : Inputs dc) := InputsCore.C1 I
+abbrev Inputs.gs_eq {dc : DesignConst} (I : Inputs dc) := InputsCore.gs_eq I
+abbrev Inputs.xc_eq {dc : DesignConst} (I : Inputs dc) := InputsCore.xc_eq I
+abbrev Inputs.hC {dc : DesignConst} (I : Inputs dc) := InputsCore.hC I
+abbrev Inputs.umin {dc : DesignConst} (I : Inputs dc) := InputsCore.umin I
+abbrev Inputs.humin {dc : DesignConst} (I : Inputs dc) := InputsCore.humin I
 
 /-- The input geometry is the cap proved for these same design nodes. -/
 theorem markedCap_inputs (dc : DesignConst) (I : Inputs dc)
     (N : ℕ) {m : ℕ} {y : Fin m → ℝ} (hy : ∀ j, y j ∈ Ioo (-1 : ℝ) 1)
     (h : NodeSub (nodesτ dc) N m y) :
     MarkedCap I.gs I.xc I.C1 ((dc.n0 * N : ℕ) : ℝ) (I.umin N) y := by
-  rw [I.gs_eq, I.xc_eq, I.humin]
-  simpa only [Nat.cast_mul] using (markedCap_real dc I.C1 I.hC N hy h)
+  have hm := markedCap_real dc I.C1 I.hC N hy h
+  first
+    | (rw [I.gs_eq, I.xc_eq, I.humin]; simpa only [Nat.cast_mul, Option.map_none, Option.getD_none] using hm)
+    | (simp only [Inputs.gs, Inputs.xc, Inputs.umin, InputsCore.gs_eq, InputsCore.xc_eq, InputsCore.humin] at hm ⊢; simpa only [Nat.cast_mul, Option.map_none, Option.getD_none] using hm)
+    | (simpa only [Nat.cast_mul, I.gs_eq, I.xc_eq, I.humin, Option.map_none, Option.getD_none] using hm)
 
-structure Rows (dc : DesignConst) (I : Inputs dc) where
+structure RowsCore (dc : DesignConst) (geometry : Option (NodeGeometryData dc))
+    (I : InputsCore dc geometry) where
   SnA : Fin 2 → ℝ
   SnB : Fin 2 → ℝ
   SpA : Fin 2 → ℝ
@@ -319,10 +363,10 @@ structure Rows (dc : DesignConst) (I : Inputs dc) where
   hxc : ∀ i, I.xc ≤ (capE i).xc
   hC1le : ∀ i, I.C1 ≤ (capE i).C1
   hnegA : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (I.lo i) (I.hi i),
-    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(capE i).gs →
+    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -((geometry.map (fun H => H.gsN)).getD (capE i).gs) →
       (I.DA i N).fNegM (groupedMarkedField dc.toParameters N) x ≤ (capE i).lamNA + ε
   hnegB : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (I.lo i) (I.hi i),
-    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(capE i).gs →
+    ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -((geometry.map (fun H => H.gsN)).getD (capE i).gs) →
       (I.DB i N).fNegM (groupedMarkedField dc.toParameters N) x ≤ (capE i).lamNB + ε
   hposA : ∀ i, ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ α ∈ Icc (I.lo i) (I.hi i),
     ∀ x ∈ Ioo (0 : ℝ) 1, (capE i).gs ≤ x → x < (capE i).xc →
@@ -369,6 +413,70 @@ structure Rows (dc : DesignConst) (I : Inputs dc) where
       (1 - α) * chord (I.αA i) (I.αB i) (SyA i) (SyB i) α + zb i α ≤
         (-I.target + Real.log 2 / 2) + I.cost * α
 
+abbrev Rows (dc : DesignConst) (I : Inputs dc) := RowsCore dc none I
+abbrev RowsAsym (dc : DesignConst) (H : NodeGeometryData dc) (I : InputsAsym dc H) :=
+  RowsCore dc (some H) I
+abbrev Rows.mk {dc : DesignConst} {I : Inputs dc} := @RowsCore.mk dc none I
+abbrev Rows.SnA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SnA R
+abbrev Rows.SnB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SnB R
+abbrev Rows.SpA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SpA R
+abbrev Rows.SpB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SpB R
+abbrev Rows.SyA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SyA R
+abbrev Rows.SyB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.SyB R
+abbrev Rows.hSnA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSnA R
+abbrev Rows.hSnB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSnB R
+abbrev Rows.hSpA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSpA R
+abbrev Rows.hSpB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSpB R
+abbrev Rows.hSyA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSyA R
+abbrev Rows.hSyB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hSyB R
+abbrev Rows.cP {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.cP R
+abbrev Rows.hcP {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hcP R
+abbrev Rows.rA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.rA R
+abbrev Rows.rB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.rB R
+abbrev Rows.κc {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.κc R
+abbrev Rows.hrA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hrA R
+abbrev Rows.hrB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hrB R
+abbrev Rows.hκ {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hκ R
+abbrev Rows.Clsf {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.Clsf R
+abbrev Rows.cp {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.cp R
+abbrev Rows.cp_pos {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.cp_pos R
+abbrev Rows.cp_le {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.cp_le R
+abbrev Rows.err_small {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.err_small R
+abbrev Rows.cp_theta {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.cp_theta R
+abbrev Rows.hCls {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hCls R
+abbrev Rows.capE {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.capE R
+abbrev Rows.hxc0 {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hxc0 R
+abbrev Rows.hxc1 {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hxc1 R
+abbrev Rows.hC1 {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hC1 R
+abbrev Rows.hrP {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hrP R
+abbrev Rows.hrSA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hrSA R
+abbrev Rows.hrSB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hrSB R
+abbrev Rows.Bd {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.Bd R
+abbrev Rows.Rbd {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.Rbd R
+abbrev Rows.hBdPA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hBdPA R
+abbrev Rows.hBdPB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hBdPB R
+abbrev Rows.hBdSA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hBdSA R
+abbrev Rows.hBdSB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hBdSB R
+abbrev Rows.hRP {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hRP R
+abbrev Rows.hRSA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hRSA R
+abbrev Rows.hRSB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hRSB R
+abbrev Rows.hgs {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hgs R
+abbrev Rows.hxc {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hxc R
+abbrev Rows.hC1le {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hC1le R
+abbrev Rows.hnegA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnegA R
+abbrev Rows.hnegB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnegB R
+abbrev Rows.hposA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hposA R
+abbrev Rows.hposB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hposB R
+abbrev Rows.hposTopA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hposTopA R
+abbrev Rows.hposTopB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hposTopB R
+abbrev Rows.hnearA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnearA R
+abbrev Rows.hnearB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnearB R
+abbrev Rows.hnearTopA {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnearTopA R
+abbrev Rows.hnearTopB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hnearTopB R
+abbrev Rows.zb {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.zb R
+abbrev Rows.hZB {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hZB R
+abbrev Rows.hbudLo {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hbudLo R
+abbrev Rows.hbudHi {dc : DesignConst} {I : Inputs dc} (R : Rows dc I) := RowsCore.hbudHi R
 
 end Generic
 

@@ -39,265 +39,309 @@ theorem cell0 (x : ℝ) (hx : x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((1 : 
   have h := d2SAE003Bound x hxE hne
   rw [fieldNFCheck_sound d2SAE003RawIdentity x] at h
   have hBound := h.trans (by norm_num [d2SAE003Target, d2SAE003EndLiteral.q2] : (d2SAE003Target : ℝ) ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [d2SAE003FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [d2SAE003FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell1 (x : ℝ) (hx : x ∈ Icc ((((1 : ℚ) / 1024) : ℚ) : ℝ) ((((654847 : ℚ) / 134217728) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P0Lift0 x (by norm_num [d2StandaloneCached011P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell2 (x : ℝ) (hx : x ∈ Icc ((((654847 : ℚ) / 134217728) : ℚ) : ℝ) ((((1833469 : ℚ) / 268435456) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P1Lift0 x (by norm_num [d2StandaloneCached011P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell3 (x : ℝ) (hx : x ∈ Icc ((((1833469 : ℚ) / 268435456) : ℚ) : ℝ) ((((589311 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P2Lift0 x (by norm_num [d2StandaloneCached011P2LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P2LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell4 (x : ℝ) (hx : x ∈ Icc ((((589311 : ℚ) / 67108864) : ℚ) : ℝ) ((((2881019 : ℚ) / 268435456) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P3Lift0 x (by norm_num [d2StandaloneCached011P3LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P3LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell5 (x : ℝ) (hx : x ∈ Icc ((((2881019 : ℚ) / 268435456) : ℚ) : ℝ) ((((556543 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P4Lift0 x (by norm_num [d2StandaloneCached011P4LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P4LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell6 (x : ℝ) (hx : x ∈ Icc ((((556543 : ℚ) / 33554432) : ℚ) : ℝ) ((((1636861 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P5Lift0 x (by norm_num [d2StandaloneCached011P5LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P5LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell7 (x : ℝ) (hx : x ∈ Icc ((((1636861 : ℚ) / 67108864) : ℚ) : ℝ) ((((540159 : ℚ) / 16777216) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached011P6Lift0 x (by norm_num [d2StandaloneCached011P6LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP010InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached011P6LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP010InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell8 (x : ℝ) (hx : x ∈ Icc ((((540159 : ℚ) / 16777216) : ℚ) : ℝ) ((((2684411 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P0Lift0 x (by norm_num [d2StandaloneCached012P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell9 (x : ℝ) (hx : x ∈ Icc ((((2684411 : ℚ) / 67108864) : ℚ) : ℝ) ((((1604093 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P1Lift0 x (by norm_num [d2StandaloneCached012P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell10 (x : ℝ) (hx : x ∈ Icc ((((1604093 : ℚ) / 33554432) : ℚ) : ℝ) ((((3731961 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P2Lift0 x (by norm_num [d2StandaloneCached012P2LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P2LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell11 (x : ℝ) (hx : x ∈ Icc ((((3731961 : ℚ) / 67108864) : ℚ) : ℝ) ((((531967 : ℚ) / 8388608) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P3Lift0 x (by norm_num [d2StandaloneCached012P3LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P3LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell12 (x : ℝ) (hx : x ∈ Icc ((((531967 : ℚ) / 8388608) : ℚ) : ℝ) ((((4779511 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P4Lift0 x (by norm_num [d2StandaloneCached012P4LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P4LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell13 (x : ℝ) (hx : x ∈ Icc ((((4779511 : ℚ) / 67108864) : ℚ) : ℝ) ((((2651643 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P5Lift0 x (by norm_num [d2StandaloneCached012P5LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P5LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell14 (x : ℝ) (hx : x ∈ Icc ((((2651643 : ℚ) / 33554432) : ℚ) : ℝ) ((((5827061 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P6Lift0 x (by norm_num [d2StandaloneCached012P6LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P6LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell15 (x : ℝ) (hx : x ∈ Icc ((((5827061 : ℚ) / 67108864) : ℚ) : ℝ) ((((1587709 : ℚ) / 16777216) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached012P7Lift0 x (by norm_num [d2StandaloneCached012P7LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP011InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached012P7LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP011InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell16 (x : ℝ) (hx : x ∈ Icc ((((1587709 : ℚ) / 16777216) : ℚ) : ℝ) ((((6874611 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P0Lift0 x (by norm_num [d2StandaloneCached013P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell17 (x : ℝ) (hx : x ∈ Icc ((((6874611 : ℚ) / 67108864) : ℚ) : ℝ) ((((3699193 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P1Lift0 x (by norm_num [d2StandaloneCached013P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell18 (x : ℝ) (hx : x ∈ Icc ((((3699193 : ℚ) / 33554432) : ℚ) : ℝ) ((((7922161 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P2Lift0 x (by norm_num [d2StandaloneCached013P2LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P2LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell19 (x : ℝ) (hx : x ∈ Icc ((((7922161 : ℚ) / 67108864) : ℚ) : ℝ) ((((527871 : ℚ) / 4194304) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P3Lift0 x (by norm_num [d2StandaloneCached013P3LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P3LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell20 (x : ℝ) (hx : x ∈ Icc ((((527871 : ℚ) / 4194304) : ℚ) : ℝ) ((((8969711 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P4Lift0 x (by norm_num [d2StandaloneCached013P4LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P4LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell21 (x : ℝ) (hx : x ∈ Icc ((((8969711 : ℚ) / 67108864) : ℚ) : ℝ) ((((4746743 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P5Lift0 x (by norm_num [d2StandaloneCached013P5LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P5LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell22 (x : ℝ) (hx : x ∈ Icc ((((4746743 : ℚ) / 33554432) : ℚ) : ℝ) ((((10017261 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P6Lift0 x (by norm_num [d2StandaloneCached013P6LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P6LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell23 (x : ℝ) (hx : x ∈ Icc ((((10017261 : ℚ) / 67108864) : ℚ) : ℝ) ((((2635259 : ℚ) / 16777216) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached013P7Lift0 x (by norm_num [d2StandaloneCached013P7LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP012InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached013P7LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP012InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell24 (x : ℝ) (hx : x ∈ Icc ((((2635259 : ℚ) / 16777216) : ℚ) : ℝ) ((((11064811 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxC : x ∈ Icc (d2StandaloneUncached000P0Lo : ℝ) (d2StandaloneUncached000P0Hi : ℝ) := by
     norm_num [Set.mem_Icc, d2StandaloneUncached000P0Lo, d2StandaloneUncached000P0Hi, d2StandaloneUncached000P0Literal.q2] at hx ⊢ <;> exact hx
   have h := d2StandaloneUncached000P0Bound x hxC
   have hBound := h.trans (by norm_num [d2StandaloneUncached000P0Literal.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell25 (x : ℝ) (hx : x ∈ Icc ((((11064811 : ℚ) / 67108864) : ℚ) : ℝ) ((((3682809 : ℚ) / 16777216) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxC : x ∈ Icc (d2StandaloneUncached000P1Lo : ℝ) (d2StandaloneUncached000P1Hi : ℝ) := by
     norm_num [Set.mem_Icc, d2StandaloneUncached000P1Lo, d2StandaloneUncached000P1Hi, d2StandaloneUncached000P1Literal.q2] at hx ⊢ <;> exact hx
   have h := d2StandaloneUncached000P1Bound x hxC
   have hBound := h.trans (by norm_num [d2StandaloneUncached000P1Literal.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell26 (x : ℝ) (hx : x ∈ Icc ((((3682809 : ℚ) / 16777216) : ℚ) : ℝ) ((((1575421 : ℚ) / 4194304) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxC : x ∈ Icc (d2StandaloneUncached000P2Lo : ℝ) (d2StandaloneUncached000P2Hi : ℝ) := by
     norm_num [Set.mem_Icc, d2StandaloneUncached000P2Lo, d2StandaloneUncached000P2Hi, d2StandaloneUncached000P2Literal.q2] at hx ⊢ <;> exact hx
   have h := d2StandaloneUncached000P2Bound x hxC
   have hBound := h.trans (by norm_num [d2StandaloneUncached000P2Literal.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell27 (x : ℝ) (hx : x ∈ Icc ((((1575421 : ℚ) / 4194304) : ℚ) : ℝ) ((((2622971 : ℚ) / 4194304) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxC : x ∈ Icc (d2StandaloneUncached000P3Lo : ℝ) (d2StandaloneUncached000P3Hi : ℝ) := by
     norm_num [Set.mem_Icc, d2StandaloneUncached000P3Lo, d2StandaloneUncached000P3Hi, d2StandaloneUncached000P3Literal.q2] at hx ⊢ <;> exact hx
   have h := d2StandaloneUncached000P3Bound x hxC
   have hBound := h.trans (by norm_num [d2StandaloneUncached000P3Literal.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell28 (x : ℝ) (hx : x ∈ Icc ((((2622971 : ℚ) / 4194304) : ℚ) : ℝ) ((((3670521 : ℚ) / 4194304) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxC : x ∈ Icc (d2StandaloneUncached000P4Lo : ℝ) (d2StandaloneUncached000P4Hi : ℝ) := by
     norm_num [Set.mem_Icc, d2StandaloneUncached000P4Lo, d2StandaloneUncached000P4Hi, d2StandaloneUncached000P4Literal.q2] at hx ⊢ <;> exact hx
   have h := d2StandaloneUncached000P4Bound x hxC
   have hBound := h.trans (by norm_num [d2StandaloneUncached000P4Literal.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 theorem cell29 (x : ℝ) (hx : x ∈ Icc ((((3670521 : ℚ) / 4194304) : ℚ) : ℝ) ((((7864817 : ℚ) / 8388608) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached014P0Lift0 x (by norm_num [d2StandaloneCached014P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP013InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached014P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP013InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell30 (x : ℝ) (hx : x ∈ Icc ((((7864817 : ℚ) / 8388608) : ℚ) : ℝ) ((((16253409 : ℚ) / 16777216) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached014P1Lift0 x (by norm_num [d2StandaloneCached014P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP013InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached014P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP013InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell31 (x : ℝ) (hx : x ∈ Icc ((((16253409 : ℚ) / 16777216) : ℚ) : ℝ) ((((33030593 : ℚ) / 33554432) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P0Lift0 x (by norm_num [d2StandaloneCached015P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell32 (x : ℝ) (hx : x ∈ Icc ((((33030593 : ℚ) / 33554432) : ℚ) : ℝ) ((((66584961 : ℚ) / 67108864) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P1Lift0 x (by norm_num [d2StandaloneCached015P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell33 (x : ℝ) (hx : x ∈ Icc ((((66584961 : ℚ) / 67108864) : ℚ) : ℝ) ((((133693697 : ℚ) / 134217728) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P2Lift0 x (by norm_num [d2StandaloneCached015P2LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P2LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell34 (x : ℝ) (hx : x ∈ Icc ((((133693697 : ℚ) / 134217728) : ℚ) : ℝ) ((((267911169 : ℚ) / 268435456) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P3Lift0 x (by norm_num [d2StandaloneCached015P3LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P3LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell35 (x : ℝ) (hx : x ∈ Icc ((((267911169 : ℚ) / 268435456) : ℚ) : ℝ) ((((536346113 : ℚ) / 536870912) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P4Lift0 x (by norm_num [d2StandaloneCached015P4LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P4LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell36 (x : ℝ) (hx : x ∈ Icc ((((536346113 : ℚ) / 536870912) : ℚ) : ℝ) ((((2145908227 : ℚ) / 2147483648) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P5Lift0 x (by norm_num [d2StandaloneCached015P5LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P5LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell37 (x : ℝ) (hx : x ∈ Icc ((((2145908227 : ℚ) / 2147483648) : ℚ) : ℝ) ((((1073216001 : ℚ) / 1073741824) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P6Lift0 x (by norm_num [d2StandaloneCached015P6LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P6LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell38 (x : ℝ) (hx : x ∈ Icc ((((1073216001 : ℚ) / 1073741824) : ℚ) : ℝ) ((((2146955777 : ℚ) / 2147483648) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached015P7Lift0 x (by norm_num [d2StandaloneCached015P7LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached015P7LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell39 (x : ℝ) (hx : x ∈ Icc ((((2146955777 : ℚ) / 2147483648) : ℚ) : ℝ) ((((4294435329 : ℚ) / 4294967296) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached016P0Lift0 x (by norm_num [d2StandaloneCached016P0LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached016P0LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell40 (x : ℝ) (hx : x ∈ Icc ((((4294435329 : ℚ) / 4294967296) : ℚ) : ℝ) ((((8589394433 : ℚ) / 8589934592) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached016P1Lift0 x (by norm_num [d2StandaloneCached016P1LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached016P1LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell41 (x : ℝ) (hx : x ∈ Icc ((((8589394433 : ℚ) / 8589934592) : ℚ) : ℝ) ((((17179312641 : ℚ) / 17179869184) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached016P2Lift0 x (by norm_num [d2StandaloneCached016P2LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached016P2LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell42 (x : ℝ) (hx : x ∈ Icc ((((17179312641 : ℚ) / 17179869184) : ℚ) : ℝ) ((((68718821889 : ℚ) / 68719476736) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached016P3Lift0 x (by norm_num [d2StandaloneCached016P3LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached016P3LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem cell43 (x : ℝ) (hx : x ∈ Icc ((((68718821889 : ℚ) / 68719476736) : ℚ) : ℝ) ((((524287 : ℚ) / 524288) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have h := d2StandaloneCached016P4Lift0 x (by norm_num [d2StandaloneCached016P4LiftLiteral.q2, Set.mem_Icc] at hx ⊢ <;> exact hx)
   rw [d2SAP014InputFq, fieldClean_sound] at h
   have h' := h.trans (by norm_num [d2StandaloneCached016P4LiftLiteral.q2] : _ ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
   have hnil : d2SAP014InputTs = [] := rfl
-  simpa only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] using h'
+  simp only [hnil, lfieldTower, List.map_nil, List.sum_nil, add_zero] at h'
+  first | exact h' | exact le_of_le_of_eq h' rfl
 theorem d2SAE004RawIdentity : fieldNFCheck d2SAE004FullFq D72.StandaloneFieldData.f1 = true := by decide +kernel
 theorem cell44 (x : ℝ) (hx : x ∈ Icc ((((524287 : ℚ) / 524288) : ℚ) : ℝ) ((((1 : ℚ) / 1) : ℚ) : ℝ)) (hP : valid x) : fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by
   have hxE : x ∈ Icc (d2SAE004Lo : ℝ) (d2SAE004Hi : ℝ) := by
@@ -307,7 +351,8 @@ theorem cell44 (x : ℝ) (hx : x ∈ Icc ((((524287 : ℚ) / 524288) : ℚ) : �
   have h := d2SAE004Bound x hxE hne
   rw [fieldNFCheck_sound d2SAE004RawIdentity x] at h
   have hBound := h.trans (by norm_num [d2SAE004Target, d2SAE004EndLiteral.q2] : (d2SAE004Target : ℝ) ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ))
-  simpa only [d2SAE004FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] using hBound
+  simp only [d2SAE004FullTs, lfieldTower, List.map_nil, List.sum_nil, add_zero] at hBound
+  first | exact hBound | exact le_of_le_of_eq hBound rfl
 def domain0Block0Pieces : List (ℚ × ℚ) := [(((0 : ℚ) / 1), ((1 : ℚ) / 1024)), (((1 : ℚ) / 1024), ((654847 : ℚ) / 134217728)), (((654847 : ℚ) / 134217728), ((1833469 : ℚ) / 268435456)), (((1833469 : ℚ) / 268435456), ((589311 : ℚ) / 67108864)), (((589311 : ℚ) / 67108864), ((2881019 : ℚ) / 268435456)), (((2881019 : ℚ) / 268435456), ((556543 : ℚ) / 33554432)), (((556543 : ℚ) / 33554432), ((1636861 : ℚ) / 67108864)), (((1636861 : ℚ) / 67108864), ((540159 : ℚ) / 16777216)), (((540159 : ℚ) / 16777216), ((2684411 : ℚ) / 67108864)), (((2684411 : ℚ) / 67108864), ((1604093 : ℚ) / 33554432)), (((1604093 : ℚ) / 33554432), ((3731961 : ℚ) / 67108864)), (((3731961 : ℚ) / 67108864), ((531967 : ℚ) / 8388608)), (((531967 : ℚ) / 8388608), ((4779511 : ℚ) / 67108864)), (((4779511 : ℚ) / 67108864), ((2651643 : ℚ) / 33554432)), (((2651643 : ℚ) / 33554432), ((5827061 : ℚ) / 67108864)), (((5827061 : ℚ) / 67108864), ((1587709 : ℚ) / 16777216))]
 theorem domain0Block0Cover : pieceCover ((1587709 : ℚ) / 16777216) ((0 : ℚ) / 1) domain0Block0Pieces = true := by decide +kernel
 theorem domain0Block0 : ∀ x ∈ Icc ((((0 : ℚ) / 1) : ℚ) : ℝ) ((((1587709 : ℚ) / 16777216) : ℚ) : ℝ), valid x → fval D72.StandaloneFieldData.f1 x ≤ ((((540746234397773533 : ℚ) / 112589990684262400) : ℚ) : ℝ) := by

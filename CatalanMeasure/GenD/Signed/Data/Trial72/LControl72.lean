@@ -26,7 +26,8 @@ theorem physical_eq : ReferenceData.secondP =
   change tseqE (fQE ReferenceData.secondPData.f) (ReferenceData.secondPData.tail.map TailQ.toC) = _
   have h := perturb_seq NormData.secondPInt [] ReferenceData.secondPData.tail
   have hv (l : List ℚ) : vecAdd l [] = l := by cases l <;> rfl
-  rw [hv, NormData.secondPInt_eq] at h
+  rw [hv] at h
+  rw [show ((2:ℚ)^40) = 1099511627776 by norm_num, NormData.secondPInt_eq] at h
   simpa [fQE] using h
 
 theorem certH_sum (e : ℚ) (g : List ℚ) : certH g.length (gcertG (e : ℝ) g) =
@@ -63,7 +64,10 @@ theorem actualCpHalf {α : ℝ} (hα : 0 ≤ α) : 1-α - ((1-α)*(LRows00.Row0.
   rw [actualCpMean]
   have hc : (LRows00.Row0.c0 : ℝ) ≤ 1 := by exact_mod_cast (show LRows00.Row0.c0 ≤ 1 by decide +kernel)
   have hd : 1 - (LRows00.Row0.c0 : ℝ) - (LRows00.Row0.m : ℝ) + (LRows00.Row0.s : ℝ) ≤ 1/2 := by
-    exact_mod_cast (show 1 - LRows00.Row0.c0 - LRows00.Row0.m + LRows00.Row0.s ≤ (1/2 : ℚ) by decide +kernel)
+    have hq : 1 - LRows00.Row0.c0 - LRows00.Row0.m + LRows00.Row0.s ≤ (1/2 : ℚ) := by decide +kernel
+    have h2 := (Rat.cast_le (K := ℝ)).mpr hq
+    push_cast at h2
+    exact h2
   linarith only [hd, mul_nonneg hα (sub_nonneg.mpr hc)]
 
 theorem actualCp_neg {y : ℝ} (hy : y ∈ Icc (-1 : ℝ) 1) (hy0 : y < 0) :

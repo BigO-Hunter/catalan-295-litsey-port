@@ -33,6 +33,20 @@ open CatalanMeasure.GenD.D58 CatalanMeasure.GenD.Uniform CatalanMeasure.GenD.Ana
 
 noncomputable section
 
+namespace Generic
+
+/-- Assemble a measure bound from matching certificates for one shared design.
+`D` supplies the normalizer, growth, nonvanishing, decay and payment evidence.
+No certificate output is inferred from the design choices alone. -/
+theorem catalan_irrationalityMeasure_of_design (dc : DesignConst)
+    (D : DesignData dc.toParameters) :
+    ∀ᶠ b : ℕ in atTop, ∀ a : ℤ,
+      (b : ℝ) ^ (-(D.B : ℝ)) <
+        |(∑' j : ℕ, (-1 : ℝ) ^ j / ((2 * j + 1 : ℕ) : ℝ) ^ 2) - a / b| := by
+  simpa [catalan] using measure_of_design dc.toParameters D
+
+end Generic
+
 theorem catalan_irrationalityMeasure_410_of_near
     (hnear : FreeNearBound D58.Odd.design G410 (CatalanMeasure.Signed.NodeSub nodesτ)
       K590.target0 c2_410 (1 / 16)) :
@@ -41,9 +55,9 @@ theorem catalan_irrationalityMeasure_410_of_near
         |(∑' j : ℕ, (-1 : ℝ) ^ j / ((2 * j + 1 : ℕ) : ℝ) ^ 2) - a / b| := by
   have hfirst := Data.S1.freeFirst0 Bank540.first rfl rfl rfl
   have hlarge := Data.S1.freeLarge0 Bank540.second rfl rfl
-  have h := measure_of_design D58.Odd.design
+  have h := Generic.catalan_irrationalityMeasure_of_design dc58
     { B := 410
-      Z := canonicalNormalizer design D58.Odd.design_admissible (famLB (fams532 hosts532)) 79
+      Z := canonicalNormalizer design D58.Odd.design_admissible (famLB (fams532 hosts532)) (dc58.H + 1)
         (by rw [D58.Odd.design_H]; norm_num)
       w := 3 / 5, ρ := K590.rhoEnd (879663 / 10000), η := 3833924 / 100000,
       κ := 410 / K590.rhoEnd (879663 / 10000), δ := D58.delta
@@ -55,10 +69,10 @@ theorem catalan_irrationalityMeasure_410_of_near
         filter_upwards [partial_growth532 hosts532 hε] with N hN
         unfold gDg
         convert hN using 2
-      tΔ := 58 ^ 2 * (K590.target0 - Real.log 2 / 2)
+      tΔ := (dc58.n0 : ℝ) ^ 2 * (K590.target0 - Real.log 2 / 2)
       delta_small := delta_small_410 hfirst hnear hlarge
       eta_le := gain_ok410 _ (829824 / 100000) _
-        (by unfold Bank540.tDelta; nlinarith [K590.target0_sub]) gain532_ge le_rfl
+        (by simp only [dc58_n0]; unfold Bank540.tDelta; nlinarith [K590.target0_sub]) gain532_ge le_rfl
       nonvanishing := D58.nonvanishing_d58 D58.C3.c3_d58 }
   simpa [catalan] using h
 
@@ -92,3 +106,5 @@ end CatalanMeasure.GenD.Signed
 #print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_near
 #print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_rows
 #print axioms CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410_of_cells
+
+#print axioms CatalanMeasure.GenD.Signed.Generic.catalan_irrationalityMeasure_of_design
