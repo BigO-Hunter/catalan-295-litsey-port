@@ -30,7 +30,7 @@ private theorem difference {z : ℚ} {ρ y : ℝ}
   simp only [Rat.cast_one, one_mul] at h1'
   rw [h1'] at h1
   rw [value] at h2
-  push_cast
+  push_cast at h2 ⊢
   linarith only [h1,h2]
 
 

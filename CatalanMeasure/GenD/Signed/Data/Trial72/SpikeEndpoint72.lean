@@ -73,7 +73,9 @@ theorem at_piece {D : SignedData} {N x m : ℕ} {bs fa : List ℚ} {ta : List Ta
     nlinarith only [mul_le_mul_of_nonneg_right hs hN.le,hcountR]
   have hbx : (D.withCount x).b = fun k => l*bSeq bsn k := by
     funext k
-    rw [SignedData.withCount_b,T.hb,normalized_b bs hsr.ne',T.hsp]
+    rw [SignedData.withCount_b,T.hb]
+    beta_reduce
+    rw [normalized_b bs hsr.ne',T.hsp]
     push_cast
     norm_num [dc72, l, bsn]
     <;> ring
@@ -90,7 +92,8 @@ theorem at_piece {D : SignedData} {N x m : ℕ} {bs fa : List ℚ} {ta : List Ta
     exact hphys
   have hθ : D.θ = (1/1024 : ℝ) := by simpa [dc72] using T.hθ
   have hτ : D.τ ∈ Icc (1-1/1073741824 : ℝ) 1 := by
-    have he : D.e ≤ (1/1073741824 : ℝ) := by simpa using T.he
+    have he : D.e ≤ (1/1073741824 : ℝ) :=
+      le_trans (by simpa using T.he) (le_of_eq (by norm_num : ((2:ℝ)^30)⁻¹ = 1/1073741824))
     change 1-1/1073741824 ≤ 1-D.e ∧ 1-D.e ≤ 1
     constructor <;> linarith [T.he0]
   obtain ⟨hr1,hr2,_⟩ := SpikeLinear72.root_geometry hτ hroot

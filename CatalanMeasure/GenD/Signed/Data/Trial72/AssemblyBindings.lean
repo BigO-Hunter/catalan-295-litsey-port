@@ -61,9 +61,10 @@ theorem hnear (I : Generic.InputsAsym dc72 geometry72) (h : InputsMatch I)
     (L : LinkCert (Generic.phase2Asym dc72 geometry72 I R) dc72.toParameters
       targetOld residual nearCap costOld G72 (nearReference Cref Bref) δ e I.target (72*cost72)) :
     FreeNearBound dc72.toParameters G72 (NodeSub Davis.tau72) target72 (72*cost72) (1/16) := by
-  have hc : I.cost*(dc72.n0:ℝ) ≤ 72*cost72 := by rw [h.hcost,dc72_n0]; ring_nf
-  simpa only [h.htarget,h.halpha] using
-    Generic.hnear_asym dc72 geometry72 I R (nearReference Cref Bref) hδ he hec hc L
+  have hc : I.cost*(dc72.n0:ℝ) ≤ 72*cost72 := le_of_eq (by rw [h.hcost,dc72_n0]; push_cast; ring)
+  have hr := Generic.hnear_asym dc72 geometry72 I R (nearReference Cref Bref) hδ he hec hc L
+  rw [h.htarget,h.halpha] at hr
+  exact hr
 
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
@@ -76,51 +77,44 @@ abbrev rowSN0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSN_cell dc7
 abbrev rowSC0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSC_cell dc72 X0 hok0
 abbrev rowSP0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSP_cell dc72 X0 hok0 hRt0
 abbrev rowSM0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNeg_cell dc72 X0 hok0 hRt0
-abbrev rowSPM0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPos_cell dc72 X0 hok0 hRt0
 abbrev rowSPMTop0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPosTop_cell dc72 X0 hok0 hRt0
-abbrev rowNear0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNear_cell dc72 X0 hok0 hRt0
-abbrev rowNearTop0 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNearTop_cell dc72 X0 hok0 hRt0
 theorem hok1 : ∀ C : ℝ, ((X1.Cb:ℚ):ℝ) ≤ C → X1.T.DataOK C := fun C h => T1.dataOK h
 theorem hRt1 : X1.T.R.tail = [] := rfl
 abbrev rowSN1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSN_cell dc72 X1 hok1 hRt1
 abbrev rowSC1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSC_cell dc72 X1 hok1
 abbrev rowSP1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSP_cell dc72 X1 hok1 hRt1
 abbrev rowSM1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNeg_cell dc72 X1 hok1 hRt1
-abbrev rowSPM1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPos_cell dc72 X1 hok1 hRt1
 abbrev rowSPMTop1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPosTop_cell dc72 X1 hok1 hRt1
-abbrev rowNear1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNear_cell dc72 X1 hok1 hRt1
-abbrev rowNearTop1 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNearTop_cell dc72 X1 hok1 hRt1
 theorem hok2 : ∀ C : ℝ, ((X2.Cb:ℚ):ℝ) ≤ C → X2.T.DataOK C := fun C h => T2.dataOK h
 theorem hRt2 : X2.T.R.tail = [] := rfl
 abbrev rowSN2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSN_cell dc72 X2 hok2 hRt2
 abbrev rowSC2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSC_cell dc72 X2 hok2
 abbrev rowSP2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowSP_cell dc72 X2 hok2 hRt2
 abbrev rowSM2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNeg_cell dc72 X2 hok2 hRt2
-abbrev rowSPM2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPos_cell dc72 X2 hok2 hRt2
 abbrev rowSPMTop2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowPosTop_cell dc72 X2 hok2 hRt2
-abbrev rowNear2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNear_cell dc72 X2 hok2 hRt2
-abbrev rowNearTop2 := CatalanMeasure.GenD.Signed.Data.Assembly.Generic.rowNearTop_cell dc72 X2 hok2 hRt2
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings
 open Set Filter CatalanMeasure.Signed CatalanMeasure.Signed.FieldForm
 open CatalanMeasure.GenD.Signed.Data.Trial CatalanMeasure.GenD.Signed.TaylorCell
-open CatalanMeasure.CellCert CatalanMeasure.GenD.Signed.Data.Assembly
+open CatalanMeasure.CellCert CatalanMeasure.GenD.Signed.Data.Assembly CatalanMeasure.GenD.Signed.Data.Cells
 noncomputable section
 
 theorem scIdentity0 (x : ℝ) :
     cfLim dc72.toParameters x + 2 * X0.T.form.v.Tform x =
       fieldTower T0.scFq (poleF T0.scFq.poles) 0 x + scK T0.trial := by
-  simpa [cfLim_eq, X0, toAssembly, T0.params, dc72] using T0.hidSC x
+  rw [cfLim_eq]
+  convert T0.hidSC x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem snIdentity0 (x : ℝ) :
     fNegLim X0.T.form (rfLim dc72.toParameters) x =
       fieldTower T0.snFq (poleF T0.snFq.poles) 0 x + snK T0.trial := by
-  simpa [rfLim_eq, X0, toAssembly, T0.params, dc72] using T0.hidSN x
+  rw [rfLim_eq]
+  convert T0.hidSN x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem smIdentity0 (x : ℝ) :
     fNegMLim X0.T.form (fun y => -(((dc72.n0:ℝ)-dc72.g0)/dc72.n0)*Real.log (1+y^2)) x =
       fieldTower T0.smFq (poleF T0.smFq.poles) 0 x + smK T0.trial := by
-  simpa [rmQ, X0, toAssembly, T0.params, dc72] using T0.hidSM x
+  convert T0.hidSM x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 
 theorem boundSC0 (Fc : FieldQ) (hpl : T0.scFq.plogs = Fc.plogs) (hpo : T0.scFq.poles = Fc.poles)
     {δ : ℚ} (hδ : l1Q T0.scFq.poly Fc.poly ≤ δ) {T TR c lo : ℝ}
@@ -130,7 +124,7 @@ theorem boundSC0 (Fc : FieldQ) (hpl : T0.scFq.plogs = Fc.plogs) (hpo : T0.scFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (1-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0:ℝ) 1,
       (T0.D N).fCol x ≤ T+δ+scK T0.trial+ε := by
-  simpa only [T0.D, X0, toAssembly] using
+  exact
     Generic.rowSC_cell dc72 X0 hok0 T0.scFq Fc (scIdentity0) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -142,7 +136,7 @@ theorem boundSN0 (Fc : FieldQ) (hpl : T0.snFq.plogs = Fc.plogs) (hpo : T0.snFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0,
       (T0.D N).fNeg x ≤ T+δ+snK T0.trial+ε := by
-  simpa only [T0.D, X0, toAssembly] using
+  exact
     Generic.rowSN_cell dc72 X0 hok0 hRt0 T0.snFq Fc (snIdentity0) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -150,24 +144,26 @@ theorem boundSM0 (Fc : FieldQ) (hpl : T0.smFq.plogs = Fc.plogs) (hpo : T0.smFq.p
     {δ : ℚ} (hδ : l1Q T0.smFq.poly Fc.poly ≤ δ) {T : ℝ}
     (hsup : ∀ x ∈ Ioc (-1:ℝ) (-(19501/100000:ℝ)), fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0, x ≤ -(19501/100000:ℝ) →
-      (T0.D N).fNegM (CatalanMeasure.Parametric.groupedMarkedField dc72.toParameters N) x ≤
+      (T0.D N).fNegM (CatalanMeasure.GenD.Analytic.groupedMarkedField dc72.toParameters N) x ≤
         T+δ+smK T0.trial+ε := by
-  simpa only [T0.D, X0, toAssembly] using
+  exact
     Generic.rowNeg_cell dc72 X0 hok0 hRt0 T0.smFq Fc (smIdentity0) hpl hpo hδ
       (by norm_num : (-1:ℝ)< -(19501/100000:ℝ)) (by norm_num : -(19501/100000:ℝ)<0) hsup
 
 theorem scIdentity1 (x : ℝ) :
     cfLim dc72.toParameters x + 2 * X1.T.form.v.Tform x =
       fieldTower T1.scFq (poleF T1.scFq.poles) 0 x + scK T1.trial := by
-  simpa [cfLim_eq, X1, toAssembly, T1.params, dc72] using T1.hidSC x
+  rw [cfLim_eq]
+  convert T1.hidSC x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem snIdentity1 (x : ℝ) :
     fNegLim X1.T.form (rfLim dc72.toParameters) x =
       fieldTower T1.snFq (poleF T1.snFq.poles) 0 x + snK T1.trial := by
-  simpa [rfLim_eq, X1, toAssembly, T1.params, dc72] using T1.hidSN x
+  rw [rfLim_eq]
+  convert T1.hidSN x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem smIdentity1 (x : ℝ) :
     fNegMLim X1.T.form (fun y => -(((dc72.n0:ℝ)-dc72.g0)/dc72.n0)*Real.log (1+y^2)) x =
       fieldTower T1.smFq (poleF T1.smFq.poles) 0 x + smK T1.trial := by
-  simpa [rmQ, X1, toAssembly, T1.params, dc72] using T1.hidSM x
+  convert T1.hidSM x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 
 theorem boundSC1 (Fc : FieldQ) (hpl : T1.scFq.plogs = Fc.plogs) (hpo : T1.scFq.poles = Fc.poles)
     {δ : ℚ} (hδ : l1Q T1.scFq.poly Fc.poly ≤ δ) {T TR c lo : ℝ}
@@ -177,7 +173,7 @@ theorem boundSC1 (Fc : FieldQ) (hpl : T1.scFq.plogs = Fc.plogs) (hpo : T1.scFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (1-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0:ℝ) 1,
       (T1.D N).fCol x ≤ T+δ+scK T1.trial+ε := by
-  simpa only [T1.D, X1, toAssembly] using
+  exact
     Generic.rowSC_cell dc72 X1 hok1 T1.scFq Fc (scIdentity1) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -189,7 +185,7 @@ theorem boundSN1 (Fc : FieldQ) (hpl : T1.snFq.plogs = Fc.plogs) (hpo : T1.snFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0,
       (T1.D N).fNeg x ≤ T+δ+snK T1.trial+ε := by
-  simpa only [T1.D, X1, toAssembly] using
+  exact
     Generic.rowSN_cell dc72 X1 hok1 hRt1 T1.snFq Fc (snIdentity1) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -197,24 +193,26 @@ theorem boundSM1 (Fc : FieldQ) (hpl : T1.smFq.plogs = Fc.plogs) (hpo : T1.smFq.p
     {δ : ℚ} (hδ : l1Q T1.smFq.poly Fc.poly ≤ δ) {T : ℝ}
     (hsup : ∀ x ∈ Ioc (-1:ℝ) (-(19501/100000:ℝ)), fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0, x ≤ -(19501/100000:ℝ) →
-      (T1.D N).fNegM (CatalanMeasure.Parametric.groupedMarkedField dc72.toParameters N) x ≤
+      (T1.D N).fNegM (CatalanMeasure.GenD.Analytic.groupedMarkedField dc72.toParameters N) x ≤
         T+δ+smK T1.trial+ε := by
-  simpa only [T1.D, X1, toAssembly] using
+  exact
     Generic.rowNeg_cell dc72 X1 hok1 hRt1 T1.smFq Fc (smIdentity1) hpl hpo hδ
       (by norm_num : (-1:ℝ)< -(19501/100000:ℝ)) (by norm_num : -(19501/100000:ℝ)<0) hsup
 
 theorem scIdentity2 (x : ℝ) :
     cfLim dc72.toParameters x + 2 * X2.T.form.v.Tform x =
       fieldTower T2.scFq (poleF T2.scFq.poles) 0 x + scK T2.trial := by
-  simpa [cfLim_eq, X2, toAssembly, T2.params, dc72] using T2.hidSC x
+  rw [cfLim_eq]
+  convert T2.hidSC x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem snIdentity2 (x : ℝ) :
     fNegLim X2.T.form (rfLim dc72.toParameters) x =
       fieldTower T2.snFq (poleF T2.snFq.poles) 0 x + snK T2.trial := by
-  simpa [rfLim_eq, X2, toAssembly, T2.params, dc72] using T2.hidSN x
+  rw [rfLim_eq]
+  convert T2.hidSN x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 theorem smIdentity2 (x : ℝ) :
     fNegMLim X2.T.form (fun y => -(((dc72.n0:ℝ)-dc72.g0)/dc72.n0)*Real.log (1+y^2)) x =
       fieldTower T2.smFq (poleF T2.smFq.poles) 0 x + smK T2.trial := by
-  simpa [rmQ, X2, toAssembly, T2.params, dc72] using T2.hidSM x
+  convert T2.hidSM x using 3 <;> first | rfl | norm_num [rmQ, X0, X1, X2, toAssembly, T0.params, T1.params, T2.params, dc72]
 
 theorem boundSC2 (Fc : FieldQ) (hpl : T2.scFq.plogs = Fc.plogs) (hpo : T2.scFq.poles = Fc.poles)
     {δ : ℚ} (hδ : l1Q T2.scFq.poly Fc.poly ≤ δ) {T TR c lo : ℝ}
@@ -224,7 +222,7 @@ theorem boundSC2 (Fc : FieldQ) (hpl : T2.scFq.plogs = Fc.plogs) (hpo : T2.scFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (1-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (0:ℝ) 1,
       (T2.D N).fCol x ≤ T+δ+scK T2.trial+ε := by
-  simpa only [T2.D, X2, toAssembly] using
+  exact
     Generic.rowSC_cell dc72 X2 hok2 T2.scFq Fc (scIdentity2) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -236,7 +234,7 @@ theorem boundSN2 (Fc : FieldQ) (hpl : T2.snFq.plogs = Fc.plogs) (hpo : T2.snFq.p
     (hc : 0 < c) (hcmp : TR+c*Real.log (-lo) ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0,
       (T2.D N).fNeg x ≤ T+δ+snK T2.trial+ε := by
-  simpa only [T2.D, X2, toAssembly] using
+  exact
     Generic.rowSN_cell dc72 X2 hok2 hRt2 T2.snFq Fc (snIdentity2) hpl hpo hδ
       hsup hlo0 hlo1 hend hc hcmp
 
@@ -244,9 +242,9 @@ theorem boundSM2 (Fc : FieldQ) (hpl : T2.smFq.plogs = Fc.plogs) (hpo : T2.smFq.p
     {δ : ℚ} (hδ : l1Q T2.smFq.poly Fc.poly ≤ δ) {T : ℝ}
     (hsup : ∀ x ∈ Ioc (-1:ℝ) (-(19501/100000:ℝ)), fieldTower Fc (poleF Fc.poles) 0 x ≤ T) :
     ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (-1:ℝ) 0, x ≤ -(19501/100000:ℝ) →
-      (T2.D N).fNegM (CatalanMeasure.Parametric.groupedMarkedField dc72.toParameters N) x ≤
+      (T2.D N).fNegM (CatalanMeasure.GenD.Analytic.groupedMarkedField dc72.toParameters N) x ≤
         T+δ+smK T2.trial+ε := by
-  simpa only [T2.D, X2, toAssembly] using
+  exact
     Generic.rowNeg_cell dc72 X2 hok2 hRt2 T2.smFq Fc (smIdentity2) hpl hpo hδ
       (by norm_num : (-1:ℝ)< -(19501/100000:ℝ)) (by norm_num : -(19501/100000:ℝ)<0) hsup
 end
@@ -260,19 +258,19 @@ theorem spikeEnv0 {S0 : ℝ}
     (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T0.trial.form x ≤ S0)
     (hgap : S0 < T0.trial.Sup) :
     ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T0.D N)) := by
-  simpa only [T0.D, X0, toAssembly] using
+  exact
     Generic.famD_spikeEnv dc72 X0 hok0 hRt0 hfr hgap
 theorem spikeEnv1 {S0 : ℝ}
     (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T1.trial.form x ≤ S0)
     (hgap : S0 < T1.trial.Sup) :
     ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T1.D N)) := by
-  simpa only [T1.D, X1, toAssembly] using
+  exact
     Generic.famD_spikeEnv dc72 X1 hok1 hRt1 hfr hgap
 theorem spikeEnv2 {S0 : ℝ}
     (hfr : ∀ x ∈ Icc (-1:ℝ) 1, frLim T2.trial.form x ≤ S0)
     (hgap : S0 < T2.trial.Sup) :
     ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T2.D N)) := by
-  simpa only [T2.D, X2, toAssembly] using
+  exact
     Generic.famD_spikeEnv dc72 X2 hok2 hRt2 hfr hgap
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.AssemblyBindings

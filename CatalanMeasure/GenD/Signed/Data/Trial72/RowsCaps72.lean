@@ -100,12 +100,12 @@ theorem zb0_eq (c d β : ℝ) :
   dsimp only
   unfold zbCap
   simp only [CapEnd.toS,cap0,chord,markN0,markP0,markS0,mix]
-  have hp : ((cap0.toS (0) (1/200)).gP (c+d+β) -
-      ((cap0.toS (0) (1/200)).lamP (c+d+β) = gapP0 (interpL (0) (1/200) (c+d+β)) := by
+  have hp : (cap0.toS (0) (1/200)).gP (c+d+β) -
+      (cap0.toS (0) (1/200)).lamP (c+d+β) = gapP0 (interpL (0) (1/200) (c+d+β)) := by
     simp [CapEnd.toS,cap0,chord,gapP0]
     <;> ring
-  have hs : ((cap0.toS (0) (1/200)).gS (c+d+β) β -
-      ((cap0.toS (0) (1/200)).lamS (c+d+β) β = gapS0 (interpL (0) (1/200) (c+d+β)) := by
+  have hs : (cap0.toS (0) (1/200)).gS (c+d+β) β -
+      (cap0.toS (0) (1/200)).lamS (c+d+β) β = gapS0 (interpL (0) (1/200) (c+d+β)) := by
     simp [CapEnd.toS,cap0,chord,gapS0]
     <;> ring
   simp only [CapEnd.toS,cap0,chord] at hp hs
@@ -143,12 +143,12 @@ theorem zb1_eq (c d β : ℝ) :
   dsimp only
   unfold zbCap
   simp only [CapEnd.toS,cap1,chord,markN1,markP1,markS1,mix]
-  have hp : ((cap1.toS (1/200) (1/16)).gP (c+d+β) -
-      ((cap1.toS (1/200) (1/16)).lamP (c+d+β) = gapP1 (interpL (1/200) (1/16) (c+d+β)) := by
+  have hp : (cap1.toS (1/200) (1/16)).gP (c+d+β) -
+      (cap1.toS (1/200) (1/16)).lamP (c+d+β) = gapP1 (interpL (1/200) (1/16) (c+d+β)) := by
     simp [CapEnd.toS,cap1,chord,gapP1]
     <;> ring
-  have hs : ((cap1.toS (1/200) (1/16)).gS (c+d+β) β -
-      ((cap1.toS (1/200) (1/16)).lamS (c+d+β) β = gapS1 (interpL (1/200) (1/16) (c+d+β)) := by
+  have hs : (cap1.toS (1/200) (1/16)).gS (c+d+β) β -
+      (cap1.toS (1/200) (1/16)).lamS (c+d+β) β = gapS1 (interpL (1/200) (1/16) (c+d+β)) := by
     simp [CapEnd.toS,cap1,chord,gapS1]
     <;> ring
   simp only [CapEnd.toS,cap1,chord] at hp hs

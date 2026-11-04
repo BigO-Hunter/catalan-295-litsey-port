@@ -17,7 +17,7 @@ set_option profiler true
 set_option maxRecDepth 1000000
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.MomentBindings
-open CatalanMeasure.Signed.FieldForm
+open CatalanMeasure.Signed CatalanMeasure.Signed.FieldForm
 open CatalanMeasure.GenD.Signed.Data.Assembly
 open CatalanMeasure.GenD.Signed.Data.Consts.EvalRef
 open CatalanMeasure.Cert.Iv (mom1 dl mom1_dl)
@@ -29,50 +29,50 @@ theorem merge0 : MergeOK MergeOKPilot.cutsT MergeOKPilot.cutsF MergeOKPilot.orig
 theorem actual_mpos0 (N n : ℕ) (τ : ℝ) :
     mpos (T0.D N).μ τ n = τ ^ (n + 1) * (mom1 EnergyCacheData.p0_0.p (n + 2) : ℝ) := by
   rw [mpos_eq _ MergeOKPilot.original (MergeOKPilot.actual_ref N) MergeOKPilot.original_ok,
-    mposQ_merge merge0, mposQ_single EnergyCacheData.R0 EnergyCacheData.p0_0.p rfl rfl]
+    mposQ_merge merge0, mposQ_single EnergyCacheData.R0 EnergyCacheData.p0_0.p (by decide +kernel) rfl]
 
 theorem actual_self0 (K : ℕ) :
     ipPartQ MergeOKPilot.original K = ∑ n ∈ Finset.range K,
       mom1 EnergyCacheData.p0_0.p (n + 2) ^ 2 / ((n : ℚ) + 1) := by
   rw [ipPartQ_merge merge0]
   unfold ipPartQ
-  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R0 EnergyCacheData.p0_0.p rfl rfl])
+  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R0 EnergyCacheData.p0_0.p (by decide +kernel) rfl])
 
 theorem actual_mpos1 (N n : ℕ) (τ : ℝ) :
     mpos (T1.D N).μ τ n = τ ^ (n + 1) * (mom1 EnergyCacheData.p1_0.p (n + 2) : ℝ) := by
   rw [mpos_eq _ EnergyMerge1.original (EnergyMerge1.actual_ref N) EnergyMerge1.original_ok,
-    mposQ_merge EnergyMerge1.merge_checked, mposQ_single EnergyCacheData.R1 EnergyCacheData.p1_0.p rfl rfl]
+    mposQ_merge EnergyMerge1.merge_checked, EnergyMerge1.merged, mposQ_single EnergyCacheData.R1 EnergyCacheData.p1_0.p (by decide +kernel) rfl]
 
 theorem actual_self1 (K : ℕ) :
     ipPartQ EnergyMerge1.original K = ∑ n ∈ Finset.range K,
       mom1 EnergyCacheData.p1_0.p (n + 2) ^ 2 / ((n : ℚ) + 1) := by
-  rw [ipPartQ_merge EnergyMerge1.merge_checked]
+  rw [ipPartQ_merge EnergyMerge1.merge_checked, EnergyMerge1.merged]
   unfold ipPartQ
-  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R1 EnergyCacheData.p1_0.p rfl rfl])
+  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R1 EnergyCacheData.p1_0.p (by decide +kernel) rfl])
 
 theorem actual_mpos2 (N n : ℕ) (τ : ℝ) :
     mpos (T2.D N).μ τ n = τ ^ (n + 1) * (mom1 EnergyCacheData.p2_0.p (n + 2) : ℝ) := by
   rw [mpos_eq _ EnergyMerge2.original (EnergyMerge2.actual_ref N) EnergyMerge2.original_ok,
-    mposQ_merge EnergyMerge2.merge_checked, mposQ_single EnergyCacheData.R2 EnergyCacheData.p2_0.p rfl rfl]
+    mposQ_merge EnergyMerge2.merge_checked, EnergyMerge2.merged, mposQ_single EnergyCacheData.R2 EnergyCacheData.p2_0.p (by decide +kernel) rfl]
 
 theorem actual_self2 (K : ℕ) :
     ipPartQ EnergyMerge2.original K = ∑ n ∈ Finset.range K,
       mom1 EnergyCacheData.p2_0.p (n + 2) ^ 2 / ((n : ℚ) + 1) := by
-  rw [ipPartQ_merge EnergyMerge2.merge_checked]
+  rw [ipPartQ_merge EnergyMerge2.merge_checked, EnergyMerge2.merged]
   unfold ipPartQ
-  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R2 EnergyCacheData.p2_0.p rfl rfl])
+  exact Finset.sum_congr rfl (fun n _ => by rw [mposQ_single EnergyCacheData.R2 EnergyCacheData.p2_0.p (by decide +kernel) rfl])
 
 theorem actual_diff01 (K : ℕ) :
     ipDiffRQ MergeOKPilot.original EnergyMerge1.original K = ∑ n ∈ Finset.range K,
       mom1 (dl EnergyCacheData.p0_0.p EnergyCacheData.p1_0.p) (n + 2) ^ 2 / ((n : ℚ) + 1) := by
   rw [ipDiffRQ_merge merge0 EnergyMerge1.merge_checked]
-  exact ipDiffRQ_single (R := EnergyCacheData.R0) (S := EnergyCacheData.R1) rfl rfl rfl rfl K
+  exact ipDiffRQ_single (R := EnergyCacheData.R0) (S := EnergyCacheData.R1) (by decide +kernel) rfl (by decide +kernel) rfl K
 
 theorem actual_diff12 (K : ℕ) :
     ipDiffRQ EnergyMerge1.original EnergyMerge2.original K = ∑ n ∈ Finset.range K,
       mom1 (dl EnergyCacheData.p1_0.p EnergyCacheData.p2_0.p) (n + 2) ^ 2 / ((n : ℚ) + 1) := by
   rw [ipDiffRQ_merge EnergyMerge1.merge_checked EnergyMerge2.merge_checked]
-  exact ipDiffRQ_single (R := EnergyCacheData.R1) (S := EnergyCacheData.R2) rfl rfl rfl rfl K
+  exact ipDiffRQ_single (R := EnergyCacheData.R1) (S := EnergyCacheData.R2) (by decide +kernel) rfl (by decide +kernel) rfl K
 
 theorem density_eq0 : RInstPilot.density = EnergyCacheData.p0_0.p := by decide +kernel
 theorem cap0 : RInstPilot.Lip ≤ ipPartQ MergeOKPilot.original 1000 := by

@@ -57,11 +57,11 @@ theorem hcert : ∀ i, ∀ᶠ N : ℕ in atTop, ∀ x m : ℕ, (I.DA i N).sp ≤
   have c2 := cert2 hN0 hx0 j a ha hlo hhi hq' (p2 a)
   fin_cases i
   · refine ⟨rho (ap a),c0.1,c0.2.1,?_,?_⟩
-    · simpa only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat] using c0.2.2
-    · simpa only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat] using c1.2.2
+    · simp only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat]; exact c0.2.2
+    · simp only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat]; exact c1.2.2
   · refine ⟨rho (ap a),c1.1,c1.2.1,?_,?_⟩
-    · simpa only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat] using c1.2.2
-    · simpa only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat] using c2.2.2
+    · simp only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat]; exact c1.2.2
+    · simp only [dc72_n0,Nat.cast_mul,Nat.cast_ofNat]; exact c2.2.2
 
 theorem hCls (E0 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T0.D N)))
     (E1 : ∀ᶠ N : ℕ in atTop, Nonempty (SpikeEnv (T1.D N)))

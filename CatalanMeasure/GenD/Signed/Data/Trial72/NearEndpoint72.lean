@@ -13,6 +13,7 @@ open Set Filter CatalanMeasure.GenD.Analytic OAI.InternalCatalan CatalanMeasure.
 open CatalanMeasure.Signed CatalanMeasure.Signed.Consts
 open CatalanMeasure.GenD.Signed.Data.Assembly
 open AssemblyBindings Inputs72 ReferenceData Davis.ScalarInstance72 StandaloneBudgets
+open CatalanMeasure.CellCert
 noncomputable section
 
 def gapRegion : Set ℝ := {x | 0 < |x| ∧ |x| < 7/100}
@@ -76,7 +77,7 @@ theorem hnear (F : Rows72.FieldRows) (B : EventualRegions)
   let R := Rows72.rows F E0 E1 E2
   have L := Generic.link_asym dc72 geometry72 I R (data B) StandaloneEndpoints72.reference
     rfl rfl rfl (by intros; assumption)
-  exact AssemblyBindings.hnear I Inputs72.matches R StandaloneCertificates.reference
+  exact AssemblyBindings.hnear I Inputs72.hmatch R StandaloneCertificates.reference
     CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneDecayBounds.reference
     (by norm_num) (by constructor <;> norm_num) ReferenceAbs72.hec L
 

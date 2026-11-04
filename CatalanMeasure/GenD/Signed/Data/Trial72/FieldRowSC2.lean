@@ -53,7 +53,7 @@ theorem eventual :
     (δ := 0) (selfDistance _)
     (T := (T : ℝ)) (TR := ((ceSignedScRowEnd2TR + ceSignedScRowEnd2U : ℚ) : ℝ))
     (c := (endC ceSignedScRowEnd2FullFq ceSignedScRowEnd2FullTs ceSignedScRowEnd2Site : ℝ))
-    (lo := (ceSignedScRowEnd2Lo : ℝ)) (fun x hx => ceSignedScDeltaT2Named x hx)
+    (lo := (ceSignedScRowEnd2Lo : ℝ)) (fun x hx => by have h := ceSignedScDeltaT2Named x hx; norm_num [T, SignedScDeltaT2AssemblyLiteral.q2] at h ⊢; exact h)
     (by exact_mod_cast hlo0) (by exact_mod_cast hlo1) ?_ (by exact_mod_cast hpos) ?_
   · intro ε hε
     filter_upwards [key ε hε] with N hN x hx

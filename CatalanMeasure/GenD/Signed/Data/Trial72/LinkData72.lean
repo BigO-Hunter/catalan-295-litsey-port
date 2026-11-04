@@ -23,6 +23,8 @@ def ct (j : Fin 24) : PolyCert :=
 def st (j : Fin 24) : ℝ :=
   ([(LRows00.Row2.s : ℝ), (LRows00.Row3.s : ℝ), (LRows00.Row4.s : ℝ), (LRows01.Row5.s : ℝ), (LMeanPilot.s : ℝ), (LRows01.Row7.s : ℝ), (LRows01.Row8.s : ℝ), (LRows01.Row9.s : ℝ), (LRows01.Row10.s : ℝ), (LRows02.Row11.s : ℝ), (LRows02.Row12.s : ℝ), (LRows02.Row13.s : ℝ), (LRows02.Row14.s : ℝ), (LRows02.Row15.s : ℝ), (LRows03.Row16.s : ℝ), (LRows03.Row17.s : ℝ), (LRows03.Row18.s : ℝ), (LRows03.Row19.s : ℝ), (LRows03.Row20.s : ℝ), (LRows04.Row21.s : ℝ), (LRows04.Row22.s : ℝ), (LRows04.Row23.s : ℝ), (LRows04.Row24.s : ℝ), (LRows04.Row25.s : ℝ)] : List ℝ).get j
 
+theorem e_eq : (1/1073741824 : ℝ) = (LRows00.Row0.e : ℝ) := by norm_num [LRows00.Row0.e]
+
 def data {H : NodeGeometryData dc72} (I : InputsAsym dc72 H) {MXRef targetOld costOld c2 : ℝ}
     (hα1 : I.α1 = 1/16)
     (hdom : ∀ i, ∀ α ∈ Icc (I.lo i) (I.hi i), α ∈ Icc (0 : ℝ) (1/16))
@@ -50,14 +52,16 @@ def data {H : NodeGeometryData dc72} (I : InputsAsym dc72 H) {MXRef targetOld co
   hsM0 := fun _ => by norm_num [LRows00.Row1.s]
   hsP := fun _ => LControl72.actualStatCp
   hsM := fun _ => LControl72.actualStatCm
-  hCp_neg := fun _ _ hy hz => LControl72.actualCp_neg hy hz
-  hCp_pos := fun _ _ hy hz => LControl72.actualCp_pos hy hz
-  hCm_neg := fun _ _ hy hz => LControl72.actualCm_neg hy hz
-  hCm_pos := fun _ _ hy hz => LControl72.actualCm_pos hy hz
+  hCp_neg := fun _ _ hy hz => by rw [e_eq]; exact LControl72.actualCp_neg hy hz
+  hCp_pos := fun _ _ hy hz => by rw [e_eq]; exact LControl72.actualCp_pos hy hz
+  hCm_neg := fun _ _ hy hz => by rw [e_eq]; exact LControl72.actualCm_neg hy hz
+  hCm_pos := fun _ _ hy hz => by rw [e_eq]; exact LControl72.actualCm_pos hy hz
   hκlo := by
     intro i α hα
+    have hq : α ∈ Icc ((0 : ℚ) : ℝ) ((1/16 : ℚ) : ℝ) := by simpa using hdom i α hα
+    have h := LControl72.actualMarginCm hq
     rw [hlo i]
-    exact LControl72.actualMarginCm (hdom i α hα)
+    exact (show (1/4 : ℝ) = ((1/4 : ℚ) : ℝ) by norm_num).trans_le h
   hκhi := by
     intro i α hα
     rw [hhi i]
@@ -66,12 +70,12 @@ def data {H : NodeGeometryData dc72} (I : InputsAsym dc72 H) {MXRef targetOld co
   hq2g := by
     intro i α hα
     exact (show 2*(dc72.g0 : ℝ)/dc72.n0 < ((25/58 : ℚ) : ℝ) by norm_num [dc72]).trans_le
-      (LControl72.actualMarginCp (hdom i α hα))
+      (LControl72.actualMarginCp (by simpa using hdom i α hα))
   hspq_floor := by norm_num [dc72]
   hqlo := by
     intro i α hα
     exact (show (dc72.hspq_qlo : ℝ) ≤ ((25/58 : ℚ) : ℝ) by norm_num [dc72]).trans
-      (LControl72.actualMarginCp (hdom i α hα))
+      (LControl72.actualMarginCp (by simpa using hdom i α hα))
   a0 := 7/100
   ts := 13/128
   dgap := 1/25
@@ -155,32 +159,32 @@ def data {H : NodeGeometryData dc72} (I : InputsAsym dc72 H) {MXRef targetOld co
     · exact LControl72.actualStatS23
   hPt := by
     intro j y hy _
-    rw [tgR_eq]
+    rw [tgR_eq, e_eq]
     fin_cases j
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS0 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS1 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS2 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS3 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS4 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS5 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS6 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS7 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS8 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS9 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS10 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS11 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS12 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS13 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS14 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS15 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS16 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS17 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS18 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS19 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS20 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS21 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS22 hy
-    · simpa only [show (39/2048 : ℝ)/(13/128) = 3/16 by norm_num] using LControl72.actualS23 hy
+    · convert LControl72.actualS0 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS1 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS2 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS3 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS4 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS5 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS6 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS7 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS8 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS9 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS10 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS11 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS12 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS13 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS14 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS15 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS16 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS17 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS18 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS19 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS20 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS21 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS22 hy using 2 <;> first | rfl | norm_num
+    · convert LControl72.actualS23 hy using 2 <;> first | rfl | norm_num
   hmarg := by
     intro j α hα
     have hα0 : α ∈ Icc ((0 : ℚ) : ℝ) ((1/16 : ℚ) : ℝ) := by simpa [hα1] using hα

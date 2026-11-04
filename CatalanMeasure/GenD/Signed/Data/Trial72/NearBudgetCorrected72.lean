@@ -16,7 +16,7 @@ theorem bernstein_upper {t A B C D : ℝ} (ht : t ∈ Icc (0 : ℝ) 1)
     (hA : A ≤ D) (hB : B ≤ D) (hC : C ≤ D) :
     (1-t)^2*A + 2*t*(1-t)*B + t^2*C ≤ D := by
   have h1 := mul_le_mul_of_nonneg_left hA (sq_nonneg (1-t))
-  have h2 := mul_le_mul_of_nonneg_left hB (mul_nonneg (mul_nonneg (by norm_num) ht.1) (sub_nonneg.mpr ht.2))
+  have h2 := mul_le_mul_of_nonneg_left hB (mul_nonneg (mul_nonneg (by norm_num : (0 : ℝ) ≤ 2) ht.1) (sub_nonneg.mpr ht.2))
   have h3 := mul_le_mul_of_nonneg_left hC (sq_nonneg t)
   exact (add_le_add (add_le_add h1 h2) h3).trans_eq (by ring)
 

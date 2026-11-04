@@ -67,8 +67,8 @@ def I : InputsAsym dc72 geometry72 where
   etaA := by
     intro i N
     fin_cases i
-    · simpa [DA] using T0.etaD N
-    · simpa [DA] using T1.etaD N
+    · simp [DA]; rw [T0.etaD N]; norm_num
+    · simp [DA]; rw [T1.etaD N]; norm_num
   gs := geometry72.gsP
   xc := geometry72.xc
   C1 := geometry72.C1
@@ -78,7 +78,7 @@ def I : InputsAsym dc72 geometry72 where
   umin := geometry72.umin
   humin := fun _ => rfl
 
-theorem matches : InputsMatch I := ⟨rfl,rfl,rfl,rfl,rfl,rfl,rfl,rfl⟩
+theorem hmatch : InputsMatch I := ⟨rfl,rfl,rfl,rfl,rfl,rfl,rfl,rfl⟩
 
 theorem excess_cap (i : Fin 2) (α : ℝ) (_ : α ∈ Icc (I.lo i) (I.hi i)) :
     excess baseTarget72 cost72 I.target (72*cost72) (13/100000) (dc72.n0 : ℝ) α ≤ 13/5000 :=
@@ -91,4 +91,4 @@ theorem excess_top (α : ℝ) (_ : α ∈ Icc 0 I.α1) :
 end
 end CatalanMeasure.GenD.Signed.Data.Trial72.Inputs72
 #print axioms CatalanMeasure.GenD.Signed.Data.Trial72.Inputs72.I
-#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.Inputs72.matches
+#print axioms CatalanMeasure.GenD.Signed.Data.Trial72.Inputs72.hmatch

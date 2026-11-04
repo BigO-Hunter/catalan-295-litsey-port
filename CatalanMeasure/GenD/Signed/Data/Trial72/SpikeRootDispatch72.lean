@@ -132,7 +132,7 @@ theorem rhoHi (a : Fin 27) : rho (ap a) ≤ (SpikeLinear72.rhoHi.getD a.val 0 : 
 
 
 theorem root (a : Fin 27) : rho (ap a) ∈ Icc (0 : ℝ) (999001/1000000) :=
-  ⟨rhoLo a,(rhoHi a).trans (by exact_mod_cast SpikeLinear72.root_bound a)⟩
+  ⟨rhoLo a,(rhoHi a).trans ((Rat.cast_le (K := ℝ)).mpr (SpikeLinear72.root_bound a) |>.trans_eq (by norm_num))⟩
 
 def qlo (i : Fin 200) : ℝ := 71*(i.val : ℝ)/12500
 
@@ -147,7 +147,7 @@ theorem gain (i : Fin 200) (a : Fin 27) (ha : a.val = RhoQAliases72.indices.getD
   split_ifs with h
   · have hr := SpikeLinear72.root_high i h
     rw [← ha] at hr
-    have hh : rho (ap a) ≤ (499/500 : ℝ) := (rhoHi a).trans (by exact_mod_cast hr)
+    have hh : rho (ap a) ≤ (499/500 : ℝ) := (rhoHi a).trans ((Rat.cast_le (K := ℝ)).mpr hr |>.trans_eq (by norm_num))
     simpa using SpikeLinear72.sg_high hτ ⟨rhoLo a,hh⟩
   · simpa using (SpikeLinear72.root_geometry hτ (root a)).2.2
 
@@ -216,7 +216,7 @@ def de0 (a : Fin 27) : ℝ := (max 0 (SpikeCostScalars0.deUpper.getD a.val 0) : 
 theorem jump0 (a : Fin 27) {y : ℝ} (hy : y ∈ Icc (0 : ℝ) 1) :
     2*(barrierTrialS (bSeq SpikeDe0.bs) (-y)-barrierTrialS (bSeq SpikeDe0.bs) (-(rho (ap a)))) ≤ de0 a := by
   have h : (SpikeCostScalars0.deUpper.getD a.val 0 : ℝ) ≤ de0 a := by
-    exact_mod_cast (le_max_right 0 (SpikeCostScalars0.deUpper.getD a.val 0))
+    exact (Rat.cast_le (K := ℝ)).mpr (le_max_right _ _)
   apply le_trans _ h
   fin_cases a
 
@@ -280,7 +280,7 @@ def de1 (a : Fin 27) : ℝ := (max 0 (SpikeCostScalars1.deUpper.getD a.val 0) : 
 theorem jump1 (a : Fin 27) {y : ℝ} (hy : y ∈ Icc (0 : ℝ) 1) :
     2*(barrierTrialS (bSeq SpikeDe1.bs) (-y)-barrierTrialS (bSeq SpikeDe1.bs) (-(rho (ap a)))) ≤ de1 a := by
   have h : (SpikeCostScalars1.deUpper.getD a.val 0 : ℝ) ≤ de1 a := by
-    exact_mod_cast (le_max_right 0 (SpikeCostScalars1.deUpper.getD a.val 0))
+    exact (Rat.cast_le (K := ℝ)).mpr (le_max_right _ _)
   apply le_trans _ h
   fin_cases a
 
@@ -344,7 +344,7 @@ def de2 (a : Fin 27) : ℝ := (max 0 (SpikeCostScalars2.deUpper.getD a.val 0) : 
 theorem jump2 (a : Fin 27) {y : ℝ} (hy : y ∈ Icc (0 : ℝ) 1) :
     2*(barrierTrialS (bSeq SpikeDe2.bs) (-y)-barrierTrialS (bSeq SpikeDe2.bs) (-(rho (ap a)))) ≤ de2 a := by
   have h : (SpikeCostScalars2.deUpper.getD a.val 0 : ℝ) ≤ de2 a := by
-    exact_mod_cast (le_max_right 0 (SpikeCostScalars2.deUpper.getD a.val 0))
+    exact (Rat.cast_le (K := ℝ)).mpr (le_max_right _ _)
   apply le_trans _ h
   fin_cases a
 

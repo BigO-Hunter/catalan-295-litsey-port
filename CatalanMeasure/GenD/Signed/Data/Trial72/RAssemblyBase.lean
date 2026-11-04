@@ -20,9 +20,9 @@ def rLimQ (η l2 Vq Pq Rq Aq raq iRRq Lq γ Sup σ Bq : ℚ) : ℚ :=
     iRRq / 2 - Lq / 2
 
 theorem rLim_cast (η l2 Vq Pq Rq Aq raq iRRq Lq γ Sup σ Bq : ℚ) :
-    rLim (η : ℝ) (l2 : ℝ) (Vq : ℝ) (Pq : ℝ) (Rq : ℝ) (Aq : ℝ) (raq : ℝ) (iRRq : ℝ) (Lq : ℝ) (γ : ℝ)
+    CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.rLim (η : ℝ) (l2 : ℝ) (Vq : ℝ) (Pq : ℝ) (Rq : ℝ) (Aq : ℝ) (raq : ℝ) (iRRq : ℝ) (Lq : ℝ) (γ : ℝ)
       (Sup : ℝ) (σ : ℝ) (Bq : ℝ) = ((rLimQ η l2 Vq Pq Rq Aq raq iRRq Lq γ Sup σ Bq : ℚ) : ℝ) := by
-  unfold rLim rLimQ
+  unfold CatalanMeasure.GenD.Signed.Data.Consts.EvalRef.rLim rLimQ
   push_cast
   ring
 

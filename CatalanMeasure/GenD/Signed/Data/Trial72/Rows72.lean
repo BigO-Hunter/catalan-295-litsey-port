@@ -142,13 +142,13 @@ def rows (F : FieldRows)
   hrA := by
     intro i ε hε
     fin_cases i
-    · simpa only [dc72_n0] using RAssembly0.constant_bound ε hε
-    · simpa only [dc72_n0] using RAssembly1.constant_bound ε hε
+    · exact RAssembly0.constant_bound ε hε
+    · exact RAssembly1.constant_bound ε hε
   hrB := by
     intro i ε hε
     fin_cases i
-    · simpa only [dc72_n0] using RAssembly1.constant_bound ε hε
-    · simpa only [dc72_n0] using RAssembly2.constant_bound ε hε
+    · exact RAssembly1.constant_bound ε hε
+    · exact RAssembly2.constant_bound ε hε
   hκ := by
     intro i ε hε
     fin_cases i
@@ -164,10 +164,12 @@ def rows (F : FieldRows)
     intro i ε hε
     fin_cases i
     · filter_upwards [Generic.err_small dc72 AssemblyBindings.X0 hε] with N hN α _
-      exact hN
+      convert hN using 2 <;> first | rfl | norm_num [SpikeClassifier72.cp, dc72]
     · filter_upwards [Generic.err_small dc72 AssemblyBindings.X1 hε] with N hN α _
-      exact hN
-  cp_theta := by intro i N α; fin_cases i <;> exact le_rfl
+      convert hN using 2 <;> first | rfl | norm_num [SpikeClassifier72.cp, dc72]
+  cp_theta := by
+    intro i N α
+    fin_cases i <;> (change (1/1024 : ℝ) ≤ ((dc72.thetaL : ℚ) : ℝ); norm_num [dc72])
   hCls := SpikeClassifier72.hCls E0 E1 E2
   capE := capE
   hxc0 := by intro i; fin_cases i <;> norm_num [capE,cap0,cap1]

@@ -37,7 +37,8 @@ theorem piece {D : SignedData} {N x m : ℕ} {bs fa bsn : List ℚ} {ta : List T
   have hmr : (m : ℝ) < x := by exact_mod_cast hmx
   have hθ : D.θ = (1/1024 : ℝ) := by simpa [dc72] using T.hθ
   have hν : D.ν = 72*(N : ℝ) := by simpa [dc72_n0] using T.hν
-  have he : D.e ≤ (1/1073741824 : ℝ) := by simpa using T.he
+  have he : D.e ≤ (1/1073741824 : ℝ) :=
+    le_trans (by simpa using T.he) (le_of_eq (by norm_num : ((2:ℝ)^30)⁻¹ = 1/1073741824))
   have hτ : D.τ ∈ Icc (1-1/1073741824 : ℝ) 1 := by
     change 1-1/1073741824 ≤ 1-D.e ∧ 1-D.e ≤ 1
     constructor <;> linarith [T.he0]
@@ -82,7 +83,7 @@ theorem piece {D : SignedData} {N x m : ℕ} {bs fa bsn : List ℚ} {ta : List T
     hK := hK
     hfin := by
       change 2*(m : ℝ)*(72*(N : ℝ)*(1/1000) + 2*(x : ℝ)*(l'*(De/2)) +
-        (m : ℝ)*Sg + 2*D.ν*D.e*A) + (m : ℝ)*K ≤ D.ν*((2*m : ℕ) : ℝ)*D.cs
+        (m : ℝ)*Sg + 2*D.ν*D.e*A) + (m : ℝ)*K ≤ D.ν*(((2*m : ℕ) : ℝ)*D.cs)
       rw [hν]
       have h := SpikeLinear72.linear_withCount hNr.le hx hSg0 hmlo T.he0 he hA0 hAmax hlinear
       have hp := hpay m _ h
