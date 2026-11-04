@@ -7,16 +7,24 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneFieldsGate
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneConstantsGate
 public import CatalanMeasure.GenD.Signed.Data.Consts.LinkSupLim
 public import CatalanMeasure.GenD.Signed.DesignConst
+public import CatalanMeasure.GenD.Signed.Data.Trial72.StandaloneBudgets
 
 @[expose] public section
+set_option maxRecDepth 100000
+set_option maxHeartbeats 0
 
 namespace CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneC16
-open Set Filter OAI.InternalCatalan CatalanMeasure.GenD CatalanMeasure.GenD.Analytic
-open CatalanMeasure.Signed.Consts CatalanMeasure.GenD.Signed.DesignConst
+open Set Filter OAI.InternalCatalan CatalanMeasure.CellCert CatalanMeasure.GenD CatalanMeasure.GenD.Analytic
+open CatalanMeasure.Signed CatalanMeasure.Signed.FieldForm CatalanMeasure.Signed.Consts CatalanMeasure.GenD.Signed.DesignConst
+open CatalanMeasure.GenD.Signed.TaylorCell CatalanMeasure.GenD.Signed.LogEval
 open CatalanMeasure.GenD.Signed.Data.Trial CatalanMeasure.GenD.Signed.Data.Trial72.ReferenceData
 open CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneAdapter
 open CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneFieldsGate
 open CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneConstantsGate
+
+private theorem referenceLiteralCheck :
+    fieldNFCheck D72.StandaloneFieldData.f2 referenceRowLiteral = true := by
+  decide +kernel
 
 private theorem rowOfBound {x T : ℝ} (hx : |x| ≤ 1)
     (h : fval D72.StandaloneFieldData.f2 x ≤ T) :
@@ -24,10 +32,12 @@ private theorem rowOfBound {x T : ℝ} (hx : |x| ≤ 1)
       T + (((638384986865860071 : ℚ) / 36028797018963968) : ℝ) := by
   change rowFieldG (3/8) (1/9) (97/72) (sequence secondPData) (sequence secondVData) x ≤ _
   rw [referenceRowIdentity secondPData secondVData (tailOK_of _ secondP_tail) (tailOK_of _ secondV_tail) hx]
-  have he := referenceRowValue x
-  change fval D72.StandaloneFieldData.f2 x = _ at he
+  have he : fval D72.StandaloneFieldData.f2 x =
+      fval (referenceRowQ secondPData secondVData) x := by
+    have hLiteral := (fieldNFCheck_sound referenceLiteralCheck x).trans (referenceRowValue x)
+    simpa only [fieldTower, poleTower_zero, fval, poleF, poleFn] using hLiteral
   rw [he] at h
-  exact add_le_add h (refRowUpper.trans (by norm_num [d2LitsConstantsGate.q2]))
+  exact (add_le_add h refRowUpper).trans (by norm_num [d2LitsConstantsGate.q2])
 
 private theorem gapSubset : {x : ℝ | 0 < |x| ∧ |x| < 7/100} ⊆
     Ico (-1 : ℝ) 0 ∪ Ioo 0 1 := by
@@ -73,7 +83,8 @@ theorem hgap : ∀ᶠ N : ℕ in atTop, ∀ x : ℝ, 0 < |x| → |x| < 7/100 →
   have h := link_cap_of_region dc72.admissible secondP_summable secondV_summable
     (α := 3/8) (β := 1/9) (γ := 97/72)
     (by norm_num [dc72]) (by norm_num [dc72]) (by norm_num [dc72])
-    gapSubset (fun x hx => gapLimit x hx.1 hx.2) (d := 1/25) (δ := 13/100000)
+    gapSubset (Mx := -96992793/100000000) (d0 := 1/25 + 1/10000)
+    (fun x hx => gapLimit x hx.1 hx.2) (d := 1/25) (δ := 13/100000)
     (by norm_num) (by norm_num)
   filter_upwards [h] with N hN x h0 h1 using hN x ⟨h0,h1⟩
 
@@ -83,9 +94,30 @@ theorem hsup : ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (1-1/1000 : ℝ) 1,
   exact link_cap_of_region dc72.admissible secondP_summable secondV_summable
     (α := 3/8) (β := 1/9) (γ := 97/72)
     (by norm_num [dc72]) (by norm_num [dc72]) (by norm_num [dc72])
-    (fun x hx => Or.inr ⟨by linarith [hx.1], hx.2⟩) supLimit (by norm_num) (by norm_num)
+    (fun x hx => Or.inr ⟨by linarith [hx.1], hx.2⟩)
+    (Mx := -96992793/100000000) (d0 := 17/100 + 1/10000) supLimit (by norm_num) (by norm_num)
 
 #print axioms hgap
 #print axioms hsup
 end CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneC16
 
+
+namespace CatalanMeasure.GenD.Signed.Data.Trial72.NearEndpoint72
+open Set Filter OAI.InternalCatalan CatalanMeasure.GenD.Analytic
+open CatalanMeasure.Signed CatalanMeasure.GenD.Signed.DesignConst
+open ReferenceData StandaloneBudgets
+
+/-- The exact consumer contract; producers may supply these finite-N
+regional bounds directly or use the limit-field adapter above. -/
+structure EventualRegions : Prop where
+  gap : ∀ᶠ N : ℕ in atTop, ∀ x : ℝ, 0 < |x| → |x| < 7/100 →
+    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-1/25
+  sup : ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (1-1/1000 : ℝ) 1,
+    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-17/100
+
+/-- The frozen D72 reference row satisfies both eventual regional caps. -/
+theorem eventualRegions : EventualRegions :=
+  ⟨Cells.D72.StandaloneC16.hgap, Cells.D72.StandaloneC16.hsup⟩
+
+#print axioms eventualRegions
+end CatalanMeasure.GenD.Signed.Data.Trial72.NearEndpoint72

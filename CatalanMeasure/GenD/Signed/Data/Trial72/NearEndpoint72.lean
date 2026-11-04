@@ -1,4 +1,5 @@
 module
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.StandaloneC16
 public import CatalanMeasure.GenD.Signed.Data.Trial72.Rows72
 public import CatalanMeasure.GenD.Signed.Data.Trial72.LinkData72
 public import CatalanMeasure.GenD.Signed.Data.Trial72.ReferenceAbs72
@@ -51,14 +52,6 @@ private theorem sup_eventual (B : Regions) :
     (ε := (13/100000)/4) (by norm_num)
   filter_upwards [h] with N hN x hx
   exact (hN x hx).trans_eq (by ring)
-
-/-- The exact consumer contract; producers may supply these finite-N
-regional bounds directly or use the limit-field adapter above. -/
-structure EventualRegions : Prop where
-  gap : ∀ᶠ N : ℕ in atTop, ∀ x : ℝ, 0 < |x| → |x| < 7/100 →
-    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-1/25
-  sup : ∀ᶠ N : ℕ in atTop, ∀ x ∈ Ioo (1-1/1000 : ℝ) 1,
-    freeRowX dc72.toParameters N secondP secondV x ≤ secondMX+(13/100000)/4-17/100
 
 theorem Regions.eventual (B : Regions) : EventualRegions :=
   ⟨gap_eventual B,sup_eventual B⟩
