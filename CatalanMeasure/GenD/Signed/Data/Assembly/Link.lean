@@ -322,10 +322,10 @@ def link (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
   hCp_pos := C.hCp_pos
   hCm_neg := C.hCm_neg
   hCm_pos := C.hCm_pos
-  hκlo := by simpa only [hp, phase2] using C.hκlo
-  hκhi := by simpa only [hp, phase2] using C.hκhi
+  hκlo := by simpa only [hp, phase2, phase2Core] using C.hκlo
+  hκhi := by simpa only [hp, phase2, phase2Core] using C.hκhi
   hk0 := C.hk0
-  hq2g := by simpa only [hp, phase2] using C.hq2g
+  hq2g := by simpa only [hp, phase2, phase2Core] using C.hq2g
   a0 := C.a0
   ts := C.ts
   dgap := C.dgap
@@ -346,7 +346,7 @@ def link (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
   hsT0 := C.hsT0
   hsT := C.hsT
   hPt := C.hPt
-  hmarg := by simpa only [hp, phase2] using C.hmarg
+  hmarg := by simpa only [hp, phase2, phase2Core] using C.hmarg
   θ0 := C.θ0
   dsp := C.dsp
   hθ0 := C.hθ0
@@ -357,7 +357,7 @@ def link (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
   hsup := by simpa only [hp, hv, hMX] using C.hsup
   hθi := fun i N => by
     change (I.DA i N).θ ≤ C.θ0
-    rw [I.hDA]
+    rw [show I.DA i N = famD dc (I.XA i) N from I.hDA i N]
     exact C.hθcut
   Kn := fun N => ((dc.n0 * N : ℕ) : ℝ)
   Tn := fun N => ((dc.n0 * N : ℕ) : ℝ) + 1
@@ -365,15 +365,15 @@ def link (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
   hKn := fun N => le_rfl
   hTn := fun N => le_rfl
   hMmax := fun N => by
-    simpa only [Parameters.n, Nat.cast_mul, phase2] using
+    simpa only [Parameters.n, Nat.cast_mul, phase2, phase2Core] using
       CatalanMeasure.Signed.Consts.Generic.mmaxOf_ge dc (C.Dtop / C.dsp + I.C1 * C.θ0) N
   hgA := fun i N => by
     change (I.DA i N).g = dc.g0 * N
-    rw [I.hDA]
+    rw [show I.DA i N = famD dc (I.XA i) N from I.hDA i N]
     rfl
   hspA := fun i N hN => by
     change 0 < (I.DA i N).sp
-    rw [I.hDA]
+    rw [show I.DA i N = famD dc (I.XA i) N from I.hDA i N]
     change 0 < dc.sp * N
     exact Nat.mul_pos dc.sp_pos (by omega)
   hspq := fun i i0 N hN α hα => by
@@ -385,7 +385,7 @@ def link (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
     change ((I.DA i N).sp : ℝ) + ((dc.g0 * N : ℕ) : ℝ) ≤
       ((1 - α) * (C.Cp i0).c0 + certMean (C.Cp i0).K (C.Cp i0).G D0.p - C.sP i0) *
         ((dc.n0 * N : ℕ) : ℝ)
-    rw [hp, I.hDA]
+    rw [hp]; rw [show I.DA i N = famD dc (I.XA i) N from I.hDA i N]
     change ((dc.sp * N : ℕ) : ℝ) + ((dc.g0 * N : ℕ) : ℝ) ≤ Q * ((dc.n0 * N : ℕ) : ℝ)
     push_cast
     nlinarith only [hscaled]
@@ -625,7 +625,7 @@ def linkData410 : Generic.LinkData dc58 inputs410
     fin_cases i
     · exact (kappaHi_I0 rfl (fun _ => rfl) (fun _ => rfl) hα)
     · exact (kappaHi_I1 rfl (fun _ => rfl) (fun _ => rfl) hα)
-  hk0 := fun i => by fin_cases i <;> norm_num [inputs410, κlo410]
+  hk0 := fun i => by fin_cases i <;> norm_num [inputs410, κlo410, Generic.Inputs.κlo]
   hq2g := fun i α hα => by
     rw [certMean]
     have h5 : 2 * (dc58.g0 : ℝ) / dc58.n0 = 5 / 29 := by norm_num
@@ -709,7 +709,7 @@ def link410 (R : Rows410) {residual nearCap : ℝ}
     rw [hs]
     rfl
   apply Generic.link dc58 inputs410 (Rows410.toGeneric R) linkData410 D0 hp hv hM
-  simpa only [phase2, Generic.phase2, Rows410.toGeneric, dc58_n0, hCap] using hCls
+  simpa only [phase2, Generic.phase2, Generic.phase2Core, Rows410.toGeneric, dc58_n0, hCap] using hCls
 
 theorem hec410' {residual nearCap : ℝ}
     (D0 : SecondTrialBoundsEnd P410 0 K590.target residual nearCap K590.secondCost' G410)
