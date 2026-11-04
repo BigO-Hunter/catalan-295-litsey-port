@@ -4,7 +4,10 @@ public import CatalanMeasure.GenD.Signed.Data.Trial72.Rows72
 set_option Elab.async false
 set_option profiler true
 namespace CatalanMeasure.GenD.Signed.Data.Trial72.FieldRows72
-open Set Filter CatalanMeasure.Signed CatalanMeasure.GenD.Analytic
+open Set Filter CatalanMeasure.Signed CatalanMeasure.Signed.FieldForm OAI.InternalCatalan
+open CatalanMeasure.Parametric CatalanMeasure.GenD.Analytic CatalanMeasure.GenD
+open CatalanMeasure.GenD.Signed.Data.Assembly
+open CatalanMeasure.GenD.Signed.Data.Assembly.Generic
 open Inputs72 AssemblyBindings RowsCaps72
 noncomputable section
 
