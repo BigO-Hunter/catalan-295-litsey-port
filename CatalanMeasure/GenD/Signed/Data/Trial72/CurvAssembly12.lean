@@ -72,7 +72,7 @@ theorem hmoment (N : ℕ) :
   have hm' := (Rat.cast_le (K := ℝ)).mpr hm
   have ht : (2 * max (X.Cb : ℝ) (Y.Cb : ℝ)) ^ 2 / (((1000 : ℝ) + 1) * ((1000 : ℝ) + 2)) ≤
       (momentTail : ℝ) := by norm_num [X, Y, RAssembly1.X, RAssembly2.X, T1.Cb, T2.Cb, momentTail, qlist, max_def]
-  rw [Rat.cast_add]
+  first | rw [Rat.cast_add] | (unfold momentUpper; rw [Rat.cast_add]) | (simp only [momentUpper, Rat.cast_add])
   exact h.trans (add_le_add hm' ht)
 
 theorem scalar : cap ≤ vLower / 2 + 2 * ADifferenceCached12.lower + (1 - (9/20 : ℚ)) * rbLower +
