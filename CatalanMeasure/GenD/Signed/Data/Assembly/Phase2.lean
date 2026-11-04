@@ -37,13 +37,37 @@ theorem hlogu (dc : DesignConst) (I : Inputs dc) :
     (by exact_mod_cast Nat.mul_pos (by decide : 0 < 2) hd)
     (by norm_num) (by exact_mod_cast dc.n0_pos)
   refine h.congr (fun N => ?_)
-  rw [I.humin]
+  have hu := I.humin N
+  simp only [Option.map_none, Option.getD_none] at hu
+  first | rw [hu] | erw [hu] | simp only [hu] | (change _ = -Real.log (InputsCore.umin I N) / _; rw [hu])
   unfold umin
   push_cast
   rw [show 2 * (dc.d0 : ℝ) * (N : ℝ) + 2 =
     2 * ((dc.d0 : ℝ) * (N : ℝ) + 1) by ring]
 
-def phase2 (dc : DesignConst) (I : Inputs dc) (R : Rows dc I) : Phase2Data 2 where
+theorem InputsCore.umin_pos {dc : DesignConst} {geometry : Option (NodeGeometryData dc)}
+    (I : InputsCore dc geometry) (N : ℕ) : 0 < I.umin N := by
+  cases geometry with
+  | none => rw [I.humin]; exact Generic.umin_pos dc N
+  | some H => rw [I.humin]; exact H.umin_pos N
+
+theorem InputsCore.umin_le_one {dc : DesignConst} {geometry : Option (NodeGeometryData dc)}
+    (I : InputsCore dc geometry) (N : ℕ) : I.umin N ≤ 1 := by
+  cases geometry with
+  | none => rw [I.humin]; exact Generic.umin_le_one dc N
+  | some H => rw [I.humin]; exact H.umin_le_one N
+
+theorem InputsCore.hlogu {dc : DesignConst} {geometry : Option (NodeGeometryData dc)}
+    (I : InputsCore dc geometry) :
+    Tendsto (fun N : ℕ => -Real.log (I.umin N) / ((dc.n0 * N : ℕ) : ℝ)) atTop (𝓝 0) := by
+  cases geometry with
+  | none => exact Generic.hlogu dc I
+  | some H =>
+    exact H.hlogu.congr (fun N => by rw [I.humin]; simp)
+
+def phase2Core (dc : DesignConst) (geometry : Option (NodeGeometryData dc))
+    (I : InputsCore dc geometry) (R : RowsCore dc geometry I) :
+    Phase2DataCore 2 (geometry.map (fun H => H.gsN)) where
   ncount := fun N => dc.n0 * N
   ncount_pos := fun N hN => Nat.mul_pos dc.n0_pos hN
   B := -I.target + Real.log 2 / 2
@@ -114,8 +138,8 @@ def phase2 (dc : DesignConst) (I : Inputs dc) (R : Rows dc I) : Phase2Data 2 whe
   hrSA := R.hrSA
   hrSB := R.hrSB
   umin := I.umin
-  hum0 := fun N => by rw [I.humin]; exact umin_pos dc N
-  hum1 := fun N => by rw [I.humin]; exact umin_le_one dc N
+  hum0 := I.umin_pos
+  hum1 := I.umin_le_one
   Bd := R.Bd
   Rbd := R.Rbd
   hBdPA := R.hBdPA
@@ -126,7 +150,7 @@ def phase2 (dc : DesignConst) (I : Inputs dc) (R : Rows dc I) : Phase2Data 2 whe
   hRSA := R.hRSA
   hRSB := R.hRSB
   hn_top := hn_top dc
-  hlogu := hlogu dc I
+  hlogu := I.hlogu
   gs := I.gs
   xc := I.xc
   C1 := I.C1
@@ -147,6 +171,13 @@ def phase2 (dc : DesignConst) (I : Inputs dc) (R : Rows dc I) : Phase2Data 2 whe
   hZB := R.hZB
   hbudLo := R.hbudLo
   hbudHi := R.hbudHi
+
+def phase2 (dc : DesignConst) (I : Inputs dc) (R : Rows dc I) : Phase2Data 2 :=
+  phase2Core dc none I R
+
+def phase2Asym (dc : DesignConst) (H : NodeGeometryData dc) (I : InputsAsym dc H)
+    (R : RowsAsym dc H I) : Phase2DataAsym 2 H.gsN :=
+  phase2Core dc (some H) I R
 
 end Generic
 
@@ -172,3 +203,6 @@ end CatalanMeasure.GenD.Signed.Data.Assembly
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.hlogu
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.hn_top410
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.hlogu410
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.phase2Core
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.phase2Asym
