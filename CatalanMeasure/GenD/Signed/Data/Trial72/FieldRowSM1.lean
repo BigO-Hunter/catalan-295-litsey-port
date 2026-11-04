@@ -41,7 +41,10 @@ theorem eventual : ∀ ε : ℝ, 0 < ε → ∀ᶠ N : ℕ in atTop,
     ∀ x ∈ Ioo (-1 : ℝ) 0, x ≤ -(19501/100000:ℝ) →
       (T1.D N).fNegM (groupedMarkedField dc72.toParameters N) x ≤ (S : ℝ) + ε := by
   have key := boundSM1 T1.smFq rfl rfl (δ := 0) (selfDistance _) (T := (T : ℝ))
-    (by simpa [Rat.cast_div, Rat.cast_neg] using CatalanMeasure.GenD.Signed.Data.Cells.D72.SignedSmEntryT1Cover.named)
+    (fun y hy => by
+      have h := CatalanMeasure.GenD.Signed.Data.Cells.D72.SignedSmEntryT1Cover.named y (by norm_num [Set.mem_Ioc] at hy ⊢; exact hy)
+      norm_num [T] at h ⊢
+      exact h)
   intro ε hε
   filter_upwards [key ε hε] with N hN x hx hcut
   have h := hN x hx hcut
