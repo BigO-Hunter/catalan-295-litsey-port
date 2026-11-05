@@ -4,6 +4,7 @@ public import CatalanMeasure.GenD.Signed.Data.Cells.ChebPieceL
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.LaurentCache
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.RootScale
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.ZeroLaurent
+public import CatalanMeasure.GenD.Signed.Data.Cells.D72.AnchoredLaurent
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.NearCorners001
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.NearProduction005
 public import CatalanMeasure.GenD.Signed.Data.Cells.D72.NearProduction006
@@ -365,8 +366,14 @@ theorem delta0Value (x : ℝ) : fval D72.NearCorners001.delta0 x = (0 : ℝ) := 
   rw [h]
   simp [fval_sum, fval_log]
 theorem corner0Identity (x : ℝ) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((0 : ℚ) / 1) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + ((0 : ℝ)) := by
-  rw [D72.NearCorners001.corner0Value, delta0Value, ← laurentNF_sound (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) x, D72.NearCorners001.corner0Terms, laurentNF_sound, ← D72.NearBinding001.termsValue x]
-  ring
+  have hf : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((0 : ℚ) / 1) ((0 : ℚ) / 1)) x = fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta0 x := by
+    convert D72.NearCorners001.corner0Value x using 1 <;> norm_num [d2LitsNearCorners001.q2]
+  have ht : lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = lfieldTower D72.NearBinding001.literalTerms 0 x :=
+    (laurent_eq_of_nf (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) D72.NearCorners001.corner0Terms x).trans (D72.NearBinding001.termsValue x).symm
+  calc
+    _ = (fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta0 x) + lfieldTower D72.NearBinding001.literalTerms 0 x :=
+      congrArg₂ (fun u v : ℝ => u + v) hf ht
+    _ = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + ((0 : ℝ)) := by rw [delta0Value]; ring
 theorem corner0Piece0 (x : ℝ) (hx : x ∈ Icc ((((98749 : ℚ) / 1000000) : ℚ) : ℝ) ((((828367 : ℚ) / 8388608) : ℚ) : ℝ)) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((0 : ℚ) / 1) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x ≤ ((((-8658245509 : ℚ) / 8589934592) : ℚ) : ℝ) := by
   rw [corner0Identity]
   have h := envelope0 x hx
@@ -689,8 +696,14 @@ theorem delta1Value (x : ℝ) : fval D72.NearCorners001.delta1 x = ((((1 : ℚ) 
   rw [h]
   simp [fval_sum, fval_log]
 theorem corner1Identity (x : ℝ) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)|) := by
-  rw [D72.NearCorners001.corner1Value, delta1Value, ← laurentNF_sound (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) x, D72.NearCorners001.corner1Terms, laurentNF_sound, ← D72.NearBinding001.termsValue x]
-  ring
+  have hf : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((0 : ℚ) / 1)) x = fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta1 x := by
+    convert D72.NearCorners001.corner1Value x using 1 <;> norm_num [d2LitsNearCorners001.q2]
+  have ht : lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = lfieldTower D72.NearBinding001.literalTerms 0 x :=
+    (laurent_eq_of_nf (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) D72.NearCorners001.corner1Terms x).trans (D72.NearBinding001.termsValue x).symm
+  calc
+    _ = (fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta1 x) + lfieldTower D72.NearBinding001.literalTerms 0 x :=
+      congrArg₂ (fun u v : ℝ => u + v) hf ht
+    _ = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)|) := by rw [delta1Value]; ring
 theorem corner1Piece0 (x : ℝ) (hx : x ∈ Icc ((((98749 : ℚ) / 1000000) : ℚ) : ℝ) ((((828367 : ℚ) / 8388608) : ℚ) : ℝ)) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x ≤ ((((-553478271191 : ℚ) / 549755813888) : ℚ) : ℝ) := by
   rw [corner1Identity]
   have h := envelope0 x hx
@@ -1319,8 +1332,14 @@ theorem delta2Value (x : ℝ) : fval D72.NearCorners001.delta2 x = ((((1 : ℚ) 
   rw [h]
   simp [fval_sum, fval_log]
 theorem corner2Identity (x : ℝ) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((1 : ℚ) / 200)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 4400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| + ((((-1 : ℚ) / 440) : ℚ) : ℝ) * Real.log |x - ((((1 : ℚ) / 1) : ℚ) : ℝ)|) := by
-  rw [D72.NearCorners001.corner2Value, delta2Value, ← laurentNF_sound (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) x, D72.NearCorners001.corner2Terms, laurentNF_sound, ← D72.NearBinding001.termsValue x]
-  ring
+  have hf : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((1 : ℚ) / 200)) x = fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta2 x := by
+    convert D72.NearCorners001.corner2Value x using 1 <;> norm_num [d2LitsNearCorners001.q2]
+  have ht : lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = lfieldTower D72.NearBinding001.literalTerms 0 x :=
+    (laurent_eq_of_nf (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) D72.NearCorners001.corner2Terms x).trans (D72.NearBinding001.termsValue x).symm
+  calc
+    _ = (fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta2 x) + lfieldTower D72.NearBinding001.literalTerms 0 x :=
+      congrArg₂ (fun u v : ℝ => u + v) hf ht
+    _ = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 4400) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| + ((((-1 : ℚ) / 440) : ℚ) : ℝ) * Real.log |x - ((((1 : ℚ) / 1) : ℚ) : ℝ)|) := by rw [delta2Value]; ring
 theorem corner2Piece0 (x : ℝ) (hx : x ∈ Icc ((((98749 : ℚ) / 1000000) : ℚ) : ℝ) ((((828367 : ℚ) / 8388608) : ℚ) : ℝ)) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 200) ((1 : ℚ) / 200)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x ≤ ((((-1105819401003 : ℚ) / 1099511627776) : ℚ) : ℝ) := by
   rw [corner2Identity]
   have h := envelope0 x hx
@@ -1949,8 +1968,14 @@ theorem delta3Value (x : ℝ) : fval D72.NearCorners001.delta3 x = ((((1 : ℚ) 
   rw [h]
   simp [fval_sum, fval_log]
 theorem corner3Identity (x : ℝ) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)|) := by
-  rw [D72.NearCorners001.corner3Value, delta3Value, ← laurentNF_sound (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) x, D72.NearCorners001.corner3Terms, laurentNF_sound, ← D72.NearBinding001.termsValue x]
-  ring
+  have hf : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((0 : ℚ) / 1)) x = fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta3 x := by
+    convert D72.NearCorners001.corner3Value x using 1 <;> norm_num [d2LitsNearCorners001.q2]
+  have ht : lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = lfieldTower D72.NearBinding001.literalTerms 0 x :=
+    (laurent_eq_of_nf (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) D72.NearCorners001.corner3Terms x).trans (D72.NearBinding001.termsValue x).symm
+  calc
+    _ = (fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta3 x) + lfieldTower D72.NearBinding001.literalTerms 0 x :=
+      congrArg₂ (fun u v : ℝ => u + v) hf ht
+    _ = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 32) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)|) := by rw [delta3Value]; ring
 theorem corner3Piece0 (x : ℝ) (hx : x ∈ Icc ((((98749 : ℚ) / 1000000) : ℚ) : ℝ) ((((828367 : ℚ) / 8388608) : ℚ) : ℝ)) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((0 : ℚ) / 1)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x ≤ ((((-1091974106687 : ℚ) / 1099511627776) : ℚ) : ℝ) := by
   rw [corner3Identity]
   have h := envelope0 x hx
@@ -2579,8 +2604,14 @@ theorem delta4Value (x : ℝ) : fval D72.NearCorners001.delta4 x = ((((1 : ℚ) 
   rw [h]
   simp [fval_sum, fval_log]
 theorem corner4Identity (x : ℝ) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((1 : ℚ) / 16)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 352) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| + ((((-5 : ℚ) / 176) : ℚ) : ℝ) * Real.log |x - ((((1 : ℚ) / 1) : ℚ) : ℝ)|) := by
-  rw [D72.NearCorners001.corner4Value, delta4Value, ← laurentNF_sound (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) x, D72.NearCorners001.corner4Terms, laurentNF_sound, ← D72.NearBinding001.termsValue x]
-  ring
+  have hf : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((1 : ℚ) / 16)) x = fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta4 x := by
+    convert D72.NearCorners001.corner4Value x using 1 <;> norm_num [d2LitsNearCorners001.q2]
+  have ht : lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x = lfieldTower D72.NearBinding001.literalTerms 0 x :=
+    (laurent_eq_of_nf (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) D72.NearCorners001.corner4Terms x).trans (D72.NearBinding001.termsValue x).symm
+  calc
+    _ = (fval D72.NearBinding001.literalField x + fval D72.NearCorners001.delta4 x) + lfieldTower D72.NearBinding001.literalTerms 0 x :=
+      congrArg₂ (fun u v : ℝ => u + v) hf ht
+    _ = (fval D72.NearBinding001.literalField x + lfieldTower D72.NearBinding001.literalTerms 0 x) + (((((1 : ℚ) / 352) : ℚ) : ℝ) * Real.log |x - ((((-1 : ℚ) / 1) : ℚ) : ℝ)| + ((((-5 : ℚ) / 176) : ℚ) : ℝ) * Real.log |x - ((((1 : ℚ) / 1) : ℚ) : ℝ)|) := by rw [delta4Value]; ring
 theorem corner4Piece0 (x : ℝ) (hx : x ∈ Icc ((((98749 : ℚ) / 1000000) : ℚ) : ℝ) ((((828367 : ℚ) / 8388608) : ℚ) : ℝ)) : fval (CatalanMeasure.GenD.Signed.Data.Trial72.T1.nearAt ((1 : ℚ) / 16) ((1 : ℚ) / 16)) x + lfieldTower (CatalanMeasure.Signed.FieldForm.scaleL (-1) (CatalanMeasure.Signed.FieldForm.reflL (CatalanMeasure.GenD.Signed.Data.Trial.dilTermsS CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qF CatalanMeasure.GenD.Signed.Data.Trial72.T1.trial.qFn))) 0 x ≤ ((((-1077090373847 : ℚ) / 1099511627776) : ℚ) : ℝ) := by
   rw [corner4Identity]
   have h := envelope0 x hx
