@@ -8,7 +8,7 @@ large integers `q`.
 
 > **Theorem.**
 >
-> - μ(G) ≤ 410;
+> - μ(G) ≤ 400;
 > - μ(G ± 5π²/48) ≤ 31.2876, for both signs;
 > - μ(L(2, χ₋₃)) ≤ 13.7046;
 > - μ(L(2, χ₋₃) ± π²/9) ≤ 9.4998, for both signs;
@@ -24,7 +24,7 @@ All proofs are kernel-checked in Lean and use only the axioms `propext`, `Quot.s
 
 ## Papers
 
-- S. Litsey, *An irrationality measure for Catalan's constant* (2026), the proof of μ(G) ≤ 410: LaTeX
+- S. Litsey, *An irrationality measure for Catalan's constant* (2026), the proof of μ(G) ≤ 400: LaTeX
   source and PDF in [`paper/`](paper/) (`catalan-measure-hexagon.tex` is the single-file version),
   Hexagon preprint [`hexagon:2610.00187`](https://hexagonmath.org/2610.00187).
 - S. Litsey, *Irrationality measures for differences of trigamma values* (2026), the other fifteen
@@ -32,7 +32,7 @@ All proofs are kernel-checked in Lean and use only the axioms `propext`, `Quot.s
   is the single-file version), Hexagon preprint [`hexagon:2610.00401`](https://hexagonmath.org/2610.00401).
 
 Both papers build on OpenAI's proof that `G` is irrational ([openai/math](https://github.com/openai/math);
-preprint dated September 24, 2026, released October 6, 2026), and the proof of μ(G) ≤ 410 also builds on
+preprint dated September 24, 2026, released October 6, 2026), and the proof of μ(G) ≤ 400 also builds on
 its Lean formalization. Other bounds in the literature:
 - For `G`, R. K. Jha proved μ(G) ≤ 10^8 ([doi:10.5281/zenodo.23237269](https://doi.org/10.5281/zenodo.23237269)).
   M. C. S. Carreira treated the five parameters of OpenAI's construction as free and obtained μ(G) < 2294
@@ -44,7 +44,10 @@ its Lean formalization. Other bounds in the literature:
   C. Davis obtained μ(G) ≤ 528.23288 with the design and arithmetic of this repository and new quadrature
   nodes, formalized in Lean ([1337isnot1337/catalan-constant](https://github.com/1337isnot1337/catalan-constant));
   D. I. Arkhipov modified that development to μ(G) ≤ 528.2327
-  ([darkhipo/catalan-constant-gen5](https://github.com/darkhipo/catalan-constant-gen5)).
+  ([darkhipo/catalan-constant-gen5](https://github.com/darkhipo/catalan-constant-gen5)). The proof of
+  μ(G) ≤ 400 uses Davis's quadrature nodes and 33 of Davis's Lean files (commit `3c45153`, Apache License 2.0),
+  ported unchanged into [`CatalanMeasure/GenD/Signed/Davis/`](CatalanMeasure/GenD/Signed/Davis/); see
+  [`NOTICE`](NOTICE) and `PROVENANCE.json` there.
 - For `L(2, χ₋₃)` and its rational linear combinations with `ζ(2)`, Calegari, Dimitrov and Tang give
   24781 (arXiv:2510.04156, Theorem 5.1 and the remark after it).
 - We know of no earlier irrationality result for `G ± 5π²/48`, `ψ′(a/5) − ζ(2)` or `ψ′(a/7) − ζ(2)`.
@@ -53,62 +56,63 @@ its Lean formalization. Other bounds in the literature:
 
 | File | Content |
 |---|---|
-| [`Challenge.lean`](Challenge.lean), [`ChallengeHybrid.lean`](ChallengeHybrid.lean) | the sixteen statements, using Mathlib only, with the constants written as series: μ(G) ≤ 410 in `Challenge.lean` (namespace `CatalanIrrationalityMeasure`) and the other fifteen in `ChallengeHybrid.lean` (namespace `TrigammaDifferences`). This is the whole trusted statement surface |
+| [`Challenge.lean`](Challenge.lean), [`ChallengeHybrid.lean`](ChallengeHybrid.lean) | the sixteen statements, using Mathlib only, with the constants written as series: μ(G) ≤ 400 in `Challenge.lean` (namespace `CatalanIrrationalityMeasure`) and the other fifteen in `ChallengeHybrid.lean` (namespace `TrigammaDifferences`). This is the whole trusted statement surface |
 | [`Solution.lean`](Solution.lean), [`SolutionHybrid.lean`](SolutionHybrid.lean) | their proofs, each file ending with `#print axioms` for its theorems |
 | [`comparator.json`](comparator.json), [`comparator-hybrid.json`](comparator-hybrid.json) | configurations for `lake comparator`, stating that each `Solution` file proves exactly the statements of its `Challenge` file with the three permitted axioms. The `comparator` job of the CI workflow [`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs [`scripts/verify-comparator.sh`](scripts/verify-comparator.sh) on `comparator.json`, with Lean's kernel and the NanoDa and con-ron kernels bundled with the toolchain; the manually dispatched workflow [`comparator-timing.yml`](.github/workflows/comparator-timing.yml) times the same check with each external kernel separately. `comparator-hybrid.json` is not run in CI |
-| [`CatalanMeasure/GenD/`](CatalanMeasure/GenD/) | the proof of μ(G) ≤ 410 |
+| [`CatalanMeasure/GenD/`](CatalanMeasure/GenD/) | the proof of μ(G) ≤ 400 |
 | [`CatalanCore/Uniform/`](CatalanCore/Uniform/) | the proofs for the differences of trigamma values |
 | [`formalization.yaml`](formalization.yaml), [`formalization-hybrid.yaml`](formalization-hybrid.yaml) | provenance, authorship, automation and scope |
 
-## Catalan's constant: μ(G) ≤ 410
+## Catalan's constant: μ(G) ≤ 400
 
 OpenAI's proof compares, for a determinant whose entries are linear forms in `1` and `G`, a lower bound
 coming from its denominators with an upper bound coming from an integral representation. The construction
 depends on five integer parameters `(n₀, b₀, q₀, g₀, h₀)`, a *design*, and every argument here is carried
-out for an arbitrary design. The design used is `(58, 9, 3, 5, 3)`: the determinant has size `58N`, and as
-a polynomial in the constant it has degree at most `53N`.
+out for an arbitrary design. The design used is `(72, 11, 4, 6, 4)`: the determinant has size `72N`, and as
+a polynomial in the constant it has degree at most `66N`.
 
 - **Rank of the reduction modulo p.** At a prime `p` the denominator of the determinant is smaller by the
-  dimension of the kernel of the reduction modulo `p` of the matrix of rational parts. Four closed
-  formulas, proved for every design with antisymmetric row combinations, a reflection of Chebyshev
-  polynomials modulo `p` and Frobenius relations, bound this dimension for `12N < p ≤ 26N`. Below `12N`
-  further kernel vectors come from a single counting inequality for the nullity. On 34 windows of primes
-  between `3N` and `16.2N` it is applied to fixed rational subspaces whose ranks are certified by stored
-  integer kernel vectors. Together they give a piecewise linear profile with 102 pieces whose area, at
-  least `22.05325` in units of `N²`, is the gain in the denominators.
+  dimension of the kernel of the reduction modulo `p` of the matrix of rational parts. Closed formulas,
+  proved for every design with antisymmetric row combinations, a reflection of Chebyshev polynomials
+  modulo `p` and Frobenius relations, bound this dimension on a range of large primes. Below it, further
+  kernel vectors come from a single counting inequality for the nullity and from a rank theorem for blocks
+  of digits. On windows of primes these are applied to fixed rational subspaces whose ranks are certified
+  by exact integer computations. Together they give a piecewise linear profile whose area, at least
+  `34.50397` in units of `N²`, is the gain in the denominators.
 - **A signed bound at the real place.** OpenAI's integrand contains the determinant of the row functions,
   which the energy method bounds only crudely. A Pick matrix argument and a Schur complement reduce it to
   the block of the negative nodes. Heine's formula writes that block as a ratio of two log-gas integrals,
   bounded above by completing squares in Chebyshev moments and below by Jensen's inequality. An energy
   inequality for signed measures keeps the bound concave. The bound holds on every configuration whose
-  energy is near the maximum, and OpenAI's bound suffices on the others. It adds `8.29824` in units of
+  energy is near the maximum, and OpenAI's bound suffices on the others. It adds `12.79086` in units of
   `N²` to the decay rate.
-- **The neighbourhood of G.** A Gauss quadrature formula with `53N` nodes extends the bound to
-  `|x − G| ≤ e^(−ρN)` with `ρ = 296.586…`. The cost is paid column by column: a binomial bound for
-  generalized Vandermonde determinants and a contour bound for the weight of each column peak at
-  different columns.
+- **The neighbourhood of G.** A quadrature formula with `66N` nodes extends the bound to
+  `|x − G| ≤ e^(−ρN)` with `ρ = 368.268856`. The nodes are those of C. Davis: the inverse images under a
+  fixed polynomial of Chebyshev nodes, whose weights are bounded through the exact Green function of the
+  inverse image of `[−1, 1]`. The cost is paid column by column: a binomial bound for generalized
+  Vandermonde determinants and a contour bound for the weight of each column peak at different columns.
 - **Criterion.** For large `N` the integer polynomials obtained by clearing denominators are at most
-  `e^(−ηN²)` on that neighbourhood, with `η = 38.33924`. A criterion with a free lower end of the window
+  `e^(−ηN²)` on that neighbourhood, with `η = 60.7644388`. A criterion with a free lower end of the window
   of primes, which uses the largest prime of the window whose square does not divide `b`, gives
-  `|G − a/b| > b^(−410)`. Its last condition reads `410 > dρ/(η − 4dδ) = 409.99999…` with `d = 53` and
+  `|G − a/b| > b^(−400)`. Its last condition reads `400 > dρ/(η − 4dδ) = 399.99999…` with `d = 66` and
   `δ = 2.9·10⁻⁷`. The prime number theorem enters through the denominators and the choice of the prime.
 
 The energy estimates use trial sequences whose generating functions are logarithmic potentials of point
 charges near the edges of the support of the extremal measure. They are checked on covers by cells with
-an exact local Taylor expansion, as kernel-checked rational inequalities.
+exact polynomial enclosures and rigorous remainder bounds, as kernel-checked rational inequalities.
 
 In Lean, `CatalanMeasure/GenD/` is the design-generic layer: the denominators, the closed formulas
 (`t_rank`, `u_rank`, `u6_rank_closed`, `s_rank`), the nonvanishing, the real place (`Analytic/`, `Cert/`)
 and the criterion, assembled by `CatalanMeasure.GenD.measure_of_design` from a `DesignData` record.
-`GenD/Uniform/W/` contains the counting inequality (`w_core`), its form for fixed rational subspaces
-(`Charts3.host_count`) and the decision procedure for the window conditions (`Charts6.Check.checkHost`,
-with soundness `physHost_of_checks`). `GenD/Uniform/Bank532/` holds the profile `wins532` of the 102
-intervals and the bound `gain532_ge` for its area. `GenD/D58/` instantiates the design. `GenD/Signed/`
-holds the signed bound (`PickDet`, `LemmaT`, `RatioIdentity`, `ReflectionEnergy`, the `Spike*` modules),
-the column costs (`BinomVandermonde`, `Keyhole`), the cell certificates (`Data/Cells/`) and the assembly
-(`Theorem410`). The generic valuation theorems of the construction are in `CatalanMeasure/Parametric/`.
-The theorem is `CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410` in
-[`CellsAll.lean`](CatalanMeasure/GenD/Signed/Data/Assembly/CellsAll.lean).
+`GenD/Uniform/W/` contains the counting inequality (`w_core`) and the decision procedure for the window
+conditions (`Charts6.Check.checkHost`). `GenD/Uniform/ContentBank/D72/` holds the rank certificates and
+the profile of the design, with the growth bound `hcontent` in `FullContent.lean`. `GenD/Signed/` holds
+the signed bound (`PickDet`, `LemmaT`, `RatioIdentity`, `ReflectionEnergy`, the `Spike*` modules), the
+column costs (`BinomVandermonde`, `Keyhole`), Davis's nodes (`Davis/`), the cell certificates
+(`Data/Cells/D72/`) and the assembly (`Data/Trial72/`). The generic valuation theorems of the construction
+are in `CatalanMeasure/Parametric/`. The theorem is
+`CatalanMeasure.GenD.Signed.Data.Trial72.Measure400.catalan_irrationalityMeasure_400` in
+[`Measure400.lean`](CatalanMeasure/GenD/Signed/Data/Trial72/Measure400.lean).
 
 ## Differences of trigamma values
 
@@ -245,7 +249,7 @@ OpenAI's formalization (from commit `fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb` o
 [openai/math](https://github.com/openai/math)) and the 10 files that OpenAI adds to
 PrimeNumberTheoremAnd are copied into `OAI/` and `PrimeNumberTheoremAnd/`. Each was converted to a
 module and adjusted for the newer Lean and Mathlib (see [`PORTING.md`](PORTING.md)). The proof of
-μ(G) ≤ 410 imports 386 of the files in `OAI/` and all 10 in `PrimeNumberTheoremAnd/`; the proofs for the
+μ(G) ≤ 400 imports 386 of the files in `OAI/` and all 10 in `PrimeNumberTheoremAnd/`; the proofs for the
 trigamma differences import no file of `OAI/` and, for the Wiener–Ikehara theorem, 9 of the files in
 `PrimeNumberTheoremAnd/`. In 37 point-evaluation files of OpenAI's certificate, which the theorems above do not import,
 the comparison constants are given to seven digits (the computations are unchanged; see `NOTICE`).

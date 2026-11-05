@@ -4,23 +4,23 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Topology.Algebra.InfiniteSum.Real
 public import Mathlib.Order.Filter.AtTopBot.Basic
 
-import CatalanMeasure.GenD.Signed.Data.Assembly.CellsAll
+import CatalanMeasure.GenD.Signed.Data.Trial72.Measure400
 
 public section
 
 /-!
-Proof of the statement in `Challenge.lean`: the 410 bound of
-`CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410`.
+Proof of the statement in `Challenge.lean`: the 400 bound of
+`CatalanMeasure.GenD.Signed.Data.Trial72.Measure400.catalan_irrationalityMeasure_400`.
 -/
 
 namespace CatalanIrrationalityMeasure
 
-theorem catalan_irrationalityMeasure_410 :
+theorem catalan_irrationalityMeasure_400 :
     ∀ᶠ b : ℕ in Filter.atTop, ∀ a : ℤ,
-      (b : ℝ) ^ (-(410 : ℝ)) <
+      (b : ℝ) ^ (-(400 : ℝ)) <
         |(∑' j : ℕ, (-1 : ℝ) ^ j / ((2 * j + 1 : ℕ) : ℝ) ^ 2) - a / b| :=
-  CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410
+  CatalanMeasure.GenD.Signed.Data.Trial72.Measure400.catalan_irrationalityMeasure_400
 
-#print axioms catalan_irrationalityMeasure_410
+#print axioms catalan_irrationalityMeasure_400
 
 end CatalanIrrationalityMeasure
