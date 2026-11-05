@@ -43,7 +43,7 @@ its Lean formalization. Other bounds in the literature:
   not formalized ([issue #5](https://github.com/slitsey/catalan-irrationality-measure/issues/5)).
   C. Davis obtained μ(G) ≤ 528.23288 with the design and arithmetic of this repository and new quadrature
   nodes, formalized in Lean ([1337isnot1337/catalan-constant](https://github.com/1337isnot1337/catalan-constant));
-  D. I. Arkhipov modified that development to μ(G) ≤ 528.2327
+  D. I. Arkhipov modified that development to μ(G) ≤ 528.2315
   ([darkhipo/catalan-constant-gen5](https://github.com/darkhipo/catalan-constant-gen5)). The proof of
   μ(G) ≤ 400 uses Davis's quadrature nodes and 33 of Davis's Lean files (commit `3c45153`, Apache License 2.0),
   ported unchanged into [`CatalanMeasure/GenD/Signed/Davis/`](CatalanMeasure/GenD/Signed/Davis/); see

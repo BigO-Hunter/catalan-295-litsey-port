@@ -26,7 +26,6 @@ globs = ["PrimeNumberTheoremAnd.+"]
 [[lean_lib]]
 name = "CatalanMeasure"
 roots = ["CatalanMeasure"]
-globs = ["CatalanMeasure.+"]
 
 [[lean_lib]]
 name = "Challenge"
