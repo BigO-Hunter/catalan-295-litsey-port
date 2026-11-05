@@ -8,6 +8,7 @@ public import Mathlib.Analysis.SpecialFunctions.Complex.Arg
 public import Mathlib.Analysis.SpecialFunctions.Trigonometric.DerivHyp
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Quadrature weights bounded on the unit circle

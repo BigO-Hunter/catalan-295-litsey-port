@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.ScFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SC, alpha = 0.005: window around e = 1, [1, 1] (`endUOK`). -/
 

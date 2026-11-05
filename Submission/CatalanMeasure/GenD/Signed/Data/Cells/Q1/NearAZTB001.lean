@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.NearAZTFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! NEAR top, trial 1, corner az: blocks 5..9 (5 cells). -/
 

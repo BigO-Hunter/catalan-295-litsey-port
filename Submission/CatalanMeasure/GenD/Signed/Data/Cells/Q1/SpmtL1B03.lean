@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.SpmtL1B02
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SP, trial 1: plain block 3 [0.999984741211, 0.999996185303] of the jump region. -/
 

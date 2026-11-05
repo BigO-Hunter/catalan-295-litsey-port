@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q2.FrFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! Block 36 of FR, alpha = 0.0625: 32 cells. -/
 

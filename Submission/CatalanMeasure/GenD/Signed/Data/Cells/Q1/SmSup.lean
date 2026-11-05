@@ -13,6 +13,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.SmP008
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.SmE054
 
 @[expose] public section
+set_option Elab.async false
 
 /-! **SM, alpha = 0.005: the sup statement.**  `fieldTower q1smFq ... x <= q1smT` on the open domain; `T = S - K` with S (design threshold, unlifted reference) = -0.454552532174, K = -9.289570897999 (NOTES-TRIAL; kappa_old = -9.289570897999). -/
 

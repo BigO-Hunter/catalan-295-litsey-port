@@ -7,6 +7,7 @@ public import Submission.OAI.NumberTheory.Catalan.Energy.BarrierGlobalMaxReducti
 public import Submission.OAI.NumberTheory.Catalan.FirstBarrier.BarrierCaseOnePointY1
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

@@ -3,6 +3,7 @@ public import Submission.CatalanMeasure.Cert.ExplicitIntegerGap
 public meta import Lean.Meta.Eval
 public meta import Lean.Elab.Tactic
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.Cert
 
 theorem ipHom_step_explicit (a b d c : ℤ) (p D N : List ℤ)

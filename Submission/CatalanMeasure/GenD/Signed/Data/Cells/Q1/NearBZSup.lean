@@ -14,6 +14,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.NearBZTB001
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.NearBZTB002
 
 @[expose] public section
+set_option Elab.async false
 
 /-! **NEAR, trial 1, corner 1/16: sup statements** (T = S_Lean - kappa_up of thresholds410.json). -/
 

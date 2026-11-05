@@ -94,6 +94,7 @@ public import Submission.OAI.NumberTheory.Catalan.Determinants.FixedClearedZetaC
 public import Submission.OAI.NumberTheory.Catalan.Determinants.FixedClearedZetaColumn46
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

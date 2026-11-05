@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.SpL1B15
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SP, trial 0: the window [1 - 2^-40, 1] of the jump region (`endUOK` at e = 1 for the plain field; regular part by cells). -/
 

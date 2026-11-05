@@ -38,6 +38,7 @@ public import Submission.CatalanMeasure.GenD.D58.FirstCert.ValuesY0
 public import Submission.CatalanMeasure.GenD.D58.FirstCert.ValuesY1
 public import Submission.CatalanMeasure.GenD.D58.FirstCert.ValuesY2
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.GenD.D58.FirstCert
 open CatalanMeasure.Cert OAI.InternalCatalan
 set_option maxRecDepth 1000000

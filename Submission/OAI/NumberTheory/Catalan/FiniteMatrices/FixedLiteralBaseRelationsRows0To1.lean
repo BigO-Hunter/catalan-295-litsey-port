@@ -7,6 +7,7 @@ public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularZer
 public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularZeroModRows24To35
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

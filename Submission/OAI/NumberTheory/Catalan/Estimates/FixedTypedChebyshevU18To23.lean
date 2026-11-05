@@ -6,6 +6,7 @@ public import Submission.OAI.NumberTheory.Catalan.Determinants.RealColumnDetermi
 public import Submission.OAI.NumberTheory.Catalan.Estimates.FixedTypedChebyshevUData
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

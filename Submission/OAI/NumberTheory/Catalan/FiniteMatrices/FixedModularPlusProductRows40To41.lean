@@ -5,6 +5,7 @@ public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularPlu
 public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularPlusModRows24To35
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

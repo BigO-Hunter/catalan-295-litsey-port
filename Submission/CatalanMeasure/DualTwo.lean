@@ -5,6 +5,7 @@ public import Submission.OAI.NumberTheory.Catalan.Determinants.RealDeterminantCo
 public import Mathlib.Analysis.Complex.ExponentialBounds
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # A new certificate for OpenAI's second energy dual

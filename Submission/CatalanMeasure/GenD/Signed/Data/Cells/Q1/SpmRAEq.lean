@@ -6,6 +6,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Trial.T1Fields
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! Shared-path identification of the SPM_R data (trial 1, corner a) with the trial literals; merge lemma. -/
 

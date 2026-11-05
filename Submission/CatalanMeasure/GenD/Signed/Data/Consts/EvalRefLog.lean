@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Interp
 public import Submission.CatalanMeasure.GenD.Signed.LogEval
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # The reference bilinear energy `refBil` of two piecewise-polynomial references (Theorem A, lane E1b, item 15)

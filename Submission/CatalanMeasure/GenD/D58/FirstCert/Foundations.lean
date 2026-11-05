@@ -3,6 +3,7 @@ public import Submission.CatalanMeasure.GenD.D58.FirstCert.AQ
 public import Submission.CatalanMeasure.FirstStrongTrial.First
 public import Submission.CatalanMeasure.Cert.ExplicitIntegerGap
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.GenD.D58.FirstCert
 open CatalanMeasure.Cert OAI.InternalCatalan
 set_option maxRecDepth 1000000

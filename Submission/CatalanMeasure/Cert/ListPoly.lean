@@ -7,6 +7,7 @@ public import Mathlib.Tactic.FieldSimp
 public import Mathlib.Tactic.Ring
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Computable polynomials for kernel-checked certificates

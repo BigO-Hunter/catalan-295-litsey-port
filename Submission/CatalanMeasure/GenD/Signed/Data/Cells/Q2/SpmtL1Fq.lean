@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.L1Ents
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SP, trial 2: the Laurent part of the jump region [1 - 2^-10, 1] as a plain field (series window at c = 1, `l1_series_soundM`; `q2spmtTs` merged by `mergeL`, zero terms pruned). -/
 

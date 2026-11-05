@@ -5,6 +5,7 @@ public import Mathlib.Analysis.Complex.ExponentialBounds
 public import Submission.CatalanMeasure.CellCert.EvalS
 
 @[expose] public section
+set_option Elab.async false
 
 open CatalanMeasure.Cert OAI.InternalCatalan
 namespace CatalanMeasure.WLog

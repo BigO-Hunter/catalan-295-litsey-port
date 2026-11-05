@@ -5,6 +5,7 @@ public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedCanonicalM
 public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedLiteralBaseRelationsRows0To1
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

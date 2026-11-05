@@ -6,6 +6,7 @@ public import Submission.CatalanMeasure.GenD.Cert.WLog
 public import Submission.CatalanMeasure.GenD.Signed.TaylorCell
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Certified evaluation of the cell anchors `A0` (Theorem A, Phase 2)

@@ -18,6 +18,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Consts.MeanEval
 -/
 
 @[expose] public section
+set_option Elab.async false
 
 namespace CatalanMeasure.Signed.Consts
 

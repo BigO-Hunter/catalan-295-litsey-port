@@ -6,6 +6,7 @@ public import Submission.OAI.NumberTheory.Catalan.Estimates.FixedTypedChebyshevT
 public import Submission.OAI.NumberTheory.Catalan.Estimates.FixedTypedChebyshevU18To23
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

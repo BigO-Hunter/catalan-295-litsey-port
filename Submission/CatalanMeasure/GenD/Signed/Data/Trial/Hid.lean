@@ -28,6 +28,7 @@ the data checks (`tailOKB`, the range of `η`, `PieceOK` by `nnCov`, `BD` by `nn
 -/
 
 @[expose] public section
+set_option Elab.async false
 
 namespace CatalanMeasure.GenD.Signed.Data.Trial
 

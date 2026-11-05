@@ -1,6 +1,7 @@
 module
 public import Submission.CatalanMeasure.Parametric.RawDigitReduction
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.Parametric
 open OAI.InternalCatalan
 

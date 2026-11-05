@@ -65,6 +65,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q2.NearBZSup
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q2.NearBHSup
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # `μ(G) ≤ 410`

@@ -5,6 +5,7 @@ public import Mathlib.Tactic.NormNum
 public import Submission.OAI.NumberTheory.Catalan.Estimates.FixedTypedChebyshevT39To41
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.GenD.Signed.Data.Consts.EvalRefMom
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # `constTotal − constant → Q(t)`: the limit glue of `hrA`, `hrB` (Theorem A, lane E1b, item 18)

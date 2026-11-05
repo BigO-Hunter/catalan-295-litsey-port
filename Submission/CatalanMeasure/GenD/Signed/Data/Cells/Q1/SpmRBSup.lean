@@ -13,6 +13,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.SpmRBB008
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.SpmRBGB000
 
 @[expose] public section
+set_option Elab.async false
 
 /-! **SPM_R, trial 1, corner 1/16: sup statement** (series window on [gs, 3/10], merged Laurent cells on [3/10, xc)). -/
 

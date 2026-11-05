@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Assembly.Spike
 public import Submission.CatalanMeasure.GenD.Signed.Data.Assembly.RowsCell
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # 410 assembly: the spike class (`hCls`)

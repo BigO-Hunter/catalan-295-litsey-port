@@ -5,6 +5,7 @@ public import Mathlib.Analysis.SpecialFunctions.Log.Deriv
 public import Mathlib.Analysis.SpecialFunctions.Complex.LogDeriv
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Sound Taylor-model cell bound with point coefficients and an exact quadratic maximum

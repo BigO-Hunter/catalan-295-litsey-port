@@ -6,6 +6,7 @@ public import Submission.CatalanMeasure.GenD.D58.Cert.Data
 public import Mathlib.Analysis.Calculus.Deriv.MeanValue
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # D58: the near-field cap (one-variable analysis) and the first coefficient

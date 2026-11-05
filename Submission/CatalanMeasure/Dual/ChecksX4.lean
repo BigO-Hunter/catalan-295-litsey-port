@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.Dual.Data
 
 @[expose] public section
+set_option Elab.async false
 
 namespace CatalanMeasure.Dual
 

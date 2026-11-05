@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.SpFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Trial.T0Fields
 
 @[expose] public section
+set_option Elab.async false
 
 /-! Shared-path identification of the SP cell data with the Trial literals: Laurent terms, plogs and poles by `decide +kernel`. -/
 

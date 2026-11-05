@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.Cert.Norm
 public import Submission.CatalanMeasure.Cert.SplitNorm
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # The weighted norm of a scale-`2^40` trial sequence in closed form

@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.D58.Budget
 public import Submission.CatalanMeasure.GenD.D58.OddProfile
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # D58: the circle certificate `GapCircleBound` (hcirc) and the side conditions

@@ -5,6 +5,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.SpiEq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SP, trial 0: the end window (0, 2^-20] by `endL0UOK` / `endL0_sound` (Core, LaurentEnd0): uniform bound T and the log form with c = endC + l0C > 0. -/
 

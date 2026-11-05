@@ -2,6 +2,7 @@ module
 public import Submission.CatalanMeasure.QuadCircle
 public import Mathlib.Analysis.Complex.ExponentialBounds
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.Parametric
 noncomputable section
 def residualRadius : ℚ := 1001 / 1000

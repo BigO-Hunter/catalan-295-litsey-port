@@ -13,6 +13,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Consts.Umin
 public import Submission.CatalanMeasure.GenD.D58.Budget590
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # 410 assembly: `Phase2Data 2` from the structural data and the row ingredients

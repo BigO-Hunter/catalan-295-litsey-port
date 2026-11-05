@@ -1,6 +1,7 @@
 module
 public import Submission.CatalanMeasure.GenD.D58.FirstCert.FieldsData
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.GenD.D58.FirstCert
 open CatalanMeasure.Cert OAI.InternalCatalan
 set_option maxRecDepth 100000

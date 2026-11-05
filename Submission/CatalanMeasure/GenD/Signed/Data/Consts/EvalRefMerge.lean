@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.GenD.Signed.Data.Consts.EvalRefLog
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # `refBil` depends only on the signed density (Theorem A, lane E1b, route (g))

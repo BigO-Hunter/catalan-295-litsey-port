@@ -24,6 +24,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.NearAHGFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.SpmRAGFq
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # 410 assembly: the rows of trial 0 from its cell statements

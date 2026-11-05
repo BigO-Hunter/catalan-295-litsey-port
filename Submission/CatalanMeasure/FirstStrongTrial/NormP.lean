@@ -1,6 +1,7 @@
 module
 public import Submission.CatalanMeasure.FirstStrongTrial.Data
 @[expose] public section
+set_option Elab.async false
 namespace CatalanMeasure.FirstStrongTrial
 open CatalanMeasure.Cert OAI.InternalCatalan
 set_option maxRecDepth 1000000

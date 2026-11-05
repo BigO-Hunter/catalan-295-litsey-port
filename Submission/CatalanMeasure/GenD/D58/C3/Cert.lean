@@ -6,6 +6,7 @@ public import Submission.CatalanMeasure.GenD.D58.C3.Data
 public import Mathlib.Tactic.NormNum.Prime
 
 @[expose] public section
+set_option Elab.async false
 
 /-! # D58.C3: the three base-matrix determinants of the design (58,9,3,5,3) are nonzero mod 1009.
 Every check is a small Nat-level kernel computation on residue tables (see `gen_c3b.py`, `gen_cert.py`). -/

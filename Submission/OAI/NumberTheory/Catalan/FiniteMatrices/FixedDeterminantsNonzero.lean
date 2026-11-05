@@ -18,6 +18,7 @@ public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularPlu
 public import Submission.OAI.NumberTheory.Catalan.FiniteMatrices.FixedModularZeroRightInverse
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

@@ -7,6 +7,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q2.SpGE0
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! SP gap (0, 3/10), trial 2: the series window `l0_series_sound` turns the Laurent-free cover `q2spgSup` of fq' into the bound for the true SP field plus the merged Laurent terms. -/
 

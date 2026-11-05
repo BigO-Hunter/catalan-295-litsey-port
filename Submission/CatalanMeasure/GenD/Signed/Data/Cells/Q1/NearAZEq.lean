@@ -6,6 +6,7 @@ public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q1.NearAZTFq
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
 
 @[expose] public section
+set_option Elab.async false
 
 /-! Shared-path identification of the NEAR data (trial 1, corner az) with the trial literals, and the merge lemma instance. -/
 

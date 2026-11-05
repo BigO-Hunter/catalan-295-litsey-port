@@ -4,6 +4,7 @@ public import Submission.CatalanMeasure.GenD.D58.Cert.Near
 public import Submission.CatalanMeasure.GenD.D58.Cert590.Data
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # D58, bank K590: the first coefficient `p_1 ≥ 9/50` of the K590 witness

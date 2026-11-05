@@ -4,6 +4,7 @@ public import Submission.OAI.NumberTheory.Catalan.Determinants.FixedCompactRow48
 public import Submission.OAI.NumberTheory.Catalan.Estimates.PalindromicBlockInverse
 
 @[expose] public section
+set_option Elab.async false
 
 namespace OAI
 

@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.SnE096
 
 @[expose] public section
+set_option Elab.async false
 
 /-! **SN trial 0: log-form end data at e = 0** (for `fNeg_cell_zero` / `fPosS_cell_zero` / `fCol_cell_one`): the window gives `field <= TR + U + c log|x - e|` with `c = endC > 0`. -/
 

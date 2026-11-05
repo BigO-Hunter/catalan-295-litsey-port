@@ -1,6 +1,7 @@
 module
 public import Submission.CatalanMeasure.CellCert.CellW
 @[expose] public section
+set_option Elab.async false
 /-!
 # One-value pieces for the cell lists
 

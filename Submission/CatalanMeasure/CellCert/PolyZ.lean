@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.CellCert.FieldsSLink
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # The integer polynomial `Z` of the derivative fields, by a verified integer Clenshaw recursion

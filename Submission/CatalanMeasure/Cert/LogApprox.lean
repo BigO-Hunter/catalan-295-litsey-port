@@ -5,6 +5,7 @@ public import Submission.OAI.NumberTheory.Catalan.Energy.BarrierComplexOctantRan
 public import Submission.CatalanMeasure.Cert.ListPoly
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Kernel-computable approximations of `Re ((c + d i) log z)`

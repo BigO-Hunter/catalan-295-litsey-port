@@ -3,6 +3,7 @@ module
 public import Submission.CatalanMeasure.GenD.Signed.LogEval
 
 @[expose] public section
+set_option Elab.async false
 
 /-!
 # Field cell certificates, the generic layer (Theorem A, Phase 2 data lane D1)
