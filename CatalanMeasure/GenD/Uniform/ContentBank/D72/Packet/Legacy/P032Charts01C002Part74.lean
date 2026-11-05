@@ -1,0 +1,16 @@
+module
+public import CatalanMeasure.GenD.Uniform.ContentBank.D72.Packet.Legacy.P032Charts01C002Data
+@[expose] public section
+set_option Elab.async false
+set_option maxRecDepth 100000
+set_option maxHeartbeats 4000000
+/-! Exact D72 finite packet; checked by the original Packet.check. -/
+namespace CatalanMeasure.GenD.Uniform.ContentBank.D72.Packet.Legacy.P032
+open CatalanMeasure.GenD.Uniform.W.Prof
+
+namespace C002
+-- kcost: 4.5600 s provisional model for 7600 first-product units.
+theorem part74 : kerOK basis.matrix 100 76 (chart.ker.drop 74) chart.rows = true := by decide +kernel
+
+end C002
+end CatalanMeasure.GenD.Uniform.ContentBank.D72.Packet.Legacy.P032

@@ -16,7 +16,7 @@ Forecasts are per-class peaks learned from receipts. A build whose stale frontie
 than itself is refused. Near the floor the driver sheds its youngest owned job tree (by PID)
 and requeues it once.
 """
-import ctypes as C, json, os, subprocess, sys, time, uuid
+import ctypes as C, json, os, re, subprocess, sys, time, uuid
 # Receipts carry Lean output (non-ASCII); a cp1252 console made `submit` crash while printing.
 try:
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
@@ -62,18 +62,29 @@ def cls(t): return t.rsplit('.', 1)[0]
 def peaks():
     try: return json.loads(LEARN.read_text(encoding='utf-8'))
     except Exception: return {}
+# 1 Nov: a class-wide max learned from a killed runaway (CurvInst, 16 GB) put the Assembly class
+# above what an idle host can offer, and every Assembly module (CurvFast: 9 s) waited forever.
+# Forecasts are now per module, learned from successful builds only (latest value, so a fixed
+# module's forecast comes back down); an unmeasured module uses the MEDIAN of its class's
+# successful modules. peaks.json keeps the old class maxima only as a last fallback.
+TLEARN = LANES / 'tpeaks.json'
+def tpeaks():
+    try: return json.loads(TLEARN.read_text(encoding='utf-8'))
+    except Exception: return {}
 def est(t):
-    ws = peaks().get(cls(t))
+    tp = tpeaks()
+    ws = tp.get(t)
+    if ws is None:
+        sib = sorted(v for k, v in tp.items() if cls(k) == cls(t))
+        ws = sib[len(sib) // 2] if sib else peaks().get(cls(t))
     return (1.75 * ws + 1.0, ws) if ws else (7.0, 3.5)
-def learn(t, out):
-    import re
+def learn(t, out, rc=0):
     m = re.search(r'"lean_process_peak_working_sets_bytes": \{([^}]*)\}', out)
-    if not m: return
+    if not m or rc != 0: return
     vals = [int(v) for v in re.findall(r': (\d+)', m.group(1))]
     if not vals: return
-    pk = peaks(); c = cls(t)
-    pk[c] = max(pk.get(c, 0), max(vals) / 2**30)
-    LEARN.write_text(json.dumps(pk, indent=1), encoding='utf-8')
+    tp = tpeaks(); tp[t] = max(vals) / 2**30
+    TLEARN.write_text(json.dumps(tp, indent=1), encoding='utf-8')
 # Measured 28 Oct 09:50: one build holds about 3.6 GB of commit (lean 2.5 + lake 1.0) at
 # 1.7 GB working set. Reserves above were sized from a wrong 6 GB/job reading.
 # RAMP was 45 s; with YOUNG accounting it only throttled throughput to one start per 45 s.
@@ -166,6 +177,40 @@ def registry_refusal(target):
     return None
 
 
+_COUNT = re.compile(r'(?<![\d/.])(?<!/ )\b(\d{3,7})\b(?!\s*/)(?![\d.])')
+
+
+def kcost_refusal(target):
+    """1 Nov (Sean: "this must not happen again"): RInst/CurvInst ran 20+ min on `decide +kernel`
+    over 1000-term exact sums nobody had costed. A NEW or MODIFIED module (cell data excepted) whose
+    `decide +kernel` declaration iterates a count >= 200 must say what that costs: a `kcost:` comment
+    in the declaration (measured or estimated kernel seconds, e.g. `-- kcost: 12 s measured 1 Nov`)."""
+    if '.Cells.' in target:
+        return None
+    rel = target.replace('.', '/') + '.lean'
+    clean = subprocess.run(['git', 'diff', '--quiet', 'HEAD', '--', rel], cwd=WORK,
+                           capture_output=True).returncode == 0
+    tracked = subprocess.run(['git', 'ls-files', '--error-unmatch', rel], cwd=WORK,
+                             capture_output=True).returncode == 0
+    if tracked and clean:
+        return None
+    try:
+        src = (WORK / rel).read_text(encoding='utf-8')
+    except OSError:
+        return None
+    bad = []
+    for decl in re.split(r'\n(?=(?:private |protected )?(?:theorem|lemma|def|example|instance)\b)', src):
+        if 'decide +kernel' not in decl or 'kcost:' in decl:
+            continue
+        counts = [int(m.group(1)) for m in _COUNT.finditer(decl) if 200 <= int(m.group(1)) <= 10 ** 7]
+        if counts:
+            bad.append(decl.split(None, 2)[1] if len(decl.split()) > 1 else '?')
+    if bad:
+        return (f'kernel cost not stated: {", ".join(bad[:5])} run `decide +kernel` over a count >= 200; '
+                'count the operations, measure one declaration, and add a `-- kcost: <s> s` comment (or redesign)')
+    return None
+
+
 def stale_count(target):
     r = subprocess.run([str(PY), '-I', 'scripts/claude/run_guarded.py', target, 'preflight', '3'],
                        cwd=WORK, capture_output=True, text=True, encoding='utf-8', errors='replace')
@@ -208,6 +253,7 @@ def drive():
     last = 0.0
     pool = ThreadPoolExecutor(max_workers=4)
     pre = {}   # target -> (future, submitted_at)
+    stall_since, stall_logged = None, 0.0
     log('driver start')
     # Restart recovery: a job left in running/ by a dead driver has no owner and no receipt.
     # Requeue it (lake makes a finished build a no-op), so its submitter still gets a receipt.
@@ -225,7 +271,7 @@ def drive():
                 spec.update(rc=proc.returncode, ended=time.time(), output=out[-4000:])
                 (DONE / f'{jid}.json').write_text(json.dumps(spec), encoding='utf-8')
                 (RUN / f'{jid}.json').unlink(missing_ok=True)
-                learn(spec['target'], out)
+                learn(spec['target'], out, proc.returncode)
                 log(f"done {spec['target']} rc={proc.returncode}")
                 del running[jid]
         # Own-tree shedding (skill: kill only owned trees, by PID): if the host nears the floor,
@@ -233,7 +279,9 @@ def drive():
         # watchdog has to pick a victim it does not own.
         if running:
             phys0, commit0 = mem()
-            if phys0 < FLOOR + 0.5 or commit0 < FLOOR + 0.5:
+            # 1 Nov (Sean): kill only on a real shortage. The guard handles RAM first (over-budget
+            # tree below 3 GB free, any tree below 2 GB); shedding is the next step, at 1.5 GB.
+            if phys0 < FLOOR - 1.5 or commit0 < FLOOR + 0.5:
                 jid, (proc, spec) = max(running.items(), key=lambda kv: kv[1][1]['started'])
                 subprocess.run(['taskkill', '/T', '/F', '/PID', str(proc.pid)], capture_output=True)
                 proc.wait()
@@ -280,8 +328,8 @@ def drive():
         npre = 0
         for qf in queued:
             t = specs.get(qf)
-            if t is None or blocked(t):
-                continue
+            if t is None or blocked(t) or t.get('cmd'):
+                continue   # `run` jobs need no preflight and must not use up the preflight slots
             npre += 1
             if npre > 12:
                 break
@@ -289,6 +337,7 @@ def drive():
                 pre[t['target']] = (pool.submit(stale_count, t['target']), time.time())
         busy = {s['target'] for _, s in running.values()}
         pick = None
+        first_ready = None
         if (queued and not (LANES / 'PAUSE').exists() and len(running) < maxlanes()
                 and time.time() - last >= RAMP):
             phys, commit = mem()
@@ -332,9 +381,26 @@ def drive():
                 if need_w + ew <= env_w and need_c + ec <= env_c:
                     pick, spec = qf, s
                     break
+                if first_ready is None:
+                    first_ready = (qf, s, ew)
                 # No starvation hold (Sean, 31 Oct): "We must always be using all available space
                 # that is safe. Small jobs can jump the queue if they fit now." Priority order
                 # (priority.txt) gives critical jobs the first fit; anything else that fits runs.
+            # 1 Nov: never deadlock. A forecast can exceed what an idle host offers (E2 09:54,
+            # Assembly 11:13); with nothing of ours running, the first ready job starts alone and
+            # the guard enforces the real limit.
+            if pick is None and not running and first_ready is not None:
+                pick, spec = first_ready[0], first_ready[1]
+                log(f"admit-alone {spec['target']} forecast={first_ready[2]:.1f}GB env={env_w:.1f}GB")
+        # 1 Nov: a queue that admits nothing for 5 min with nothing running is a stall; log it.
+        if queued and not running and not pick and not (LANES / 'PAUSE').exists():
+            if stall_since is None:
+                stall_since = time.time()
+            elif time.time() - stall_since > 300 and time.time() - stall_logged > 300:
+                log(f"STALL queue={len(queued)} running=0 for {int(time.time() - stall_since)} s")
+                stall_logged = time.time()
+        else:
+            stall_since = None
         if pick:
             why = hold_refusal(spec['target'])
             if why:
@@ -352,7 +418,7 @@ def drive():
             log(f"refuse-lake {spec['target']}")
             pick = None
         if pick and not spec.get('cmd'):
-            why = registry_refusal(spec['target'])
+            why = registry_refusal(spec['target']) or kcost_refusal(spec['target'])
             if why:
                 spec.update(rc=96, ended=time.time(), output='lanes: refused: ' + why)
                 (DONE / f'{pick.stem}.json').write_text(json.dumps(spec), encoding='utf-8')
@@ -377,6 +443,11 @@ def drive():
             # 28 Oct 20:45: roots submitted with budget 3 were guard-killed (cap 1.5x budget) although
             # their class peak was known. Give the guard at least the forecast working set x 1.2.
             gb = max(b, -(-1.2 * est(spec['target'])[1] // 1))
+            # 1 Nov: the guard waits for free RAM >= budget + floor, so a raise above the free RAM
+            # deadlocked EvalRefE2 (17 GB raise, 17.5 GB free, 25 min idle). Admission has already
+            # checked the forecast peak fits; cap the raise at free - floor (still >= forecast +
+            # margin, inside the guard's 1.5x kill cap).
+            gb = max(b, min(gb, (phys - FLOOR) // 1))
             if gb > b:
                 log(f"raise-budget {spec['target']} {b:.0f}->{gb:.0f}")
                 b = gb

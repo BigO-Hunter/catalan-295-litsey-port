@@ -1,0 +1,103 @@
+module
+public import CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.Phys033
+@[expose] public section
+set_option Elab.async false
+set_option maxRecDepth 100000
+set_option maxHeartbeats 6000000
+
+namespace CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.Owner033
+open Filter CatalanMeasure.GenD CatalanMeasure.GenD.Uniform.W.Prof
+open CatalanMeasure.GenD.Uniform.W.Charts3 CatalanMeasure.GenD.Uniform.W.Charts6
+open CatalanMeasure.GenD.Uniform.W.Charts6.Check (Aff)
+open CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.Phys033 (Win width phys lb)
+open CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.PacketSource033 (packet)
+open CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.PacketDomain033 (jetLayout widthTape)
+open CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.Affine004.P033 (win)
+open CatalanMeasure.GenD.Uniform.ContentBank.D72.Source
+noncomputable section
+
+theorem chart_weight_sum (N p : Nat) (hp : p % 2 = 1)
+    (hwin : ∀ f ∈ win, 0 ≤ affAt N p f) :
+    ((∑ j, width j N p * (packet.chart j).r : Nat) : Int) =
+      (-16 : Int) * N + (186) * halfPrime p + (122) := by
+  have hwin' := hwin
+  simp [win, affAt, Aff.eval] at hwin'
+  have h0 : 0 ≤ affAt N p (⟨0, 1, 0⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h1 : 0 ≤ affAt N p (⟨97, -74, -37⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h2 : 0 ≤ affAt N p (⟨-11, 10, 5⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h3 : 0 ≤ affAt N p (⟨-86, 66, 33⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h4 : 0 ≤ affAt N p (⟨4, -3, -2⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h5 : 0 ≤ affAt N p (⟨-8, 7, 4⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h6 : 0 ≤ affAt N p (⟨8, -6, -3⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h7 : 0 ≤ affAt N p (⟨-70, 54, 28⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h8 : 0 ≤ affAt N p (⟨60, -46, -24⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h9 : 0 ≤ affAt N p (⟨6, -4, -2⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h10 : 0 ≤ affAt N p (⟨0, 0, 1⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  have h11 : 0 ≤ affAt N p (⟨-93, 72, 35⟩ : Aff) := by
+    simp [affAt, Aff.eval] <;> omega
+  change ((∑ j : Fin 12, width j N p * (packet.chart j).r : Nat) : Int) = _
+  simp only [Fin.sum_univ_succ, Fin.sum_univ_zero]
+  change (((affAt N p (⟨0, 1, 0⟩ : Aff)).toNat * 30 + ((affAt N p (⟨97, -74, -37⟩ : Aff)).toNat * 28 + ((affAt N p (⟨-11, 10, 5⟩ : Aff)).toNat * 0 + ((affAt N p (⟨-86, 66, 33⟩ : Aff)).toNat * 0 + ((affAt N p (⟨4, -3, -2⟩ : Aff)).toNat * 60 + ((affAt N p (⟨-8, 7, 4⟩ : Aff)).toNat * 30 + ((affAt N p (⟨8, -6, -3⟩ : Aff)).toNat * 29 + ((affAt N p (⟨-70, 54, 28⟩ : Aff)).toNat * 87 + ((affAt N p (⟨60, -46, -24⟩ : Aff)).toNat * 87 + ((affAt N p (⟨6, -4, -2⟩ : Aff)).toNat * 85 + ((affAt N p (⟨0, 0, 1⟩ : Aff)).toNat * 87 + ((affAt N p (⟨-93, 72, 35⟩ : Aff)).toNat * 28 + (0)))))))))))) : Nat) : Int) = _
+  push_cast
+  simp only [Int.toNat_of_nonneg h0, Int.toNat_of_nonneg h1, Int.toNat_of_nonneg h2, Int.toNat_of_nonneg h3, Int.toNat_of_nonneg h4, Int.toNat_of_nonneg h5, Int.toNat_of_nonneg h6, Int.toNat_of_nonneg h7, Int.toNat_of_nonneg h8, Int.toNat_of_nonneg h9, Int.toNat_of_nonneg h10, Int.toNat_of_nonneg h11]
+  simp [affAt, Aff.eval] <;> ring
+
+private theorem D_ne_zero : packet.D ≠ 0 := by decide +kernel
+
+theorem w004_hcert72 : ∀ᶠ N : Nat in atTop, ∀ p : Nat, p.Prime →
+    (29969697 / 11500000 : ℝ) * N < p → (p : ℝ) ≤ (989999999 / 379500000 : ℝ) * N →
+    (N : ℝ) * ((1599999999 / 100000000 : ℝ) + (-6 / 1 : ℝ) * ((p : ℝ) / N)) - 2 ≤ (lb.kap N p : ℝ) := by
+  let K : Nat := max 47950000001 (max packet.D.natAbs momentData.scale.natAbs)
+  filter_upwards [eventually_ge_atTop K] with N hN
+  intro p hp hlo hhi
+  have hNl : 47950000001 ≤ N := (le_max_left _ _).trans hN
+  have hD : packet.D.natAbs ≤ N := ((le_max_left _ _).trans (le_max_right _ _)).trans hN
+  have hs : momentData.scale.natAbs ≤ N := ((le_max_right _ _).trans (le_max_right _ _)).trans hN
+  have hl : 29969697 * N < 11500000 * p := by
+    exact_mod_cast (show (29969697 : ℝ) * N < 11500000 * p by linarith)
+  have hh : 379500000 * p ≤ 989999999 * N := by
+    exact_mod_cast (show (379500000 : ℝ) * p ≤ 989999999 * N by linarith)
+  have hnp : N < p := by omega
+  have ho : p % 2 = 1 := hp.eq_two_or_odd.resolve_left (by omega)
+  have hp' : 2 * halfPrime p + 1 = (p : Int) := by unfold halfPrime; omega
+  have hwin : ∀ f ∈ win, 0 ≤ affAt N p f := by
+    intro f hf
+    simp [win] at hf
+    rcases hf with rfl | rfl | rfl <;>
+      simp [affAt, Aff.eval] <;> omega
+  have ha : HostApp packet Win N p :=
+    hostApp_of_large packet D_ne_zero ⟨hwin, by omega, hs.trans_lt hnp⟩ (hD.trans_lt hnp)
+  have hkap : lb.kap N p = packetVal packet (fun _ p => p) width N p :=
+    ofPacketHost_kap p72_admissible packet _ Win (fun _ p => p) width phys ha
+  have hsum := chart_weight_sum N p ho hwin
+  have hc : (87 : Int) * p -
+      ((∑ j, width j N p * (packet.chart j).r : Nat) : Int) ≤ (lb.kap N p : Int) := by
+    rw [hkap]
+    unfold packetVal
+    change _ ≤ ((p * 87 - ∑ j, width j N p * (packet.chart j).r : Nat) : Int)
+    omega
+  rw [hsum] at hc
+  have hcR : (87 : ℝ) * p -
+      ((-16 : ℝ) * N + (186) * (halfPrime p : ℝ) + (122)) ≤ (lb.kap N p : ℝ) := by
+    exact_mod_cast hc
+  have hpR : 2 * (halfPrime p : ℝ) + 1 = (p : ℝ) := by exact_mod_cast hp'
+  have hNr : (47950000001 : ℝ) ≤ N := by exact_mod_cast hNl
+  have hNZ : (N : ℝ) ≠ 0 := by exact_mod_cast (show N ≠ 0 by omega)
+  have he : (N : ℝ) * ((1599999999 / 100000000 : ℝ) + (-6 / 1 : ℝ) * ((p : ℝ) / N)) =
+      (1599999999 / 100000000 : ℝ) * N + (-6 / 1 : ℝ) * p := by field_simp <;> ring
+  rw [he]
+  linarith
+
+end
+end CatalanMeasure.GenD.Uniform.ContentBank.D72.Host.Owner033

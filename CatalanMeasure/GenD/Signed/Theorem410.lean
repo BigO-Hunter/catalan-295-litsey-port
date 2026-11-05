@@ -4,7 +4,8 @@ public import CatalanMeasure.GenD.Signed.Data.Assembly.Near
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Link
 public import CatalanMeasure.GenD.Signed.Data.Assembly.RowsInst
 public import CatalanMeasure.GenD.Signed.Data.S1.TrialEnd590
-public import CatalanMeasure.GenD.Signed.Gate
+public import CatalanMeasure.GenD.Signed.Gate410
+public import CatalanMeasure.GenD.Signed.MeasureOfDesign
 public import CatalanMeasure.GenD.Uniform.ContentBank.HostsInst
 
 @[expose] public section
@@ -33,19 +34,6 @@ open CatalanMeasure.GenD.D58 CatalanMeasure.GenD.Uniform CatalanMeasure.GenD.Ana
 
 noncomputable section
 
-namespace Generic
-
-/-- Assemble a measure bound from matching certificates for one shared design.
-`D` supplies the normalizer, growth, nonvanishing, decay and payment evidence.
-No certificate output is inferred from the design choices alone. -/
-theorem catalan_irrationalityMeasure_of_design (dc : DesignConst)
-    (D : DesignData dc.toParameters) :
-    ∀ᶠ b : ℕ in atTop, ∀ a : ℤ,
-      (b : ℝ) ^ (-(D.B : ℝ)) <
-        |(∑' j : ℕ, (-1 : ℝ) ^ j / ((2 * j + 1 : ℕ) : ℝ) ^ 2) - a / b| := by
-  simpa [catalan] using measure_of_design dc.toParameters D
-
-end Generic
 
 theorem catalan_irrationalityMeasure_410_of_near
     (hnear : FreeNearBound D58.Odd.design G410 (CatalanMeasure.Signed.NodeSub nodesτ)

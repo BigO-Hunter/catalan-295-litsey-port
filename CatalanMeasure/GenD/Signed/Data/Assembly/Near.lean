@@ -2,6 +2,7 @@ module
 
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Phase2
 public import CatalanMeasure.GenD.Signed.Data.Assembly.Decay
+public import CatalanMeasure.GenD.Signed.NearOfNodes
 
 @[expose] public section
 
@@ -45,6 +46,21 @@ theorem hnear (dc : DesignConst) (I : Inputs dc) (R : Rows dc I)
     (NodeSub (nodesτ dc)) (fun N m y hy h => markedCap_inputs dc I N hy h)
     D0 hδ he hec L
 
+/-- The concrete Rows factory feeds the same actual-node near bridge. -/
+theorem hnear_asym (dc : DesignConst) (H : NodeGeometryData dc) (I : InputsAsym dc H)
+    (R : RowsAsym dc H I) {target residual nearCap cost c2 : ℝ} {G : ℝ → Prop}
+    (D0 : SecondTrialBoundsEnd dc.toParameters 0 target residual nearCap cost G)
+    {δ e : ℝ} (hδ : 0 < δ) (he : e ∈ Ioo (0 : ℝ) (1 / 8))
+    (hec : e * (4 * (∑' j, |D0.p j|) + 4 * (∑' j, |D0.v j|) + |D0.p 1| + 20) < δ / 2)
+    (hcost : I.cost * (dc.n0 : ℝ) ≤ c2)
+    (L : LinkCert (phase2Asym dc H I R) dc.toParameters target residual nearCap cost G D0 δ e
+      I.target c2) : FreeNearBound dc.toParameters G (NodeSub H.tau) I.target c2 I.α1 := by
+  refine hnear_nodes dc 2 H (phase2Asym dc H I R) I.gs_eq I.xc_eq I.hC I.humin
+    (fun N => rfl)
+    (fun N r a b h => Glue410.hconst_closed dc.admissible N r a b h)
+    (fun N => rfl) (fun N => rfl) (fun N => rfl) (fun N => rfl)
+    (fun N k q m1 m2' xn gp yn yp' => rfl) rfl hcost D0 hδ he hec L
+
 end Generic
 
 
@@ -75,3 +91,5 @@ end CatalanMeasure.GenD.Signed.Data.Assembly
 
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.hnear
 #print axioms CatalanMeasure.GenD.Signed.Data.Assembly.hnear410
+
+#print axioms CatalanMeasure.GenD.Signed.Data.Assembly.Generic.hnear_asym
