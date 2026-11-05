@@ -37,8 +37,8 @@ We use the following abbreviations for general parameters:
  \alpha_A=\frac An,\quad \beta_h=\frac{2h_0}{n_0},\quad \gamma_H=\frac Hn,\quad \gamma_d=\frac{d_0}{n_0},\\
  a_0=1-\frac{b_0+q_0+g_0}{n_0},\quad a_1=3-\frac{b_0+q_0+2g_0}{n_0}.
 \end{gather*}
-For our parameters these are $\alpha_A=11/29$, $\beta_h=3/29$, $\gamma_H=39/29$, $\gamma_d=53/58$,
-$a_0=41/58$ and $a_1=76/29$.
+For our parameters these are $\alpha_A=3/8$, $\beta_h=1/9$, $\gamma_H=97/72$, $\gamma_d=11/12$,
+$a_0=17/24$ and $a_1=21/8$.
 
 \subsection{A quadrature formula for the coefficient of $G$}\label{ssec:quadrature}
 Let $\varepsilon=x-G$. Then $\Delta_N(x)=\det(\cA_N+\varepsilon\cL_N)$. The question is how large the columns
@@ -55,25 +55,34 @@ $\ell_a$. This is a quadrature formula of Gauss type. It makes the columns of $\
 values of the row functions that define $\cA_N$. So the perturbed determinant can be treated by the energy
 method. The price is the size of the weights.
 
-We take $J=d_0N=53N$ nodes. Put $g_*=401/2500$, $a_*=2g_*/(1+g_*^2)=2005000/6410801$ and $J'=\lceil J/2\rceil$.
-The nodes are the points
+We take $J=d_0N=66N$ nodes, and we use the nodes of Davis \cite{Davis2026}. Davis constructs a polynomial
+$P$ of degree $130$ with rational coefficients such that every value in $(-1,1)$ is taken by $P$ at
+$130$ distinct points of $(-1,1)$. Put $K=\lceil J/130\rceil$. Then $F_N=T_K\circ P$ has $130K$ simple
+roots in $(-1,1)$. We take $J$ of them as the nodes $t_1,\ldots,t_J$, and delete the other $s=130K-J<130$.
+The nodes lie in $E=P^{-1}([-1,1])$. In the coordinate $x$ with $t=2x/(1+x^2)$ they lie in
 \[
- t_{j,\pm}=\pm\sqrt{a_*^2+(1-a_*^2)(1+s_j)/2},\qquad T_{J'}(s_j)=0,
+ E_x=[-\tfrac{2409}{2500},-\tfrac{19501}{100000}]\cup[\tfrac{98749}{1000000},1].
 \]
-that is, the roots of $T_{J'}\bigl((2t^2-(1+a_*^2))/(1-a_*^2)\bigr)$. We keep all $J'$ positive roots and the
-first $J-J'$ negative ones, so for odd $J$ exactly one root is dropped. The nodes lie in
-$S=(-1,-a_*)\cup(a_*,1)$, and in the coordinate $x$ with $t=2x/(1+x^2)$ every node has $|x|>g_*$. The nodes
-avoid a neighbourhood of $x=0$, where the fields of the energy method are largest, and they are Chebyshev
-nodes for $S$. Dropping a root changes the nodal polynomial by a linear factor, so it changes the
-derivative bound and the size of the Lagrange polynomials only by factors polynomial in $N$. So an odd
-number of nodes does not change the exponent. This is needed, since $J=53N$ is odd for odd $N$.
+So the nodes avoid a neighbourhood of $x=0$, where the fields of the energy method are largest. The two
+gaps have different widths. The nodes are not Chebyshev nodes for a union of two intervals. They are the
+inverse images under $P$ of the Chebyshev nodes of $[-1,1]$, and this is what makes the Lagrange
+polynomials small.
 
-Let $g_S$ be the Green function of $\C\setminus\bar S$ with pole at infinity. In closed form
+Let $g_E$ be the Green function of $\C\setminus E$ with pole at infinity. Since $E=P^{-1}([-1,1])$, it is
 \[
- g_S(z)=\tfrac12\operatorname{arccosh}\Bigl(\frac{|z^2-1|+|z^2-a_*^2|}{1-a_*^2}\Bigr).
+ g_E(z)=\tfrac1{130}\,g_{[-1,1]}(P(z)),\qquad
+ g_{[-1,1]}(w)=\operatorname{arccosh}\bigl(\tfrac12(|w-1|+|w+1|)\bigr).
 \]
-The Lagrange polynomials satisfy $|\ell_a(z)|\le e^{53Ng_S(z)+o(N)}$ at distance at least $c/N$ from the
-nodes, by the derivative identity for Chebyshev polynomials at their roots. The weight of column $k$ is a
+This formula needs no choice of branch. Let $D_N$ be the monic polynomial whose roots are the deleted roots.
+The Lagrange polynomial of a node $t_a$ is
+\[
+ \ell_a(z)=\frac{F_N(z)\,D_N(t_a)}{F_N'(t_a)\,(z-t_a)\,D_N(z)}.
+\]
+Here $|F_N'(t_a)|$ is bounded below independently of $N$, and $|T_K(w)|\le e^{Kg_{[-1,1]}(w)}$. Since $130K=66N+s$, this gives $|\ell_a(z)|\le e^{66Ng_E(z)+O(\log N)}$ for $z$ in
+a fixed disc at distance at least $N^{-2}$ from $t_a$ and from the deleted roots. Fewer than $130$ roots
+are deleted, so the deletion costs only a factor polynomial in $N$. The contours below can be moved by
+$O(N^{-2})$ to keep this distance, and $g_E$ is uniformly H\"older continuous. So the move changes the
+bound by a factor $e^{O(1)}$. The weight of column $k$ is a
 coefficient functional of $\ell_a$ multiplied by the column function. After removal of the common factor of
 the rows it equals
 \[
@@ -102,17 +111,16 @@ The formal proof replaces the integral by the finite Gauss--Chebyshev identity
 $\frac1M\sum_{j<M}\cos^{2l}\frac{(2j+1)\pi}{2M}=c_l$ for $l<M$, and Cauchy's estimate by the finite Cauchy formula
 at roots of unity. So no integration is needed. For $0\le y\le1$ and $z\in\C$ let
 \[
- \Phi_y(z)=(10-58y)\log|z|+6\log|1-z|+53g_S(z).
+ \Phi_y(z)=(12-72y)\log|z|+8\log|1-z|+66g_E(z).
 \]
-Here $10=(A-b-q)/N$ and $6=(q+h)/N$. With $y=k/n$, Lemma~\ref{lem:keyhole} gives
+Here $12=(A-b-q)/N$ and $8=(q+h)/N$. With $y=k/n$, Lemma~\ref{lem:keyhole} gives
 \begin{equation}\label{eq:wk}
  |\beta'_k|\le e^{(w(y)+o(1))N},\qquad w(y)=\min_r\max_{z\in\Gamma_r}\Phi_y(z),
 \end{equation}
 where $\Gamma_r$ is the circle $|z|=r$ together with the segments $r\le|z|\le1$ of the real axis. For $y$ near
-$1$ the factor $|z|^{10-58y}$ favours a large circle, and for small $y$ a small one. The circle $|z|=1.001$ alone
-gives $w(y)\le52.79$ for every $y$. The keyhole contour improves this only slightly at the worst column. Its
-use is elsewhere: it lowers $w(y)$ at the columns where the binomial factor of Lemma~\ref{lem:binomvand} is
-largest.
+$1$ the factor $|z|^{12-72y}$ favours a large circle, and for small $y$ a small one. The weight is largest at $y=1$, where it is about
+$65.3$. The keyhole contour matters elsewhere: it lowers $w(y)$ at the columns where the binomial factor of
+Lemma~\ref{lem:binomvand} is largest.
 
 \subsection{Column expansion and Andr\'eief's identity}\label{ssec:andreief}
 Write $\mathcal P(r,a)=A_r(t_a)$. Expanding $\det(\cA_N+\varepsilon\mathcal P\beta)$ multilinearly in the
@@ -180,23 +188,23 @@ where $\tilde h_2(y)$ is the binary entropy $h_2(y)=-y\log y-(1-y)\log(1-y)$ for
 $y<\frac12$. So the replaced column $k$ contributes at most $e^{(w(y)+n_0\tilde h_2(y)+o(1))N}$, with $y=k/n$.
 Put
 \[
- W_0\ge\sup_{0\le y\le1}\bigl(w(y)+58\tilde h_2(y)\bigr).
+ W_0\ge\sup_{0\le y\le1}\bigl(w(y)+72\tilde h_2(y)\bigr).
 \]
 Appendix~\ref{app:field} proves $W_0=\WZero$.
 
-The two factors peak at different columns. The weight $w(y)$ increases up to $y\approx0.84$, while
-$\tilde h_2(y)$ is largest on $[0,\frac12]$. So the maximum of $w+58\tilde h_2$ is about $87.96$, at
-$y\approx0.62$, well below the sum $52.79+40.20$ of the separate maxima (Figure~\ref{fig:columns}). This saving of
-about $5$ in $\rho$ is the reason for treating the columns one at a time.
+The two factors peak at different columns. The weight $w(y)$ increases with $y$, while
+$\tilde h_2(y)$ is largest on $[0,\frac12]$. So the maximum of $w+72\tilde h_2$ is about $108.75$, at
+$y\approx0.62$, well below the sum $65.32+49.91$ of the separate maxima (Figure~\ref{fig:columns}). This saving of
+about $6.5$ in $\rho$ is the reason for treating the columns one at a time.
 
 \begin{figure}[ht]
 \centering
 \input{fig-columns}
-\caption{The weight $w(y)$ of column $k=yn$, the binomial factor $58\tilde h_2(y)$, and their sum, per unit
+\caption{The weight $w(y)$ of column $k=yn$, the binomial factor $72\tilde h_2(y)$, and their sum, per unit
 of $N$. The values were computed numerically on a grid of step $0.02$ and are not part of the proof. The
 certified bound for the sum is $W_0=\WZero$. The dotted line is the sum of the separate maxima.}
 \label{fig:columns}
 \end{figure}
 
 The remaining factor of $\rho$ is $n_0c_2$, the increase of the energy bound caused by the prescribed
-columns. It comes from Section~\ref{sec:energy}, and with it $\rho=58\cdot\Ctwo+\WZero=\Rho$.
+columns. It comes from Section~\ref{sec:energy}, and with it $\rho=72\cdot\Ctwo+\WZero=\Rho$.

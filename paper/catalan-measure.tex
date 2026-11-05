@@ -12,35 +12,32 @@
 \newcommand{\FormalizationLink}{\url{\FormalizationURL}}
 
 % Numerical constants: decimal truncations (or outward roundings) of rational numbers of the formal proof.
-\newcommand{\Bstar}{409.99999}
-\newcommand{\Rho}{296.586094}
-\newcommand{\Ctwo}{3.596893}
-\newcommand{\Cone}{3.549542}
-\newcommand{\WZero}{87.9663}
-\newcommand{\Utarget}{2.255858836}
-\newcommand{\Gain}{8.29824}
-\newcommand{\Uzero}{2.2583256}
-\newcommand{\NormCap}{0.77363}
-\newcommand{\SupX}{-0.96450499}
-\newcommand{\SupY}{-1.57499400}
-\newcommand{\FieldCap}{-2.53949899}
-\newcommand{\ResCap}{-0.0631062}
-\newcommand{\EtaTot}{38.33924}
-\newcommand{\LamCrit}{1.382397}
+\newcommand{\Bstar}{399.99999}
+\newcommand{\Rho}{368.268856}
+\newcommand{\Ctwo}{3.604373}
+\newcommand{\Cone}{3.457195}
+\newcommand{\WZero}{108.754}
+\newcommand{\Utarget}{2.264840934}
+\newcommand{\Gain}{12.79086}
+\newcommand{\Uzero}{2.2673083}
+\newcommand{\NormCap}{0.77612}
+\newcommand{\SupX}{-0.96992793}
+\newcommand{\SupY}{-1.58005012}
+\newcommand{\FieldCap}{-2.54997805}
+\newcommand{\ResCap}{-0.06909202}
+\newcommand{\EtaTot}{60.7644388}
+\newcommand{\LamCrit}{1.086162}
 \newcommand{\Kcoef}{160}
 \newcommand{\Ngeo}{75}
 \newcommand{\Ncomplex}{41}
-\newcommand{\Nblocks}{47, 38 and 23}
-\newcommand{\Ncells}{373, 302 and 176}
-\newcommand{\Mmargin}{2.986\cdot10^{-6}}
-\newcommand{\Decay}{6431.1338}
-\newcommand{\DecayOA}{6422.8355}
-\newcommand{\EtaExact}{38.34580}
-\newcommand{\PayL}{53.0000849}
-\newcommand{\PayR}{53.0000857}
-\newcommand{\Chi}{22.05972}
-\newcommand{\ChiLean}{22.05325}
-\newcommand{\LamDen}{6392.7880}
+\newcommand{\Mmargin}{2.98609\cdot10^{-6}}
+\newcommand{\Decay}{9957.0887}
+\newcommand{\DecayOA}{9944.2979}
+\newcommand{\EtaExact}{60.76446}
+\newcommand{\PayL}{66.0000831}
+\newcommand{\PayR}{66.0000842}
+\newcommand{\Chi}{34.503976}
+\newcommand{\LamDen}{9896.3243}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -85,9 +82,9 @@
 logarithmic energy, Pick matrices, Heine's formula, Gauss quadrature, Lean}
 
 \begin{abstract}
-Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-410}$ for all
+Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-400}$ for all
 integers $a$ and all sufficiently large integers $b$. Hence the irrationality exponent of $G$ is at most
-$410$. The proof refines OpenAI's recent proof that $G$ is irrational. That proof compares two bounds for
+$400$. The proof refines OpenAI's recent proof that $G$ is irrational. That proof compares two bounds for
 a large determinant whose entries are linear forms in $1$ and $G$. The lower bound comes from the
 denominators of the entries, and the upper bound from an integral representation. We improve both. On the
 arithmetic side we show that the matrix of rational parts has large corank modulo $p$ for every prime in
@@ -125,9 +122,9 @@ $\xi\mapsto r\xi+r'$ with $r,r'\in\Q$ and $r\ne0$.
 \begin{theorem}\label{thm:main}
 For all integers $a$ and all sufficiently large integers $b$,
 \[
- \left|G-\frac ab\right|>b^{-410}.
+ \left|G-\frac ab\right|>b^{-400}.
 \]
-In particular $\mu(G)\le410$.
+In particular $\mu(G)\le400$.
 \end{theorem}
 
 The proof uses the prime number theorem. The theorem and every result it depends on have been verified
@@ -188,10 +185,11 @@ conditions under which OpenAI's argument goes through, and proved $\mu(G)<2294$.
 constant of the energy estimate as the value of an equilibrium problem for two measures, and in
 \cite{Carreira2026b} he records attempts to carry the method to $\beta(4)$. Bojnal \cite{Bojnal2026} and Xu
 \cite{Xu2026} obtained $\mu(G)<2402$ and $\mu(G)\le727.03$ at other parameters. Xu's certificate is
-numerical and not formalized. Davis \cite{Davis2026} and Arkhipov \cite{Arkhipov2026} reached
-$\mu(G)\le528.24$ with new quadrature nodes, the zeros of $T_K(P(t))$ for a fixed polynomial $P$, and
-Davis's result is formalized in Lean. These constructions are independent of the ideas of the present
-paper. An earlier preprint of Sun \cite{Sun2026} claimed the irrationality of $G$, but Wachs
+numerical and not formalized. Davis \cite{Davis2026} reached $\mu(G)\le528.23288$ and Arkhipov
+\cite{Arkhipov2026} reached $\mu(G)\le528.2315$, both with new quadrature nodes, the zeros of $T_K(P(t))$ for a fixed polynomial $P$, and
+Davis's result is formalized in Lean. We use Davis's nodes, the polynomial $P$ of \cite{Davis2026} and
+the formal proofs of their properties from that work in Section~\ref{sec:real}. The other constructions are independent of the ideas of the
+present paper. An earlier preprint of Sun \cite{Sun2026} claimed the irrationality of $G$, but Wachs
 \cite{Wachs2026} showed that its main estimate is not justified.
 
 \subsection{The companion paper}
@@ -236,43 +234,44 @@ The right side is less than $1$ as soon as $\mu>d\rho/\eta$. So $\mu(G)\le d\rho
 
 The three numbers come from different places. The degree $d$ comes from the construction
 (Lemma~\ref{lem:degree}). The neighbourhood exponent $\rho$ comes from a quadrature formula for the
-coefficient of $G$ (Section~\ref{sec:real}). The difference $\eta$ is a small difference of two large
-numbers, $D\approx6431$ and $\Lambda\approx6393$ (Figure~\ref{fig:balance}). For OpenAI's construction with
-our parameters, $D$ and $\Lambda$ differ by about $8$. We lower $\Lambda$ by $22.06$ through the corank of
-a matrix modulo $p$ (Section~\ref{sec:content}), and raise $D$ by $8.30$ through a signed bound for a
-determinant of row functions (Section~\ref{sec:signed}). The result is $\eta\approx38.3$, which is what
-makes $d\rho/\eta$ as small as $410$.
+coefficient of $G$, whose nodes are those of Davis \cite{Davis2026} (Section~\ref{sec:real}). The
+difference $\eta$ is a small difference of two large numbers, $D\approx9957$ and $\Lambda\approx9896$
+(Figure~\ref{fig:balance}). For OpenAI's construction with our parameters, $D$ and $\Lambda$ differ by
+about $13$. We lower $\Lambda$ by $34.50$ through the corank of a matrix modulo $p$
+(Section~\ref{sec:content}), and raise $D$ by $12.79$ through a signed bound for a determinant of row
+functions (Section~\ref{sec:signed}). The result is $\eta\approx60.8$, which is what makes $d\rho/\eta$ as
+small as $400$.
 
 \begin{figure}[ht]
 \centering
-\setlength{\unitlength}{0.17cm}
-\begin{picture}(66,24)(-14,-6)
- \put(0,-1){\line(1,0){60}}
- \multiput(0,-1)(10,0){7}{\line(0,-1){0.8}}
- \put(0,-3.5){\makebox(0,0){$6380$}}
- \put(20,-3.5){\makebox(0,0){$6400$}}
- \put(40,-3.5){\makebox(0,0){$6420$}}
- \put(60,-3.5){\makebox(0,0){$6440$}}
+\setlength{\unitlength}{0.14cm}
+\begin{picture}(84,24)(-14,-6)
+ \put(0,-1){\line(1,0){70}}
+ \multiput(0,-1)(10,0){8}{\line(0,-1){0.8}}
+ \put(0,-3.5){\makebox(0,0){$9890$}}
+ \put(20,-3.5){\makebox(0,0){$9910$}}
+ \put(40,-3.5){\makebox(0,0){$9930$}}
+ \put(60,-3.5){\makebox(0,0){$9950$}}
  \qbezier(-1.5,-1.4)(-1,-0.9)(-0.5,-0.4)\qbezier(-0.9,-1.4)(-0.4,-0.9)(0.1,-0.4)
- \put(0,14){\framebox(42.8,3){}}
- \put(42.8,14){\framebox(8.3,3){$+8.3$}}
+ \put(0,14){\framebox(54.3,3){}}
+ \put(54.3,14){\framebox(12.8,3){$+12.8$}}
  \put(-1,15.5){\makebox(0,0)[r]{decay rate $D$}}
- \put(0,6){\framebox(12.8,3){}}
- \put(12.8,6){\dashbox{0.5}(22.1,3){$-22.1$}}
+ \put(0,6){\framebox(6.3,3){}}
+ \put(6.3,6){\dashbox{0.5}(34.5,3){$-34.5$}}
  \put(-1,7.5){\makebox(0,0)[r]{denominators $\Lambda$}}
- \put(12.8,3){\line(0,1){11}}
- \put(51.1,3){\line(0,1){11}}
- \qbezier(12.8,3.6)(31.95,3.6)(51.1,3.6)
- \qbezier(12.8,3.6)(13.4,3.85)(14.0,4.1)\qbezier(12.8,3.6)(13.4,3.35)(14.0,3.1)
- \qbezier(51.1,3.6)(50.5,3.85)(49.9,4.1)\qbezier(51.1,3.6)(50.5,3.35)(49.9,3.1)
- \put(32,1.6){\makebox(0,0){$\eta=D-\Lambda\approx38.3$}}
- \put(42.8,19.2){\makebox(0,0){$D_0=6422.8$}}
- \put(34.9,11.2){\makebox(0,0){$\Lambda_0=6414.8$}}
+ \put(6.3,3){\line(0,1){11}}
+ \put(67.1,3){\line(0,1){11}}
+ \qbezier(6.3,3.6)(36.7,3.6)(67.1,3.6)
+ \qbezier(6.3,3.6)(6.9,3.85)(7.5,4.1)\qbezier(6.3,3.6)(6.9,3.35)(7.5,3.1)
+ \qbezier(67.1,3.6)(66.5,3.85)(65.9,4.1)\qbezier(67.1,3.6)(66.5,3.35)(65.9,3.1)
+ \put(36.7,1.6){\makebox(0,0){$\eta=D-\Lambda\approx60.8$}}
+ \put(54.3,19.2){\makebox(0,0){$D_0=9944.3$}}
+ \put(40.8,11.2){\makebox(0,0){$\Lambda_0=9930.8$}}
 \end{picture}
-\caption{The exponent balance for the parameters $(58,9,3,5,3)$, per unit of $N^2$. The axis is broken at
-$6380$. OpenAI's estimates give the decay rate $D_0$ and the denominator exponent $\Lambda_0$, which
-differ by about $8$. The signed bound of Section~\ref{sec:signed} adds $8.3$ to $D_0$, and the corank bounds
-of Section~\ref{sec:content} remove $22.1$ from $\Lambda_0$.}\label{fig:balance}
+\caption{The exponent balance for the parameters $(72,11,4,6,4)$, per unit of $N^2$. The axis is broken at
+$9890$. OpenAI's estimates give the decay rate $D_0$ and the denominator exponent $\Lambda_0$, which
+differ by about $13$. The signed bound of Section~\ref{sec:signed} adds $12.8$ to $D_0$, and the corank
+bounds of Section~\ref{sec:content} remove $34.5$ from $\Lambda_0$.}\label{fig:balance}
 \end{figure}
 
 \subsection{New ideas}\label{sec:intro-ideas}
@@ -280,9 +279,11 @@ of Section~\ref{sec:content} remove $22.1$ from $\Lambda_0$.}\label{fig:balance}
 \item \emph{Large corank modulo $p$.} Let $\nu_N(p)$ be the corank modulo $p$ of $p^2$ times the matrix of
 rational parts. Each unit of corank lowers the denominator by a factor $p$
 (Proposition~\ref{prop:valuation}). We show that the corank is of order $N$ for every prime in
-$(\frac{16}7N,\frac{53}2N]$. The kernel vectors are explicit. They come from antisymmetric combinations of
-rows, a reflection formula for Chebyshev polynomials modulo $p$, and the relation $(1-X)^p=1-X^p$.
-Together these lower the denominator exponent by $22.05$.
+$(\frac52N,\frac{954}{29}N]$. The kernel vectors are explicit. They come from antisymmetric combinations of
+rows, a reflection formula for Chebyshev polynomials modulo $p$, the relation $(1-X)^p=1-X^p$, and a
+vanishing statement for blocks of base-$p$ digits (Theorem~\ref{thm:S}). On the lowest primes we use
+explicit rational subspaces whose ranks are checked exactly. Together these lower the denominator
+exponent by $34.50$.
 
 \item \emph{One counting principle.} All these kernels arise in the same way. One takes a space of row
 combinations and imposes a few linear conditions that make every entry of the combined row vanish modulo
@@ -291,42 +292,44 @@ The four closed formulas are instances. A form of the principle with a fixed rat
 remaining windows of primes, with explicit kernel vectors listed in the formalization.
 
 \item \emph{A perturbation bound column by column.} For the neighbourhood of $G$ we write the coefficient of
-$G$ by a quadrature formula with $53N$ nodes. The perturbed determinant is then a sum of determinants in
+$G$ by a quadrature formula with $66N$ nodes. The perturbed determinant is then a sum of determinants in
 which some columns are replaced by values of the row functions at the nodes. We bound the weight of each
 replaced column and its generalized Vandermonde factor separately. The two bounds peak at different
-columns, which lowers $\rho$ by about $5$.
+columns, which lowers $\rho$ by about $6.5$. The nodes are those of Davis \cite{Davis2026}, the inverse
+images of Chebyshev nodes under a polynomial of degree $130$. We bound their Lagrange polynomials by the
+exact Green function of the inverse image of $[-1,1]$, on contours that depend on the column.
 
 \item \emph{A signed bound for the row determinant.} OpenAI's integrand contains a determinant $\det\mathsf L$
 of size $n$ that the energy method bounds by $6^n$. We write it with a Pick matrix and reduce it, by a Schur
 complement and a contour bound, to the block of the negative nodes. Heine's formula writes that block as a
 ratio of two log-gas integrals. We bound the numerator from above and the denominator from below. An
 inequality for the logarithmic energy of signed measures (Theorem~\ref{thm:reflection}) keeps the combined
-estimate concave. This raises the decay rate by $8.3$.
+estimate concave. This raises the decay rate by $12.79$.
 
 \item \emph{Near-extremal configurations.} The signed bound needs hypotheses on the configuration. We show
 that they hold whenever the configuration comes close to the maximum of OpenAI's energy. On all other
 configurations OpenAI's bound already suffices.
 \end{enumerate}
 The parameters of OpenAI's construction are kept symbolic throughout, so every statement except the final
-numerical verifications holds for an arbitrary choice of them. We use $(58,9,3,5,3)$.
+numerical verifications holds for an arbitrary choice of them. We use $(72,11,4,6,4)$.
 
 \subsection{The constants}
-Table~\ref{tab:constants} lists the constants for the parameters $(58,9,3,5,3)$, per unit of $N$ or $N^2$.
+Table~\ref{tab:constants} lists the constants for the parameters $(72,11,4,6,4)$, per unit of $N$ or $N^2$.
 \begin{table}[ht]\centering
 \begin{tabular}{@{}llr@{}}\toprule
-degree & $d$ & $53$\\
-neighbourhood exponent & $\rho=58c_2+W_0$ & $296.59$\\
-decay rate (OpenAI's estimate) & $D_0$ & $6422.84$\\
-decay rate (with the signed bound) & $D$ & $6431.13$\\
-denominator exponent (with the corank gain) & $\Lambda$ & $6392.79$\\
-difference & $\eta=D-\Lambda$ & $38.34$\\
+degree & $d$ & $66$\\
+neighbourhood exponent & $\rho=72c_2+W_0$ & $368.26$\\
+decay rate (OpenAI's estimate) & $D_0$ & $9944.29$\\
+decay rate (with the signed bound) & $D$ & $9957.08$\\
+denominator exponent (with the corank gain) & $\Lambda$ & $9896.32$\\
+difference & $\eta=D-\Lambda$ & $60.76$\\
 \midrule
-bound & $d\rho/\eta$ & $409.99\ldots$\\\bottomrule
+bound & $d\rho/\eta$ & $399.99\ldots$\\\bottomrule
 \end{tabular}
 \caption{The constants of the proof, truncated. The formal proof uses exact rational numbers.}
 \label{tab:constants}\end{table}
-Without the corank gain and the signed bound, $\eta$ would be about $8$, and the method would give an
-exponent near $2000$.
+Without the corank gain and the signed bound, $\eta$ would be about $13$, and the method would give an
+exponent near $1800$.
 
 \subsection{Organization}
 Section~\ref{sec:overview} recalls OpenAI's construction for general parameters and proves the criterion
@@ -358,13 +361,13 @@ quintuple $(n_0,b_0,q_0,g_0,h_0)$ of integers with $n_0,b_0,q_0,h_0\ge1$, $g_0\g
  n=n_0N,\quad b=b_0N,\quad q=q_0N,\quad g=g_0N,\quad h=h_0N,\\
  L=n+b+q,\quad C=L+g,\quad H=C+h,\quad A=b+q+2g ,
 \end{gather*}
-and $d_0=n_0-g_0$. OpenAI's choice is $(48,7,4,4,2)$. We work throughout with the design $(58,9,3,5,3)$,
+and $d_0=n_0-g_0$. OpenAI's choice is $(48,7,4,4,2)$. We work throughout with the design $(72,11,4,6,4)$,
 for which
 \begin{gather*}
- n=58N,\quad b=9N,\quad q=3N,\quad g=5N,\quad h=3N,\\
- L=70N,\quad C=75N,\quad H=78N,\quad A=22N,
+ n=72N,\quad b=11N,\quad q=4N,\quad g=6N,\quad h=4N,\\
+ L=87N,\quad C=93N,\quad H=97N,\quad A=27N,
 \end{gather*}
-and $d_0=53$. The search that led to this design is not part of the proof.
+and $d_0=66$. The search that led to this design is not part of the proof.
 
 \subsection{The determinant}
 For $0\le r<n$ the row polynomials are
@@ -477,8 +480,8 @@ divide $b$. The squares of the larger primes then divide $b$, and (c) recovers t
 the interval would lose a power of $b$. Taking the lower end $u_0=(\lambda-\omega)\log b$ as a free
 parameter allows $\lambda<2$, since the recovery needs only $u_1<2u_0$.
 
-For Catalan's constant we take $d=53$, $\omega=\frac35$, $\delta=2.9\cdot10^{-7}$ and $\lambda=410/\rho$.
-The last hypothesis then reads $410>B_*$ with $B_*=d\rho/(\eta-4d\delta)=\Bstar\ldots$
+For Catalan's constant we take $d=66$, $\omega=\frac{27}{50}$, $\delta=2.9\cdot10^{-7}$ and $\lambda=400/\rho$.
+The last hypothesis then reads $400>B_*$ with $B_*=d\rho/(\eta-4d\delta)=\Bstar\ldots$
 
 \input{sec3}
 \input{sec4}

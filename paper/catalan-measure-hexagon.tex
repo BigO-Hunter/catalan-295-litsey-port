@@ -12,35 +12,32 @@
 \newcommand{\FormalizationLink}{\url{\FormalizationURL}}
 
 % Numerical constants: decimal truncations (or outward roundings) of rational numbers of the formal proof.
-\newcommand{\Bstar}{409.99999}
-\newcommand{\Rho}{296.586094}
-\newcommand{\Ctwo}{3.596893}
-\newcommand{\Cone}{3.549542}
-\newcommand{\WZero}{87.9663}
-\newcommand{\Utarget}{2.255858836}
-\newcommand{\Gain}{8.29824}
-\newcommand{\Uzero}{2.2583256}
-\newcommand{\NormCap}{0.77363}
-\newcommand{\SupX}{-0.96450499}
-\newcommand{\SupY}{-1.57499400}
-\newcommand{\FieldCap}{-2.53949899}
-\newcommand{\ResCap}{-0.0631062}
-\newcommand{\EtaTot}{38.33924}
-\newcommand{\LamCrit}{1.382397}
+\newcommand{\Bstar}{399.99999}
+\newcommand{\Rho}{368.268856}
+\newcommand{\Ctwo}{3.604373}
+\newcommand{\Cone}{3.457195}
+\newcommand{\WZero}{108.754}
+\newcommand{\Utarget}{2.264840934}
+\newcommand{\Gain}{12.79086}
+\newcommand{\Uzero}{2.2673083}
+\newcommand{\NormCap}{0.77612}
+\newcommand{\SupX}{-0.96992793}
+\newcommand{\SupY}{-1.58005012}
+\newcommand{\FieldCap}{-2.54997805}
+\newcommand{\ResCap}{-0.06909202}
+\newcommand{\EtaTot}{60.7644388}
+\newcommand{\LamCrit}{1.086162}
 \newcommand{\Kcoef}{160}
 \newcommand{\Ngeo}{75}
 \newcommand{\Ncomplex}{41}
-\newcommand{\Nblocks}{47, 38 and 23}
-\newcommand{\Ncells}{373, 302 and 176}
-\newcommand{\Mmargin}{2.986\cdot10^{-6}}
-\newcommand{\Decay}{6431.1338}
-\newcommand{\DecayOA}{6422.8355}
-\newcommand{\EtaExact}{38.34580}
-\newcommand{\PayL}{53.0000849}
-\newcommand{\PayR}{53.0000857}
-\newcommand{\Chi}{22.05972}
-\newcommand{\ChiLean}{22.05325}
-\newcommand{\LamDen}{6392.7880}
+\newcommand{\Mmargin}{2.98609\cdot10^{-6}}
+\newcommand{\Decay}{9957.0887}
+\newcommand{\DecayOA}{9944.2979}
+\newcommand{\EtaExact}{60.76446}
+\newcommand{\PayL}{66.0000831}
+\newcommand{\PayR}{66.0000842}
+\newcommand{\Chi}{34.503976}
+\newcommand{\LamDen}{9896.3243}
 
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{lemma}[theorem]{Lemma}
@@ -85,9 +82,9 @@
 logarithmic energy, Pick matrices, Heine's formula, Gauss quadrature, Lean}
 
 \begin{abstract}
-Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-410}$ for all
+Let $G=\sum_{j\ge0}(-1)^j(2j+1)^{-2}$ be Catalan's constant. We prove that $|G-a/b|>b^{-400}$ for all
 integers $a$ and all sufficiently large integers $b$. Hence the irrationality exponent of $G$ is at most
-$410$. The proof refines OpenAI's recent proof that $G$ is irrational. That proof compares two bounds for
+$400$. The proof refines OpenAI's recent proof that $G$ is irrational. That proof compares two bounds for
 a large determinant whose entries are linear forms in $1$ and $G$. The lower bound comes from the
 denominators of the entries, and the upper bound from an integral representation. We improve both. On the
 arithmetic side we show that the matrix of rational parts has large corank modulo $p$ for every prime in
@@ -125,9 +122,9 @@ $\xi\mapsto r\xi+r'$ with $r,r'\in\Q$ and $r\ne0$.
 \begin{theorem}\label{thm:main}
 For all integers $a$ and all sufficiently large integers $b$,
 \[
- \left|G-\frac ab\right|>b^{-410}.
+ \left|G-\frac ab\right|>b^{-400}.
 \]
-In particular $\mu(G)\le410$.
+In particular $\mu(G)\le400$.
 \end{theorem}
 
 The proof uses the prime number theorem. The theorem and every result it depends on have been verified
@@ -188,10 +185,11 @@ conditions under which OpenAI's argument goes through, and proved $\mu(G)<2294$.
 constant of the energy estimate as the value of an equilibrium problem for two measures, and in
 \cite{Carreira2026b} he records attempts to carry the method to $\beta(4)$. Bojnal \cite{Bojnal2026} and Xu
 \cite{Xu2026} obtained $\mu(G)<2402$ and $\mu(G)\le727.03$ at other parameters. Xu's certificate is
-numerical and not formalized. Davis \cite{Davis2026} and Arkhipov \cite{Arkhipov2026} reached
-$\mu(G)\le528.24$ with new quadrature nodes, the zeros of $T_K(P(t))$ for a fixed polynomial $P$, and
-Davis's result is formalized in Lean. These constructions are independent of the ideas of the present
-paper. An earlier preprint of Sun \cite{Sun2026} claimed the irrationality of $G$, but Wachs
+numerical and not formalized. Davis \cite{Davis2026} reached $\mu(G)\le528.23288$ and Arkhipov
+\cite{Arkhipov2026} reached $\mu(G)\le528.2315$, both with new quadrature nodes, the zeros of $T_K(P(t))$ for a fixed polynomial $P$, and
+Davis's result is formalized in Lean. We use Davis's nodes, the polynomial $P$ of \cite{Davis2026} and
+the formal proofs of their properties from that work in Section~\ref{sec:real}. The other constructions are independent of the ideas of the
+present paper. An earlier preprint of Sun \cite{Sun2026} claimed the irrationality of $G$, but Wachs
 \cite{Wachs2026} showed that its main estimate is not justified.
 
 \subsection{The companion paper}
@@ -236,43 +234,44 @@ The right side is less than $1$ as soon as $\mu>d\rho/\eta$. So $\mu(G)\le d\rho
 
 The three numbers come from different places. The degree $d$ comes from the construction
 (Lemma~\ref{lem:degree}). The neighbourhood exponent $\rho$ comes from a quadrature formula for the
-coefficient of $G$ (Section~\ref{sec:real}). The difference $\eta$ is a small difference of two large
-numbers, $D\approx6431$ and $\Lambda\approx6393$ (Figure~\ref{fig:balance}). For OpenAI's construction with
-our parameters, $D$ and $\Lambda$ differ by about $8$. We lower $\Lambda$ by $22.06$ through the corank of
-a matrix modulo $p$ (Section~\ref{sec:content}), and raise $D$ by $8.30$ through a signed bound for a
-determinant of row functions (Section~\ref{sec:signed}). The result is $\eta\approx38.3$, which is what
-makes $d\rho/\eta$ as small as $410$.
+coefficient of $G$, whose nodes are those of Davis \cite{Davis2026} (Section~\ref{sec:real}). The
+difference $\eta$ is a small difference of two large numbers, $D\approx9957$ and $\Lambda\approx9896$
+(Figure~\ref{fig:balance}). For OpenAI's construction with our parameters, $D$ and $\Lambda$ differ by
+about $13$. We lower $\Lambda$ by $34.50$ through the corank of a matrix modulo $p$
+(Section~\ref{sec:content}), and raise $D$ by $12.79$ through a signed bound for a determinant of row
+functions (Section~\ref{sec:signed}). The result is $\eta\approx60.8$, which is what makes $d\rho/\eta$ as
+small as $400$.
 
 \begin{figure}[ht]
 \centering
-\setlength{\unitlength}{0.17cm}
-\begin{picture}(66,24)(-14,-6)
- \put(0,-1){\line(1,0){60}}
- \multiput(0,-1)(10,0){7}{\line(0,-1){0.8}}
- \put(0,-3.5){\makebox(0,0){$6380$}}
- \put(20,-3.5){\makebox(0,0){$6400$}}
- \put(40,-3.5){\makebox(0,0){$6420$}}
- \put(60,-3.5){\makebox(0,0){$6440$}}
+\setlength{\unitlength}{0.14cm}
+\begin{picture}(84,24)(-14,-6)
+ \put(0,-1){\line(1,0){70}}
+ \multiput(0,-1)(10,0){8}{\line(0,-1){0.8}}
+ \put(0,-3.5){\makebox(0,0){$9890$}}
+ \put(20,-3.5){\makebox(0,0){$9910$}}
+ \put(40,-3.5){\makebox(0,0){$9930$}}
+ \put(60,-3.5){\makebox(0,0){$9950$}}
  \qbezier(-1.5,-1.4)(-1,-0.9)(-0.5,-0.4)\qbezier(-0.9,-1.4)(-0.4,-0.9)(0.1,-0.4)
- \put(0,14){\framebox(42.8,3){}}
- \put(42.8,14){\framebox(8.3,3){$+8.3$}}
+ \put(0,14){\framebox(54.3,3){}}
+ \put(54.3,14){\framebox(12.8,3){$+12.8$}}
  \put(-1,15.5){\makebox(0,0)[r]{decay rate $D$}}
- \put(0,6){\framebox(12.8,3){}}
- \put(12.8,6){\dashbox{0.5}(22.1,3){$-22.1$}}
+ \put(0,6){\framebox(6.3,3){}}
+ \put(6.3,6){\dashbox{0.5}(34.5,3){$-34.5$}}
  \put(-1,7.5){\makebox(0,0)[r]{denominators $\Lambda$}}
- \put(12.8,3){\line(0,1){11}}
- \put(51.1,3){\line(0,1){11}}
- \qbezier(12.8,3.6)(31.95,3.6)(51.1,3.6)
- \qbezier(12.8,3.6)(13.4,3.85)(14.0,4.1)\qbezier(12.8,3.6)(13.4,3.35)(14.0,3.1)
- \qbezier(51.1,3.6)(50.5,3.85)(49.9,4.1)\qbezier(51.1,3.6)(50.5,3.35)(49.9,3.1)
- \put(32,1.6){\makebox(0,0){$\eta=D-\Lambda\approx38.3$}}
- \put(42.8,19.2){\makebox(0,0){$D_0=6422.8$}}
- \put(34.9,11.2){\makebox(0,0){$\Lambda_0=6414.8$}}
+ \put(6.3,3){\line(0,1){11}}
+ \put(67.1,3){\line(0,1){11}}
+ \qbezier(6.3,3.6)(36.7,3.6)(67.1,3.6)
+ \qbezier(6.3,3.6)(6.9,3.85)(7.5,4.1)\qbezier(6.3,3.6)(6.9,3.35)(7.5,3.1)
+ \qbezier(67.1,3.6)(66.5,3.85)(65.9,4.1)\qbezier(67.1,3.6)(66.5,3.35)(65.9,3.1)
+ \put(36.7,1.6){\makebox(0,0){$\eta=D-\Lambda\approx60.8$}}
+ \put(54.3,19.2){\makebox(0,0){$D_0=9944.3$}}
+ \put(40.8,11.2){\makebox(0,0){$\Lambda_0=9930.8$}}
 \end{picture}
-\caption{The exponent balance for the parameters $(58,9,3,5,3)$, per unit of $N^2$. The axis is broken at
-$6380$. OpenAI's estimates give the decay rate $D_0$ and the denominator exponent $\Lambda_0$, which
-differ by about $8$. The signed bound of Section~\ref{sec:signed} adds $8.3$ to $D_0$, and the corank bounds
-of Section~\ref{sec:content} remove $22.1$ from $\Lambda_0$.}\label{fig:balance}
+\caption{The exponent balance for the parameters $(72,11,4,6,4)$, per unit of $N^2$. The axis is broken at
+$9890$. OpenAI's estimates give the decay rate $D_0$ and the denominator exponent $\Lambda_0$, which
+differ by about $13$. The signed bound of Section~\ref{sec:signed} adds $12.8$ to $D_0$, and the corank
+bounds of Section~\ref{sec:content} remove $34.5$ from $\Lambda_0$.}\label{fig:balance}
 \end{figure}
 
 \subsection{New ideas}\label{sec:intro-ideas}
@@ -280,9 +279,11 @@ of Section~\ref{sec:content} remove $22.1$ from $\Lambda_0$.}\label{fig:balance}
 \item \emph{Large corank modulo $p$.} Let $\nu_N(p)$ be the corank modulo $p$ of $p^2$ times the matrix of
 rational parts. Each unit of corank lowers the denominator by a factor $p$
 (Proposition~\ref{prop:valuation}). We show that the corank is of order $N$ for every prime in
-$(\frac{16}7N,\frac{53}2N]$. The kernel vectors are explicit. They come from antisymmetric combinations of
-rows, a reflection formula for Chebyshev polynomials modulo $p$, and the relation $(1-X)^p=1-X^p$.
-Together these lower the denominator exponent by $22.05$.
+$(\frac52N,\frac{954}{29}N]$. The kernel vectors are explicit. They come from antisymmetric combinations of
+rows, a reflection formula for Chebyshev polynomials modulo $p$, the relation $(1-X)^p=1-X^p$, and a
+vanishing statement for blocks of base-$p$ digits (Theorem~\ref{thm:S}). On the lowest primes we use
+explicit rational subspaces whose ranks are checked exactly. Together these lower the denominator
+exponent by $34.50$.
 
 \item \emph{One counting principle.} All these kernels arise in the same way. One takes a space of row
 combinations and imposes a few linear conditions that make every entry of the combined row vanish modulo
@@ -291,42 +292,44 @@ The four closed formulas are instances. A form of the principle with a fixed rat
 remaining windows of primes, with explicit kernel vectors listed in the formalization.
 
 \item \emph{A perturbation bound column by column.} For the neighbourhood of $G$ we write the coefficient of
-$G$ by a quadrature formula with $53N$ nodes. The perturbed determinant is then a sum of determinants in
+$G$ by a quadrature formula with $66N$ nodes. The perturbed determinant is then a sum of determinants in
 which some columns are replaced by values of the row functions at the nodes. We bound the weight of each
 replaced column and its generalized Vandermonde factor separately. The two bounds peak at different
-columns, which lowers $\rho$ by about $5$.
+columns, which lowers $\rho$ by about $6.5$. The nodes are those of Davis \cite{Davis2026}, the inverse
+images of Chebyshev nodes under a polynomial of degree $130$. We bound their Lagrange polynomials by the
+exact Green function of the inverse image of $[-1,1]$, on contours that depend on the column.
 
 \item \emph{A signed bound for the row determinant.} OpenAI's integrand contains a determinant $\det\mathsf L$
 of size $n$ that the energy method bounds by $6^n$. We write it with a Pick matrix and reduce it, by a Schur
 complement and a contour bound, to the block of the negative nodes. Heine's formula writes that block as a
 ratio of two log-gas integrals. We bound the numerator from above and the denominator from below. An
 inequality for the logarithmic energy of signed measures (Theorem~\ref{thm:reflection}) keeps the combined
-estimate concave. This raises the decay rate by $8.3$.
+estimate concave. This raises the decay rate by $12.79$.
 
 \item \emph{Near-extremal configurations.} The signed bound needs hypotheses on the configuration. We show
 that they hold whenever the configuration comes close to the maximum of OpenAI's energy. On all other
 configurations OpenAI's bound already suffices.
 \end{enumerate}
 The parameters of OpenAI's construction are kept symbolic throughout, so every statement except the final
-numerical verifications holds for an arbitrary choice of them. We use $(58,9,3,5,3)$.
+numerical verifications holds for an arbitrary choice of them. We use $(72,11,4,6,4)$.
 
 \subsection{The constants}
-Table~\ref{tab:constants} lists the constants for the parameters $(58,9,3,5,3)$, per unit of $N$ or $N^2$.
+Table~\ref{tab:constants} lists the constants for the parameters $(72,11,4,6,4)$, per unit of $N$ or $N^2$.
 \begin{table}[ht]\centering
 \begin{tabular}{@{}llr@{}}\toprule
-degree & $d$ & $53$\\
-neighbourhood exponent & $\rho=58c_2+W_0$ & $296.59$\\
-decay rate (OpenAI's estimate) & $D_0$ & $6422.84$\\
-decay rate (with the signed bound) & $D$ & $6431.13$\\
-denominator exponent (with the corank gain) & $\Lambda$ & $6392.79$\\
-difference & $\eta=D-\Lambda$ & $38.34$\\
+degree & $d$ & $66$\\
+neighbourhood exponent & $\rho=72c_2+W_0$ & $368.26$\\
+decay rate (OpenAI's estimate) & $D_0$ & $9944.29$\\
+decay rate (with the signed bound) & $D$ & $9957.08$\\
+denominator exponent (with the corank gain) & $\Lambda$ & $9896.32$\\
+difference & $\eta=D-\Lambda$ & $60.76$\\
 \midrule
-bound & $d\rho/\eta$ & $409.99\ldots$\\\bottomrule
+bound & $d\rho/\eta$ & $399.99\ldots$\\\bottomrule
 \end{tabular}
 \caption{The constants of the proof, truncated. The formal proof uses exact rational numbers.}
 \label{tab:constants}\end{table}
-Without the corank gain and the signed bound, $\eta$ would be about $8$, and the method would give an
-exponent near $2000$.
+Without the corank gain and the signed bound, $\eta$ would be about $13$, and the method would give an
+exponent near $1800$.
 
 \subsection{Organization}
 Section~\ref{sec:overview} recalls OpenAI's construction for general parameters and proves the criterion
@@ -358,13 +361,13 @@ quintuple $(n_0,b_0,q_0,g_0,h_0)$ of integers with $n_0,b_0,q_0,h_0\ge1$, $g_0\g
  n=n_0N,\quad b=b_0N,\quad q=q_0N,\quad g=g_0N,\quad h=h_0N,\\
  L=n+b+q,\quad C=L+g,\quad H=C+h,\quad A=b+q+2g ,
 \end{gather*}
-and $d_0=n_0-g_0$. OpenAI's choice is $(48,7,4,4,2)$. We work throughout with the design $(58,9,3,5,3)$,
+and $d_0=n_0-g_0$. OpenAI's choice is $(48,7,4,4,2)$. We work throughout with the design $(72,11,4,6,4)$,
 for which
 \begin{gather*}
- n=58N,\quad b=9N,\quad q=3N,\quad g=5N,\quad h=3N,\\
- L=70N,\quad C=75N,\quad H=78N,\quad A=22N,
+ n=72N,\quad b=11N,\quad q=4N,\quad g=6N,\quad h=4N,\\
+ L=87N,\quad C=93N,\quad H=97N,\quad A=27N,
 \end{gather*}
-and $d_0=53$. The search that led to this design is not part of the proof.
+and $d_0=66$. The search that led to this design is not part of the proof.
 
 \subsection{The determinant}
 For $0\le r<n$ the row polynomials are
@@ -477,8 +480,8 @@ divide $b$. The squares of the larger primes then divide $b$, and (c) recovers t
 the interval would lose a power of $b$. Taking the lower end $u_0=(\lambda-\omega)\log b$ as a free
 parameter allows $\lambda<2$, since the recovery needs only $u_1<2u_0$.
 
-For Catalan's constant we take $d=53$, $\omega=\frac35$, $\delta=2.9\cdot10^{-7}$ and $\lambda=410/\rho$.
-The last hypothesis then reads $410>B_*$ with $B_*=d\rho/(\eta-4d\delta)=\Bstar\ldots$
+For Catalan's constant we take $d=66$, $\omega=\frac{27}{50}$, $\delta=2.9\cdot10^{-7}$ and $\lambda=400/\rho$.
+The last hypothesis then reads $400>B_*$ with $B_*=d\rho/(\eta-4d\delta)=\Bstar\ldots$
 
 \section{Denominators and nonvanishing}\label{sec:setup}
 
@@ -591,7 +594,7 @@ Let $p$ be an odd prime with $\sqrt H<p\le H$. OpenAI's method \cite[\S3]{OpenAI
 of the entries prime by prime. For any choice of the parameters it gives $v_p(\Delta_N(z))\ge-\ell_N(p)$
 for every $z$ with denominator prime to $p$. Here $\ell_N(p)$ is the number of columns whose entries can
 have a pole at $p$. It is computed by grouping the coefficients of the row polynomials by their base-$p$
-digits. All differences below are truncated at $0$. For $2p\le H$,
+digits. All differences below are truncated at $0$, and $L-p$ is replaced by $(L-p)_+$. For $2p\le H$,
 \[
  \ell_N(p)=2n-\Bigl(\min\bigl(p,\,L-p,\,A\bigr)-\max\bigl(b,\,H-2p\bigr)-q\Bigr).
 \]
@@ -605,19 +608,19 @@ the primes that interest us they agree with OpenAI's. For our parameters $\ell_N
 rounding, with a piecewise linear function $f$ of $\theta=p/N$:
 \[
  f(\theta)=\begin{cases}
- 116&\theta\le59/2,\\
- 175-2\theta&59/2\le \theta\le69/2,\\
- 106&69/2\le \theta\le39,\\
- 184-2\theta&39\le \theta\le81/2,\\
- 265-4\theta&81/2\le \theta\le48,\\
- 217-3\theta&48\le \theta\le69,\\
- 148-2\theta&69\le \theta\le70,\\
- 78-\theta&70\le \theta\le78,
+ 144&\theta\le37,\\
+ 218-2\theta&37\le \theta\le43,\\
+ 132&43\le \theta\le97/2,\\
+ 229-2\theta&97/2\le \theta\le101/2,\\
+ 330-4\theta&101/2\le \theta\le60,\\
+ 270-3\theta&60\le \theta\le86,\\
+ 184-2\theta&86\le \theta\le87,\\
+ 97-\theta&87\le \theta\le97,
  \end{cases}
 \]
-and $f=0$ for $\theta\ge78$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
-$[1,78]$ is $24269/4$, and $f=116=2n_0$ on $[0,1]$. Since $f(\theta)=2n_0$ for $\theta\le59/2$, every prime of
-the range $(\frac{16}7N,\frac{53}2N]$ of the corank bounds of Section~\ref{sec:content} has
+and $f=0$ for $\theta\ge97$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
+$[1,97]$ is $18841/2$, and $f=144=2n_0$ on $[0,1]$. Since $f(\theta)=2n_0$ for $\theta\le37$, every prime of
+the range $(\frac52N,\frac{954}{29}N]$ of the corank bounds of Section~\ref{sec:content} has
 $\ell_N(p)=2n$. There Proposition~\ref{prop:valuation} improves the bound $-2n$ to $\nu_N(p)-2n$.
 
 The primes $p\le\sqrt H$ are not covered by these bounds. For them we use the cruder bound $6n\log_pH$ for
@@ -641,23 +644,23 @@ With $s=n-m-\ell$ and $m_*=(n+H-b)/4$,
  =2(m-m_*)^2+s\,(C-n+m)+\tfrac12s^2\ge0 .
 \]
 This gives a $2$-adic bound $v_2(\Delta_N(i))\ge-\Lambda_2-O(N\log N)$, uniform in the integer $i$. For our
-parameters $\Lambda_2=(58+78-9)^2/8-58^2/2=2673/8$ in units of $N^2$.
+parameters $\Lambda_2=(72+97-11)^2/8-72^2/2=1057/2$ in units of $N^2$.
 
 \subsection{The common denominator}
 The corank bounds of Section~\ref{sec:content} give a function $\kappa$ of $\theta=p/N$
 (Theorem~\ref{thm:profile-D}). We use it here as an input.
 
 \begin{proposition}\label{prop:denominators}
-For the parameters $(58,9,3,5,3)$ there are positive integers $\cD_N$ with the following properties.
+For the parameters $(72,11,4,6,4)$ there are positive integers $\cD_N$ with the following properties.
 $\cD_N\Delta_N(i)\in\Z$ for every integer $i$, and $p'^{2n}\mid\cD_N$ for every prime $N<p'\le2N$. For every
 $\varepsilon>0$ and all large $N$
 \begin{gather*}
  \log\cD_N\le(\Lambda+\varepsilon)N^2,\\
- \Lambda=\frac{2673}8\log2+116+\frac{24269}4-\int_0^\infty\kappa(\theta)\,d\theta=\LamDen\ldots
+ \Lambda=\frac{1057}2\log2+144+\frac{18841}2-\int_0^\infty\kappa(\theta)\,d\theta=\LamDen\ldots
 \end{gather*}
 \end{proposition}
 
-Here $\frac{2673}8\log2$ comes from the prime $2$, and $116+\frac{24269}4$ is the area of $f$. The last term
+Here $\frac{1057}2\log2$ comes from the prime $2$, and $144+\frac{18841}2$ is the area of $f$. The last term
 is the gain from the corank.
 
 \begin{proof}
@@ -668,16 +671,16 @@ above, and for $p=2$ the $2$-adic bound. Let $\cD_N$ be the product of $p^{e_N(p
 Proposition~\ref{prop:valuation} and the bounds of this section, $v_p(\Delta_N(i))\ge-e_N(p)$ for every
 integer $i\ge0$ and every $p$. For $p>H$ the matrix is $p$-integral. So $\cD_N\Delta_N(i)\in\Z$. A prime
 $p'\in(N,2N]$ has $\nu^*_N(p')=0$, since no interval of Theorem~\ref{thm:profile-D} contains it, and
-$\ell_N(p')=2n$. So $p'^{2n}\mid\cD_N$. Here $N\ge79$ guarantees $p'>\sqrt H$.
+$\ell_N(p')=2n$. So $p'^{2n}\mid\cD_N$. Here $N\ge98$ guarantees $p'>\sqrt H$.
 
 For the size of $\cD_N$ we use the prime number theorem in the weighted form
 \begin{equation}\label{eq:weighted-pnt}
  \frac1N\sum_{p}F(p/N)\log p\longrightarrow\int_0^\infty F(\theta)\,d\theta\qquad(N\to\infty),
 \end{equation}
 for bounded, Riemann integrable, compactly supported $F$. By \eqref{eq:weighted-pnt} the sum of
-$\ell_N(p)\log p$ over the odd primes is $N^2\int_0^{78}f+o(N^2)$, with $\int_0^{78}f=116+24269/4$. The primes in
-the intervals of Theorem~\ref{thm:profile-D} lie in $(16N/7,53N/2]$ and have $\ell_N(p)=116N$. So their
-exponent is at most $116N-N\kappa(p/N)+2$. The sum of $(N\kappa(p/N)-2)\log p$ over these primes is
+$\ell_N(p)\log p$ over the odd primes is $N^2\int_0^{97}f+o(N^2)$, with $\int_0^{97}f=144+18841/2$. The primes in
+the intervals of Theorem~\ref{thm:profile-D} lie in $(5N/2,954N/29]$ and have $\ell_N(p)=144N$. So their
+exponent is at most $144N-N\kappa(p/N)+2$. The sum of $(N\kappa(p/N)-2)\log p$ over these primes is
 $N^2\int\kappa+o(N^2)$, again by \eqref{eq:weighted-pnt}. The $2$-adic part contributes
 $\Lambda_2\log2\,N^2+o(N^2)$.
 \end{proof}
@@ -718,7 +721,7 @@ $p$, $\Delta_p(z)\ne0$. In particular $\Delta_p(a/b)\ne0$ whenever $a\in\Z$, $b\
 The matrices are those of OpenAI's reduction modulo $p$ at $N=p$, with general parameters in place of
 OpenAI's. Let $B$ be the rational $(n_0+1)\times n_0$ matrix of the entries of $\cA^0_1$, the rational part at
 $N=1$, for the rows $0,\dots,n_0$. The row $n_0$ is an auxiliary row. Let $B_\sigma$ have rows
-$B_r+\sigma B_{r+1}$, $0\le r<n_0$. For our parameters $B$ has $59$ rows and $58$ columns.
+$B_r+\sigma B_{r+1}$, $0\le r<n_0$. For our parameters $B$ has $73$ rows and $72$ columns.
 
 \begin{proof}
 Let $p>4H_0$, with $H_0=H/N$, so that $H=H_0p<p^2/4$. Let $p$ also be prime to the numerators and
@@ -743,7 +746,7 @@ with zero reduction. So the reduction of $p^2(\cA^0_p+z\cL_p)$ is the same inver
 $v_p(\Delta_p(z))=-2n$. Finally, if $p^2\nmid b$, then $p(a/b)$ has denominator prime to $p$.
 \end{proof}
 
-For the parameters $(58,9,3,5,3)$ we verify that $B_0$, $B_0+B_1$ and $B_0-B_1$ are invertible by exhibiting
+For the parameters $(72,11,4,6,4)$ we verify that $B_0$, $B_0+B_1$ and $B_0-B_1$ are invertible by exhibiting
 their inverses modulo $1009$. This prime exceeds every denominator of $B$, so the three determinants are
 nonzero rational numbers. Proposition~\ref{prop:nonvanishing} then applies to all large primes. The proof
 uses only $2g<n$ and $H<p^2/4$.
@@ -853,14 +856,14 @@ $\varsigma_0=\max(q,H+q-6p)$:
 \[
  \min\Bigl(\frac{p-1}2-g,\ n+b+q+h-\frac{11p+1}2\Bigr).
 \]
-\item (Theorem~\ref{thm:S}) If $e\ge0$ and $n\le4p+2g+1$: $m_1-m_0-e$, with
+\item (Theorem~\ref{thm:S}) If $e\ge0$ and $n\le4p+2g+1$, then for every integer $k\ge2$ the quantity $m_1-m_0-e$, with
 \[
- m_0=\max(b+q,\,L+\chi-4p),\qquad m_1=\min(p,\,L-3p,\,A+1).
+ m_0=\max(b+q,\,L+\chi-kp),\qquad m_1=\min(p,\,L-(k-1)p,\,A+1).
 \]
 \end{enumerate}
 \end{theorem}
 
-For our parameters these bounds apply for $12N<p\le26N$, where they give most of the gain
+For our parameters these bounds apply for $\frac{74}5N<p\le\frac{954}{29}N$, where they give most of the gain
 (Section~\ref{ssec:kappa}). We prove the four parts in turn.
 
 \subsection{Antisymmetric combinations of rows}
@@ -1038,44 +1041,65 @@ $n-5w+4w+e=n-(w-e)$ linear conditions, so the left kernel has dimension at least
 equals $\varsigma_1-q-e=n+b+q+h-(11p+1)/2$ if $\varsigma_0=q$, and $(p-1)/2-g$ if $\varsigma_0=H+q-6p$.
 \end{proof}
 
-\subsection{The digits $1$ to $4$}
+\subsection{The digits $1$ to $k$}\label{ssec:S}
+The proof of Theorem~\ref{thm:U6} uses five digits. A shorter block uses fewer. The count is the same for
+every number of digits $k\ge2$, and we prove it once. The cases $k=4$ and $k=3$ both occur for our
+parameters. The case $k=3$ gives the bounds on $(\frac{186}7N,28N]$.
+
 \begin{theorem}\label{thm:S}
-Let $e=(p+1)/2-q-h\ge0$ and $n\le4p+2g+1$, and put
+Let $e=(p+1)/2-q-h\ge0$ and $n\le4p+2g+1$. Let $k\ge2$ be an integer and put
 \[
- m_0=\max(b+q,\,L+\chi-4p),\qquad m_1=\min(p,\,L-3p,\,A+1).
+ m_0=\max(b+q,\,L+\chi-kp),\qquad m_1=\min\bigl(p,\,L-(k-1)p,\,A+1\bigr).
 \]
 Then $\nu_N(p)\ge m_1-m_0-e$.
 \end{theorem}
 
-\begin{proof}
-Let $\mathcal M=[m_0,m_1)$ and $w=m_1-m_0>e$. For $\varsigma\in \mathcal M$ we have $\varsigma\le A$, so the digit $u=0$ of $Q_c$ and
-$\widehat D_c$ vanishes. The inequality $\varsigma\ge L+\chi-4p$ gives that the digits $u\ge4$ of $\widehat D_c$ and
-$u\ge5$ of $Q_c$ vanish. Finally $3p+\varsigma<L$. So \eqref{eq:K6} gives, with $D_i=\widehat D_c[ip+\varsigma]$ and
-$Q_i=Q_c[ip+\varsigma]$,
-\[
- Q_1=D_1,\qquad Q_2=D_2,\qquad Q_3=D_3-\tfrac12D_1 .
-\]
-So every value of $c$ at a column with residue $\varsigma\in \mathcal M$ is a combination of the four functionals
-$D_1(\varsigma),D_2(\varsigma),D_3(\varsigma),Q_4(\varsigma)$ of $c$. For $\varsigma\in \mathcal M$ the columns $k=\varsigma-(b+q)$, $p+\varsigma-(b+q)$,
-$2p+\varsigma-(b+q)$ and $3p+\varsigma-(b+q)$ exist, since $b+q\le\varsigma<p$ and $3p+\varsigma<L$. So there are at least $4w$
-block columns, and their entries lie in the span $\mathcal F$ of the $4w$ functionals.
+The proof rests on a statement about digits only. Write $\mathcal M=[m_0,m_1)$. For $\varsigma\in\mathcal M$ and
+$u\ge0$ put $Q_u=Q_c[up+\varsigma]$ and $D_u=\widehat D_c[up+\varsigma]$, with the polynomials of
+\eqref{eq:Qc}. The relation \eqref{eq:K6} reads $2Q_u=2D_u-D_{u-2}$ for $up+\varsigma<L$, with $D_{u-2}=0$
+for $u<2$. The Frobenius relation $(1-X)^eQ_c=(1-X^p)Y_c$ of the proof of Theorem~\ref{thm:U6} gives
+\begin{equation}\label{eq:frob-digits}
+ \sum_{t=0}^e(-1)^t\binom et\,Q_c[i-t]=Y_c[i]-Y_c[i-p]\qquad(i\ge0).
+\end{equation}
 
-We find $w-e$ linear relations among these functionals. As in the proof of Theorem~\ref{thm:U6},
-$(1-X)^eQ_c=(1-X^p)Y_c$ with $Y_c$ a polynomial. Put $\sigma_c(\ell)=\sum_{u\ge0}Q_c[up+\ell]$ and sum the
-coefficients of this identity over the residue class of $\varsigma\ge e$ modulo $p$. The right side gives
-$\sum_u\bigl(Y_c[up+\varsigma]-Y_c[(u-1)p+\varsigma]\bigr)=0$, since $Y_c$ is a polynomial. The left side gives
-$\sum_{t=0}^e(-1)^t\binom et\sigma_c(\varsigma-t)$. For $\varsigma\in \mathcal M$ with $\varsigma-e\ge m_0$ all $\varsigma-t$ lie in $\mathcal M$, and there
-$\sigma_c=Q_1+Q_2+Q_3+Q_4=D_1+D_2+D_3-\tfrac12D_1+Q_4$. So
+\begin{lemma}\label{lem:digit-vanishing}
+Let $w=m_1-m_0>e$ and assume the hypotheses of Theorem~\ref{thm:S}. Suppose that $D_j=0$ for
+$1\le j<k$ and all $\varsigma\in\mathcal M$, and that $Q_k=0$ for the first $e$ residues
+$\varsigma=m_0,\dots,m_0+e-1$. Then $Q_u=D_u=0$ for all $u\ge0$ and all $\varsigma\in\mathcal M$.
+\end{lemma}
+
+\begin{proof}
+Since $m_1\le A+1$, we have $\varsigma\le A$ and the digits $u=0$ of $Q_c$ and $\widehat D_c$ vanish. Since
+$\varsigma\ge L+\chi-kp$, the digits $u\ge k$ of $\widehat D_c$ and $u\ge k+1$ of $Q_c$ vanish. Indeed these
+polynomials have no coefficients beyond $L+\chi-1$ and $L+\chi+p-1$. The digits $D_j$ with $1\le j<k$ vanish by
+assumption. For $1\le j<k$ we have $jp+\varsigma\le(k-1)p+m_1-1<L$. So \eqref{eq:K6} applies. It gives
+$2Q_j=2D_j-D_{j-2}=0$, because $D_{j-2}$ is either absent or a digit already known to vanish. Only $Q_k$
+remains.
+
+Let $\varsigma\ge m_0+e$. Apply \eqref{eq:frob-digits} at $i=up+\varsigma$ for $u=0,\dots,k+1$ and add. The right sides
+telescope to $Y_c[(k+1)p+\varsigma]$. This coefficient vanishes. Indeed $Y_c$ has degree at most
+$C+(p-1)/2$, while $(k+1)p+\varsigma\ge p+L+\chi>C+(p-1)/2$, because $p+q+h>(p-1)/2$. On the left, every residue
+$\varsigma-t$ with $0\le t\le e$ lies in $\mathcal M$. So all digits vanish except the digit $k$, and
 \[
- \sum_{t=0}^e(-1)^t\binom et\bigl(\tfrac12D_1+D_2+D_3+Q_4\bigr)(\varsigma-t)=0\qquad(m_0+e\le\varsigma<m_1).
+ \sum_{t=0}^e(-1)^t\binom et\,Q_c[kp+\varsigma-t]=0 .
 \]
-These $w-e$ relations are independent, since $Q_4(\varsigma)$ occurs with coefficient $1$ in the relation for $\varsigma$
-and only with smaller arguments in the others. Hence $\dim \mathcal F\le4w-(w-e)$, and the rank of the matrix is at
-most $(n-4w)+3w+e=n-(w-e)$.
+The term $t=0$ has coefficient $1$. The first $e$ values of $Q_k$ vanish by assumption. Induction on $\varsigma$
+shows $Q_k=0$ on all of $\mathcal M$.
 \end{proof}
 
-The proof uses neither a determinant nor a lower bound for $N$. Unlike the proof of Theorem~\ref{thm:U6}, the
-telescoping here runs over all digits, so no vanishing of $Y_c$ at the ends is needed.
+\begin{proof}[Proof of Theorem~\ref{thm:S}]
+We may assume $w=m_1-m_0>e$. The columns $Jp+\varsigma-(b+q)$ with $0\le J<k$ and $\varsigma\in\mathcal M$ exist.
+They are nonnegative since $\varsigma\ge b+q$, and smaller than $n$ since $(k-1)p+\varsigma<L$. They are
+distinct since $\varsigma<p$. So there are $kw$ of them. By \eqref{eq:column-digits} the value of $c$ at such a
+column is a combination of the digits $Q_u,D_u$ at the residue $\varsigma$. Impose on $c$ that the values at the
+other $n-kw$ columns vanish, that $D_j=0$ for $1\le j<k$ and all $\varsigma\in\mathcal M$ ($(k-1)w$ conditions),
+and that $Q_k=0$ for the first $e$ residues. By Lemma~\ref{lem:digit-vanishing} all digits at the residues of
+$\mathcal M$ vanish. So the values at the $kw$ columns vanish as well. There are at most
+$(n-kw)+(k-1)w+e=n-(w-e)$ conditions, and the left kernel has dimension at least $w-e$.
+\end{proof}
+
+The lemma is the digit-only core of the argument. The proof uses no determinant and no lower bound for $N$.
+
 
 \subsection{Decompositions modulo $p$}
 The further families organize the row combinations as follows.
@@ -1113,59 +1137,88 @@ words. The statements are those of the formalization.
 factor, a free polynomial of bounded degree $d_P$ in the Chebyshev variable, and a polynomial $\Xi(X^p)$ with
 exponents in an interval of $K$ consecutive values. The conditions require $\Xi$ to annihilate the
 functionals seen by the columns. If $\#\text{seen}$ of these functionals are independent, the bound is
-$(d_P+1)(K-\#\text{seen})$. For our parameters this gives $53N-2p-1$ on $(26N,\frac{53}2N)$, where $2p+2\le53N$.
+$(d_P+1)(K-\#\text{seen})$. For our parameters this gives $66N-2p-1$ on $(\frac{97}3N,\frac{954}{29}N]$.
 \item \emph{A truncated form of Theorem~\ref{thm:U6}.} Without the hypothesis $n\le4p+2g+1$, the bound
 $\varsigma_1-\varsigma_0-e_+-(n-4p-2g-1)_+$ holds whenever $L\le6p$ and $b+q\le p+\varsigma_0$. For our parameters it gives
-$5p-59N+1$ on $(\frac{59}5N,12N]$.
+$5p-74N$ on $(\frac{74}5N,15N]$ and $p-14N$ on $(15N,16N]$, up to a bounded term.
 \item \emph{A tail of the antisymmetric family.} With the four centres $g+kp$ ($0\le k\le3$) and
 $k_T'=n-1-g-3p$, the bound is $p-1-(2g+q+h)$, under $4p\le L$, $b\le p$, $k_T'\le g$, $k_T'\le(p-1)/2$,
-$3p+1+g\le n$ and $4p+b\le H$. For our parameters this is $p-16N-1$ on $(16N,\frac{118}7N]$.
+$3p+1+g\le n$ and $4p+b\le H$. For our parameters this is $p-20N-1$ on $(\frac{222}{11}N,\frac{146}7N]$.
 \item \emph{Two families of decompositions and their sum.} The first fixes a digit $s\le H/p$ and a range of
 blocks of rows, with polynomials $\pi_d$ divisible by a power of $X-1$. The second has polynomials
 $(X^p-1)\pi$ with $\pi$ supported in an interval of degrees. Under a separation condition their kernels are
 independent when both apply, at the same digit $s$ or at the digits $s$ and $s-1$. Then the sum of the two
-bounds is a lower bound. This is the one place where two bounds are added.
-\item \emph{Families defined by rational equations.} In five further families the coefficients of the
-decomposition satisfy a fixed system of linear equations with rational coefficients. A solution modulo $p$
-exists for every $p$ prime to a fixed integer, and the bound is the dimension of the solution space minus
-the number of conditions. In two of these families the entries depend only on the residue of the column
-modulo $p$, so the difference of order $q$ imposes $(p-q)_+$ conditions. When $h\ge p$ one writes
-$(X-1)^h=(X^p-1)(X-1)^{h-p}$, which imposes $h-p$ more conditions. These families give the bounds on
-$(\frac{58}{17}N,\frac{59}{17}N]$, $(\frac{29}8N,\frac{11}3N]$, $(\frac{16}7N,\frac52N]$ and on six intervals in
-$(\frac{341}{25}N,\frac{809}{50}N]$.
-\item \emph{Block decompositions.} Write a row index as $kp+d$ and put $y=X^p$. For $h\ge p$ the identity
-\[
- (X-1)^hWT_{kp+d}=\bigl((X-1)T_k\bigr)(y)\,Q_1+\bigl((X-1)(X^2-1)U_{k-1}\bigr)(y)\,Q_2
-\]
-and its analogue for $U_{kp+d-1}$ hold in $\F_p[X]$, with $Q_1=(X-1)^{h-p}WT_d$ and $Q_2=(X-1)^{h-p}U_{d-1}$.
-At a residue with a single nonzero digit the values of all rows of a block are proportional, and the bound
-counts the blocks. For $h<p$ a difference of order $p-h$ of the coefficients plays the same role. For our
-parameters these give bounds on $(\frac{59}{21}N,3N]$, where $h\ge p$, and on $(3N,\frac{16}5N]$.
+bounds is a lower bound. This is the one place where two bounds are added. For our parameters it gives
+bounds on six intervals between $8.4N$ and $10.9N$.
+\item \emph{Residue intervals and rational cells.} For $p\le q$ one chooses the row combinations residue by
+residue. On an interval $[\alpha,\beta)$ of residues of constant combinatorial type the bound is
+$\beta-\alpha+p-q$ (Theorem~L$^*$). For $p\ge h$ and for $p\le h$ one uses cells defined over $\Q$. A cell
+fixes a window of the digits, a range of blocks of rows and an integer profile, such that the value
+of the combination at the columns of the cell has a fixed difference over $\Q$. For a prime $p$ prime to the modulus of the cell
+the bound is $(\mathrm{hi}-\mathrm{lo})-(p-q)$ in the first case (Theorem~C) and
+$(\mathrm{hi}-\mathrm{lo})-(h-p)-(p-q)$ in the second (Theorem~C$'$), where $[\mathrm{lo},\mathrm{hi})$ is an interval of positions
+compatible with the cell. For our parameters each of these theorems supplies selected subintervals, with gaps,
+of an interval. Theorem~C$'$ gives bounds on $(\frac{20}7N,\frac{66}{23}N]$ and $(\frac{80}{27}N,3N]$.
+Theorem~L$^*$ gives bounds on $(\frac{74}{21}N,\frac{18}5N]$, $(\frac{37}{10}N,\frac{72}{19}N]$ and
+$(\frac{74}{19}N,4N]$. Theorem~C gives bounds on $(4N,\frac{37}9N]$, $(\frac{72}{17}N,\frac{74}{17}N]$,
+$(\frac92N,\frac{87}{19}N]$ and $(\frac{97}{21}N,\frac{37}8N]$. On $(\frac{87}{19}N,\frac{97}{21}N]$ the bound
+combines two cells of Theorem~C and has the value $\mathrm{hi}_A+(\mathrm{hi}_B-\mathrm{lo}_B)-(p-4N)$, with
+$\mathrm{lo}_B=97N-21p$, $\mathrm{hi}_A=\min(97N-21p,10N-2p)$ and $\mathrm{hi}_B=\min(10N-2p,70N-1-15p)$.
+Intervals shifted by tiny rational amounts are listed in the formalization.
+\item \emph{Affine cells, Theorem~HY$^+$ and Theorem~MT.} On $(\frac{83}{31}N,\frac{101}{37}N]$ and
+$(\frac{36}{13}N,\frac{14}5N]$ the same
+counting applies with cells on which the values of the combinations at consecutive digits differ by a fixed
+slope, for primes $p>44$ prime to a fixed integer. Between these two intervals the bounds come from explicit
+subspaces. Theorem~HY$^+$ uses the residue sums for the digits $s=11,10,9$ on the following intervals. For $s=11$
+it gives $(\frac{70}9N,8N]$. For $s=10$ it gives $(\frac{17}2N,\frac{97}{11}N]$, and a variant with a short fold gives
+$(\frac{97}{11}N,\frac{4409091}{500000}N]$. For $s=9$ it gives $(\frac{66}7N,\frac{202}{21}N]$, and a variant with a short
+fold gives $(\frac{97}{10}N,\frac{8300000001}{850000000}N]$. A mixed family of antisymmetric and symmetric pairs
+of rows (Theorem~MT) gives $\nu_N(p)\ge\frac{29}2p-77N-2$ on $(\frac{43}8N,\frac{97}{18}N]$.
+\item \emph{Theorem Z.} Two further families, called the laws $\mathrm{L}$ and $\mathrm{H}$ in the formalization,
+give bounds on $(\frac{186}{11}N,\frac{160}9N]$ and on $(\frac{132}7N,\frac{222}{11}N]$. Write $T=H-5p$ and $h_p=(p-1)/2$.
+The law $\mathrm L$ gives
+\begin{multline*}
+ 2\nu_N(p)\ge11p-2(n+b+q+g)-1\\
+ {}+2\min(0,L-5p)+2\min(0,T-b)+2\min(0,h+h_p-T).
+\end{multline*}
+In the regime $5p\le L$ and $b\le T\le h+h_p$ the three minima vanish. For our parameters the three selected lines
+are $\frac{11}2p-93N$, $\frac p2-7N$ and $80N-\frac92p$, up to a loss of at most two. The two laws count the conditions
+that the Taylor coefficients of the combinations impose on a space of rows.
 \end{enumerate}
+The interval $(\frac{96666667}{10000000}N,\frac{290999999}{30000000}N]$ belongs to an explicit subspace of
+Appendix~\ref{app:windows}, with $\kappa(\theta)=\frac{599999999}{100000000}-\frac\theta2$. It is not assigned to
+Theorem~HY$^+$. The interval $(\frac{202}{21}N,\frac{29}3N]$ before it belongs to (F4).
 
-For the intervals of primes below $12N$ that these families do not cover, we use the counting inequality
-in a special form. The space of row combinations is the tensor product of a space of polynomials with a
-fixed rational subspace $V\subset\Q^s$, and the conditions are Taylor coefficients composed with fixed linear
-maps. The subspaces $V$ are explicit but have no closed form. Appendix~\ref{app:windows} states this form
+In the cases that need a prime to avoid finitely many bad values, only $p$ larger than fixed integers occur,
+and the corresponding $N$ are large.
+
+For the primes below $12N$ that none of these closed forms covers, we use the counting inequality in a special
+form. The space of row combinations is the tensor product of a space of polynomials with a fixed rational
+subspace $V\subset\Q^s$, and the conditions are Taylor coefficients composed with fixed linear maps. The
+subspaces $V$ are explicit but have no closed form. Appendix~\ref{app:windows} states this form
 (Theorem~\ref{thm:profile}) and describes how its hypotheses are verified.
 
 \subsection{The corank profile for our parameters}\label{ssec:kappa}
 The bounds combine into the following statement.
 
 \begin{theorem}\label{thm:profile-D}
-For the parameters $(58,9,3,5,3)$ there are $102$ intervals $(a_i,b_i]$, with
-$\frac{16}7=a_1<b_1\le a_2<\dots<b_{102}=\frac{53}2$, and a function $\kappa$, linear on each interval and $0$
-outside their union, with the following property. For all large $N$ and every prime $p$ with
+For the parameters $(72,11,4,6,4)$ there are $148$ intervals $(a_i,b_i]$ with rational endpoints,
+$\frac{185000001}{74000000}=a_1<b_1\le a_2<\dots<b_{148}=\frac{954}{29}$, and a function $\kappa$, affine on each
+interval and $0$ outside their union, with the following property. For all large $N$ and every prime $p$ with
 $a_iN<p\le b_iN$ for some $i$,
 \[
  \nu_N(p)\ge N\kappa(p/N)-2 .
 \]
-On each interval the bound is given by one of the families of this section. The area of $\kappa$ is a
-rational number,
-\[
- \int_0^\infty\kappa(\theta)\,d\theta=\frac{36235515874601938601596598}{1642609663271115992578125}=\Chi\ldots\ \ge\ \ChiLean .
-\]
+On each interval the bound is given by one of the families of this section, or by the explicit subspaces of
+Appendix~\ref{app:windows}. The area of $\kappa$ is the rational number
+\begin{multline*}
+ \int_0^\infty\kappa(\theta)\,d\theta\\
+ =\frac{8933203314101219901240655133431309756867}{258903586359571936582800000000000000000}=\Chi\ldots .
+\end{multline*}
 \end{theorem}
+
+The first endpoint exceeds $\frac52$ by $\frac{1}{74\cdot10^6}$. Some other endpoints and intercepts are moved by amounts below $10^{-7}$,
+to absorb the integer rounding of the families. The intervals are listed in the formalization.
 
 The contributions by ranges of $\theta=p/N$ are as follows. The third column counts the intervals on which
 the bound is that of Theorem~\ref{thm:profile} with an explicit subspace.
@@ -1174,103 +1227,114 @@ the bound is that of Theorem~\ref{thm:profile} with an explicit subspace.
 \toprule
 range of $\theta$ & intervals & with explicit subspace & area \\
 \midrule
-$(16/7,\,3]$ & $11$ & $0$ & $0.06259$ \\
-$(3,\,6]$ & $46$ & $23$ & $0.25136$ \\
-$(6,\,12]$ & $27$ & $9$ & $0.71965$ \\
-$(12,\,53/2]$ & $18$ & $2$ & $21.02610$ \\
+$(5/2,\,3]$ & $29$ & $9$ & $0.03074$ \\
+$(3,\,6]$ & $67$ & $20$ & $0.36842$ \\
+$(6,\,12]$ & $31$ & $13$ & $1.06902$ \\
+$(12,\,954/29]$ & $21$ & $0$ & $33.03580$ \\
 \midrule
-total & $102$ & $34$ & $\Chi$ \\
+total & $148$ & $42$ & $\Chi$ \\
 \bottomrule
 \end{tabular}
 \end{center}
-Almost all of the area lies in $(12,\frac{53}2]$, where $\kappa$ is as follows.
+Almost all of the area lies in $(12,\frac{954}{29}]$. There the intervals with $\theta>\frac{74}5$ are as follows.
+Adjacent intervals with the same line are merged.
 \begin{center}
 \begin{tabular}{@{}lll@{}}
 \toprule
 interval of $\theta$ & $\kappa(\theta)$ & bound \\
 \midrule
-$(12,13]$ & $\theta/2-5$ & Theorem~\ref{thm:content}(c), $(p-1)/2-g$ \\
-$(13,\,146/11]$ & $73-11\theta/2$ & Theorem~\ref{thm:content}(c), second term \\
-$(341/25,\,69/5]$ & $11\theta/2-75$ & (F5) \\
-$(69/5,\,14]$ & $\theta/2-6$ & (F5) \\
-$(14,\,711/50]$ & $64-9\theta/2$ & (F5) \\
-$(30287/2000,\,78/5]$ & $7\theta/2-53$ & (F5) \\
-$(78/5,\,16]$ & $25-3\theta/2$ & (F5) \\
-$(16,\,809/50]$ & $73-9\theta/2$ & (F5) \\
-$(809/50,\,178/11]$ & $73-9\theta/2$ & Appendix~\ref{app:windows} \\
-$(178/11,\,1619/100]$ & $\theta-16$ & Appendix~\ref{app:windows} \\
-$(1619/100,\,118/7]$ & $\theta-16$ & (F3) \\
-$(118/7,\,69/4]$ & $9\theta/2-75$ & Theorem~\ref{thm:content}(d), $(9p-2C)/2$ \\
-$(69/4,\,35/2]$ & $\theta/2-6$ & Theorem~\ref{thm:content}(d), $(p-1)/2+h-b$ \\
-$(35/2,\,128/7]$ & $64-7\theta/2$ & Theorem~\ref{thm:content}(d), $(2(n+q+h)-7p)/2$ \\
-$(64/3,\,23]$ & $3\theta-64$ & Theorem~\ref{thm:content}(a), $3p-(n+q+h)$ \\
-$(23,\,24]$ & $5$ & Theorem~\ref{thm:content}(a) up to $\theta=70/3$, then (b) \\
-$(24,\,26]$ & $53-2\theta$ & Theorem~\ref{thm:content}(b), $n-g-2p$ \\
-$(26,\,53/2]$ & $53-2\theta$ & (F1) \\
+$(74/5,\,15]$ & $5\theta-74$ & (F2) \\
+$(15,\,16]$ & $\theta-14$ & (F2) \\
+$(16,\,97/6]$ & $\theta/2-6$ & Theorem~\ref{thm:content}(c), $(p-1)/2-g$ \\
+$(97/6,\,182/11]$ & $91-11\theta/2$ & Theorem~\ref{thm:content}(c), second term \\
+$(186/11,\,86/5]$ & $11\theta/2-93$ & (F7), law $\mathrm L$ \\
+$(86/5,\,87/5]$ & $\theta/2-7$ & (F7), law $\mathrm L$ \\
+$(87/5,\,160/9]$ & $80-9\theta/2$ & (F7), law $\mathrm L$ \\
+$(132/7,\,97/5]$ & $7\theta/2-66$ & (F7), law $\mathrm H$ with cap \\
+$(97/5,\,20]$ & $31-3\theta/2$ & (F7), law $\mathrm H$ \\
+$(20,\,222/11]$ & $91-9\theta/2$ & (F7), law $\mathrm H$ \\
+$(222/11,\,146/7]$ & $\theta-20$ & (F3) \\
+$(146/7,\,43/2]$ & $9\theta/2-93$ & Theorem~\ref{thm:content}(d), $k=4$ \\
+$(43/2,\,87/4]$ & $\theta/2-7$ & Theorem~\ref{thm:content}(d), $k=4$ \\
+$(87/4,\,160/7]$ & $80-7\theta/2$ & Theorem~\ref{thm:content}(d), $k=4$ \\
+$(186/7,\,27]$ & $7\theta/2-93$ & Theorem~\ref{thm:content}(d), $k=3$ \\
+$(27,\,28]$ & $5\theta/2-66$ & Theorem~\ref{thm:content}(d), $k=3$ \\
+$(28,\,86/3]$ & $3\theta-80$ & Theorem~\ref{thm:content}(a), $3p-(n+q+h)$ \\
+$(86/3,\,30]$ & $6$ & Theorem~\ref{thm:content}(a) up to $\theta=29$, then (b) \\
+$(30,\,97/3]$ & $66-2\theta$ & Theorem~\ref{thm:content}(b), $n-g-2p$ \\
+$(97/3,\,954/29]$ & $66-2\theta$ & (F1) \\
 \bottomrule
 \end{tabular}
 \end{center}
-The areas of the rows of this table add up to $21.02610\ldots$, and the $84$ intervals below $12$
-contribute $1.03361\ldots$, so the total is $\Chi\ldots$. The exact sum is computed in the formalization
-from the list of intervals. Figure~\ref{fig:corank} shows $\kappa$ on $(12,\frac{53}2]$.
+The areas of these rows add up to $33.03580\ldots$, and the $127$ intervals below $12$
+contribute $1.46818\ldots$. The exact sum is computed in the
+formalization from the list of intervals. Figure~\ref{fig:corank} shows $\kappa$ on $(\frac{74}5,\frac{954}{29}]$.
 
 \begin{figure}[ht]
 \centering
 \setlength{\unitlength}{1cm}
-\begin{picture}(12.4,4.6)(-0.8,-0.9)
+\begin{picture}(12.4,5.4)(-0.8,-0.9)
 \put(0,0){\line(1,0){11.8}}
-\put(0,0){\line(0,1){3.8}}
+\put(0,0){\line(0,1){4.9}}
 \put(0.000,0){\line(0,-1){0.12}}
-\put(0.000,-0.4){\makebox(0,0){$12$}}
-\put(1.600,0){\line(0,-1){0.12}}
-\put(1.600,-0.4){\makebox(0,0){$14$}}
-\put(3.200,0){\line(0,-1){0.12}}
-\put(3.200,-0.4){\makebox(0,0){$16$}}
+\put(0.000,-0.4){\makebox(0,0){$14$}}
+\put(1.200,0){\line(0,-1){0.12}}
+\put(1.200,-0.4){\makebox(0,0){$16$}}
+\put(2.400,0){\line(0,-1){0.12}}
+\put(2.400,-0.4){\makebox(0,0){$18$}}
+\put(3.600,0){\line(0,-1){0.12}}
+\put(3.600,-0.4){\makebox(0,0){$20$}}
 \put(4.800,0){\line(0,-1){0.12}}
-\put(4.800,-0.4){\makebox(0,0){$18$}}
-\put(6.400,0){\line(0,-1){0.12}}
-\put(6.400,-0.4){\makebox(0,0){$20$}}
-\put(8.000,0){\line(0,-1){0.12}}
-\put(8.000,-0.4){\makebox(0,0){$22$}}
+\put(4.800,-0.4){\makebox(0,0){$22$}}
+\put(6.000,0){\line(0,-1){0.12}}
+\put(6.000,-0.4){\makebox(0,0){$24$}}
+\put(7.200,0){\line(0,-1){0.12}}
+\put(7.200,-0.4){\makebox(0,0){$26$}}
+\put(8.400,0){\line(0,-1){0.12}}
+\put(8.400,-0.4){\makebox(0,0){$28$}}
 \put(9.600,0){\line(0,-1){0.12}}
-\put(9.600,-0.4){\makebox(0,0){$24$}}
-\put(11.200,0){\line(0,-1){0.12}}
-\put(11.200,-0.4){\makebox(0,0){$26$}}
+\put(9.600,-0.4){\makebox(0,0){$30$}}
+\put(10.800,0){\line(0,-1){0.12}}
+\put(10.800,-0.4){\makebox(0,0){$32$}}
 \put(0,0.000){\line(-1,0){0.12}}
 \put(-0.35,0.000){\makebox(0,0)[r]{$0$}}
-\put(0,0.700){\line(-1,0){0.12}}
-\put(-0.35,0.700){\makebox(0,0)[r]{$1$}}
-\put(0,1.400){\line(-1,0){0.12}}
-\put(-0.35,1.400){\makebox(0,0)[r]{$2$}}
-\put(0,2.100){\line(-1,0){0.12}}
-\put(-0.35,2.100){\makebox(0,0)[r]{$3$}}
-\put(0,2.800){\line(-1,0){0.12}}
-\put(-0.35,2.800){\makebox(0,0)[r]{$4$}}
-\put(0,3.500){\line(-1,0){0.12}}
-\put(-0.35,3.500){\makebox(0,0)[r]{$5$}}
-\put(11.700,-0.4){\makebox(0,0)[l]{$\theta$}}
-\put(0.15,3.85){\makebox(0,0)[l]{$\kappa(\theta)$}}
-\qbezier(0.000,0.700)(0.400,0.875)(0.800,1.050)
-\qbezier(0.800,1.050)(0.909,0.525)(1.018,0.000)
-\qbezier(1.018,0.000)(1.165,0.000)(1.312,0.000)
-\qbezier(1.312,0.014)(1.376,0.322)(1.440,0.630)
-\qbezier(1.440,0.630)(1.520,0.665)(1.600,0.700)
-\qbezier(1.600,0.700)(1.688,0.353)(1.776,0.007)
-\qbezier(1.776,0.000)(2.145,0.000)(2.515,0.000)
-\qbezier(2.515,0.002)(2.697,0.561)(2.880,1.120)
-\qbezier(2.880,1.120)(3.040,0.910)(3.200,0.700)
-\qbezier(3.200,0.700)(3.273,0.414)(3.345,0.127)
-\qbezier(3.345,0.127)(3.616,0.364)(3.886,0.600)
-\qbezier(3.886,0.600)(4.043,1.219)(4.200,1.837)
-\qbezier(4.200,1.837)(4.300,1.881)(4.400,1.925)
-\qbezier(4.400,1.925)(4.714,0.962)(5.029,0.000)
-\qbezier(5.029,0.000)(6.248,0.000)(7.467,0.000)
-\qbezier(7.467,0.000)(8.133,1.750)(8.800,3.500)
-\qbezier(8.800,3.500)(9.200,3.500)(9.600,3.500)
-\qbezier(9.600,3.500)(10.600,1.750)(11.600,0.000)
+\put(0,0.750){\line(-1,0){0.12}}
+\put(-0.35,0.750){\makebox(0,0)[r]{$1$}}
+\put(0,1.500){\line(-1,0){0.12}}
+\put(-0.35,1.500){\makebox(0,0)[r]{$2$}}
+\put(0,2.250){\line(-1,0){0.12}}
+\put(-0.35,2.250){\makebox(0,0)[r]{$3$}}
+\put(0,3.000){\line(-1,0){0.12}}
+\put(-0.35,3.000){\makebox(0,0)[r]{$4$}}
+\put(0,3.750){\line(-1,0){0.12}}
+\put(-0.35,3.750){\makebox(0,0)[r]{$5$}}
+\put(0,4.500){\line(-1,0){0.12}}
+\put(-0.35,4.500){\makebox(0,0)[r]{$6$}}
+\qbezier(0.480,0.000)(0.540,0.375)(0.600,0.750)
+\qbezier(0.600,0.750)(0.900,1.125)(1.200,1.500)
+\qbezier(1.200,1.500)(1.250,1.531)(1.300,1.562)
+\qbezier(1.300,1.562)(1.414,0.781)(1.527,0.000)
+\qbezier(1.745,0.000)(1.833,0.600)(1.920,1.200)
+\qbezier(1.920,1.200)(1.980,1.237)(2.040,1.275)
+\qbezier(2.040,1.275)(2.153,0.637)(2.267,0.000)
+\qbezier(2.914,0.000)(3.077,0.712)(3.240,1.425)
+\qbezier(3.240,1.425)(3.420,1.087)(3.600,0.750)
+\qbezier(3.600,0.750)(3.655,0.443)(3.709,0.136)
+\qbezier(3.709,0.136)(3.912,0.390)(4.114,0.643)
+\qbezier(4.114,0.643)(4.307,1.728)(4.500,2.812)
+\qbezier(4.500,2.812)(4.575,2.859)(4.650,2.906)
+\qbezier(4.650,2.906)(4.982,1.453)(5.314,0.000)
+\qbezier(7.543,0.000)(7.671,0.562)(7.800,1.125)
+\qbezier(7.800,1.125)(8.100,2.062)(8.400,3.000)
+\qbezier(8.400,3.000)(8.600,3.750)(8.800,4.500)
+\qbezier(8.800,4.500)(8.900,4.500)(9.000,4.500)
+\qbezier(9.000,4.500)(9.300,4.500)(9.600,4.500)
+\qbezier(9.600,4.500)(10.300,2.750)(11.000,1.000)
+\qbezier(11.000,1.000)(11.169,0.578)(11.338,0.155)
+\put(11.95,-0.4){\makebox(0,0)[l]{$\theta$}}
 \end{picture}
-\caption{The corank profile $\kappa(\theta)$ on $(12,\frac{53}2]$, where $\nu_N(p)\ge N\kappa(p/N)-2$ for
-$p=\theta N$. The bound on the pole count is $f(\theta)=116$ on this whole range, so $\kappa$ is the gain over
+\caption{The corank profile $\kappa(\theta)$ on $(\frac{74}5,\frac{954}{29}]$, where $\nu_N(p)\ge N\kappa(p/N)-2$ for
+$p=\theta N$. The bound on the pole count is $f(\theta)=144$ on this whole range, so $\kappa$ is the gain over
 OpenAI's denominators.}\label{fig:corank}
 \end{figure}
 
@@ -1278,22 +1342,22 @@ On each interval we use a single bound. The families come from different constru
 shown that their kernels are independent, except for the pair (F4). So the bounds are not added at a prime
 where several apply.
 
-For Theorem~\ref{thm:content} one checks the hypotheses on the intervals above. The hypotheses $e\ge0$ and
-$n\le4p+2g+1$ both read $\theta\ge12$, and $L\le6p$ reads $\theta\ge35/3$. So Theorems~\ref{thm:U6}
-and~\ref{thm:S} apply for $\theta\ge12$. For $12\le\theta\le13$ one has $\varsigma_0=H+q-6p=81N-6p$, so the
-first branch of Theorem~\ref{thm:U6} applies. For $\theta\ge13$ one has $\varsigma_0=3N$, and the second
-branch applies, which is positive until $\theta=146/11$. In Theorem~\ref{thm:S}, $m_1=p$ for $\theta\le35/2$ and
-$m_1=70N-3p$ above, and $m_0=81N-4p$ for $\theta\le69/4$ and $12N$ above. The value $m_1-m_0-e$ is
-$9\theta/2-75$, $\theta/2-6$ and $64-7\theta/2$ on the three intervals $(50/3,69/4]$, $(69/4,35/2]$ and
-$(35/2,128/7]$, and it is nonpositive outside $(50/3,128/7)$. Theorem~\ref{thm:T} applies for $\theta>10$ and
-$\theta\ge39/2$, with $k_T=\min(5N,52N-1-2p,75N-3p)$. It gives $3p-(n+q+h)=3\theta-64$ up to $\theta=23$ and
-the cap $g=5N$ up to $\theta=70/3$. From $\theta=70/3$ to $\theta=26$ the hypotheses of Theorem~\ref{thm:U}
-hold. They read $3p\ge L$, $3p\le H$, $2p\le n+q$ and $2h\le p+1$. The bound is $\min(n,2p+2g+1)-g-2p-1$,
-which is $5N$ for $\theta\le24$ and $53N-2p-1$ above. In each case the value of the theorem is the value in
-the table minus at most one unit, from the integer rounding. The same kind of check, with linear
-inequalities in $N$, $p$ and the parameters, gives the bounds of Section~\ref{ssec:families} on their
-intervals, and Appendix~\ref{app:windows} gives the others. This proves Theorem~\ref{thm:profile-D}. The loss
-of $2$ in its statement covers the integer rounding of all the bounds.
+For Theorem~\ref{thm:content} one checks the hypotheses on the intervals above. The hypothesis $e\ge0$
+reads $\theta\ge16$, the hypothesis $n\le4p+2g+1$ reads $\theta\ge15$, and $L\le6p$ reads $\theta\ge29/2$. For
+$16\le\theta\le97/6$ one has $\varsigma_0=H+q-6p=101N-6p$, so the first branch of Theorem~\ref{thm:U6}
+applies. For larger $\theta$ one has $\varsigma_0=4N$ and the second branch applies, which is positive until
+$\theta=182/11$. In Theorem~\ref{thm:S} with $k=4$, $m_1=p$ for $\theta\le43/2$ and $m_1=L-3p=87N-3p$ above, and
+$m_0=\max(15N,101N-4p)$, so that $m_0=101N-4p$ for $\theta\le43/2$. The three values $m_1-m_0-e$ are
+$9\theta/2-93$, $\theta/2-7$ and $80-7\theta/2$. With $k=3$ one has $m_0=101N-3p$ and
+$m_1=\min(p,27N+1)$, and the value $m_1-m_0-e$ is $7\theta/2-93$ on $(\frac{186}7,27]$ and $5\theta/2-66$ on
+$(27,28]$, up to the constants $\mp\frac12$. Theorem~\ref{thm:T} gives $3p-(n+q+h)=3\theta-80$ up to the cap
+$g=6N$, which it reaches at $\theta=\frac{86}3$. From $\theta=29$ the hypotheses of Theorem~\ref{thm:U}
+hold. They read $3p\ge L$, $3p\le H$, $2p\le n+q$ and $2h\le p+1$. The bound is
+$\min(n,2p+2g+1)-g-2p-1$, which is $6N$ for $\theta\le30$ and $66N-2p-1$ above. In each case the value of the
+theorem is the value in the table minus at most one unit, from the integer rounding. The same kind of check,
+with linear inequalities in $N$, $p$ and the parameters, gives the bounds of Section~\ref{ssec:families} on
+their intervals, and Appendix~\ref{app:windows} gives the others. This proves Theorem~\ref{thm:profile-D}.
+The loss of $2$ in its statement covers the integer rounding of all the bounds.
 \section{The neighbourhood of $G$}\label{sec:real}
 
 This section and the next two prove that $\Delta_N$ is small on a whole neighbourhood of $G$. The idea is to
@@ -1333,8 +1397,8 @@ We use the following abbreviations for general parameters:
  \alpha_A=\frac An,\quad \beta_h=\frac{2h_0}{n_0},\quad \gamma_H=\frac Hn,\quad \gamma_d=\frac{d_0}{n_0},\\
  a_0=1-\frac{b_0+q_0+g_0}{n_0},\quad a_1=3-\frac{b_0+q_0+2g_0}{n_0}.
 \end{gather*}
-For our parameters these are $\alpha_A=11/29$, $\beta_h=3/29$, $\gamma_H=39/29$, $\gamma_d=53/58$,
-$a_0=41/58$ and $a_1=76/29$.
+For our parameters these are $\alpha_A=3/8$, $\beta_h=1/9$, $\gamma_H=97/72$, $\gamma_d=11/12$,
+$a_0=17/24$ and $a_1=21/8$.
 
 \subsection{A quadrature formula for the coefficient of $G$}\label{ssec:quadrature}
 Let $\varepsilon=x-G$. Then $\Delta_N(x)=\det(\cA_N+\varepsilon\cL_N)$. The question is how large the columns
@@ -1351,25 +1415,34 @@ $\ell_a$. This is a quadrature formula of Gauss type. It makes the columns of $\
 values of the row functions that define $\cA_N$. So the perturbed determinant can be treated by the energy
 method. The price is the size of the weights.
 
-We take $J=d_0N=53N$ nodes. Put $g_*=401/2500$, $a_*=2g_*/(1+g_*^2)=2005000/6410801$ and $J'=\lceil J/2\rceil$.
-The nodes are the points
+We take $J=d_0N=66N$ nodes, and we use the nodes of Davis \cite{Davis2026}. Davis constructs a polynomial
+$P$ of degree $130$ with rational coefficients such that every value in $(-1,1)$ is taken by $P$ at
+$130$ distinct points of $(-1,1)$. Put $K=\lceil J/130\rceil$. Then $F_N=T_K\circ P$ has $130K$ simple
+roots in $(-1,1)$. We take $J$ of them as the nodes $t_1,\ldots,t_J$, and delete the other $s=130K-J<130$.
+The nodes lie in $E=P^{-1}([-1,1])$. In the coordinate $x$ with $t=2x/(1+x^2)$ they lie in
 \[
- t_{j,\pm}=\pm\sqrt{a_*^2+(1-a_*^2)(1+s_j)/2},\qquad T_{J'}(s_j)=0,
+ E_x=[-\tfrac{2409}{2500},-\tfrac{19501}{100000}]\cup[\tfrac{98749}{1000000},1].
 \]
-that is, the roots of $T_{J'}\bigl((2t^2-(1+a_*^2))/(1-a_*^2)\bigr)$. We keep all $J'$ positive roots and the
-first $J-J'$ negative ones, so for odd $J$ exactly one root is dropped. The nodes lie in
-$S=(-1,-a_*)\cup(a_*,1)$, and in the coordinate $x$ with $t=2x/(1+x^2)$ every node has $|x|>g_*$. The nodes
-avoid a neighbourhood of $x=0$, where the fields of the energy method are largest, and they are Chebyshev
-nodes for $S$. Dropping a root changes the nodal polynomial by a linear factor, so it changes the
-derivative bound and the size of the Lagrange polynomials only by factors polynomial in $N$. So an odd
-number of nodes does not change the exponent. This is needed, since $J=53N$ is odd for odd $N$.
+So the nodes avoid a neighbourhood of $x=0$, where the fields of the energy method are largest. The two
+gaps have different widths. The nodes are not Chebyshev nodes for a union of two intervals. They are the
+inverse images under $P$ of the Chebyshev nodes of $[-1,1]$, and this is what makes the Lagrange
+polynomials small.
 
-Let $g_S$ be the Green function of $\C\setminus\bar S$ with pole at infinity. In closed form
+Let $g_E$ be the Green function of $\C\setminus E$ with pole at infinity. Since $E=P^{-1}([-1,1])$, it is
 \[
- g_S(z)=\tfrac12\operatorname{arccosh}\Bigl(\frac{|z^2-1|+|z^2-a_*^2|}{1-a_*^2}\Bigr).
+ g_E(z)=\tfrac1{130}\,g_{[-1,1]}(P(z)),\qquad
+ g_{[-1,1]}(w)=\operatorname{arccosh}\bigl(\tfrac12(|w-1|+|w+1|)\bigr).
 \]
-The Lagrange polynomials satisfy $|\ell_a(z)|\le e^{53Ng_S(z)+o(N)}$ at distance at least $c/N$ from the
-nodes, by the derivative identity for Chebyshev polynomials at their roots. The weight of column $k$ is a
+This formula needs no choice of branch. Let $D_N$ be the monic polynomial whose roots are the deleted roots.
+The Lagrange polynomial of a node $t_a$ is
+\[
+ \ell_a(z)=\frac{F_N(z)\,D_N(t_a)}{F_N'(t_a)\,(z-t_a)\,D_N(z)}.
+\]
+Here $|F_N'(t_a)|$ is bounded below independently of $N$, and $|T_K(w)|\le e^{Kg_{[-1,1]}(w)}$. Since $130K=66N+s$, this gives $|\ell_a(z)|\le e^{66Ng_E(z)+O(\log N)}$ for $z$ in
+a fixed disc at distance at least $N^{-2}$ from $t_a$ and from the deleted roots. Fewer than $130$ roots
+are deleted, so the deletion costs only a factor polynomial in $N$. The contours below can be moved by
+$O(N^{-2})$ to keep this distance, and $g_E$ is uniformly H\"older continuous. So the move changes the
+bound by a factor $e^{O(1)}$. The weight of column $k$ is a
 coefficient functional of $\ell_a$ multiplied by the column function. After removal of the common factor of
 the rows it equals
 \[
@@ -1398,17 +1471,16 @@ The formal proof replaces the integral by the finite Gauss--Chebyshev identity
 $\frac1M\sum_{j<M}\cos^{2l}\frac{(2j+1)\pi}{2M}=c_l$ for $l<M$, and Cauchy's estimate by the finite Cauchy formula
 at roots of unity. So no integration is needed. For $0\le y\le1$ and $z\in\C$ let
 \[
- \Phi_y(z)=(10-58y)\log|z|+6\log|1-z|+53g_S(z).
+ \Phi_y(z)=(12-72y)\log|z|+8\log|1-z|+66g_E(z).
 \]
-Here $10=(A-b-q)/N$ and $6=(q+h)/N$. With $y=k/n$, Lemma~\ref{lem:keyhole} gives
+Here $12=(A-b-q)/N$ and $8=(q+h)/N$. With $y=k/n$, Lemma~\ref{lem:keyhole} gives
 \begin{equation}\label{eq:wk}
  |\beta'_k|\le e^{(w(y)+o(1))N},\qquad w(y)=\min_r\max_{z\in\Gamma_r}\Phi_y(z),
 \end{equation}
 where $\Gamma_r$ is the circle $|z|=r$ together with the segments $r\le|z|\le1$ of the real axis. For $y$ near
-$1$ the factor $|z|^{10-58y}$ favours a large circle, and for small $y$ a small one. The circle $|z|=1.001$ alone
-gives $w(y)\le52.79$ for every $y$. The keyhole contour improves this only slightly at the worst column. Its
-use is elsewhere: it lowers $w(y)$ at the columns where the binomial factor of Lemma~\ref{lem:binomvand} is
-largest.
+$1$ the factor $|z|^{12-72y}$ favours a large circle, and for small $y$ a small one. The weight is largest at $y=1$, where it is about
+$65.3$. The keyhole contour matters elsewhere: it lowers $w(y)$ at the columns where the binomial factor of
+Lemma~\ref{lem:binomvand} is largest.
 
 \subsection{Column expansion and Andr\'eief's identity}\label{ssec:andreief}
 Write $\mathcal P(r,a)=A_r(t_a)$. Expanding $\det(\cA_N+\varepsilon\mathcal P\beta)$ multilinearly in the
@@ -1476,21 +1548,21 @@ where $\tilde h_2(y)$ is the binary entropy $h_2(y)=-y\log y-(1-y)\log(1-y)$ for
 $y<\frac12$. So the replaced column $k$ contributes at most $e^{(w(y)+n_0\tilde h_2(y)+o(1))N}$, with $y=k/n$.
 Put
 \[
- W_0\ge\sup_{0\le y\le1}\bigl(w(y)+58\tilde h_2(y)\bigr).
+ W_0\ge\sup_{0\le y\le1}\bigl(w(y)+72\tilde h_2(y)\bigr).
 \]
 Appendix~\ref{app:field} proves $W_0=\WZero$.
 
-The two factors peak at different columns. The weight $w(y)$ increases up to $y\approx0.84$, while
-$\tilde h_2(y)$ is largest on $[0,\frac12]$. So the maximum of $w+58\tilde h_2$ is about $87.96$, at
-$y\approx0.62$, well below the sum $52.79+40.20$ of the separate maxima (Figure~\ref{fig:columns}). This saving of
-about $5$ in $\rho$ is the reason for treating the columns one at a time.
+The two factors peak at different columns. The weight $w(y)$ increases with $y$, while
+$\tilde h_2(y)$ is largest on $[0,\frac12]$. So the maximum of $w+72\tilde h_2$ is about $108.75$, at
+$y\approx0.62$, well below the sum $65.32+49.91$ of the separate maxima (Figure~\ref{fig:columns}). This saving of
+about $6.5$ in $\rho$ is the reason for treating the columns one at a time.
 
 \begin{figure}[ht]
 \centering
 \setlength{\unitlength}{1cm}
-\begin{picture}(12.6,5.6)(-1.0,-0.8)
+\begin{picture}(12.6,6.3)(-1.0,-0.8)
 \put(0,0){\line(1,0){10.2}}
-\put(0,0){\line(0,1){4.9}}
+\put(0,0){\line(0,1){5.6}}
 \put(0.000,0){\line(0,-1){0.12}}
 \put(0.000,-0.4){\makebox(0,0){$0$}}
 \put(2.000,0){\line(0,-1){0.12}}
@@ -1505,181 +1577,185 @@ about $5$ in $\rho$ is the reason for treating the columns one at a time.
 \put(10.000,-0.4){\makebox(0,0){$1$}}
 \put(0,0.000){\line(-1,0){0.12}}
 \put(-0.25,0.000){\makebox(0,0)[r]{$0$}}
-\put(0,1.000){\line(-1,0){0.12}}
-\put(-0.25,1.000){\makebox(0,0)[r]{$20$}}
-\put(0,2.000){\line(-1,0){0.12}}
-\put(-0.25,2.000){\makebox(0,0)[r]{$40$}}
-\put(0,3.000){\line(-1,0){0.12}}
-\put(-0.25,3.000){\makebox(0,0)[r]{$60$}}
-\put(0,4.000){\line(-1,0){0.12}}
-\put(-0.25,4.000){\makebox(0,0)[r]{$80$}}
+\put(0,0.900){\line(-1,0){0.12}}
+\put(-0.25,0.900){\makebox(0,0)[r]{$20$}}
+\put(0,1.800){\line(-1,0){0.12}}
+\put(-0.25,1.800){\makebox(0,0)[r]{$40$}}
+\put(0,2.700){\line(-1,0){0.12}}
+\put(-0.25,2.700){\makebox(0,0)[r]{$60$}}
+\put(0,3.600){\line(-1,0){0.12}}
+\put(-0.25,3.600){\makebox(0,0)[r]{$80$}}
+\put(0,4.500){\line(-1,0){0.12}}
+\put(-0.25,4.500){\makebox(0,0)[r]{$100$}}
+\put(0,5.400){\line(-1,0){0.12}}
+\put(-0.25,5.400){\makebox(0,0)[r]{$120$}}
 \put(10.15,-0.4){\makebox(0,0)[l]{$y$}}
-\qbezier(0.000,0.586)(0.100,0.621)(0.200,0.656)
-\qbezier(0.200,0.656)(0.300,0.691)(0.400,0.725)
-\qbezier(0.400,0.725)(0.500,0.760)(0.600,0.795)
-\qbezier(0.600,0.795)(0.700,0.830)(0.800,0.865)
-\qbezier(0.800,0.865)(0.900,0.900)(1.000,0.935)
-\qbezier(1.000,0.935)(1.100,0.970)(1.200,1.005)
-\qbezier(1.200,1.005)(1.300,1.040)(1.400,1.075)
-\qbezier(1.400,1.075)(1.500,1.110)(1.600,1.144)
-\qbezier(1.600,1.144)(1.700,1.179)(1.800,1.214)
-\qbezier(1.800,1.214)(1.900,1.249)(2.000,1.284)
-\qbezier(2.000,1.284)(2.100,1.319)(2.200,1.354)
-\qbezier(2.200,1.354)(2.300,1.389)(2.400,1.424)
-\qbezier(2.400,1.424)(2.500,1.459)(2.600,1.494)
-\qbezier(2.600,1.494)(2.700,1.529)(2.800,1.563)
-\qbezier(2.800,1.563)(2.900,1.598)(3.000,1.633)
-\qbezier(3.000,1.633)(3.100,1.668)(3.200,1.703)
-\qbezier(3.200,1.703)(3.300,1.738)(3.400,1.773)
-\qbezier(3.400,1.773)(3.500,1.808)(3.600,1.843)
-\qbezier(3.600,1.843)(3.700,1.877)(3.800,1.911)
-\qbezier(3.800,1.911)(3.900,1.944)(4.000,1.976)
-\qbezier(4.000,1.976)(4.100,2.006)(4.200,2.037)
-\qbezier(4.200,2.037)(4.300,2.065)(4.400,2.094)
-\qbezier(4.400,2.094)(4.500,2.121)(4.600,2.148)
-\qbezier(4.600,2.148)(4.700,2.174)(4.800,2.199)
-\qbezier(4.800,2.199)(4.900,2.223)(5.000,2.247)
-\qbezier(5.000,2.247)(5.100,2.269)(5.200,2.291)
-\qbezier(5.200,2.291)(5.300,2.312)(5.400,2.333)
-\qbezier(5.400,2.333)(5.500,2.353)(5.600,2.372)
-\qbezier(5.600,2.372)(5.700,2.390)(5.800,2.408)
-\qbezier(5.800,2.408)(5.900,2.425)(6.000,2.442)
-\qbezier(6.000,2.442)(6.100,2.457)(6.200,2.472)
-\qbezier(6.200,2.472)(6.300,2.486)(6.400,2.501)
-\qbezier(6.400,2.501)(6.500,2.513)(6.600,2.526)
-\qbezier(6.600,2.526)(6.700,2.537)(6.800,2.549)
-\qbezier(6.800,2.549)(6.900,2.559)(7.000,2.569)
-\qbezier(7.000,2.569)(7.100,2.578)(7.200,2.587)
-\qbezier(7.200,2.587)(7.300,2.594)(7.400,2.602)
-\qbezier(7.400,2.602)(7.500,2.608)(7.600,2.614)
-\qbezier(7.600,2.614)(7.700,2.619)(7.800,2.624)
-\qbezier(7.800,2.624)(7.900,2.628)(8.000,2.631)
-\qbezier(8.000,2.631)(8.100,2.633)(8.200,2.636)
-\qbezier(8.200,2.636)(8.300,2.636)(8.400,2.637)
-\qbezier(8.400,2.637)(8.500,2.637)(8.600,2.637)
-\qbezier(8.600,2.637)(8.700,2.637)(8.800,2.637)
-\qbezier(8.800,2.637)(8.900,2.637)(9.000,2.637)
-\qbezier(9.000,2.637)(9.100,2.637)(9.200,2.637)
-\qbezier(9.200,2.637)(9.300,2.637)(9.400,2.637)
-\qbezier(9.400,2.637)(9.500,2.637)(9.600,2.637)
-\qbezier(9.600,2.637)(9.700,2.637)(9.800,2.637)
-\qbezier(9.800,2.637)(9.900,2.637)(10.000,2.637)
-\qbezier(0.000,2.010)(0.100,2.010)(0.200,2.010)
-\qbezier(0.200,2.010)(0.300,2.010)(0.400,2.010)
-\qbezier(0.400,2.010)(0.500,2.010)(0.600,2.010)
-\qbezier(0.600,2.010)(0.700,2.010)(0.800,2.010)
-\qbezier(0.800,2.010)(0.900,2.010)(1.000,2.010)
-\qbezier(1.000,2.010)(1.100,2.010)(1.200,2.010)
-\qbezier(1.200,2.010)(1.300,2.010)(1.400,2.010)
-\qbezier(1.400,2.010)(1.500,2.010)(1.600,2.010)
-\qbezier(1.600,2.010)(1.700,2.010)(1.800,2.010)
-\qbezier(1.800,2.010)(1.900,2.010)(2.000,2.010)
-\qbezier(2.000,2.010)(2.100,2.010)(2.200,2.010)
-\qbezier(2.200,2.010)(2.300,2.010)(2.400,2.010)
-\qbezier(2.400,2.010)(2.500,2.010)(2.600,2.010)
-\qbezier(2.600,2.010)(2.700,2.010)(2.800,2.010)
-\qbezier(2.800,2.010)(2.900,2.010)(3.000,2.010)
-\qbezier(3.000,2.010)(3.100,2.010)(3.200,2.010)
-\qbezier(3.200,2.010)(3.300,2.010)(3.400,2.010)
-\qbezier(3.400,2.010)(3.500,2.010)(3.600,2.010)
-\qbezier(3.600,2.010)(3.700,2.010)(3.800,2.010)
-\qbezier(3.800,2.010)(3.900,2.010)(4.000,2.010)
-\qbezier(4.000,2.010)(4.100,2.010)(4.200,2.010)
-\qbezier(4.200,2.010)(4.300,2.010)(4.400,2.010)
-\qbezier(4.400,2.010)(4.500,2.010)(4.600,2.010)
-\qbezier(4.600,2.010)(4.700,2.010)(4.800,2.010)
-\qbezier(4.800,2.010)(4.900,2.010)(5.000,2.010)
-\qbezier(5.000,2.010)(5.100,2.009)(5.200,2.008)
-\qbezier(5.200,2.008)(5.300,2.004)(5.400,2.001)
-\qbezier(5.400,2.001)(5.500,1.995)(5.600,1.989)
-\qbezier(5.600,1.989)(5.700,1.981)(5.800,1.973)
-\qbezier(5.800,1.973)(5.900,1.962)(6.000,1.952)
-\qbezier(6.000,1.952)(6.100,1.939)(6.200,1.926)
-\qbezier(6.200,1.926)(6.300,1.910)(6.400,1.895)
-\qbezier(6.400,1.895)(6.500,1.877)(6.600,1.859)
-\qbezier(6.600,1.859)(6.700,1.838)(6.800,1.818)
-\qbezier(6.800,1.818)(6.900,1.795)(7.000,1.772)
-\qbezier(7.000,1.772)(7.100,1.746)(7.200,1.720)
-\qbezier(7.200,1.720)(7.300,1.691)(7.400,1.662)
-\qbezier(7.400,1.662)(7.500,1.630)(7.600,1.598)
-\qbezier(7.600,1.598)(7.700,1.563)(7.800,1.528)
-\qbezier(7.800,1.528)(7.900,1.490)(8.000,1.451)
-\qbezier(8.000,1.451)(8.100,1.409)(8.200,1.367)
-\qbezier(8.200,1.367)(8.300,1.321)(8.400,1.275)
-\qbezier(8.400,1.275)(8.500,1.225)(8.600,1.174)
-\qbezier(8.600,1.174)(8.700,1.119)(8.800,1.064)
-\qbezier(8.800,1.064)(8.900,1.003)(9.000,0.943)
-\qbezier(9.000,0.943)(9.100,0.876)(9.200,0.808)
-\qbezier(9.200,0.808)(9.300,0.733)(9.400,0.658)
-\qbezier(9.400,0.658)(9.500,0.573)(9.600,0.487)
-\qbezier(9.600,0.487)(9.700,0.386)(9.800,0.284)
-\qbezier(9.800,0.284)(9.900,0.142)(10.000,0.000)
-\qbezier(0.000,2.596)(0.100,2.631)(0.200,2.666)
-\qbezier(0.200,2.666)(0.300,2.701)(0.400,2.736)
-\qbezier(0.400,2.736)(0.500,2.771)(0.600,2.805)
-\qbezier(0.600,2.805)(0.700,2.840)(0.800,2.875)
-\qbezier(0.800,2.875)(0.900,2.910)(1.000,2.945)
-\qbezier(1.000,2.945)(1.100,2.980)(1.200,3.015)
-\qbezier(1.200,3.015)(1.300,3.050)(1.400,3.085)
-\qbezier(1.400,3.085)(1.500,3.120)(1.600,3.155)
-\qbezier(1.600,3.155)(1.700,3.190)(1.800,3.224)
-\qbezier(1.800,3.224)(1.900,3.259)(2.000,3.294)
-\qbezier(2.000,3.294)(2.100,3.329)(2.200,3.364)
-\qbezier(2.200,3.364)(2.300,3.399)(2.400,3.434)
-\qbezier(2.400,3.434)(2.500,3.469)(2.600,3.504)
-\qbezier(2.600,3.504)(2.700,3.539)(2.800,3.574)
-\qbezier(2.800,3.574)(2.900,3.608)(3.000,3.643)
-\qbezier(3.000,3.643)(3.100,3.678)(3.200,3.713)
-\qbezier(3.200,3.713)(3.300,3.748)(3.400,3.783)
-\qbezier(3.400,3.783)(3.500,3.818)(3.600,3.853)
-\qbezier(3.600,3.853)(3.700,3.887)(3.800,3.921)
-\qbezier(3.800,3.921)(3.900,3.954)(4.000,3.986)
-\qbezier(4.000,3.986)(4.100,4.016)(4.200,4.047)
-\qbezier(4.200,4.047)(4.300,4.076)(4.400,4.104)
-\qbezier(4.400,4.104)(4.500,4.131)(4.600,4.158)
-\qbezier(4.600,4.158)(4.700,4.184)(4.800,4.209)
-\qbezier(4.800,4.209)(4.900,4.233)(5.000,4.257)
-\qbezier(5.000,4.257)(5.100,4.278)(5.200,4.299)
-\qbezier(5.200,4.299)(5.300,4.317)(5.400,4.334)
-\qbezier(5.400,4.334)(5.500,4.348)(5.600,4.361)
-\qbezier(5.600,4.361)(5.700,4.371)(5.800,4.381)
-\qbezier(5.800,4.381)(5.900,4.387)(6.000,4.393)
-\qbezier(6.000,4.393)(6.100,4.396)(6.200,4.398)
-\qbezier(6.200,4.398)(6.300,4.397)(6.400,4.395)
-\qbezier(6.400,4.395)(6.500,4.390)(6.600,4.385)
-\qbezier(6.600,4.385)(6.700,4.376)(6.800,4.367)
-\qbezier(6.800,4.367)(6.900,4.354)(7.000,4.341)
-\qbezier(7.000,4.341)(7.100,4.323)(7.200,4.306)
-\qbezier(7.200,4.306)(7.300,4.285)(7.400,4.264)
-\qbezier(7.400,4.264)(7.500,4.238)(7.600,4.212)
-\qbezier(7.600,4.212)(7.700,4.182)(7.800,4.152)
-\qbezier(7.800,4.152)(7.900,4.117)(8.000,4.082)
-\qbezier(8.000,4.082)(8.100,4.042)(8.200,4.003)
-\qbezier(8.200,4.003)(8.300,3.957)(8.400,3.912)
-\qbezier(8.400,3.912)(8.500,3.862)(8.600,3.812)
-\qbezier(8.600,3.812)(8.700,3.756)(8.800,3.701)
-\qbezier(8.800,3.701)(8.900,3.641)(9.000,3.580)
-\qbezier(9.000,3.580)(9.100,3.513)(9.200,3.446)
-\qbezier(9.200,3.446)(9.300,3.370)(9.400,3.295)
-\qbezier(9.400,3.295)(9.500,3.210)(9.600,3.124)
-\qbezier(9.600,3.124)(9.700,3.023)(9.800,2.921)
-\qbezier(9.800,2.921)(9.900,2.779)(10.000,2.637)
-\multiput(0,4.650)(0.2,0){51}{\line(1,0){0.08}}
-\put(0.2,4.870){\makebox(0,0)[l]{$52.79+40.20$}}
-\put(6.200,4.398){\makebox(0,0){$\bullet$}}
-\put(6.200,4.048){\makebox(0,0){$87.96$}}
-\put(10.15,2.637){\makebox(0,0)[l]{$w(y)$}}
-\put(2.0,2.260){\makebox(0,0)[l]{$58\tilde h_2(y)$}}
-\put(2.6,3.804){\makebox(0,0)[r]{sum}}
+\qbezier(0.000,0.621)(0.100,0.660)(0.200,0.699)
+\qbezier(0.200,0.699)(0.300,0.738)(0.400,0.777)
+\qbezier(0.400,0.777)(0.500,0.816)(0.600,0.855)
+\qbezier(0.600,0.855)(0.700,0.894)(0.800,0.933)
+\qbezier(0.800,0.933)(0.900,0.972)(1.000,1.011)
+\qbezier(1.000,1.011)(1.100,1.050)(1.200,1.089)
+\qbezier(1.200,1.089)(1.300,1.128)(1.400,1.167)
+\qbezier(1.400,1.167)(1.500,1.206)(1.600,1.245)
+\qbezier(1.600,1.245)(1.700,1.284)(1.800,1.323)
+\qbezier(1.800,1.323)(1.900,1.362)(2.000,1.401)
+\qbezier(2.000,1.401)(2.100,1.440)(2.200,1.479)
+\qbezier(2.200,1.479)(2.300,1.518)(2.400,1.557)
+\qbezier(2.400,1.557)(2.500,1.596)(2.600,1.635)
+\qbezier(2.600,1.635)(2.700,1.674)(2.800,1.713)
+\qbezier(2.800,1.713)(2.900,1.752)(3.000,1.791)
+\qbezier(3.000,1.791)(3.100,1.830)(3.200,1.869)
+\qbezier(3.200,1.869)(3.300,1.908)(3.400,1.947)
+\qbezier(3.400,1.947)(3.500,1.986)(3.600,2.025)
+\qbezier(3.600,2.025)(3.700,2.064)(3.800,2.103)
+\qbezier(3.800,2.103)(3.900,2.139)(4.000,2.176)
+\qbezier(4.000,2.176)(4.100,2.211)(4.200,2.245)
+\qbezier(4.200,2.245)(4.300,2.278)(4.400,2.310)
+\qbezier(4.400,2.310)(4.500,2.341)(4.600,2.372)
+\qbezier(4.600,2.372)(4.700,2.401)(4.800,2.430)
+\qbezier(4.800,2.430)(4.900,2.457)(5.000,2.484)
+\qbezier(5.000,2.484)(5.100,2.510)(5.200,2.535)
+\qbezier(5.200,2.535)(5.300,2.559)(5.400,2.583)
+\qbezier(5.400,2.583)(5.500,2.605)(5.600,2.627)
+\qbezier(5.600,2.627)(5.700,2.648)(5.800,2.668)
+\qbezier(5.800,2.668)(5.900,2.687)(6.000,2.707)
+\qbezier(6.000,2.707)(6.100,2.724)(6.200,2.742)
+\qbezier(6.200,2.742)(6.300,2.758)(6.400,2.774)
+\qbezier(6.400,2.774)(6.500,2.789)(6.600,2.803)
+\qbezier(6.600,2.803)(6.700,2.816)(6.800,2.829)
+\qbezier(6.800,2.829)(6.900,2.841)(7.000,2.853)
+\qbezier(7.000,2.853)(7.100,2.863)(7.200,2.873)
+\qbezier(7.200,2.873)(7.300,2.882)(7.400,2.891)
+\qbezier(7.400,2.891)(7.500,2.898)(7.600,2.905)
+\qbezier(7.600,2.905)(7.700,2.911)(7.800,2.917)
+\qbezier(7.800,2.917)(7.900,2.921)(8.000,2.926)
+\qbezier(8.000,2.926)(8.100,2.929)(8.200,2.931)
+\qbezier(8.200,2.931)(8.300,2.933)(8.400,2.934)
+\qbezier(8.400,2.934)(8.500,2.934)(8.600,2.935)
+\qbezier(8.600,2.935)(8.700,2.935)(8.800,2.935)
+\qbezier(8.800,2.935)(8.900,2.936)(9.000,2.936)
+\qbezier(9.000,2.936)(9.100,2.936)(9.200,2.937)
+\qbezier(9.200,2.937)(9.300,2.937)(9.400,2.937)
+\qbezier(9.400,2.937)(9.500,2.938)(9.600,2.938)
+\qbezier(9.600,2.938)(9.700,2.938)(9.800,2.939)
+\qbezier(9.800,2.939)(9.900,2.939)(10.000,2.939)
+\qbezier(0.000,2.246)(0.100,2.246)(0.200,2.246)
+\qbezier(0.200,2.246)(0.300,2.246)(0.400,2.246)
+\qbezier(0.400,2.246)(0.500,2.246)(0.600,2.246)
+\qbezier(0.600,2.246)(0.700,2.246)(0.800,2.246)
+\qbezier(0.800,2.246)(0.900,2.246)(1.000,2.246)
+\qbezier(1.000,2.246)(1.100,2.246)(1.200,2.246)
+\qbezier(1.200,2.246)(1.300,2.246)(1.400,2.246)
+\qbezier(1.400,2.246)(1.500,2.246)(1.600,2.246)
+\qbezier(1.600,2.246)(1.700,2.246)(1.800,2.246)
+\qbezier(1.800,2.246)(1.900,2.246)(2.000,2.246)
+\qbezier(2.000,2.246)(2.100,2.246)(2.200,2.246)
+\qbezier(2.200,2.246)(2.300,2.246)(2.400,2.246)
+\qbezier(2.400,2.246)(2.500,2.246)(2.600,2.246)
+\qbezier(2.600,2.246)(2.700,2.246)(2.800,2.246)
+\qbezier(2.800,2.246)(2.900,2.246)(3.000,2.246)
+\qbezier(3.000,2.246)(3.100,2.246)(3.200,2.246)
+\qbezier(3.200,2.246)(3.300,2.246)(3.400,2.246)
+\qbezier(3.400,2.246)(3.500,2.246)(3.600,2.246)
+\qbezier(3.600,2.246)(3.700,2.246)(3.800,2.246)
+\qbezier(3.800,2.246)(3.900,2.246)(4.000,2.246)
+\qbezier(4.000,2.246)(4.100,2.246)(4.200,2.246)
+\qbezier(4.200,2.246)(4.300,2.246)(4.400,2.246)
+\qbezier(4.400,2.246)(4.500,2.246)(4.600,2.246)
+\qbezier(4.600,2.246)(4.700,2.246)(4.800,2.246)
+\qbezier(4.800,2.246)(4.900,2.246)(5.000,2.246)
+\qbezier(5.000,2.246)(5.100,2.245)(5.200,2.243)
+\qbezier(5.200,2.243)(5.300,2.239)(5.400,2.235)
+\qbezier(5.400,2.235)(5.500,2.229)(5.600,2.222)
+\qbezier(5.600,2.222)(5.700,2.213)(5.800,2.204)
+\qbezier(5.800,2.204)(5.900,2.192)(6.000,2.181)
+\qbezier(6.000,2.181)(6.100,2.166)(6.200,2.152)
+\qbezier(6.200,2.152)(6.300,2.134)(6.400,2.117)
+\qbezier(6.400,2.117)(6.500,2.097)(6.600,2.077)
+\qbezier(6.600,2.077)(6.700,2.054)(6.800,2.031)
+\qbezier(6.800,2.031)(6.900,2.005)(7.000,1.979)
+\qbezier(7.000,1.979)(7.100,1.950)(7.200,1.921)
+\qbezier(7.200,1.921)(7.300,1.889)(7.400,1.857)
+\qbezier(7.400,1.857)(7.500,1.821)(7.600,1.785)
+\qbezier(7.600,1.785)(7.700,1.746)(7.800,1.707)
+\qbezier(7.800,1.707)(7.900,1.664)(8.000,1.621)
+\qbezier(8.000,1.621)(8.100,1.574)(8.200,1.527)
+\qbezier(8.200,1.527)(8.300,1.476)(8.400,1.425)
+\qbezier(8.400,1.425)(8.500,1.368)(8.600,1.312)
+\qbezier(8.600,1.312)(8.700,1.250)(8.800,1.189)
+\qbezier(8.800,1.189)(8.900,1.121)(9.000,1.053)
+\qbezier(9.000,1.053)(9.100,0.978)(9.200,0.903)
+\qbezier(9.200,0.903)(9.300,0.819)(9.400,0.735)
+\qbezier(9.400,0.735)(9.500,0.640)(9.600,0.544)
+\qbezier(9.600,0.544)(9.700,0.431)(9.800,0.318)
+\qbezier(9.800,0.318)(9.900,0.159)(10.000,0.000)
+\qbezier(0.000,2.867)(0.100,2.906)(0.200,2.945)
+\qbezier(0.200,2.945)(0.300,2.984)(0.400,3.023)
+\qbezier(0.400,3.023)(0.500,3.062)(0.600,3.101)
+\qbezier(0.600,3.101)(0.700,3.140)(0.800,3.179)
+\qbezier(0.800,3.179)(0.900,3.218)(1.000,3.257)
+\qbezier(1.000,3.257)(1.100,3.296)(1.200,3.335)
+\qbezier(1.200,3.335)(1.300,3.374)(1.400,3.413)
+\qbezier(1.400,3.413)(1.500,3.452)(1.600,3.491)
+\qbezier(1.600,3.491)(1.700,3.530)(1.800,3.569)
+\qbezier(1.800,3.569)(1.900,3.608)(2.000,3.647)
+\qbezier(2.000,3.647)(2.100,3.686)(2.200,3.725)
+\qbezier(2.200,3.725)(2.300,3.764)(2.400,3.803)
+\qbezier(2.400,3.803)(2.500,3.842)(2.600,3.881)
+\qbezier(2.600,3.881)(2.700,3.920)(2.800,3.959)
+\qbezier(2.800,3.959)(2.900,3.998)(3.000,4.037)
+\qbezier(3.000,4.037)(3.100,4.076)(3.200,4.115)
+\qbezier(3.200,4.115)(3.300,4.154)(3.400,4.193)
+\qbezier(3.400,4.193)(3.500,4.232)(3.600,4.271)
+\qbezier(3.600,4.271)(3.700,4.310)(3.800,4.348)
+\qbezier(3.800,4.348)(3.900,4.385)(4.000,4.422)
+\qbezier(4.000,4.422)(4.100,4.456)(4.200,4.491)
+\qbezier(4.200,4.491)(4.300,4.524)(4.400,4.556)
+\qbezier(4.400,4.556)(4.500,4.587)(4.600,4.618)
+\qbezier(4.600,4.618)(4.700,4.647)(4.800,4.676)
+\qbezier(4.800,4.676)(4.900,4.703)(5.000,4.730)
+\qbezier(5.000,4.730)(5.100,4.754)(5.200,4.778)
+\qbezier(5.200,4.778)(5.300,4.798)(5.400,4.818)
+\qbezier(5.400,4.818)(5.500,4.834)(5.600,4.850)
+\qbezier(5.600,4.850)(5.700,4.861)(5.800,4.872)
+\qbezier(5.800,4.872)(5.900,4.880)(6.000,4.887)
+\qbezier(6.000,4.887)(6.100,4.890)(6.200,4.893)
+\qbezier(6.200,4.893)(6.300,4.892)(6.400,4.891)
+\qbezier(6.400,4.891)(6.500,4.886)(6.600,4.880)
+\qbezier(6.600,4.880)(6.700,4.870)(6.800,4.860)
+\qbezier(6.800,4.860)(6.900,4.846)(7.000,4.832)
+\qbezier(7.000,4.832)(7.100,4.813)(7.200,4.794)
+\qbezier(7.200,4.794)(7.300,4.771)(7.400,4.747)
+\qbezier(7.400,4.747)(7.500,4.719)(7.600,4.691)
+\qbezier(7.600,4.691)(7.700,4.658)(7.800,4.624)
+\qbezier(7.800,4.624)(7.900,4.586)(8.000,4.547)
+\qbezier(8.000,4.547)(8.100,4.503)(8.200,4.459)
+\qbezier(8.200,4.459)(8.300,4.409)(8.400,4.359)
+\qbezier(8.400,4.359)(8.500,4.303)(8.600,4.247)
+\qbezier(8.600,4.247)(8.700,4.185)(8.800,4.124)
+\qbezier(8.800,4.124)(8.900,4.057)(9.000,3.989)
+\qbezier(9.000,3.989)(9.100,3.915)(9.200,3.840)
+\qbezier(9.200,3.840)(9.300,3.756)(9.400,3.673)
+\qbezier(9.400,3.673)(9.500,3.577)(9.600,3.482)
+\qbezier(9.600,3.482)(9.700,3.369)(9.800,3.256)
+\qbezier(9.800,3.256)(9.900,3.098)(10.000,2.939)
+\multiput(0,5.185)(0.2,0){51}{\line(1,0){0.08}}
+\put(0.2,5.405){\makebox(0,0)[l]{$65.32+49.91$}}
+\put(6.200,4.893){\makebox(0,0){$\bullet$}}
+\put(6.200,4.593){\makebox(0,0){$108.75$}}
+\put(10.15,2.939){\makebox(0,0)[l]{$w(y)$}}
+\put(2.0,1.946){\makebox(0,0)[l]{$72\tilde h_2(y)$}}
+\put(2.6,4.081){\makebox(0,0)[r]{sum}}
 \end{picture}
-\caption{The weight $w(y)$ of column $k=yn$, the binomial factor $58\tilde h_2(y)$, and their sum, per unit
+\caption{The weight $w(y)$ of column $k=yn$, the binomial factor $72\tilde h_2(y)$, and their sum, per unit
 of $N$. The values were computed numerically on a grid of step $0.02$ and are not part of the proof. The
 certified bound for the sum is $W_0=\WZero$. The dotted line is the sum of the separate maxima.}
 \label{fig:columns}
 \end{figure}
 
 The remaining factor of $\rho$ is $n_0c_2$, the increase of the energy bound caused by the prescribed
-columns. It comes from Section~\ref{sec:energy}, and with it $\rho=58\cdot\Ctwo+\WZero=\Rho$.
+columns. It comes from Section~\ref{sec:energy}, and with it $\rho=72\cdot\Ctwo+\WZero=\Rho$.
 \section{The energy method with prescribed columns}\label{sec:energy}
 
 This section recalls OpenAI's energy method, extends it to determinants with prescribed columns, and
@@ -1725,7 +1801,7 @@ configuration is described by an equilibrium problem for two interacting measure
 When $m$ of the $n$ columns are point values, only $n-m$ points of each kind are integrated over, and the
 energy is still normalized by $n$. The prescribed points enter through the row determinant, now evaluated
 at the free points together with the prescribed ones. There are two kinds of prescribed points: the
-quadrature nodes, which satisfy $|x|>g_*$, and points $y\in(0,1)$. Let $\alpha=m/n$ be the fraction of
+quadrature nodes, which lie in the set $E_x$ of Section~\ref{sec:real}, and points $y\in(0,1)$. Let $\alpha=m/n$ be the fraction of
 prescribed columns and $\alpha_2$ the fraction of prescribed points of the second kind. Each missing free point
 changes the energy bound by a bounded amount. The total change is linear in $m$, and its slope $c_2$ enters
 $\rho$.
@@ -1734,7 +1810,7 @@ Every step of OpenAI's argument remains valid uniformly in the number of free po
 the logarithmic interactions, the diagonal corrections and the completion of squares only involve sums over
 the points present. For the prescribed points of the first kind the relevant field is
 \[
- F_1(x)=-\gamma_d\log(1+x^2)-2\mathsf T(u,x),\qquad g_*\le|x|\le1 .
+ F_1(x)=-\gamma_d\log(1+x^2)-2\mathsf T(u,x),\qquad x\in E_x .
 \]
 For those of the second kind it is
 \[
@@ -1796,7 +1872,8 @@ the logarithmic potential of a point charge of complex strength $r$ at $x_0+i\ep
 extremal measure has a gap in its support around $x=0$. Its potential has a logarithmic singularity at $x=0$
 and square-root behaviour at the edges of the gap. A Chebyshev expansion converges slowly near such points,
 while a charge at a small distance $\epsilon_0$ reproduces the local behaviour with one term. This is also why
-the quadrature nodes of Section~\ref{sec:real} avoid $|x|\le g_*$. Appendix~\ref{app:field} gives the charges
+the quadrature nodes of Section~\ref{sec:real} avoid the interval $(-\frac{19501}{100000},\frac{98749}{1000000})$ around $x=0$. The bounds for the negative
+and the positive nodes use its two endpoints separately. Appendix~\ref{app:field} gives the charges
 and the certified bounds.
 
 \subsection{The two cases at the improved rate}\label{ssec:cases}
@@ -2183,14 +2260,14 @@ interpolation parameter, so its supremum on an interval is at most the chord thr
 ends. The constant term is a quadratic polynomial in the parameter, whose curvature is an explicit
 combination of the cross energies of the two end measures. It remains to bound, at each of the three trial
 measures, the suprema of six fields of one variable. Appendix~\ref{app:trials} lists them and describes the
-verification. The smallest margin of the resulting inequality is $0.037$ per unit of $N^2$.
+verification. The smallest margin of the resulting inequality is $0.0143$ per unit of $N^2$.
 
 This proves Proposition~\ref{prop:signed-goal}, and with \S\ref{ssec:cases} it proves Theorem~\ref{thm:real}.
 \section{Proof of Theorem~\ref{thm:main}}\label{sec:proof}
 
 OpenAI's energy method gives the decay rate $D_0=n_0^2(U-\frac12\log2)=\DecayOA\ldots$ for our parameters.
 Section~\ref{sec:signed} raises it to $D=\Decay\ldots$ With $\Lambda=\LamDen\ldots$ the polynomial
-$Q_N=(d_0N)!\,\cD_N\Delta_N$ has integer coefficients, degree at most $53N$, and
+$Q_N=(d_0N)!\,\cD_N\Delta_N$ has integer coefficients, degree at most $66N$, and
 \[
  |Q_N(x)|\le e^{-\eta N^2}\qquad(|x-G|\le e^{-\rho N}),\qquad \eta=\EtaTot .
 \]
@@ -2199,29 +2276,29 @@ $p^2\nmid b$ (Proposition~\ref{prop:nonvanishing}), and divisibility of the $i$-
 $p'^{2i}$ for every prime $N<p'\le2N$ (Lemma~\ref{lem:squares}). We now check the hypotheses of
 Proposition~\ref{prop:criterion}.
 
-Take $d=53$, and let the polynomials $Q_p$ of the proposition be the $Q_N$ with $N=p$. Let
+Take $d=66$, and let the polynomials $Q_p$ of the proposition be the $Q_N$ with $N=p$. Let
 \begin{gather*}
- \rho=\Rho,\quad \eta=\EtaTot,\quad \omega=\tfrac35,\quad \delta=2.9\cdot10^{-7},\\
- \lambda=\frac{410}{\rho}=\LamCrit\ldots
+ \rho=\Rho,\quad \eta=\EtaTot,\quad \omega=\tfrac{27}{50},\quad \delta=2.9\cdot10^{-7},\\
+ \lambda=\frac{400}{\rho}=\LamCrit\ldots
 \end{gather*}
 \begin{enumerate}[label=(\alph*)]
-\item $\deg Q_N\le53N$ by \eqref{eq:QN} and Lemma~\ref{lem:degree}.
+\item $\deg Q_N\le66N$ by \eqref{eq:QN} and Lemma~\ref{lem:degree}.
 \item By Proposition~\ref{prop:nonvanishing}, $\Delta_p(a/b)\ne0$ for large $p$ with $p^2\nmid b$. Hence
 $Q_p(a/b)\ne0$.
 \item By Lemma~\ref{lem:squares}, $p'^{2i}$ divides the $i$-th coefficient of $Q_p$ for all primes
 $p<p'\le2p$.
-\item By Theorem~\ref{thm:real}, Proposition~\ref{prop:denominators} and $\log(53N)!=o(N^2)$, for
+\item By Theorem~\ref{thm:real}, Proposition~\ref{prop:denominators} and $\log(66N)!=o(N^2)$, for
 $|x-G|\le e^{-\rho N}$ and large $N$,
 \[
  |Q_N(x)|\le\exp\bigl(-(D-\Lambda+o(1))N^2\bigr)\le e^{-\eta N^2},
 \]
 since $\eta=\EtaTot<D-\Lambda=\EtaExact\ldots$ In the formal proof this is the inequality $\eta<D-\Lambda$ with
-$\int\kappa$ replaced by its lower bound $\ChiLean$.
+$\int\kappa$ replaced by a rational lower bound that differs from it by less than $3\cdot10^{-10}$.
 \end{enumerate}
-The numerical conditions hold as well. We have $\rho\lambda=410$ and $0<\eta<2d=106$. Next $\omega=\frac35\le1$ and
-$2\omega=1.2<\lambda$. Further $2(\omega-\delta(2\lambda-\omega))=1.199998\ldots>1$. Finally
+The numerical conditions hold as well. We have $\rho\lambda=400$ and $0<\eta<2d=132$. Next $\omega=\frac{27}{50}\le1$ and
+$2\omega=1.08<\lambda$. Further $2(\omega-\delta(2\lambda-\omega))=1.079999\ldots>1$. Finally
 $d+4d\delta\lambda=\PayL\ldots<\eta\lambda=\PayR\ldots$ So Proposition~\ref{prop:criterion} gives
-$|G-a/b|>b^{-\rho\lambda}=b^{-410}$ for all integers $a$ and all sufficiently large $b$. This proves
+$|G-a/b|>b^{-\rho\lambda}=b^{-400}$ for all integers $a$ and all sufficiently large $b$. This proves
 Theorem~\ref{thm:main}.
 
 \section{Remarks on the method}\label{sec:remarks}
@@ -2229,12 +2306,12 @@ Theorem~\ref{thm:main}.
 \subsection{The three ingredients}
 For fixed parameters the method gives the exponent $d\rho/\eta$, and its three ingredients come from
 different places. The degree $d=n-g$ comes from the construction. Of $\rho=\Rho$, the prescribed columns
-contribute $n_0c_2\approx208.6$ through the energy, and the weight and the binomial factor of one column
-contribute $W_0\approx88.0$. Bounding these two factors separately, by their maxima, would add about $5$ to
-$\rho$. The number $\eta$ is a small difference of two large numbers, $D\approx6.4\cdot10^3$ and
-$\Lambda\approx6.4\cdot10^3$. The corank bounds of Section~\ref{sec:content} contribute about $22$ to it, and the
-signed bound of Section~\ref{sec:signed} about $8$. Without them $\eta$ would be about $8$. Since the exponent
-is inversely proportional to $\eta$, a further gain of $0.1$ in $\eta$ would lower it by about $1$.
+contribute $n_0c_2\approx259.5$ through the energy, and the weight and the binomial factor of one column
+contribute $W_0\approx108.8$. Bounding these two factors separately, by their maxima, would add about $5$ to
+$\rho$. The number $\eta$ is a small difference of two large numbers, $D\approx9.96\cdot10^3$ and
+$\Lambda\approx9.90\cdot10^3$. The corank bounds of Section~\ref{sec:content} contribute about $34.5$ to it, and the
+signed bound of Section~\ref{sec:signed} about $12.8$. Without them $\eta$ would be about $13$. Since the exponent
+is inversely proportional to $\eta$, a further gain of $0.1$ in $\eta$ would lower it by about $0.7$.
 
 \subsection{The row determinant}
 \begin{remark}\label{rem:L}
@@ -2251,7 +2328,7 @@ raise $\Gamma_0$. These numerical values are not part of the formal proof.
 All the results of Section~\ref{sec:content} are lower bounds for the corank, and the proofs give the kernel
 vectors explicitly. The closed formulas, the counting inequality and the families derived from it are
 proved for all parameters. So are the other arguments of the paper, except the explicit subspaces of
-Appendix~\ref{app:windows} and the trial measures, which belong to $(58,9,3,5,3)$. A different choice of
+Appendix~\ref{app:windows} and the trial measures, which belong to $(72,11,4,6,4)$. A different choice of
 parameters changes $d$, $\rho$ and $\eta$ together, and we make no claim that ours is optimal. Except for the
 pair (F4), the function $\kappa$ uses no relation between different families. So at a prime where intervals
 overlap the exact corank may be larger than each bound. An upper bound for the corank is not needed. More
@@ -2267,10 +2344,10 @@ formalization of the irrationality of $G$ \cite{OpenAI2026}. The development is 
 \end{center}
 Theorem~\ref{thm:main} is the theorem
 \begin{center}
-{\small\texttt{CatalanIrrationalityMeasure.catalan\_irrationalityMeasure\_410}}
+{\small\texttt{CatalanIrrationalityMeasure.catalan\_irrationalityMeasure\_400}}
 \end{center}
 in \lean{Solution.lean}. Its statement, in \lean{Challenge.lean}, uses only Mathlib. Catalan's constant is
-written as the series $\sum_j(-1)^j/(2j+1)^2$, and the conclusion is $|G-a/b|>b^{-410}$ for all integers $a$
+written as the series $\sum_j(-1)^j/(2j+1)^2$, and the conclusion is $|G-a/b|>b^{-400}$ for all integers $a$
 and all sufficiently large $b$. The modules contain no \lean{sorry} and no \lean{native\_decide}. The command
 \lean{\#print axioms} shows that only the three standard axioms \lean{propext}, \lean{Classical.choice} and
 \lean{Quot.sound} are used. The repository also contains a configuration \lean{comparator.json} for
@@ -2278,6 +2355,13 @@ and all sufficiently large $b$. The modules contain no \lean{sorry} and no \lean
 with these axioms only. The prime number theorem is taken from the PNT+ project \cite{PNTPlus}. The parts of
 OpenAI's formalization that are used were converted to Lean's module system and ported to Lean
 4.35.0-rc2. The repository's \texttt{README} describes the changes and the layout of the modules.
+
+The quadrature nodes of Section~\ref{sec:real} come with Davis's formalization \cite{Davis2026}. We use 33
+of its Lean files, taken from commit \texttt{3c45153} under the Apache License~2.0. They contain the
+polynomial $P$ of degree $130$, the inverse branches of $P$, the nodes and their properties. Their
+declarations and proofs are unchanged. We adapted the module paths and imports, and added comments and
+axiom checks. The repository's
+\texttt{NOTICE} file and a provenance record list these files with their source hashes.
 
 The proof combines conventional formal proofs with numerical certificates. These are the inverses of the base
 matrices modulo $1009$, the trial sequences and the covers of Appendices~\ref{app:field} and~\ref{app:trials},
@@ -2293,23 +2377,25 @@ responsible for the paper. The systems were Claude Opus~5.5, Claude Sonnet~5.5 a
 irrationality proof for Catalan's constant and its Lean formalization are due to OpenAI \cite{OpenAI2026}.
 
 \subsection*{Acknowledgements}
-We thank the authors of Mathlib and of the PNT+ project, and OpenAI for making its formalization available.
+We thank the authors of Mathlib and of the PNT+ project, OpenAI for making its formalization available, and
+Cinna Davis for making the formalization of \cite{Davis2026} available.
 
 \appendix
 \section{Explicit subspaces for the remaining intervals}\label{app:windows}
 
-On $34$ of the $102$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
-inequality with an explicit rational subspace. These intervals lie in $(3N,16.2N)$. The subspaces were found
-numerically, as optimal constant subspaces for the bound below on each interval. They are dense rational
+On $42$ of the $148$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
+inequality with an explicit rational subspace. These intervals lie in $(\frac52N,10N]$. The subspaces were found
+numerically, as candidate constant subspaces for the bound below on each interval. They are dense rational
 subspaces with no evident closed form, so they are listed in the formalization. Only the integer identities
 and the interval conditions described below enter the proof.
 
 \begin{theorem}\label{thm:profile}
 Let $v_1,\dots,v_t\in\Z^s$ span a subspace $V\subset\Q^s$ of dimension $t$. For $j$ in a finite set $\mathcal J$
 let $B_j$ be an integer matrix with $s$ columns and $r_j\le t$ an integer such that there are $t-r_j$ linearly
-independent vectors $k\in\Z^t$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be the product of a
-nonzero $t\times t$ minor of $(v_1,\dots,v_t)$ and, for each $j$, of a nonzero maximal minor of these kernel
-vectors. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ with $0\le r<p$, let $V_p=\F_p^t$ be
+independent vectors $k\in\Z^t$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be an integer such that these basis and kernel vectors remain independent modulo every
+prime not dividing it. One choice is the product of a nonzero $t\times t$ minor of $(v_1,\dots,v_t)$ and, for each
+$j$, of a nonzero maximal minor of the kernel vectors. The implemented choice is the product of the stored
+adjugate scales. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ with $0\le r<p$, let $V_p=\F_p^t$ be
 the space of coordinates of $V$ modulo $p$, and let $m$ and $w_j$ ($j\in\mathcal J$) be nonnegative integers.
 Suppose that there are linear maps $\tau_{j,k}\colon V_p^m\to V_p$ ($k<w_j$) and $\iota\colon V_p^m\to\F_p^n$ such
 that, on the common kernel of the maps $B_j\circ\tau_{j,k}$, the map $\iota$ is injective and satisfies the
@@ -2322,8 +2408,7 @@ hypothesis of Theorem~\ref{thm:count}. Then
 \begin{proof}
 Since $p\nmid\mathcal E$, the reductions of $v_1,\dots,v_t$ are linearly independent, so $V_p$ is the
 reduction of $V$ in the coordinates of this basis. The kernel vectors of $B_j$ satisfy an integer identity,
-so their reductions lie in the kernel of $B_j|_{V_p}$. They remain independent because their minor is a unit
-modulo $p$. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map $\Phi=(B_j\circ\tau_{j,k})_{j,k}$ therefore
+so their reductions lie in the kernel of $B_j|_{V_p}$. They remain independent by the stipulated independence certificate. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map $\Phi=(B_j\circ\tau_{j,k})_{j,k}$ therefore
 has rank at most $\sum_jw_jr_j$, and its kernel has dimension at least $mt-\sum_jw_jr_j$.
 Theorem~\ref{thm:count}, applied to $\ker\Phi$ with no further conditions, gives the bound.
 \end{proof}
@@ -2334,81 +2419,108 @@ decompositions modulo $p$ (Definition~\ref{def:slot}) whose data $x_d$ range ove
 are Taylor coefficients at $X=-1,0,1$ and coefficients at $\infty$. Admissibility of the data is required only
 on the common kernel of these conditions.
 
-\emph{The integer identities.} For each of the $34$ intervals the formalization lists integer vectors
-$v_1,\dots,v_t$ spanning $V$, a set of $t$ pivot columns with the adjugate of the corresponding minor, and for
-each map $B_j$ its integer matrix, the bound $r_j$, $t-r_j$ kernel vectors in the coordinates of $V$, and again
-a pivot set with an adjugate. A single Boolean function of these data, evaluated by the Lean kernel, checks
-the shapes, the identities $\mathrm{adj}\cdot v_{\mathrm{piv}}=\delta\cdot I$ and the products
-$B_j\bigl(\sum_ak_av_a\bigr)=0$ in integers. Its soundness theorem gives the hypotheses of
-Theorem~\ref{thm:profile} on $V$ and the $B_j$, with $\mathcal E$ the product of the minors. No prime enters this
-check.
+\emph{The integer identities.} For each of the $42$ intervals the formalization lists integer vectors
+$v_1,\dots,v_t$ spanning $V$, together with a set of $t$ pivot columns. For each map $B_j$ it lists its integer matrix and a bound $r_j$ for the rank of $B_j$ on $V$.
+For each chart $j$ an integer matrix $K_j$ with $t-r_j$ rows satisfies $B_jV^{\mathsf T}K_j^{\mathsf T}=0$. A
+pivot identity $A_j(K_j)_{P_j}^{\mathsf T}=\delta_jI$ with $\delta_j\ne0$ holds for stored integer data $A_j$. The basis has the
+analogous identity $AV_P^{\mathsf T}=\delta I$ with $\delta\ne0$. These identities certify the required independence
+modulo every prime that avoids the scales.
+
+\begin{proposition}\label{prop:finite-ranks}
+For each of the $42$ intervals the three identities above hold in $\Z$ for the stored data. Consequently the
+hypotheses of Theorem~\ref{thm:profile} on $V$ and the $B_j$ hold, with $\mathcal E=\delta\prod_j\delta_j$ up to
+sign.
+\end{proposition}
+
+The exact integer checks are split into a head check and chart checks, with further row chunks where necessary.
+Their soundness lemmas establish the independence of the basis, the independence of the kernel vectors and the
+annihilation identity. Kernels in graph form use their scaled identity on the free columns. Packed integer
+products are justified by an explicit bound that excludes carries. The parts are assembled into one statement
+that the stored data form a valid certificate. The Lean kernel evaluates these checks. No prime and no floating
+point number enters. A kernel of dimension zero and a saturated chart are included.
 
 \emph{The interval conditions.} The hypotheses on the conditions and on $\iota$ depend on $N$ and $p$. An
 interval is described by finitely many linear inequalities in $N$ and $(p-1)/2$, and on each of finitely many
 pieces of the interval the numbers $m$ and $w_j$ are affine in the same variables. On each piece a verified
-procedure checks four things. The orders of the Taylor conditions are nonnegative and fit the interval. The
-prime exceeds $59$. The map $\iota$ is injective on the common kernel and lands in the admissible data. The
-values at the moment columns are given there by a polynomial in the column of degree less than $q\bmod p$,
-so that Theorem~\ref{thm:count} applies. Each required inequality is derived from the inequalities of the
-interval by nonnegative combinations and integer rounding, that is, by Chv\'atal--Gomory cuts. The soundness
-theorem of the procedure gives the hypotheses of Theorem~\ref{thm:profile} at every odd prime $p>59$ of the
-interval with $p\nmid\mathcal E$. For large $N$ all primes of the interval are of this kind. For $33$ of the
-$34$ intervals the hypotheses are established in this way, and for the remaining one by a direct proof of
-the same statement. Since the intervals lie in $(3N,16.2N)$, where $p>q$, we have $a=0$ in
-Theorem~\ref{thm:count}.
+procedure checks three things. The orders of the Taylor conditions are nonnegative and fit the interval. The
+map $\iota$ is injective on the common kernel and lands in the admissible data. The values at the moment
+columns are given there by a polynomial in the column of degree less than $q\bmod p$, so that
+Theorem~\ref{thm:count} applies. Each required inequality is derived from the inequalities of the interval by
+nonnegative combinations and integer rounding, that is, by Chv\'atal--Gomory cuts. The soundness theorem of the
+procedure gives the hypotheses of Theorem~\ref{thm:profile} at every odd prime $p$ of the interval with
+$p\nmid\mathcal E$. For large $N$ all primes of the interval are of this kind. The primes
+$p$ below the fixed integers of the certificate lie below the interval for large $N$. In addition $N$ is taken
+large enough that $H<p^2$ and $L<p^2-p$. Since the intervals lie in $(\frac52N,10N]$, one has $a=0$ in
+Theorem~\ref{thm:count} for $p>q=4N$ and $a=1$ for the smaller primes.
 
 \section{The bounds for the energy method}\label{app:field}
 
 This appendix gives the trial sequences of Section~\ref{sec:energy}, the certified bounds that they satisfy, and
 the bound for $W_0$.
 
-\emph{Trial sequences.} For the constrained case we use a trial sequence with $40$ Chebyshev coefficients and a
-finite number of geometric terms, with the multiplier $\lambda_1=1.68493357$. For the case with doubled
+\emph{Trial sequences.} Both for the constrained case and for the case with doubled
 interaction we use trial sequences of the form \eqref{eq:trial}, with $\Kcoef$ Chebyshev coefficients, which are
-dyadic rationals, and $\Ngeo$ geometric terms. Of these, $\Ncomplex$ have complex $z_j$ and complex $r_j$. We
-place the complex charges at the $41$ equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with
-$\epsilon_0=10^{-2}$. The real terms sit at points $\pm z$ with $z$ increasing from $0.8$ to $0.999997$. The
-numbers $z_j$ are rationals with at most twelve decimals. The norms of the geometric terms have closed forms:
+dyadic rationals, and $\Ngeo$ geometric terms. Each of the two sequences $u$ and $v$ has $\Kcoef$ coefficients and $\Ngeo$ rational geometric terms. Of these terms, $34$ have
+real $z_j$ and $\Ncomplex$ have complex $z_j$ and complex $r_j$. The real $z_j$ have $|z_j|\in[\frac45,\frac{999997}{1000000}]$,
+with $17$ magnitudes for each sign. The complex charges sit at the
+equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with $\epsilon_0=10^{-2}$. In the constrained case
+the multiplier is $\lambda_1=1.6$. The norms of the geometric terms have closed forms:
 two terms $(z_j,r_j)$ and $(z_l,r_l)$ contribute
 $-\frac12\operatorname{Re}\bigl(r_jr_l\log(1-z_jz_l)+r_j\bar r_l\log(1-z_j\bar z_l)\bigr)$ to $\|u\|^2$.
 
-\emph{Covers by cells.} We must bound three functions of one variable from above on their whole domains: the
-field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on $g_*\le|x|\le1$. With $x=\cos\theta$,
-each is a constant plus a cosine series with $\Kcoef$ terms plus finitely many terms
-$\operatorname{Re}\,w\log(1-ae^{im\theta})$. We cover each domain by cells $[x_c-h',x_c+h']$ whose endpoints are
-multiples of $2^{-40}$. On each cell we bound the function by its Taylor expansion at $x_c$. The cells are
-grouped in blocks. For each block the derivatives of the polynomial part are computed exactly at the centre
-of the block up to order $70$, and the remainder beyond order $70$ is bounded by a single constant for the
-block, multiplied by $h'^{70}/70!$. The Taylor expansion at the centre of a cell is obtained from that of the
-block by an exact shift. The logarithmic terms are expanded to order $5$, with remainders bounded from the
-exact minimum of $|1-ae^{im\theta}|$ on the cell. A few cells at $x=0$ and $x=\pm1$ treat the singular terms
-separately. The covers of $X$, $Y$ and $F_1$ have \Nblocks{} blocks and \Ncells{} cells. Each cell is
-checked by exact rational and integer arithmetic.
+\emph{Covers by intervals.} We must bound three functions of one variable from above on their whole domains: the
+field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on the node set $E_x$. Each is a polynomial
+plus finitely many terms $P(x)\log|x-c|$, $\operatorname{Re}\,\varrho\log(x-z)$ with complex $z$ and $\varrho$, and
+Laurent terms. We cover each domain by finitely many intervals $[a,b]$ with rational endpoints. On such an
+interval put $c=(a+b)/2$ and $r=(b-a)/2$. The polynomial part is shifted exactly to the centre $c$.
+Each logarithmic and Laurent term is replaced by its Taylor polynomial at $c$ with a rigorous remainder. The
+remainder is a geometric series, bounded by a finite rational expression once $r$ is a fixed fraction of the
+distance from $c$ to the singularity. The Taylor polynomials are added to the shifted polynomial, so that
+cancellations between terms are kept. The sum is a polynomial in $u=(x-c)/r\in[-1,1]$, with coefficients
+rounded to a dyadic grid and the rounding error added to the remainder. We then bound this polynomial
+from above by its expansion in Chebyshev polynomials. Let $\gamma_0,\gamma_1,\dots$ be Chebyshev
+coefficients supplied with the certificate. Since $|T_j|\le1$, the polynomial is at most
+$\gamma_0+\sum_{j\ge1}|\gamma_j|$ plus the sum of the absolute values of the coefficients of the difference
+between the polynomial and $\sum_j\gamma_jT_j$. The latter sum is computed exactly in the monomial basis.
+The Chebyshev coefficients are untrusted data. Only the final comparison with the threshold, a rational number, is
+checked. Near $x=0$ and $x=\pm1$ the singular terms are treated by separate end windows with exact Laurent
+cancellation. Every step uses exact rational and integer arithmetic.
+
+The certificates for the three trial sequences are organized by classes of fields. We name the classes as in the
+formalization. The counts below include the intervals at the endpoints of each domain. The class Fr uses $1127$ intervals, grouped in $142$ assembly blocks. The class SN uses $304$ intervals
+in $20$ blocks. The class SP uses $722$ intervals in $51$ blocks. The class SM uses $41$ intervals and needs no
+blocks. The class SPm has two parts. Its part R uses $365$ intervals in $25$ blocks, and its top part uses $456$
+intervals in $33$ blocks. The class SC rests on a shared base of $200$ intervals, which the two overlay partitions of its
+other two cases reuse, and on $160$ further checks of differences. The cross terms at the corners of the domain
+(class Near) use $152$ numerical intervals and one analytic bound, in $6$ covers over $26$ modules.
 
 \emph{The bounds.} The covers give
 \[
- \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{g_*\le|x|\le1}F_1\le\ResCap .
+ \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{x\in E_x}F_1\le\ResCap .
 \]
-So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le0.7737$. The first coefficient satisfies
-$u_1\ge9/50$, which is used near $x=0$. For the points of the second kind a one-variable estimate gives
-$\sup_{0<y<1}F_2(y)\le-77/100$ for $u_1\ge9/50$. For the constrained case, with the weights
-$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(11/29,3/29,49/58,\lambda_1,5/29)$, the bounds
-$\sup X_1\le-1.15854$ and $\sup Y\le-1.32981$ are obtained by isolating the zeros of the numerators of the
-derivatives, which are polynomials with integer coefficients. The norm bound is $n_1=0.67761$. With $a_0=41/58$,
-$a_1=76/29$ and $U=\Utarget$ these give the constants stated after Lemma~\ref{lem:energy-ineq}. At the rate $U_0$
+So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le\NormCap$. The first coefficient satisfies
+$u_1\ge17/100$, which is used near $x=0$. For the points of the second kind, $F_2$ is nonincreasing in $u_1$, so it suffices to take
+$u_1=17/100$. On $(0,1)$ the function $F_2$ is strictly concave, since $\log y$ and $-\log(1+y^2)$ are concave there
+and $-u_1y$ is linear. Its unique critical point lies in $[0.7748022467,0.7748022468]$, and an enclosure at this point
+gives $\sup_{0<y<1}F_2(y)<-0.7718$. For the constrained case, with the weights
+$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(3/8,1/9,61/72,\lambda_1,1/6)$ and $\lambda_1=1.6$, the bounds
+$\sup X_1\le-1.124$ and $\sup Y\le-1.205$ are certified in the same way. The norm bound is $n_1=0.52984$. With $a_0=17/24$,
+$a_1=21/8$ and $U=\Utarget$ these give the constants stated after Lemma~\ref{lem:energy-ineq}. At the rate $U_0$
 the inequality of the constrained case still holds with the slope $c_2$, and that of the case with doubled
 interaction holds for $\alpha\ge\frac1{16}$ with the slope $c_2$.
 
-\emph{The bound for $W_0$.} For a fixed radius the function $y\mapsto\max_{\Gamma_r}\Phi_y$ is a maximum of
-functions affine in $y$, hence convex. The entropy $h_2$ is concave. On a cell $[y_1,y_2]\subset[\frac12,1]$ we
-replace $h_2$ by its tangent at the midpoint. The sum is then convex, and its supremum on the cell is
-attained at an endpoint. On $[0,\frac12]$ the term $\tilde h_2=\log2$ is constant. We cover $[0,1]$ by $14$
-cells, each with a rational radius $r$. At each endpoint the maximum of $\Phi_y$ on the circle and on the
-segments is bounded by a cover of the contour by small arcs and intervals, in exact arithmetic. This proves
+\emph{The bound for $W_0$.} All points of the contour $\Gamma_r$ satisfy $|z|\le1$, so $\Phi_y(z)$ is
+nondecreasing in $y$. The function $\tilde h_2$ is nonincreasing. So on a cell $[y_1,y_2]$ the function
+$w(y)+72\tilde h_2(y)$ is at most $\max_{\Gamma_r}\Phi_{y_2}+72\tilde h_2(y_1)$. We cover $[0,1]$ by $149$
+cells, all with the radius $r=\frac35$. On the circle we use complex conjugation and cover the upper half by
+$622$ arcs. On each arc we expand $P$ exactly at the midpoint of the arc and bound the remainder by the
+moduli of its Taylor coefficients. This gives an upper bound for $g_E$, since $\operatorname{arccosh}$ is
+increasing. On the two real segments $\Phi_y$ is affine in $y$, so its bounds at $y=0$ and $y=1$ cover all
+$y$. This proves
 \[
- \sup_{0\le y\le1}\bigl(w(y)+58\tilde h_2(y)\bigr)\le W_0=\WZero .
+ \sup_{0\le y\le1}\bigl(w(y)+72\tilde h_2(y)\bigr)\le W_0=\WZero .
 \]
-The supremum is attained near $y=0.62$, with radius about $0.6$.
+The supremum is attained near $y=0.625$, where the circle dominates the segments.
 
 \section{The trial measures of Section~\ref{sec:signed}}\label{app:trials}
 
@@ -2428,7 +2540,7 @@ The suprema are verified on covers by cells, as in Appendix~\ref{app:field}. The
 treated by Laurent expansions and logarithmic end intervals. The polynomial part of a field has degree about
 $120$. On a block of cells we shift its Taylor expansion exactly to a fixed order and bound the remaining
 coefficients by one table shared by the block, which keeps the integers small. The smallest margin of the
-inequality of \S\ref{ssec:signedcert} is $0.037$ per unit of $N^2$.
+inequality of \S\ref{ssec:signedcert} is $0.0143$ per unit of $N^2$.
 
 \providecommand{\bysame}{\leavevmode\hbox to3em{\hrulefill}\thinspace}
 \providecommand{\MR}{\relax\ifhmode\unskip\space\fi MR }
@@ -2444,9 +2556,9 @@ Roger Ap\'ery, \emph{Irrationalit\'e de {$\zeta(2)$} et {$\zeta(3)$}},
   Ast\'erisque \textbf{61} (1979), 11--13.
 
 \bibitem{Arkhipov2026}
-Dmitri~I. Arkhipov, \emph{Catalan: {$\mu(G)\le528.2327$}}, GitHub repository,
+Dmitri~I. Arkhipov, \emph{Catalan: {$\mu(G)\le528.2315$}}, GitHub repository,
   \url{https://github.com/darkhipo/catalan-constant-gen5}; verifier submission
-  \url{https://github.com/bigospeedrun/verifier/issues/95}, November 1, 2026.
+  \url{https://github.com/bigospeedrun/verifier/issues/103}, November 2, 2026.
 
 \bibitem{Beukers79}
 Frits Beukers, \emph{A note on the irrationality of {$\zeta(2)$} and

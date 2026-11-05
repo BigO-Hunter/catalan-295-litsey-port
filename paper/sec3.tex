@@ -109,7 +109,7 @@ Let $p$ be an odd prime with $\sqrt H<p\le H$. OpenAI's method \cite[\S3]{OpenAI
 of the entries prime by prime. For any choice of the parameters it gives $v_p(\Delta_N(z))\ge-\ell_N(p)$
 for every $z$ with denominator prime to $p$. Here $\ell_N(p)$ is the number of columns whose entries can
 have a pole at $p$. It is computed by grouping the coefficients of the row polynomials by their base-$p$
-digits. All differences below are truncated at $0$. For $2p\le H$,
+digits. All differences below are truncated at $0$, and $L-p$ is replaced by $(L-p)_+$. For $2p\le H$,
 \[
  \ell_N(p)=2n-\Bigl(\min\bigl(p,\,L-p,\,A\bigr)-\max\bigl(b,\,H-2p\bigr)-q\Bigr).
 \]
@@ -123,19 +123,19 @@ the primes that interest us they agree with OpenAI's. For our parameters $\ell_N
 rounding, with a piecewise linear function $f$ of $\theta=p/N$:
 \[
  f(\theta)=\begin{cases}
- 116&\theta\le59/2,\\
- 175-2\theta&59/2\le \theta\le69/2,\\
- 106&69/2\le \theta\le39,\\
- 184-2\theta&39\le \theta\le81/2,\\
- 265-4\theta&81/2\le \theta\le48,\\
- 217-3\theta&48\le \theta\le69,\\
- 148-2\theta&69\le \theta\le70,\\
- 78-\theta&70\le \theta\le78,
+ 144&\theta\le37,\\
+ 218-2\theta&37\le \theta\le43,\\
+ 132&43\le \theta\le97/2,\\
+ 229-2\theta&97/2\le \theta\le101/2,\\
+ 330-4\theta&101/2\le \theta\le60,\\
+ 270-3\theta&60\le \theta\le86,\\
+ 184-2\theta&86\le \theta\le87,\\
+ 97-\theta&87\le \theta\le97,
  \end{cases}
 \]
-and $f=0$ for $\theta\ge78$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
-$[1,78]$ is $24269/4$, and $f=116=2n_0$ on $[0,1]$. Since $f(\theta)=2n_0$ for $\theta\le59/2$, every prime of
-the range $(\frac{16}7N,\frac{53}2N]$ of the corank bounds of Section~\ref{sec:content} has
+and $f=0$ for $\theta\ge97$, since for $p>H$ the matrix $\cA^0_N+z\cL_N$ is $p$-integral. Its integral over
+$[1,97]$ is $18841/2$, and $f=144=2n_0$ on $[0,1]$. Since $f(\theta)=2n_0$ for $\theta\le37$, every prime of
+the range $(\frac52N,\frac{954}{29}N]$ of the corank bounds of Section~\ref{sec:content} has
 $\ell_N(p)=2n$. There Proposition~\ref{prop:valuation} improves the bound $-2n$ to $\nu_N(p)-2n$.
 
 The primes $p\le\sqrt H$ are not covered by these bounds. For them we use the cruder bound $6n\log_pH$ for
@@ -159,23 +159,23 @@ With $s=n-m-\ell$ and $m_*=(n+H-b)/4$,
  =2(m-m_*)^2+s\,(C-n+m)+\tfrac12s^2\ge0 .
 \]
 This gives a $2$-adic bound $v_2(\Delta_N(i))\ge-\Lambda_2-O(N\log N)$, uniform in the integer $i$. For our
-parameters $\Lambda_2=(58+78-9)^2/8-58^2/2=2673/8$ in units of $N^2$.
+parameters $\Lambda_2=(72+97-11)^2/8-72^2/2=1057/2$ in units of $N^2$.
 
 \subsection{The common denominator}
 The corank bounds of Section~\ref{sec:content} give a function $\kappa$ of $\theta=p/N$
 (Theorem~\ref{thm:profile-D}). We use it here as an input.
 
 \begin{proposition}\label{prop:denominators}
-For the parameters $(58,9,3,5,3)$ there are positive integers $\cD_N$ with the following properties.
+For the parameters $(72,11,4,6,4)$ there are positive integers $\cD_N$ with the following properties.
 $\cD_N\Delta_N(i)\in\Z$ for every integer $i$, and $p'^{2n}\mid\cD_N$ for every prime $N<p'\le2N$. For every
 $\varepsilon>0$ and all large $N$
 \begin{gather*}
  \log\cD_N\le(\Lambda+\varepsilon)N^2,\\
- \Lambda=\frac{2673}8\log2+116+\frac{24269}4-\int_0^\infty\kappa(\theta)\,d\theta=\LamDen\ldots
+ \Lambda=\frac{1057}2\log2+144+\frac{18841}2-\int_0^\infty\kappa(\theta)\,d\theta=\LamDen\ldots
 \end{gather*}
 \end{proposition}
 
-Here $\frac{2673}8\log2$ comes from the prime $2$, and $116+\frac{24269}4$ is the area of $f$. The last term
+Here $\frac{1057}2\log2$ comes from the prime $2$, and $144+\frac{18841}2$ is the area of $f$. The last term
 is the gain from the corank.
 
 \begin{proof}
@@ -186,16 +186,16 @@ above, and for $p=2$ the $2$-adic bound. Let $\cD_N$ be the product of $p^{e_N(p
 Proposition~\ref{prop:valuation} and the bounds of this section, $v_p(\Delta_N(i))\ge-e_N(p)$ for every
 integer $i\ge0$ and every $p$. For $p>H$ the matrix is $p$-integral. So $\cD_N\Delta_N(i)\in\Z$. A prime
 $p'\in(N,2N]$ has $\nu^*_N(p')=0$, since no interval of Theorem~\ref{thm:profile-D} contains it, and
-$\ell_N(p')=2n$. So $p'^{2n}\mid\cD_N$. Here $N\ge79$ guarantees $p'>\sqrt H$.
+$\ell_N(p')=2n$. So $p'^{2n}\mid\cD_N$. Here $N\ge98$ guarantees $p'>\sqrt H$.
 
 For the size of $\cD_N$ we use the prime number theorem in the weighted form
 \begin{equation}\label{eq:weighted-pnt}
  \frac1N\sum_{p}F(p/N)\log p\longrightarrow\int_0^\infty F(\theta)\,d\theta\qquad(N\to\infty),
 \end{equation}
 for bounded, Riemann integrable, compactly supported $F$. By \eqref{eq:weighted-pnt} the sum of
-$\ell_N(p)\log p$ over the odd primes is $N^2\int_0^{78}f+o(N^2)$, with $\int_0^{78}f=116+24269/4$. The primes in
-the intervals of Theorem~\ref{thm:profile-D} lie in $(16N/7,53N/2]$ and have $\ell_N(p)=116N$. So their
-exponent is at most $116N-N\kappa(p/N)+2$. The sum of $(N\kappa(p/N)-2)\log p$ over these primes is
+$\ell_N(p)\log p$ over the odd primes is $N^2\int_0^{97}f+o(N^2)$, with $\int_0^{97}f=144+18841/2$. The primes in
+the intervals of Theorem~\ref{thm:profile-D} lie in $(5N/2,954N/29]$ and have $\ell_N(p)=144N$. So their
+exponent is at most $144N-N\kappa(p/N)+2$. The sum of $(N\kappa(p/N)-2)\log p$ over these primes is
 $N^2\int\kappa+o(N^2)$, again by \eqref{eq:weighted-pnt}. The $2$-adic part contributes
 $\Lambda_2\log2\,N^2+o(N^2)$.
 \end{proof}
@@ -236,7 +236,7 @@ $p$, $\Delta_p(z)\ne0$. In particular $\Delta_p(a/b)\ne0$ whenever $a\in\Z$, $b\
 The matrices are those of OpenAI's reduction modulo $p$ at $N=p$, with general parameters in place of
 OpenAI's. Let $B$ be the rational $(n_0+1)\times n_0$ matrix of the entries of $\cA^0_1$, the rational part at
 $N=1$, for the rows $0,\dots,n_0$. The row $n_0$ is an auxiliary row. Let $B_\sigma$ have rows
-$B_r+\sigma B_{r+1}$, $0\le r<n_0$. For our parameters $B$ has $59$ rows and $58$ columns.
+$B_r+\sigma B_{r+1}$, $0\le r<n_0$. For our parameters $B$ has $73$ rows and $72$ columns.
 
 \begin{proof}
 Let $p>4H_0$, with $H_0=H/N$, so that $H=H_0p<p^2/4$. Let $p$ also be prime to the numerators and
@@ -261,7 +261,7 @@ with zero reduction. So the reduction of $p^2(\cA^0_p+z\cL_p)$ is the same inver
 $v_p(\Delta_p(z))=-2n$. Finally, if $p^2\nmid b$, then $p(a/b)$ has denominator prime to $p$.
 \end{proof}
 
-For the parameters $(58,9,3,5,3)$ we verify that $B_0$, $B_0+B_1$ and $B_0-B_1$ are invertible by exhibiting
+For the parameters $(72,11,4,6,4)$ we verify that $B_0$, $B_0+B_1$ and $B_0-B_1$ are invertible by exhibiting
 their inverses modulo $1009$. This prime exceeds every denominator of $B$, so the three determinants are
 nonzero rational numbers. Proposition~\ref{prop:nonvanishing} then applies to all large primes. The proof
 uses only $2g<n$ and $H<p^2/4$.

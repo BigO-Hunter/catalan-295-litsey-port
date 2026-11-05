@@ -43,7 +43,7 @@ configuration is described by an equilibrium problem for two interacting measure
 When $m$ of the $n$ columns are point values, only $n-m$ points of each kind are integrated over, and the
 energy is still normalized by $n$. The prescribed points enter through the row determinant, now evaluated
 at the free points together with the prescribed ones. There are two kinds of prescribed points: the
-quadrature nodes, which satisfy $|x|>g_*$, and points $y\in(0,1)$. Let $\alpha=m/n$ be the fraction of
+quadrature nodes, which lie in the set $E_x$ of Section~\ref{sec:real}, and points $y\in(0,1)$. Let $\alpha=m/n$ be the fraction of
 prescribed columns and $\alpha_2$ the fraction of prescribed points of the second kind. Each missing free point
 changes the energy bound by a bounded amount. The total change is linear in $m$, and its slope $c_2$ enters
 $\rho$.
@@ -52,7 +52,7 @@ Every step of OpenAI's argument remains valid uniformly in the number of free po
 the logarithmic interactions, the diagonal corrections and the completion of squares only involve sums over
 the points present. For the prescribed points of the first kind the relevant field is
 \[
- F_1(x)=-\gamma_d\log(1+x^2)-2\mathsf T(u,x),\qquad g_*\le|x|\le1 .
+ F_1(x)=-\gamma_d\log(1+x^2)-2\mathsf T(u,x),\qquad x\in E_x .
 \]
 For those of the second kind it is
 \[
@@ -114,7 +114,8 @@ the logarithmic potential of a point charge of complex strength $r$ at $x_0+i\ep
 extremal measure has a gap in its support around $x=0$. Its potential has a logarithmic singularity at $x=0$
 and square-root behaviour at the edges of the gap. A Chebyshev expansion converges slowly near such points,
 while a charge at a small distance $\epsilon_0$ reproduces the local behaviour with one term. This is also why
-the quadrature nodes of Section~\ref{sec:real} avoid $|x|\le g_*$. Appendix~\ref{app:field} gives the charges
+the quadrature nodes of Section~\ref{sec:real} avoid the interval $(-\frac{19501}{100000},\frac{98749}{1000000})$ around $x=0$. The bounds for the negative
+and the positive nodes use its two endpoints separately. Appendix~\ref{app:field} gives the charges
 and the certified bounds.
 
 \subsection{The two cases at the improved rate}\label{ssec:cases}

@@ -1,17 +1,18 @@
 \section{Explicit subspaces for the remaining intervals}\label{app:windows}
 
-On $34$ of the $102$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
-inequality with an explicit rational subspace. These intervals lie in $(3N,16.2N)$. The subspaces were found
-numerically, as optimal constant subspaces for the bound below on each interval. They are dense rational
+On $42$ of the $148$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
+inequality with an explicit rational subspace. These intervals lie in $(\frac52N,10N]$. The subspaces were found
+numerically, as candidate constant subspaces for the bound below on each interval. They are dense rational
 subspaces with no evident closed form, so they are listed in the formalization. Only the integer identities
 and the interval conditions described below enter the proof.
 
 \begin{theorem}\label{thm:profile}
 Let $v_1,\dots,v_t\in\Z^s$ span a subspace $V\subset\Q^s$ of dimension $t$. For $j$ in a finite set $\mathcal J$
 let $B_j$ be an integer matrix with $s$ columns and $r_j\le t$ an integer such that there are $t-r_j$ linearly
-independent vectors $k\in\Z^t$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be the product of a
-nonzero $t\times t$ minor of $(v_1,\dots,v_t)$ and, for each $j$, of a nonzero maximal minor of these kernel
-vectors. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ with $0\le r<p$, let $V_p=\F_p^t$ be
+independent vectors $k\in\Z^t$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be an integer such that these basis and kernel vectors remain independent modulo every
+prime not dividing it. One choice is the product of a nonzero $t\times t$ minor of $(v_1,\dots,v_t)$ and, for each
+$j$, of a nonzero maximal minor of the kernel vectors. The implemented choice is the product of the stored
+adjugate scales. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ with $0\le r<p$, let $V_p=\F_p^t$ be
 the space of coordinates of $V$ modulo $p$, and let $m$ and $w_j$ ($j\in\mathcal J$) be nonnegative integers.
 Suppose that there are linear maps $\tau_{j,k}\colon V_p^m\to V_p$ ($k<w_j$) and $\iota\colon V_p^m\to\F_p^n$ such
 that, on the common kernel of the maps $B_j\circ\tau_{j,k}$, the map $\iota$ is injective and satisfies the
@@ -24,8 +25,7 @@ hypothesis of Theorem~\ref{thm:count}. Then
 \begin{proof}
 Since $p\nmid\mathcal E$, the reductions of $v_1,\dots,v_t$ are linearly independent, so $V_p$ is the
 reduction of $V$ in the coordinates of this basis. The kernel vectors of $B_j$ satisfy an integer identity,
-so their reductions lie in the kernel of $B_j|_{V_p}$. They remain independent because their minor is a unit
-modulo $p$. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map $\Phi=(B_j\circ\tau_{j,k})_{j,k}$ therefore
+so their reductions lie in the kernel of $B_j|_{V_p}$. They remain independent by the stipulated independence certificate. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map $\Phi=(B_j\circ\tau_{j,k})_{j,k}$ therefore
 has rank at most $\sum_jw_jr_j$, and its kernel has dimension at least $mt-\sum_jw_jr_j$.
 Theorem~\ref{thm:count}, applied to $\ker\Phi$ with no further conditions, gives the bound.
 \end{proof}
@@ -36,81 +36,108 @@ decompositions modulo $p$ (Definition~\ref{def:slot}) whose data $x_d$ range ove
 are Taylor coefficients at $X=-1,0,1$ and coefficients at $\infty$. Admissibility of the data is required only
 on the common kernel of these conditions.
 
-\emph{The integer identities.} For each of the $34$ intervals the formalization lists integer vectors
-$v_1,\dots,v_t$ spanning $V$, a set of $t$ pivot columns with the adjugate of the corresponding minor, and for
-each map $B_j$ its integer matrix, the bound $r_j$, $t-r_j$ kernel vectors in the coordinates of $V$, and again
-a pivot set with an adjugate. A single Boolean function of these data, evaluated by the Lean kernel, checks
-the shapes, the identities $\mathrm{adj}\cdot v_{\mathrm{piv}}=\delta\cdot I$ and the products
-$B_j\bigl(\sum_ak_av_a\bigr)=0$ in integers. Its soundness theorem gives the hypotheses of
-Theorem~\ref{thm:profile} on $V$ and the $B_j$, with $\mathcal E$ the product of the minors. No prime enters this
-check.
+\emph{The integer identities.} For each of the $42$ intervals the formalization lists integer vectors
+$v_1,\dots,v_t$ spanning $V$, together with a set of $t$ pivot columns. For each map $B_j$ it lists its integer matrix and a bound $r_j$ for the rank of $B_j$ on $V$.
+For each chart $j$ an integer matrix $K_j$ with $t-r_j$ rows satisfies $B_jV^{\mathsf T}K_j^{\mathsf T}=0$. A
+pivot identity $A_j(K_j)_{P_j}^{\mathsf T}=\delta_jI$ with $\delta_j\ne0$ holds for stored integer data $A_j$. The basis has the
+analogous identity $AV_P^{\mathsf T}=\delta I$ with $\delta\ne0$. These identities certify the required independence
+modulo every prime that avoids the scales.
+
+\begin{proposition}\label{prop:finite-ranks}
+For each of the $42$ intervals the three identities above hold in $\Z$ for the stored data. Consequently the
+hypotheses of Theorem~\ref{thm:profile} on $V$ and the $B_j$ hold, with $\mathcal E=\delta\prod_j\delta_j$ up to
+sign.
+\end{proposition}
+
+The exact integer checks are split into a head check and chart checks, with further row chunks where necessary.
+Their soundness lemmas establish the independence of the basis, the independence of the kernel vectors and the
+annihilation identity. Kernels in graph form use their scaled identity on the free columns. Packed integer
+products are justified by an explicit bound that excludes carries. The parts are assembled into one statement
+that the stored data form a valid certificate. The Lean kernel evaluates these checks. No prime and no floating
+point number enters. A kernel of dimension zero and a saturated chart are included.
 
 \emph{The interval conditions.} The hypotheses on the conditions and on $\iota$ depend on $N$ and $p$. An
 interval is described by finitely many linear inequalities in $N$ and $(p-1)/2$, and on each of finitely many
 pieces of the interval the numbers $m$ and $w_j$ are affine in the same variables. On each piece a verified
-procedure checks four things. The orders of the Taylor conditions are nonnegative and fit the interval. The
-prime exceeds $59$. The map $\iota$ is injective on the common kernel and lands in the admissible data. The
-values at the moment columns are given there by a polynomial in the column of degree less than $q\bmod p$,
-so that Theorem~\ref{thm:count} applies. Each required inequality is derived from the inequalities of the
-interval by nonnegative combinations and integer rounding, that is, by Chv\'atal--Gomory cuts. The soundness
-theorem of the procedure gives the hypotheses of Theorem~\ref{thm:profile} at every odd prime $p>59$ of the
-interval with $p\nmid\mathcal E$. For large $N$ all primes of the interval are of this kind. For $33$ of the
-$34$ intervals the hypotheses are established in this way, and for the remaining one by a direct proof of
-the same statement. Since the intervals lie in $(3N,16.2N)$, where $p>q$, we have $a=0$ in
-Theorem~\ref{thm:count}.
+procedure checks three things. The orders of the Taylor conditions are nonnegative and fit the interval. The
+map $\iota$ is injective on the common kernel and lands in the admissible data. The values at the moment
+columns are given there by a polynomial in the column of degree less than $q\bmod p$, so that
+Theorem~\ref{thm:count} applies. Each required inequality is derived from the inequalities of the interval by
+nonnegative combinations and integer rounding, that is, by Chv\'atal--Gomory cuts. The soundness theorem of the
+procedure gives the hypotheses of Theorem~\ref{thm:profile} at every odd prime $p$ of the interval with
+$p\nmid\mathcal E$. For large $N$ all primes of the interval are of this kind. The primes
+$p$ below the fixed integers of the certificate lie below the interval for large $N$. In addition $N$ is taken
+large enough that $H<p^2$ and $L<p^2-p$. Since the intervals lie in $(\frac52N,10N]$, one has $a=0$ in
+Theorem~\ref{thm:count} for $p>q=4N$ and $a=1$ for the smaller primes.
 
 \section{The bounds for the energy method}\label{app:field}
 
 This appendix gives the trial sequences of Section~\ref{sec:energy}, the certified bounds that they satisfy, and
 the bound for $W_0$.
 
-\emph{Trial sequences.} For the constrained case we use a trial sequence with $40$ Chebyshev coefficients and a
-finite number of geometric terms, with the multiplier $\lambda_1=1.68493357$. For the case with doubled
+\emph{Trial sequences.} Both for the constrained case and for the case with doubled
 interaction we use trial sequences of the form \eqref{eq:trial}, with $\Kcoef$ Chebyshev coefficients, which are
-dyadic rationals, and $\Ngeo$ geometric terms. Of these, $\Ncomplex$ have complex $z_j$ and complex $r_j$. We
-place the complex charges at the $41$ equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with
-$\epsilon_0=10^{-2}$. The real terms sit at points $\pm z$ with $z$ increasing from $0.8$ to $0.999997$. The
-numbers $z_j$ are rationals with at most twelve decimals. The norms of the geometric terms have closed forms:
+dyadic rationals, and $\Ngeo$ geometric terms. Each of the two sequences $u$ and $v$ has $\Kcoef$ coefficients and $\Ngeo$ rational geometric terms. Of these terms, $34$ have
+real $z_j$ and $\Ncomplex$ have complex $z_j$ and complex $r_j$. The real $z_j$ have $|z_j|\in[\frac45,\frac{999997}{1000000}]$,
+with $17$ magnitudes for each sign. The complex charges sit at the
+equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with $\epsilon_0=10^{-2}$. In the constrained case
+the multiplier is $\lambda_1=1.6$. The norms of the geometric terms have closed forms:
 two terms $(z_j,r_j)$ and $(z_l,r_l)$ contribute
 $-\frac12\operatorname{Re}\bigl(r_jr_l\log(1-z_jz_l)+r_j\bar r_l\log(1-z_j\bar z_l)\bigr)$ to $\|u\|^2$.
 
-\emph{Covers by cells.} We must bound three functions of one variable from above on their whole domains: the
-field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on $g_*\le|x|\le1$. With $x=\cos\theta$,
-each is a constant plus a cosine series with $\Kcoef$ terms plus finitely many terms
-$\operatorname{Re}\,w\log(1-ae^{im\theta})$. We cover each domain by cells $[x_c-h',x_c+h']$ whose endpoints are
-multiples of $2^{-40}$. On each cell we bound the function by its Taylor expansion at $x_c$. The cells are
-grouped in blocks. For each block the derivatives of the polynomial part are computed exactly at the centre
-of the block up to order $70$, and the remainder beyond order $70$ is bounded by a single constant for the
-block, multiplied by $h'^{70}/70!$. The Taylor expansion at the centre of a cell is obtained from that of the
-block by an exact shift. The logarithmic terms are expanded to order $5$, with remainders bounded from the
-exact minimum of $|1-ae^{im\theta}|$ on the cell. A few cells at $x=0$ and $x=\pm1$ treat the singular terms
-separately. The covers of $X$, $Y$ and $F_1$ have \Nblocks{} blocks and \Ncells{} cells. Each cell is
-checked by exact rational and integer arithmetic.
+\emph{Covers by intervals.} We must bound three functions of one variable from above on their whole domains: the
+field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on the node set $E_x$. Each is a polynomial
+plus finitely many terms $P(x)\log|x-c|$, $\operatorname{Re}\,\varrho\log(x-z)$ with complex $z$ and $\varrho$, and
+Laurent terms. We cover each domain by finitely many intervals $[a,b]$ with rational endpoints. On such an
+interval put $c=(a+b)/2$ and $r=(b-a)/2$. The polynomial part is shifted exactly to the centre $c$.
+Each logarithmic and Laurent term is replaced by its Taylor polynomial at $c$ with a rigorous remainder. The
+remainder is a geometric series, bounded by a finite rational expression once $r$ is a fixed fraction of the
+distance from $c$ to the singularity. The Taylor polynomials are added to the shifted polynomial, so that
+cancellations between terms are kept. The sum is a polynomial in $u=(x-c)/r\in[-1,1]$, with coefficients
+rounded to a dyadic grid and the rounding error added to the remainder. We then bound this polynomial
+from above by its expansion in Chebyshev polynomials. Let $\gamma_0,\gamma_1,\dots$ be Chebyshev
+coefficients supplied with the certificate. Since $|T_j|\le1$, the polynomial is at most
+$\gamma_0+\sum_{j\ge1}|\gamma_j|$ plus the sum of the absolute values of the coefficients of the difference
+between the polynomial and $\sum_j\gamma_jT_j$. The latter sum is computed exactly in the monomial basis.
+The Chebyshev coefficients are untrusted data. Only the final comparison with the threshold, a rational number, is
+checked. Near $x=0$ and $x=\pm1$ the singular terms are treated by separate end windows with exact Laurent
+cancellation. Every step uses exact rational and integer arithmetic.
+
+The certificates for the three trial sequences are organized by classes of fields. We name the classes as in the
+formalization. The counts below include the intervals at the endpoints of each domain. The class Fr uses $1127$ intervals, grouped in $142$ assembly blocks. The class SN uses $304$ intervals
+in $20$ blocks. The class SP uses $722$ intervals in $51$ blocks. The class SM uses $41$ intervals and needs no
+blocks. The class SPm has two parts. Its part R uses $365$ intervals in $25$ blocks, and its top part uses $456$
+intervals in $33$ blocks. The class SC rests on a shared base of $200$ intervals, which the two overlay partitions of its
+other two cases reuse, and on $160$ further checks of differences. The cross terms at the corners of the domain
+(class Near) use $152$ numerical intervals and one analytic bound, in $6$ covers over $26$ modules.
 
 \emph{The bounds.} The covers give
 \[
- \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{g_*\le|x|\le1}F_1\le\ResCap .
+ \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{x\in E_x}F_1\le\ResCap .
 \]
-So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le0.7737$. The first coefficient satisfies
-$u_1\ge9/50$, which is used near $x=0$. For the points of the second kind a one-variable estimate gives
-$\sup_{0<y<1}F_2(y)\le-77/100$ for $u_1\ge9/50$. For the constrained case, with the weights
-$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(11/29,3/29,49/58,\lambda_1,5/29)$, the bounds
-$\sup X_1\le-1.15854$ and $\sup Y\le-1.32981$ are obtained by isolating the zeros of the numerators of the
-derivatives, which are polynomials with integer coefficients. The norm bound is $n_1=0.67761$. With $a_0=41/58$,
-$a_1=76/29$ and $U=\Utarget$ these give the constants stated after Lemma~\ref{lem:energy-ineq}. At the rate $U_0$
+So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le\NormCap$. The first coefficient satisfies
+$u_1\ge17/100$, which is used near $x=0$. For the points of the second kind, $F_2$ is nonincreasing in $u_1$, so it suffices to take
+$u_1=17/100$. On $(0,1)$ the function $F_2$ is strictly concave, since $\log y$ and $-\log(1+y^2)$ are concave there
+and $-u_1y$ is linear. Its unique critical point lies in $[0.7748022467,0.7748022468]$, and an enclosure at this point
+gives $\sup_{0<y<1}F_2(y)<-0.7718$. For the constrained case, with the weights
+$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(3/8,1/9,61/72,\lambda_1,1/6)$ and $\lambda_1=1.6$, the bounds
+$\sup X_1\le-1.124$ and $\sup Y\le-1.205$ are certified in the same way. The norm bound is $n_1=0.52984$. With $a_0=17/24$,
+$a_1=21/8$ and $U=\Utarget$ these give the constants stated after Lemma~\ref{lem:energy-ineq}. At the rate $U_0$
 the inequality of the constrained case still holds with the slope $c_2$, and that of the case with doubled
 interaction holds for $\alpha\ge\frac1{16}$ with the slope $c_2$.
 
-\emph{The bound for $W_0$.} For a fixed radius the function $y\mapsto\max_{\Gamma_r}\Phi_y$ is a maximum of
-functions affine in $y$, hence convex. The entropy $h_2$ is concave. On a cell $[y_1,y_2]\subset[\frac12,1]$ we
-replace $h_2$ by its tangent at the midpoint. The sum is then convex, and its supremum on the cell is
-attained at an endpoint. On $[0,\frac12]$ the term $\tilde h_2=\log2$ is constant. We cover $[0,1]$ by $14$
-cells, each with a rational radius $r$. At each endpoint the maximum of $\Phi_y$ on the circle and on the
-segments is bounded by a cover of the contour by small arcs and intervals, in exact arithmetic. This proves
+\emph{The bound for $W_0$.} All points of the contour $\Gamma_r$ satisfy $|z|\le1$, so $\Phi_y(z)$ is
+nondecreasing in $y$. The function $\tilde h_2$ is nonincreasing. So on a cell $[y_1,y_2]$ the function
+$w(y)+72\tilde h_2(y)$ is at most $\max_{\Gamma_r}\Phi_{y_2}+72\tilde h_2(y_1)$. We cover $[0,1]$ by $149$
+cells, all with the radius $r=\frac35$. On the circle we use complex conjugation and cover the upper half by
+$622$ arcs. On each arc we expand $P$ exactly at the midpoint of the arc and bound the remainder by the
+moduli of its Taylor coefficients. This gives an upper bound for $g_E$, since $\operatorname{arccosh}$ is
+increasing. On the two real segments $\Phi_y$ is affine in $y$, so its bounds at $y=0$ and $y=1$ cover all
+$y$. This proves
 \[
- \sup_{0\le y\le1}\bigl(w(y)+58\tilde h_2(y)\bigr)\le W_0=\WZero .
+ \sup_{0\le y\le1}\bigl(w(y)+72\tilde h_2(y)\bigr)\le W_0=\WZero .
 \]
-The supremum is attained near $y=0.62$, with radius about $0.6$.
+The supremum is attained near $y=0.625$, where the circle dominates the segments.
 
 \section{The trial measures of Section~\ref{sec:signed}}\label{app:trials}
 
@@ -130,4 +157,4 @@ The suprema are verified on covers by cells, as in Appendix~\ref{app:field}. The
 treated by Laurent expansions and logarithmic end intervals. The polynomial part of a field has degree about
 $120$. On a block of cells we shift its Taylor expansion exactly to a fixed order and bound the remaining
 coefficients by one table shared by the block, which keeps the integers small. The smallest margin of the
-inequality of \S\ref{ssec:signedcert} is $0.037$ per unit of $N^2$.
+inequality of \S\ref{ssec:signedcert} is $0.0143$ per unit of $N^2$.
