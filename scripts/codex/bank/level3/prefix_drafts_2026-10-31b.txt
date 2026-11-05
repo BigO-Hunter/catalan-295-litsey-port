@@ -1,0 +1,6 @@
+-- Drafts 2026-10-31b (Claude). No uncompiled Lean code at pause: every declaration written this session is in
+-- WrapPrefixLayer.lean and built (helper rc 0). Next planned (not written): profile-level even/odd transport with
+-- explicit (gamma,k,eta) using TwoTermDeformation.actual_own_transport; global own source at window nodes from
+-- prefixAnchor_zero via UFMoments.own_fiber_form + fibreEquiv; two-parameter moment/weight, cauchy_source,
+-- weight_zero (port WrapPrefixType 439-708 with entry_shift_congr/load_shift_factor two-parameter versions);
+-- credited interval; Schur content for arbitrary common list; member ledger; closed price; Layer; Check.
