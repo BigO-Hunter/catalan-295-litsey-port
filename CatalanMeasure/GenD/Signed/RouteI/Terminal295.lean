@@ -25,7 +25,7 @@ set_option Elab.async false
 /-!
 # Route I terminal assembly at `B = 295`
 
-Discharges every premise of `RouteI.catalan_irrationalityMeasure_295` except the four inputs named
+Discharges every premise of `RouteI.catalan_irrationalityMeasure_295` except the five inputs named
 in `measure_295`: the free row cap `hR`, the free column cap `hC`, the intercept scalar `hi`, and the
 angular radius certificates `certN`, `certP`, all at the source record `capSource`.
 
@@ -275,7 +275,7 @@ theorem hnearSheet295
 
 /-! ### Terminal theorem -/
 
-/-- `μ(G) ≤ 295`, with the four named cap inputs at the source `capSource`. -/
+/-- `μ(G) ≤ 295`, with the five named cap inputs at the source `capSource`. -/
 theorem measure_295
     (hR : capSource.FreeRowCap Trunc.exact 0 (-2579777 / 1000000))
     (hC : capSource.FreeColCap 0 (-2946610 / 1000000))
