@@ -93,12 +93,13 @@
                   Lean verification at \url{https://github.com/bigospeedrun/verifier/issues/87}, October 31}
 }
 
-% Arkhipov2026: checked 5 Nov 2026. Repository darkhipo/catalan-constant-gen5 at commit 47a36df5 (2 Nov 2026):
-% Submission.lean states `theorem bound : BigOSpeedrun.Catalan.Bound ((1056463 : Q) / 2000)`, i.e.
-% mu(G) <= 528.2315. Verifier submission bigospeedrun/verifier issue 103, closed 2 Nov 2026. Supersedes
-% 528.2327 at e6e7bf6 (issue 95). Name from the GitHub profile of darkhipo.
-@misc{Arkhipov2026,
-  author       = {Arkhipov, Dmitri I.},
+% Checked 6 Nov 2026. darkhipo/catalan-constant-gen5 at 47a36df5 (2 Nov 2026), bound 1056463/2000.
+% Verifier issue 103 closed 2 Nov; leaderboard (6 Nov) shows Lean Verified.
+% Credit "MultiAgency swarm" per bigospeedrun/site issue 15 (5 Nov 2026): the account is shared
+% and the work was done by the agent swarm. Fork of Davis's repository at f90b5ab.
+% The README at 47a36df still says 528.2327; the bound 528.2315 is in the Lean submission.
+@misc{MultiAgency2026,
+  author       = {{MultiAgency swarm}},
   title        = {Catalan: {$\mu(G)\le528.2315$}},
   year         = {2026},
   howpublished = {GitHub repository, \url{https://github.com/darkhipo/catalan-constant-gen5};
@@ -112,6 +113,8 @@
 % URL rechecked 29 Oct 2026 (Paper I release pass): github.com/proof-factory/catalan-exponent answers HTTP 200,
 % github.com/fringewidth/catalan-exponent answers HTTP 301 with Location the proof-factory URL; README unchanged
 % (mu(G) < 2401.74, Theorem 35 of Carreira at (36,6,2,3,2), credits dated 15 October 2026).
+% Rechecked 6 Nov 2026: the repository sits under the organisation proof-factory, its commits are authored by
+% Hrishik Sai Bojnal, and its README credits Claude Fable 5.1 on his compute, 15 October 2026. Citation kept.
 @misc{Bojnal2026,
   author       = {Bojnal, Hrishik Sai},
   title        = {An irrationality exponent below 2402 for {C}atalan's constant},
@@ -129,14 +132,6 @@
                   sources at \url{https://github.com/MarcosCarreira/catalan-designs}}
 }
 % Carreira2026: Zenodo record 23326325 gives publication date 2026-10-12 (version v1; creator listed as Costa Santos Carreira, Marcos).
-
-% Litsey2026: the author's mu(G) paper, Hexagon listing checked 2026-10-19 (hexagonmath.org/2610.00187v4).
-@misc{Litsey2026,
-  author       = {Litsey, Sean},
-  title        = {An irrationality measure for {C}atalan's constant},
-  year         = {2026},
-  howpublished = {Hexagon preprint hexagon:2610.00187v4, \url{https://hexagonmath.org/2610.00187v4}}
-}
 
 @article{RivoalZudilin2003,
   author  = {Rivoal, Tanguy and Zudilin, Wadim},
@@ -285,6 +280,7 @@
   archivePrefix = {arXiv}
 }
 
+% v3 (5 Nov 2026) read 6 Nov 2026: Theorem 1 unchanged.
 % v2 (8 Oct 2026) verified at arxiv.org/abs/2610.10192 on 29 Oct 2026.
 % Rechecked at the arXiv abstract page on 29 Oct 2026 (Paper I release pass): title and authors as below,
 % v1 7 Oct 2026, v2 8 Oct 2026 (current), math.NT; abstract: mu(log r) = 2 for rational r > 0, r != 1.
@@ -292,7 +288,7 @@
   author        = {Liu, Jingwen and Jiang, Kai and Zhang, Pingwen},
   title         = {Irrationality exponents of logarithms of positive rational numbers},
   year          = {2026},
-  note          = {Preprint, 7 October 2026, revised 8 October 2026 (v2), \href{https://arxiv.org/abs/2610.10192}{arXiv:2610.10192}},
+  note          = {Preprint, 7 October 2026, revised 5 November 2026 (v3), \href{https://arxiv.org/abs/2610.10192}{arXiv:2610.10192}},
   eprint        = {2610.10192},
   archivePrefix = {arXiv},
   primaryClass  = {math.NT}
@@ -524,7 +520,7 @@
 @misc{Repo,
   author       = {Litsey, Sean},
   title        = {catalan-irrationality-measure: {L}ean 4 formalization},
-  howpublished = {\url{https://github.com/slitsey/catalan-irrationality-measure}, branch \texttt{claude/thmA-lean}},
+  howpublished = {\url{https://github.com/slitsey/catalan-irrationality-measure}, branch \texttt{main}},
   year         = {2026}
 }
 
@@ -571,12 +567,18 @@
   primaryClass  = {math.NT}
 }
 
-@misc{EMN2025,
-  author        = {Eskandari, Payman and Murty, Kumar and Nemoto, Yusuke},
+% Crossref 10.1112/jlms.70708, checked 6 Nov 2026; arXiv v3 (29 Aug 2026) is the final version.
+@article{EMN2025,
+  author        = {Eskandari, Payman and Murty, V. Kumar and Nemoto, Yusuke},
   title         = {Mixed motives and linear forms in the {C}atalan constant},
-  year          = {2025},
-  note          = {Preprint, October 2025 (v3: 29 August 2026), \href{https://arxiv.org/abs/2510.20648}{arXiv:2510.20648}},
+  journal       = {J. Lond. Math. Soc. (2)},
+  volume        = {114},
+  number        = {4},
+  year          = {2026},
+  pages         = {Paper No. e70708},
+  doi           = {10.1112/jlms.70708},
   eprint        = {2510.20648},
+  note          = {\href{https://arxiv.org/abs/2510.20648}{arXiv:2510.20648}},
   archivePrefix = {arXiv},
   primaryClass  = {math.NT}
 }
@@ -634,9 +636,8 @@
   year    = {2008},
   pages   = {570--572}
 }
-% Litsey2026b: title as in the companion manuscript (paper-trigamma/trigamma-irrationality.tex, 1 Nov 2026);
-% the new version replaces the Hexagon listing 2610.00401, which on 29 Oct 2026 still shows v1 (20 Oct 2026)
-% under the earlier title.
+% Litsey2026b: title as in the companion manuscript trigamma-irrationality.tex. Hexagon 2610.00401 v2 (3 Nov 2026) still lists
+% the title "Irrationality measures for G +- 5 pi^2/48 and L(2,chi_-3)"; the tex title is kept, and the next deposit should carry it.
 @misc{Litsey2026b,
   author       = {Litsey, Sean},
   title        = {Irrationality measures for {$L(2,\chi_{-3})$} and other differences of trigamma values},
@@ -696,4 +697,91 @@
   title        = {Determinant constructions for the {D}irichlet beta value at four},
   year         = {2026},
   howpublished = {Preprint, 9 October 2026, \href{https://doi.org/10.5281/zenodo.23326647}{doi:10.5281/zenodo.23326647}}
+}
+
+% Crossref 10.1134/S0081543816010107 and Math-Net.Ru tm3695, checked 6 Nov 2026. Full text not opened.
+@article{Nesterenko16,
+  author  = {Nesterenko, Yu. V.},
+  title   = {On {C}atalan's constant},
+  journal = {Proc. Steklov Inst. Math.},
+  volume  = {292},
+  number  = {1},
+  year    = {2016},
+  pages   = {153--170},
+  doi     = {10.1134/S0081543816010107}
+}
+
+% Crossref 10.1007/s11139-006-6507-0, checked 6 Nov 2026.
+@article{Rivoal06,
+  author  = {Rivoal, Tanguy},
+  title   = {Nombres d'{E}uler, approximants de {P}ad\'e et constante de {C}atalan},
+  journal = {Ramanujan J.},
+  volume  = {11},
+  number  = {2},
+  year    = {2006},
+  pages   = {199--214},
+  doi     = {10.1007/s11139-006-6507-0}
+}
+
+% arXiv abstract and PDF read 6 Nov 2026 (v1 only). The result is conditional on Fauzan's preprint.
+@misc{Giraudin26z5,
+  author        = {Giraudin, David Niedbala},
+  title         = {A new upper bound for the irrationality exponent of {$\zeta(5)$}},
+  year          = {2026},
+  note          = {Preprint, 1 November 2026, \href{https://arxiv.org/abs/2611.01708}{arXiv:2611.01708}},
+  eprint        = {2611.01708},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.NT}
+}
+
+% Palomar registry record read 6 Nov 2026 (data.palomar-registry.org). Irrationality only, no measure.
+@misc{Fasten26,
+  author       = {Fasten, Azriel},
+  title        = {Irrationality of the {R}iemann zeta value at five},
+  year         = {2026},
+  howpublished = {Lean formalization, Palomar registry entry PALOMAR-2026-09-25-000018,
+                  \url{https://github.com/realazthat/zeta5-lean2}, commit \texttt{2fa4e82}}
+}
+
+% arXiv abstract and PDF read 6 Nov 2026 (v1 only).
+@misc{KumarTosi26,
+  author        = {Kumar, Veekesh and Tosi, Riccardo},
+  title         = {Irrationality of values of {$L$}-functions for real {D}irichlet characters},
+  year          = {2026},
+  note          = {Preprint, 30 October 2026, \href{https://arxiv.org/abs/2610.41458}{arXiv:2610.41458}},
+  eprint        = {2610.41458},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.NT}
+}
+
+% Crossref 10.1112/jlms.12290, checked 6 Nov 2026.
+@article{Fischler20,
+  author  = {Fischler, St\'ephane},
+  title   = {Irrationality of values of {$L$}-functions of {D}irichlet characters},
+  journal = {J. Lond. Math. Soc. (2)},
+  volume  = {101},
+  number  = {2},
+  year    = {2020},
+  pages   = {857--876},
+  doi     = {10.1112/jlms.12290}
+}
+
+% Hexagon page and abstract read 6 Nov 2026 (v2 current). Page labels the text primarily AI-generated. Lean repository not built.
+@misc{Krisman26,
+  author       = {Krisman, Shawn},
+  title        = {One of {$\beta(4),\beta(6),\ldots,\beta(36)$} is irrational},
+  year         = {2026},
+  howpublished = {Hexagon preprint hexagon:2610.00285v2, October 16, 2026, \url{https://hexagonmath.org/2610.00285};
+                  Lean sources at \url{https://github.com/telaviv/beta-irrationality}}
+}
+
+% arXiv abstract and PDF read 6 Nov 2026 (v1 only).
+@misc{Chudnovsky26,
+  author        = {Chudnovsky, Gregory V.},
+  title         = {The irrationality exponent of the lemniscate period: {A} determinant proof with a {L}ean 4 formalization},
+  year          = {2026},
+  note          = {Preprint, 19 October 2026, \href{https://arxiv.org/abs/2610.26539}{arXiv:2610.26539}},
+  eprint        = {2610.26539},
+  archivePrefix = {arXiv},
+  primaryClass  = {math.NT}
 }

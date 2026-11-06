@@ -1,7 +1,7 @@
 \section{The energy method with prescribed columns}\label{sec:energy}
 
 This section recalls OpenAI's energy method, extends it to determinants with prescribed columns, and
-proves Theorem~\ref{thm:real} assuming the bound of Section~\ref{sec:signed}.
+proves Theorem~\ref{thm:real} assuming the bound of Section~\ref{sec:signed}. Throughout, $\alpha_1=\AlphaOne$.
 
 \subsection{OpenAI's energy}\label{ssec:energy}
 By Andr\'eief's identity, $\det\cA_N$ is an integral over $n$ points $x_i\in(-1,1)$ and $n$ points
@@ -14,10 +14,11 @@ points, written in the coordinate $x$ with $t=2x/(1+x^2)$ \cite[\S5]{OpenAI2026}
 schematically, with external fields $V_1,V_2$ of order $n$. The first two sums are the
 external fields. The next two are the logarithmic interactions among points of the same kind, and the last
 is the interaction between the two kinds. There are two cases, according to which of OpenAI's two bounds for
-the determinant of the row functions is used \cite[Props.~5.2, 5.3]{OpenAI2026}. In the \emph{constrained
-case} the row field acquires a term with a multiplier $\lambda_1$ for the constraint that defines the case,
+the determinant of the row functions is used \cite[Props.~5.2, 5.3]{OpenAI2026}. The case with doubled interaction is the one in which OpenAI's condition
+$\sum_i(1-x_i^2)/(1+x_i^2)\le n-1-2g$ \cite[Eq.~(67)]{OpenAI2026} holds, and the constrained case is its complement. In the \emph{constrained
+case} the row field acquires a term with a multiplier $\lambda_1$ for the constraint that defines the case.
 In the \emph{case with doubled interaction} the interaction among the $x_i$ has weight $2$ instead of $1$. This case also bounds a determinant
-$\det\mathsf L$ of size $n$ by $6^n$, which is the factor that Section~\ref{sec:signed} improves.
+$\det\mathsf L$ of size $n$ by $e^{O(n\log n)}$, which is the factor that Section~\ref{sec:signed} improves.
 
 The energy is bounded from above by duality. Given trial sequences $u=(u_k)$ and $v=(v_k)$, one writes the
 interaction terms as quadratic forms in the moments $\frac1n\sum_iT_k(x_i)$ and $\frac1n\sum_js_j^k$. Then one
@@ -39,7 +40,7 @@ configuration is described by an equilibrium problem for two interacting measure
 \cite{SaffTotik}. The best trial sequences are the moments of its solution, as Carreira observed
 \cite{Carreira2026}. Any trial sequences give a valid upper bound.
 
-\subsection{Prescribed points}
+\subsection{Prescribed points}\label{ssec:prescribed}
 When $m$ of the $n$ columns are point values, only $n-m$ points of each kind are integrated over, and the
 energy is still normalized by $n$. The prescribed points enter through the row determinant, now evaluated
 at the free points together with the prescribed ones. There are two kinds of prescribed points: the
@@ -64,28 +65,27 @@ the factor $\prod_{i<l}|s_i-s_l|$ to the energy, and the binomial factors are as
 energy bound then reduces to a quadratic inequality in $\alpha$ and $\alpha_2$.
 
 \begin{lemma}[energy inequality with prescribed points]\label{lem:energy-ineq}
-Let $\ell=\log2$, and let $\mathcal N,\mathcal F,\mathcal R,\mathcal F_2$, $c_2$ and $m_0\ge0$ be real numbers
-with
+Let $\ell=\log2$, $\alpha_1>0$ and $u\ge0$, and let $\mathcal N,\mathcal F,\mathcal R,\mathcal F_2$ and $c_2$ be real
+numbers with
 \begin{gather*}
- \mathcal N+\mathcal F+U-a_0\ell\le-m_0,\qquad \ell-\mathcal R+\mathcal F_2\le0,\\
- \bigl((a_1-1)\ell-\mathcal F+\mathcal R-c_2\bigr)^2\le4\ell m_0 .
+ \mathcal N+\mathcal F+U_0-a_0\ell\le u,\qquad \ell-\mathcal R+\mathcal F_2\le0,\\
+ (a_1-1)\ell-\mathcal F+\mathcal R-c_2-\ell\alpha_1+\frac u{\alpha_1}\le0 .
 \end{gather*}
-Then for all $\alpha,\alpha_2\ge0$
+Then for all $\alpha\ge\alpha_1$ and $\alpha_2\ge0$
 \begin{multline*}
  \bigl(-(a_0-\tfrac12)+(a_1-1)\alpha-\alpha^2+\alpha_2-\alpha_2^2\bigr)\ell+\mathcal N+(1-\alpha)\mathcal F\\
- +(\alpha-\alpha_2)\mathcal R+\alpha_2\mathcal F_2\le-U+\tfrac12\ell+c_2\alpha .
+ +(\alpha-\alpha_2)\mathcal R+\alpha_2\mathcal F_2\le-U_0+\tfrac12\ell+c_2\alpha .
 \end{multline*}
 \end{lemma}
 
 \begin{proof}
-The left side minus the right side equals
+Put $s=(a_1-1)\ell-\mathcal F+\mathcal R-c_2$. The left side minus the right side equals
 \[
- (\mathcal N+\mathcal F+U-a_0\ell)+\alpha\bigl((a_1-1)\ell-\mathcal F+\mathcal R-c_2\bigr)-\ell\alpha^2
- +\alpha_2(\ell-\mathcal R+\mathcal F_2)-\ell\alpha_2^2 .
+ (\mathcal N+\mathcal F+U_0-a_0\ell)+\alpha s-\ell\alpha^2+\alpha_2(\ell-\mathcal R+\mathcal F_2)-\ell\alpha_2^2 .
 \]
-The last two terms are nonpositive by the second hypothesis. The first three form a concave quadratic in
-$\alpha$. It is nonpositive for all $\alpha$, since $a+s\alpha-\ell\alpha^2\le0$ for all $\alpha$ as soon as
-$s^2+4\ell a\le0$.
+The last two terms are nonpositive by the second hypothesis. The first three are at most
+$\alpha(u/\alpha+s-\ell\alpha)$. The function $u/\alpha-\ell\alpha$ decreases in $\alpha$, so this is at most
+$\alpha(u/\alpha_1+s-\ell\alpha_1)\le0$.
 \end{proof}
 
 The lemma is applied with $\mathcal N$ a bound for $2\|u\|^2+\frac12\|v\|^2$, $\mathcal F=M_X+M_Y$,
@@ -93,13 +93,50 @@ $\mathcal R$ a bound for the supremum of $F_1$ and $\mathcal F_2$ a bound for th
 analogue for the constrained case has no prescribed points of the second kind. Its polynomial in $\alpha$ is
 \[
  \bigl(-(a_0-\tfrac12)+(a_1-1)\alpha-\alpha^2\bigr)\ell+n_1+(1-\alpha)\mathcal F_1+\alpha\lambda_1\tfrac{2g_0}{n_0}
- \le-U+\tfrac12\ell+c_1\alpha,
+ \le-U_0+\tfrac12\ell+c_2\alpha,
 \]
-with $n_1$ a bound for the norms of the trial sequences and $\mathcal F_1=M_{X_1}+M_Y$. It holds for all real
-$\alpha$ when its discriminant is nonpositive and $c_1\le(a_1-1)\ell-\mathcal F_1+\lambda_1\tfrac{2g_0}{n_0}$.
+with $n_1$ a bound for the norms of the trial sequences and $\mathcal F_1=M_{X_1}+M_Y$. The coefficient of $\alpha^2$ is negative, so this holds for all real $\alpha$ as soon as the discriminant of the
+difference of the two sides is nonpositive.
 
-For our parameters the trial sequences of Appendix~\ref{app:field} give, with $U=\Utarget$, the hypotheses of
-Lemma~\ref{lem:energy-ineq} with $m_0=\Mmargin$ and $c_2=\Ctwo$. The constrained case admits $c_1=\Cone<c_2$.
+For our parameters the trial sequences of Appendix~\ref{app:field} give the hypotheses of
+Lemma~\ref{lem:energy-ineq} with $\alpha_1=\AlphaOne$, $u=0.0068682$ and $c_2=\Ctwo$. They also give the
+inequality of the constrained case with the same $U_0$ and $c_2$.
+
+\emph{The squares that remain.} Section~\ref{sec:signed} uses what the completion of squares leaves, so we record it for the case with doubled
+interaction. Let $\mu_F$, $\mu_M$ and $\mu_S$ be the normalized counting measures of the free points, the prescribed points of the first kind and the
+prescribed points of the second kind. Their total masses are $1-\alpha$, $\alpha-\alpha_2$ and $\alpha_2$. Put $W=\mu_F+\mu_M$,
+$A_k(\mu)=\int T_k\,d\mu$ and $\langle a,b\rangle=\sum_ka_kb_k/k$, so that $\|a\|^2=\langle a,a\rangle$. Three products carry the interactions
+in the variable $x$. The Vandermonde product of the free points comes from the Cauchy determinant. The row determinant gives the Vandermonde product of the
+free points and the prescribed points of the first kind, and the Vandermonde product of the points $y$ of the second kind. These last points
+enter the row determinant through $1/y$, so it also gives the cross factors $|w-1/y|=(1-wy)/y$, for $w$ a point of $W$.
+Since $-\log|x-x'|=\log2+2\sum_kT_k(x)T_k(x')/k$ and $\log(1-wy)\le-wy$, the part of $E$ quadratic in the Chebyshev moments is, apart from the
+diagonal terms and the multiples of $\log2$, at most
+\[
+ -\|A(\mu_F)\|^2-\|A(W)\|^2-\|A(\mu_S)\|^2-A_1(W)A_1(\mu_S).
+\]
+For any measure $\mu$ we have $-\|A(\mu)\|^2=\|u\|^2-2\langle u,A(\mu)\rangle-\|A(\mu)-u\|^2$. Using this for $\mu_F$ and $W$, and writing
+$A_1(W)=u_1+(A_1(W)-u_1)$, we find that the display equals
+\[
+ 2\|u\|^2-2\langle u,A(2\mu_F+\mu_M)\rangle-u_1A_1(\mu_S)-\mathcal Q,
+\]
+where
+\[
+ \mathcal Q=\|A(\mu_F)-u\|^2+\|A(W)-u\|^2+\|A(\mu_S)\|^2+(A_1(W)-u_1)A_1(\mu_S).
+\]
+The first three terms are the term $2\|u\|^2$ of $\mathcal N$ and the terms of $X$, $F_1$ and $F_2$ that contain $u$. So the energy bound obtained from
+Lemma~\ref{lem:energy-ineq} improves by $\mathcal Q$. To bound $\mathcal Q$ from below, let $e_1$ be the first
+unit vector and put $a=A(\mu_F)-u$ and $b=A(W)-u+\frac12A_1(\mu_S)e_1$. Since $\|e_1\|=1$,
+\[
+ \|b\|^2=\|A(W)-u\|^2+(A_1(W)-u_1)A_1(\mu_S)+\tfrac14A_1(\mu_S)^2 .
+\]
+Also $\frac14A_1(\mu_S)^2\le\|A(\mu_S)\|^2$, so $\mathcal Q\ge\|a\|^2+\|b\|^2\ge2\|\frac12(a+b)\|^2$. The average of $a$ and $b$ is
+$A(\mu_F+\frac12\mu_M)-u+\frac14A_1(\mu_S)e_1$. This gives
+\begin{equation}\label{eq:squares}
+ \mathcal Q\ge\Delta,\qquad\Delta=2\sum_k\frac1k\bigl(A_k(\mu_F+\tfrac12\mu_M)+\tfrac14A_1(\mu_S)\delta_{k1}-u_k\bigr)^2 .
+\end{equation}
+The weight $\frac12$ of $\mu_M$ records that these points occur in one of the two Vandermonde products of the $x$ variables, and the weight
+$\frac14$ is half of the $\frac12$ in $b$. The diagonal terms are treated by OpenAI's regularization, which replaces the moments by damped moments
+with an error that tends to zero, as in the proof of Lemma~\ref{lem:freetangent}. We suppress this.
 
 \subsection{The trial sequences}\label{ssec:trials}
 The trial sequences have the form
@@ -114,20 +151,19 @@ the logarithmic potential of a point charge of complex strength $r$ at $x_0+i\ep
 extremal measure has a gap in its support around $x=0$. Its potential has a logarithmic singularity at $x=0$
 and square-root behaviour at the edges of the gap. A Chebyshev expansion converges slowly near such points,
 while a charge at a small distance $\epsilon_0$ reproduces the local behaviour with one term. This is also why
-the quadrature nodes of Section~\ref{sec:real} avoid the interval $(-\frac{19501}{100000},\frac{98749}{1000000})$ around $x=0$. The bounds for the negative
-and the positive nodes use its two endpoints separately. Appendix~\ref{app:field} gives the charges
+the quadrature nodes of Section~\ref{sec:real} avoid a neighbourhood of $x=0$. Appendix~\ref{app:field} gives the charges
 and the certified bounds.
 
 \subsection{The two cases at the improved rate}\label{ssec:cases}
 Theorem~\ref{thm:real} asks for the rate $U_0=U+\Gamma_0/n_0^2$ instead of $U$. In the constrained case the
-inequality of Lemma~\ref{lem:energy-ineq} still holds at $U_0$ for every $\alpha$, with the slope $c_2$. In the
-case with doubled interaction it holds at $U_0$ only for $\alpha\ge\frac1{16}$, because the extra term $U_0-U$
-is absorbed by the term $c_2\alpha$ once $\alpha$ is not small. So a new argument is needed only in the case
-with doubled interaction with fewer than $n/16$ prescribed columns. Section~\ref{sec:signed} supplies it,
-with the same constant $c_2$. Precisely, it proves the following.
+inequality above holds at $U_0$ for every $\alpha$, with the slope $c_2$. In the case with doubled interaction
+Lemma~\ref{lem:energy-ineq} gives it at $U_0$ only for $\alpha\ge\alpha_1$, because the extra term $U_0-U$ is
+absorbed by the term $c_2\alpha$ and the quadratic term once $\alpha$ is not small. So a new argument is needed
+only in the case with doubled interaction with fewer than $\alpha_1n$ prescribed columns.
+Section~\ref{sec:signed} supplies it, with the same constant $c_2$. Precisely, it proves the following.
 
 \begin{proposition}\label{prop:signed-goal}
-In the case with doubled interaction, for every configuration with $m\le n/16$ prescribed columns, the
+In the case with doubled interaction, for every configuration with $m\le\alpha_1n$ prescribed columns, the
 integrand of Lemma~\ref{lem:andreief}, with the generalized Vandermonde determinant replaced by the bound of
 Lemma~\ref{lem:binomvand}, is at most
 \[

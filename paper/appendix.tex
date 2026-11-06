@@ -1,160 +1,219 @@
-\section{Explicit subspaces for the remaining intervals}\label{app:windows}
+\section{Counting on every subspace}\label{app:windows}
 
-On $42$ of the $148$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
-inequality with an explicit rational subspace. These intervals lie in $(\frac52N,10N]$. The subspaces were found
-numerically, as candidate constant subspaces for the bound below on each interval. They are dense rational
-subspaces with no evident closed form, so they are listed in the formalization. Only the integer identities
-and the interval conditions described below enter the proof.
+On $37$ of the $113$ intervals of Theorem~\ref{thm:profile-D} the corank bound comes from the counting
+inequality applied to all constant subspaces at once. These intervals lie in $(3N,16.2N)$. No subspace is
+constructed. The proof bounds the maximum over subspaces of the right side of Theorem~\ref{thm:everyU} by forced intersections of row spaces, and the
+only finite data are upper bounds for ranks.
 
-\begin{theorem}\label{thm:profile}
-Let $v_1,\dots,v_t\in\Z^s$ span a subspace $V\subset\Q^s$ of dimension $t$. For $j$ in a finite set $\mathcal J$
-let $B_j$ be an integer matrix with $s$ columns and $r_j\le t$ an integer such that there are $t-r_j$ linearly
-independent vectors $k\in\Z^t$ with $B_j\bigl(\sum_ak_av_a\bigr)=0$. Let $\mathcal E\ne0$ be an integer such that these basis and kernel vectors remain independent modulo every
-prime not dividing it. One choice is the product of a nonzero $t\times t$ minor of $(v_1,\dots,v_t)$ and, for each
-$j$, of a nonzero maximal minor of the kernel vectors. The implemented choice is the product of the stored
-adjugate scales. Let $p\nmid\mathcal E$ be an odd prime with $H<p^2$, write $q=ap+r$ with $0\le r<p$, let $V_p=\F_p^t$ be
-the space of coordinates of $V$ modulo $p$, and let $m$ and $w_j$ ($j\in\mathcal J$) be nonnegative integers.
-Suppose that there are linear maps $\tau_{j,k}\colon V_p^m\to V_p$ ($k<w_j$) and $\iota\colon V_p^m\to\F_p^n$ such
-that, on the common kernel of the maps $B_j\circ\tau_{j,k}$, the map $\iota$ is injective and satisfies the
-hypothesis of Theorem~\ref{thm:count}. Then
+Let $V$ be a finite-dimensional vector space over $\F_p$. Let $c$ be a nonnegative integer. For $j$ in a finite
+set $\mathcal J$ let $B_j\colon V\to W_j$ be a linear map and $w_j$ a nonnegative integer, and let $\lambda_{j,k}$ ($k<w_j$) be linear forms on
+$\F_p^c$. Let $\mathcal C$ be the common kernel of the maps $B_j\circ(\lambda_{j,k}\otimes\mathrm{id})$ on $\F_p^c\otimes V$. A \emph{parametrization} is a linear map
+$\iota$ from $\F_p^c\otimes V$ to the data $x$ of a decomposition modulo $p$ (Definition~\ref{def:slot}) with three properties on $\mathcal C$. The value
+$\iota(x)$ is admissible, the map $\iota$ is injective on $\mathcal C$, and the row combination $c(\iota(x))$ satisfies the hypothesis of
+Theorem~\ref{thm:count} with some polynomial of degree less than $r$. Nothing is required outside $\mathcal C$.
+
+\begin{theorem}\label{thm:everyU}
+Let $N\ge1$ and let $p$ be an odd prime with $H<p^2$. For a parametrization and every subspace $U\subset V$,
 \[
- \nu_N(p)\ge m\,t-\sum_{j\in\mathcal J}w_j\,r_j .
+ \nu_N(p)\ge c\dim U-\sum_{j\in\mathcal J}w_j\rank(B_j|_U).
 \]
 \end{theorem}
 
 \begin{proof}
-Since $p\nmid\mathcal E$, the reductions of $v_1,\dots,v_t$ are linearly independent, so $V_p$ is the
-reduction of $V$ in the coordinates of this basis. The kernel vectors of $B_j$ satisfy an integer identity,
-so their reductions lie in the kernel of $B_j|_{V_p}$. They remain independent by the stipulated independence certificate. Hence $\operatorname{rank}(B_j|_{V_p})\le r_j$. The map $\Phi=(B_j\circ\tau_{j,k})_{j,k}$ therefore
-has rank at most $\sum_jw_jr_j$, and its kernel has dimension at least $mt-\sum_jw_jr_j$.
-Theorem~\ref{thm:count}, applied to $\ker\Phi$ with no further conditions, gives the bound.
+Since the coefficients $\lambda_{j,k}$ are scalars, $\lambda_{j,k}\otimes\mathrm{id}$ maps $\F_p^c\otimes U$ into $U$. So the restriction of $\iota$ to $\F_p^c\otimes U$ is
+a parametrization with $V$ replaced by $U$ and $B_j$ by $B_j|_U$, and its common kernel is $\mathcal C\cap(\F_p^c\otimes U)$. Let $\Phi$ be the map on $\F_p^c\otimes U$ with
+components $B_j\circ(\lambda_{j,k}\otimes\mathrm{id})$. These components map into $B_j(U)$, so $\rank\Phi\le\sum_jw_j\rank(B_j|_U)$. The
+hypotheses of Theorem~\ref{thm:count} hold on $\ker\Phi$, with the injective map $x\mapsto c(\iota(x))$ on this kernel. The theorem gives
+$\nu_N(p)\ge\dim\ker\Phi\ge c\dim U-\sum_jw_j\rank(B_j|_U)$.
 \end{proof}
 
-In the applications $m$ and the $w_j$ are affine functions of $N$ and $p$ on an interval of primes, while $V$
-and the $B_j$ are fixed. So the bound is linear on the interval. The row combinations are given by
-decompositions modulo $p$ (Definition~\ref{def:slot}) whose data $x_d$ range over $V_p$. The maps $\tau_{j,k}$
-are Taylor coefficients at $X=-1,0,1$ and coefficients at $\infty$. Admissibility of the data is required only
-on the common kernel of these conditions.
+In the applications $c$ and the $w_j$ are affine functions of $N$ and $p$ on an interval of primes, while $V$ and
+the $B_j$ are fixed. The space $\F_p^c$ is a space of polynomials of degree less than $c$ in the variable of a
+decomposition modulo $p$. The forms $\lambda_{j,k}$ are Taylor coefficients at $X=-1,0,1$ and coefficients at $\infty$. The map $\iota$ places the data block by block along the rows. Its three properties are proved once for the whole family of parametrizations. On $\mathcal C$ the moment columns take the
+values of a polynomial of degree less than $r$. Since the intervals lie in $(3N,16.2N)$, where $p>q$, we have $a=0$ in
+Theorem~\ref{thm:count}.
 
-\emph{The integer identities.} For each of the $42$ intervals the formalization lists integer vectors
-$v_1,\dots,v_t$ spanning $V$, together with a set of $t$ pivot columns. For each map $B_j$ it lists its integer matrix and a bound $r_j$ for the rank of $B_j$ on $V$.
-For each chart $j$ an integer matrix $K_j$ with $t-r_j$ rows satisfies $B_jV^{\mathsf T}K_j^{\mathsf T}=0$. A
-pivot identity $A_j(K_j)_{P_j}^{\mathsf T}=\delta_jI$ with $\delta_j\ne0$ holds for stored integer data $A_j$. The basis has the
-analogous identity $AV_P^{\mathsf T}=\delta I$ with $\delta\ne0$. These identities certify the required independence
-modulo every prime that avoids the scales.
+\emph{Lower bounds for the maximum.} For a subspace $S$ of the dual $V^*$ let $U=S^\perp$. Let $R_j\subset V^*$ be the row space of $B_j$, and let $r_j\ge\dim R_j$ be real
+numbers, in practice upper bounds for the ranks. Since $\rank(B_j|_U)=\dim R_j-\dim(R_j\cap S)$, the right side of Theorem~\ref{thm:everyU} is
+\[
+ E(S)=c(\dim V-\dim S)-\sum_jw_j\bigl(\dim R_j-\dim(R_j\cap S)\bigr).
+\]
+Let $e_0=c\dim V-\sum_jw_jr_j$ and $\delta_j=r_j-\dim R_j\ge0$. Then
+\begin{equation}\label{eq:eulerid}
+ E(S)=e_0+\sum_jw_j\delta_j+\sum_jw_j\dim(R_j\cap S)-c\dim S .
+\end{equation}
+A map may also be omitted from the sum if its weight is subtracted from $c$, because $\dim R_j-\dim(R_j\cap S)\le\dim V-\dim S$. The following three lemmas give a subspace
+with $E(S)>e_0$, from relations among the row spaces. All sets of indices are subsets of $\mathcal J$, and all $w_j$ are nonnegative.
 
-\begin{proposition}\label{prop:finite-ranks}
-For each of the $42$ intervals the three identities above hold in $\Z$ for the stored data. Consequently the
-hypotheses of Theorem~\ref{thm:profile} on $V$ and the $B_j$ hold, with $\mathcal E=\delta\prod_j\delta_j$ up to
-sign.
-\end{proposition}
+\begin{lemma}[pair]\label{lem:pairU}
+Let $a\ne b$ lie in a set $I$ such that $R_a\le R_j$ or $R_b\le R_j$ for all $j\in I$. Let
+$s\ge\dim(R_a+R_b)$ and $0\le h\le\min\bigl(w_a,w_b,\sum_{j\in I}w_j-c\bigr)$. Then some $S$ has
+$E(S)\ge e_0+\max(0,r_a+r_b-s)\,h$.
+\end{lemma}
 
-The exact integer checks are split into a head check and chart checks, with further row chunks where necessary.
-Their soundness lemmas establish the independence of the basis, the independence of the kernel vectors and the
-annihilation identity. Kernels in graph form use their scaled identity on the free columns. Packed integer
-products are justified by an explicit bound that excludes carries. The parts are assembled into one statement
-that the stored data form a valid certificate. The Lean kernel evaluates these checks. No prime and no floating
-point number enters. A kernel of dimension zero and a saturated chart are included.
+\begin{proof}
+Take $S=R_a\cap R_b$ and let $k=\dim S$. Then $S\le R_j$ for $j\in I$, so \eqref{eq:eulerid} gives
+\[
+ E(S)-e_0\ge w_a\delta_a+w_b\delta_b+\Bigl(\sum_{j\in I}w_j-c\Bigr)k\ge h(\delta_a+\delta_b+k).
+\]
+Since $\dim(R_a+R_b)+k=\dim R_a+\dim R_b$, we have $r_a+r_b-s\le\delta_a+\delta_b+k$. Also $\delta_a+\delta_b+k\ge0$.
+\end{proof}
 
-\emph{The interval conditions.} The hypotheses on the conditions and on $\iota$ depend on $N$ and $p$. An
-interval is described by finitely many linear inequalities in $N$ and $(p-1)/2$, and on each of finitely many
-pieces of the interval the numbers $m$ and $w_j$ are affine in the same variables. On each piece a verified
-procedure checks three things. The orders of the Taylor conditions are nonnegative and fit the interval. The
-map $\iota$ is injective on the common kernel and lands in the admissible data. The values at the moment
-columns are given there by a polynomial in the column of degree less than $q\bmod p$, so that
-Theorem~\ref{thm:count} applies. Each required inequality is derived from the inequalities of the interval by
-nonnegative combinations and integer rounding, that is, by Chv\'atal--Gomory cuts. The soundness theorem of the
-procedure gives the hypotheses of Theorem~\ref{thm:profile} at every odd prime $p$ of the interval with
-$p\nmid\mathcal E$. For large $N$ all primes of the interval are of this kind. The primes
-$p$ below the fixed integers of the certificate lie below the interval for large $N$. In addition $N$ is taken
-large enough that $H<p^2$ and $L<p^2-p$. Since the intervals lie in $(\frac52N,10N]$, one has $a=0$ in
-Theorem~\ref{thm:count} for $p>q=4N$ and $a=1$ for the smaller primes.
+\begin{lemma}[several points]\label{lem:pointsU}
+Let $c\ge0$. Let $I_1,\ldots,I_l$ be disjoint sets with $a_i\in I_i$, such that $R_{a_i}\le R_j$ for $j\in I_i$. Put $W_i=\sum_{j\in I_i}w_j$ and suppose that $W_i\le c$ for each $i$.
+Let $s\ge\dim\sum_iR_{a_i}$. Let $h\ge0$ with $h\le w_{a_i}$ for each $i$ and $h\le\sum_iW_i-(l-1)c$. Then some $S$ has
+$E(S)\ge e_0+\max(0,\sum_ir_{a_i}-s)\,h$.
+\end{lemma}
+
+\begin{proof}
+Let $\mathsf T$ be the kernel of the sum map $\bigoplus_iR_{a_i}\to V^*$, and let $k=\dim\mathsf T$. Let $K_i\le R_{a_i}$ be the projection of $\mathsf T$ to the summand $i$, let $\kappa_i=\dim K_i$, and let
+$S=\sum_iK_i$. Then $\kappa_i\le k$. The rank formula for the sum map gives $\sum_i\dim R_{a_i}\le s+k$. The kernel of the sum map on $\bigoplus_iK_i$ is again $\mathsf T$, so
+$\dim S=\sum_i\kappa_i-k$.
+
+For $j\in I_i$ we have $K_i\le R_j\cap S$, so $\dim(R_j\cap S)\ge\kappa_i$. Since the $I_i$ are disjoint, the $a_i$ are distinct, and \eqref{eq:eulerid} gives
+\[
+ E(S)-e_0\ge\sum_iw_{a_i}\delta_{a_i}+\sum_iW_i\kappa_i-c\sum_i\kappa_i+ck\ge h\sum_i\delta_{a_i}+\sum_i(W_i-c)\kappa_i+ck.
+\]
+Since $W_i-c\le0$ and $\kappa_i\le k$, the last two terms are at least $k(\sum_iW_i-lc+c)\ge hk$. So $E(S)-e_0\ge h(\sum_i\delta_{a_i}+k)$, and
+$\sum_ir_{a_i}-s\le\sum_i\delta_{a_i}+k$.
+\end{proof}
+
+\begin{lemma}[kernel]\label{lem:kernelU}
+Let $R\subset V^*$ be a subspace with $\dim R\le s$, and let $Z$ be a set with $R_j\le R$ for $j\in Z$. For every integer $d\ge0$
+with $d+s\le\dim V$ some $S$ has
+$E(S)\ge cd-\sum_{j\notin Z}w_j\min(r_j,d)$.
+\end{lemma}
+
+\begin{proof}
+The space $R^\perp\subset V$ has dimension at least $d$. Choose $U\le R^\perp$ of dimension $d$ and let $S=U^\perp$. Then $B_j|_U=0$ for $j\in Z$, and $\rank(B_j|_U)\le\min(r_j,d)$ for
+the other $j$.
+\end{proof}
+
+\emph{The rank data.} The space $V$ is a space of profiles of the coefficient vectors of a block, with coordinates
+$T_k$. The conditions at the moment columns are linear combinations of a small number of basic rows
+\[
+ A[k]\mapsto T_k+T_{k+1},\qquad C[k]\mapsto T_{k+1}-T_k,
+\]
+together with the row of the centre coordinate. So the moment values themselves are not needed. Every row factors
+through the map $G$ whose components are these basic rows. This gives $r_j\le\min(\rank F_j+\#\text{basic rows},\ \rank(G,F_j))$, where $F_j$ is the fixed part
+of the map. Each rank bound is certified by an integer left inverse, checked by the Lean kernel. Integer left
+inverses are valid at every prime, so no prime enters this step.
+
+The $37$ intervals are treated as follows: $13$ by Lemma~\ref{lem:kernelU}, $12$ by Lemma~\ref{lem:pointsU}, $11$ by
+Lemma~\ref{lem:pairU}, and one by $E(V)$ itself. On each interval the bound is an affine function
+$\nu_N(p)\ge c_0N+c_1p-2$ with rational $c_0$ and $c_1$. The rounding of the integer orders is absorbed by
+the shortening $\tau$ of the interval and the lowering of the bound by $10^{-6}$ in Section~\ref{ssec:kappa}.
 
 \section{The bounds for the energy method}\label{app:field}
 
 This appendix gives the trial sequences of Section~\ref{sec:energy}, the certified bounds that they satisfy, and
 the bound for $W_0$.
 
-\emph{Trial sequences.} Both for the constrained case and for the case with doubled
+\emph{Trial sequences.} For the constrained case we use a trial sequence with $40$ Chebyshev coefficients and a
+finite number of geometric terms, with the multiplier $\lambda_1=1.68493357$. For the case with doubled
 interaction we use trial sequences of the form \eqref{eq:trial}, with $\Kcoef$ Chebyshev coefficients, which are
-dyadic rationals, and $\Ngeo$ geometric terms. Each of the two sequences $u$ and $v$ has $\Kcoef$ coefficients and $\Ngeo$ rational geometric terms. Of these terms, $34$ have
-real $z_j$ and $\Ncomplex$ have complex $z_j$ and complex $r_j$. The real $z_j$ have $|z_j|\in[\frac45,\frac{999997}{1000000}]$,
-with $17$ magnitudes for each sign. The complex charges sit at the
-equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with $\epsilon_0=10^{-2}$. In the constrained case
-the multiplier is $\lambda_1=1.6$. The norms of the geometric terms have closed forms:
+dyadic rationals, and $\Ngeo$ geometric terms. Of these, $\Ncomplex$ have complex $z_j$ and complex $r_j$. We
+place the complex charges at the $41$ equally spaced points $x_0=-0.16+0.008j$ $(0\le j\le40)$, all with
+$\epsilon_0=10^{-2}$. The real terms sit at points $\pm z$ with $z$ increasing from $0.8$ to $0.999997$. The
+numbers $z_j$ are rationals with at most twelve decimals. The norms of the geometric terms have closed forms:
 two terms $(z_j,r_j)$ and $(z_l,r_l)$ contribute
 $-\frac12\operatorname{Re}\bigl(r_jr_l\log(1-z_jz_l)+r_j\bar r_l\log(1-z_j\bar z_l)\bigr)$ to $\|u\|^2$.
 
-\emph{Covers by intervals.} We must bound three functions of one variable from above on their whole domains: the
-field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on the node set $E_x$. Each is a polynomial
-plus finitely many terms $P(x)\log|x-c|$, $\operatorname{Re}\,\varrho\log(x-z)$ with complex $z$ and $\varrho$, and
-Laurent terms. We cover each domain by finitely many intervals $[a,b]$ with rational endpoints. On such an
-interval put $c=(a+b)/2$ and $r=(b-a)/2$. The polynomial part is shifted exactly to the centre $c$.
-Each logarithmic and Laurent term is replaced by its Taylor polynomial at $c$ with a rigorous remainder. The
-remainder is a geometric series, bounded by a finite rational expression once $r$ is a fixed fraction of the
-distance from $c$ to the singularity. The Taylor polynomials are added to the shifted polynomial, so that
-cancellations between terms are kept. The sum is a polynomial in $u=(x-c)/r\in[-1,1]$, with coefficients
-rounded to a dyadic grid and the rounding error added to the remainder. We then bound this polynomial
-from above by its expansion in Chebyshev polynomials. Let $\gamma_0,\gamma_1,\dots$ be Chebyshev
-coefficients supplied with the certificate. Since $|T_j|\le1$, the polynomial is at most
-$\gamma_0+\sum_{j\ge1}|\gamma_j|$ plus the sum of the absolute values of the coefficients of the difference
-between the polynomial and $\sum_j\gamma_jT_j$. The latter sum is computed exactly in the monomial basis.
-The Chebyshev coefficients are untrusted data. Only the final comparison with the threshold, a rational number, is
-checked. Near $x=0$ and $x=\pm1$ the singular terms are treated by separate end windows with exact Laurent
-cancellation. Every step uses exact rational and integer arithmetic.
+\emph{The suprema of the fields.} We must bound three functions of one variable from above on their domains: the
+field $X$ on $[-1,1]$, the field $Y$ on $[0,1]$, and the field $F_1$ on $E_x$. For $X$ and $Y$ we locate the real
+critical points. The derivative is a rational function with a known denominator, and an exact identity gives its
+numerator. The Descartes rule, after a M\"obius transformation of the interval, bounds the number of real roots
+of the numerator. Sign evaluations at $81$-bit rational points then isolate this number of roots. One global Lipschitz
+bound on each isolating interval and the values at the end points give the supremum. For $F_1$ on $|x|\ge401/2500$ we use a
+cover by cells, with exact rational and integer arithmetic on each cell. The cover uses a Taylor expansion of the
+polynomial part and an expansion to order $5$ of the logarithmic terms. On the positive part of $E_x$ below $401/2500$
+three further cells suffice, because the field stays below $-0.08$ there.
 
-The certificates for the three trial sequences are organized by classes of fields. We name the classes as in the
-formalization. The counts below include the intervals at the endpoints of each domain. The class Fr uses $1127$ intervals, grouped in $142$ assembly blocks. The class SN uses $304$ intervals
-in $20$ blocks. The class SP uses $722$ intervals in $51$ blocks. The class SM uses $41$ intervals and needs no
-blocks. The class SPm has two parts. Its part R uses $365$ intervals in $25$ blocks, and its top part uses $456$
-intervals in $33$ blocks. The class SC rests on a shared base of $200$ intervals, which the two overlay partitions of its
-other two cases reuse, and on $160$ further checks of differences. The cross terms at the corners of the domain
-(class Near) use $152$ numerical intervals and one analytic bound, in $6$ covers over $26$ modules.
-
-\emph{The bounds.} The covers give
+\emph{The bounds.} This gives
 \[
- \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{x\in E_x}F_1\le\ResCap .
+ \sup X\le\SupX,\quad \sup Y\le\SupY,\quad \sup_{E_x}F_1\le\ResCap .
 \]
-So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le\NormCap$. The first coefficient satisfies
-$u_1\ge17/100$, which is used near $x=0$. For the points of the second kind, $F_2$ is nonincreasing in $u_1$, so it suffices to take
-$u_1=17/100$. On $(0,1)$ the function $F_2$ is strictly concave, since $\log y$ and $-\log(1+y^2)$ are concave there
-and $-u_1y$ is linear. Its unique critical point lies in $[0.7748022467,0.7748022468]$, and an enclosure at this point
-gives $\sup_{0<y<1}F_2(y)<-0.7718$. For the constrained case, with the weights
-$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(3/8,1/9,61/72,\lambda_1,1/6)$ and $\lambda_1=1.6$, the bounds
-$\sup X_1\le-1.124$ and $\sup Y\le-1.205$ are certified in the same way. The norm bound is $n_1=0.52984$. With $a_0=17/24$,
-$a_1=21/8$ and $U=\Utarget$ these give the constants stated after Lemma~\ref{lem:energy-ineq}. At the rate $U_0$
-the inequality of the constrained case still holds with the slope $c_2$, and that of the case with doubled
-interaction holds for $\alpha\ge\frac1{16}$ with the slope $c_2$.
+So $M_X+M_Y=\FieldCap$, and the norms satisfy $2\|u\|^2+\frac12\|v\|^2\le0.7736206$. The first coefficient satisfies
+$u_1\ge9/50$, which is used near $x=0$. For the points of the second kind a one-variable estimate gives
+$\sup_{0<y<1}F_2(y)\le-77/100$ for $u_1\ge9/50$. For the constrained case, with the weights
+$(\alpha_A,\beta_h,\gamma_H-\frac12,\lambda_1,2g_0/n_0)=(11/29,3/29,49/58,\lambda_1,5/29)$, the bounds
+$\sup X_1\le-1.15854$ and $\sup Y\le-1.32981$ are obtained by isolating the zeros of the numerators of the
+derivatives, which are polynomials with integer coefficients. The norm bound is $n_1=0.67761$. With $a_0=41/58$,
+$a_1=76/29$ and $U_0=\Uzero$ these give the hypotheses of Lemma~\ref{lem:energy-ineq} and the inequality of the
+constrained case, as stated in Section~\ref{sec:energy}.
 
-\emph{The bound for $W_0$.} All points of the contour $\Gamma_r$ satisfy $|z|\le1$, so $\Phi_y(z)$ is
-nondecreasing in $y$. The function $\tilde h_2$ is nonincreasing. So on a cell $[y_1,y_2]$ the function
-$w(y)+72\tilde h_2(y)$ is at most $\max_{\Gamma_r}\Phi_{y_2}+72\tilde h_2(y_1)$. We cover $[0,1]$ by $149$
-cells, all with the radius $r=\frac35$. On the circle we use complex conjugation and cover the upper half by
-$622$ arcs. On each arc we expand $P$ exactly at the midpoint of the arc and bound the remainder by the
-moduli of its Taylor coefficients. This gives an upper bound for $g_E$, since $\operatorname{arccosh}$ is
-increasing. On the two real segments $\Phi_y$ is affine in $y$, so its bounds at $y=0$ and $y=1$ cover all
-$y$. This proves
+\emph{The bound for $W_0$.} By \eqref{eq:entropy} the bound for $W_0$ is the maximum of a field on the contour $\Gamma$ of
+Section~\ref{sec:real}. The contour consists of the circle $|z|=\frac35$ and real segments. On the circle, the
+inequality \eqref{eq:circlecap} follows from the bound
 \[
- \sup_{0\le y\le1}\bigl(w(y)+72\tilde h_2(y)\bigr)\le W_0=\WZero .
+ \bigl(|P(z)|^7|1-z|^{103}\bigr)^2<\frac{20550646924241}{2^{44}}\cdot2^{2\cdot871}\qquad(|z|=\tfrac35)
 \]
-The supremum is attained near $y=0.625$, where the circle dominates the segments.
+for an explicit integer polynomial $P$. Substituting $z=\frac35\zeta$ turns the difference into a Laurent polynomial on
+$|\zeta|=1$, and a sum of squares identity proves its positivity. This is a single polynomial identity with $256$ square
+numerators. On the real segments the field is treated by a direct estimate. This proves
+\[
+ \sup_{0\le y\le1}\bigl(w(y)+58\tilde h_2(y)\bigr)\le W_0=\WZero .
+\]
 
-\section{The trial measures of Section~\ref{sec:signed}}\label{app:trials}
+\section{The reference measures of Section~\ref{sec:signed}}\label{app:trials}
 
-A trial measure for the concave majorant of \S\ref{ssec:reflection} consists of a reference measure for the
-free nodes with a piecewise polynomial density, trial sequences for the rows, the columns and the numerator
-of Theorem~\ref{thm:heine}, and the measure $\mathsf m$ of Lemma~\ref{lem:LGlow}. The trial sequences have $120$
-Chebyshev coefficients and geometric tails with complex poles, as in \eqref{eq:trial}. We use three trial
-measures, at $\alpha=0$, $\frac1{200}$ and $\frac1{16}$. The constant of Theorem~\ref{thm:near1} interpolates
-between them in the same way as the fields.
+The bound of \S\ref{ssec:budget} uses reference measures $q_+$ and $q_-$, a row reference $R$ and a column reference $C$.
+This appendix describes them and the certified bounds \eqref{eq:caps}.
 
-At each of the three trial measures we bound the suprema of six fields: the fields of the negative and the
-positive free nodes, the column field, and the fields of the prescribed negative nodes, the prescribed
-positive nodes and the nodes of $\mathcal S$ in \eqref{eq:expandS}. Each field is a polynomial plus finitely many
-terms $P(x)\log|x-c|$ and $\operatorname{Re}\,\varrho\log(x-z)$ with complex $z$ and $\varrho$, plus a constant.
+\emph{The measures.} On the real line of the variable $Y=x+1/x$ with $|Y|\ge2$ we take measures $G_+$ and $G_-$ that
+are piecewise uniform on finitely many cells in $Y$, with masses $m_+$ and $m_-$ and total mass $1$. They carry the positive and the
+negative free nodes, and $R=G_++G_-$ is the row reference. The column reference $C$ has mass $1$. The measures are completed by
+auxiliary measures on the $16$ inner circles. Each auxiliary measure has a cubed Poisson density: its Fourier coefficients
+are $-q^k(1+Ak+Bk^2)/k$ with $q=e^{-\varepsilon/2}$ and $\varepsilon=27/250$, and the constants $A$ and $B$ are rational functions of $r=q^2$.
+The auxiliary measures $\nu_+$ and $\nu_-$ sit at the phases $\pi j/93$, with $680$ entries, and have total masses $1-m_+$ and $\frac{53}{58}-m_-$. Let $X$ be the inverse of $x\mapsto x+1/x$ with $|X|\le1$. Then
+$q_+=X_\#G_++\nu_+$ is the measure in the plane of $z$. In the plane of $u$ we take $q_-=J_\#\tilde q_-$ with $\tilde q_-=X_\#G_-+\nu_-$.
 
-The suprema are verified on covers by cells, as in Appendix~\ref{app:field}. The endpoints of the domains are
-treated by Laurent expansions and logarithmic end intervals. The polynomial part of a field has degree about
-$120$. On a block of cells we shift its Taylor expansion exactly to a fixed order and bound the remaining
-coefficients by one table shared by the block, which keeps the integers small. The smallest margin of the
-inequality of \S\ref{ssec:signedcert} is $0.0143$ per unit of $N^2$.
+\emph{The fields.} Let $L(\mu)=\int\log|X|\,d\mu$. For $\sigma=\pm$ the free row field is
+\begin{multline*}
+ F_\sigma(x)=L(R)+L(G_\sigma)-\kappa_\sigma+U^{G_\sigma+R-2_\#C}(x+1/x)+\bigl(m_\sigma+\tfrac{11}{29}\bigr)\log|x|\\
+ -\tfrac{39}{29}\log(1+x^2)+\tfrac3{29}\log(1-x)+[\sigma=+]\bigl(\mathsf P(x)+\mathsf E\bigr)+A_\sigma(x),
+\end{multline*}
+where $A_+=U^{\nu_+}$ and $A_-(x)=\int(\log|x-w|+\log|1-xw|)\,d\nu_-(w)$. The polynomial $\mathsf P(x)=\sum_{k\le900}m_kx^k/k$ with $m_k=\int X^k\,dG_+$ is
+the truncated reflection potential of the positive measure, and $\mathsf E\ge0$ bounds its tail.
+The column field is
+\[
+ \mathsf C(s)=-L(R)+2U^C(s)-U^R(2s)+\tfrac9{58}\log s+\tfrac3{58}\log(1-s).
+\]
+A prescribed row outside $S$ has the field $\mathsf H_\sigma$ obtained from $F_\sigma$ by three changes. The references $R$ and $C$ are removed, the
+coefficients $\frac{11}{29}$ and $\frac3{29}$ are replaced by $0$, and $\frac{39}{29}$ is replaced by $\frac{53}{58}$. Its domain is
+$x\le-19501/10^5$ and $x\ge98749/10^6$, which contains $E_x$. A prescribed row in $S$ has the field
+\[
+ \mathsf H_S(y)=\tfrac{48}{58}\log y-\tfrac{53}{58}\log(1+y^2)-\kappa_+-\mathsf P(y)+\int\log|1-yw|\,d\nu_+(w)
+\]
+for $0<y<1$.
+The angular fields are the same potentials on the $16$ circles, together with the terms $(53\sigma_j-\tau_j/2)/58$.
+
+\emph{The constant $\mathsf I$.} Let $E(\mu,\nu)=\iint\log|Y-Y'|\,d\mu\,d\nu$. Evaluating $\mathsf Q$ on the references gives $\mathsf I_0=-\frac12E(R,R)-E(C,C)+E(R,2_\#C)$. Since $R=G_++G_-$, six pair
+energies of lists of cells occur: those of $G_+$, $G_-$ and $C$ with themselves, $E(G_+,G_-)$, $E(G_+,2_\#C)$ and $E(G_-,2_\#C)$. The energies $I(q_\pm)$ split into cell, cross and auxiliary parts. Their cell parts contain the same
+pair energies. For piecewise uniform measures a pair energy is a bilinear form in the jumps of the densities, with the kernel $t^2\log|t|$, up to constants. We evaluate it on integer end points in fixed point arithmetic. Well separated blocks of end points are
+treated by a series in the offsets from their centres, using the moments of the blocks, and the other pairs by a recursion on the blocks. This encloses each pair energy to within $10^{-7}$. The remaining terms of $I(q_\pm)$ are the logarithmic moments of the cells,
+the integrals of the cells against the rings, which are sums of primitives over the end points, and the quadratic forms of the auxiliary measures, which have closed forms on the rings. All of these are enclosed to within $10^{-9}$. The reflection term $-\iint\log(1-xx')$ of $I(q_+)$
+enters only through a lower bound from its truncated series. Finally $\int_0^{53}\tau^*\ge1425.3339$. Together these give $\mathsf I\le2.367346$.
+
+\emph{The column field.} The bound $\mathsf C\le-2.946610$ on $(0,1)$ uses a chain of $386$ units $s=(M+\delta z)/10^{12}$ with $|z|\le1$, together with two end ranges. On a unit the field is at most an integer polynomial in $z$ plus an explicit
+error. The far cells of the references enter through exact integer moments of contiguous clusters, $1152$ clusters in all, and the Taylor series of the logarithmic kernel. The near cells of $C$ enter through the closed form of their potential. The two logarithms enter by
+series or, on the end units, by monotonicity. The constant is $L(R)\ge-0.6905432$, from the primitive of $\log|X|$ in $Y$.
+
+\emph{The angular bounds.} The bounds $\kappa_\pm$ are proved for both signs on each of the $16$ radii, by $32$ certificates. The auxiliary part is cut at degree $384$, with the tail retained. The gas is split into bins. On a bin the kernel has the form
+$\mathsf Q_u(x)=\mathsf a-2\mathsf bux+\mathsf cx^2$ with $u=\cos\theta$. Jensen's inequality and an odd truncation of the logarithmic series bound $\int\frac12\log\mathsf Q_u$ by a polynomial in $u$. The negative sign has a direct and a reflected kernel. The sum over the bins
+is converted exactly to a Chebyshev series. Its bound by $\kappa_\pm$ on $[-1,1]$ is certified by an identity of the same form as the one for the free rows below.
+
+\emph{The prescribed rows.} The auxiliary series of $\mathsf H_\pm$ are cut at degree $384$. The gas potential is expanded in Chebyshev polynomials on $[0,1]$. The first $64$ terms are exact, and the tail is bounded by Bessel's inequality from a bound for the $L^2$ energy of the cell densities.
+The reflection series is dropped by sign for the positive gas and kept through exact moments for the negative gas. The radial field is a sum of $16$ blocks, one for each radius. Its polynomial part goes exactly into the Chebyshev variable, and the part of degree at most $16$ is bounded by
+a chord cover with the radii as nodes. This gives a polynomial majorant, and a sum of squares identity gives $\mathsf H_\pm\le-0.9783$. On $[\frac1{10},1]$ the field $\mathsf H_S$ is treated in the same way. There $\mathsf P$ is replaced by its partial sum of degree $32$, since the moments are nonnegative, the auxiliary series is cut at degree $32$ with an absolute tail, and
+$\log y$ and $\log(1+y^2)$ are expanded explicitly. This gives $\mathsf H_S\le-0.997$. On $(0,\frac1{10}]$ one has directly $\mathsf H_S(y)\le\frac{24}{29}\log y+\log(1+y)-\kappa_++$(a fixed tail), which is smaller. So $\mathsf M=-0.976$ is admissible.
+
+\emph{The free rows.} The free row fields are bounded on each sign as follows. Put $t=|x|$ and $z=2t-1$. The exact field is at most its truncation to degree $384$ in the auxiliary terms, up to a tail
+below $10^{-8}$. We bound the truncated field by one polynomial in $z$. The direct potential of the own measure, $\int\log|t-X(y)|$, is replaced by its Chebyshev series,
+with a tail bounded through the variation of the density. Thin pieces of nonnegative density are dropped, since $\log|t-v|\le0$ there. All other potentials
+are bounded from above by finite sums of terms $w\log|1-r(\mathsf q)t|$ with rational $\mathsf q$: tangent majorants for the reflection and opposite pieces, chord majorants for the
+column panels, and the same form for $\log t$ and $\log(1-t)$. Each such term has an explicit Chebyshev expansion with a geometric tail. The moments of these terms and the
+direct moments are computed by exact integer arithmetic with Kronecker packing. The radial field and the term $-\frac{39}{29}\log(1+t^2)$ are bounded by a chord cover and a
+Chebyshev polynomial. This gives a polynomial $\mathsf p(z)$ with $F_\sigma\le\mathsf p$ plus explicit small errors. Finally $\mathsf p(z)\le\mathsf c$ on $[-1,1]$ is proved by an exact identity
+$\mathsf d(\mathsf c-\mathsf p)=\mathsf r+\mathsf q_0^2$ between Chebyshev series, with $\mathsf q_0$ of degree $16383$ and with $\mathsf r$ small in the $\ell^1$ norm of its coefficients. This gives
+$\mathsf R\le-2.579777$ for both signs.

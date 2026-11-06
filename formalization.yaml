@@ -5,32 +5,39 @@ project:
   name: "An irrationality measure for Catalan's constant"
   description: >-
     For Catalan's constant G = sum_{j >= 0} (-1)^j / (2j+1)^2, we prove
-    |G-a/b| > b^(-400) for every integer a and all sufficiently large b, so the
-    irrationality exponent of G is at most 400. The proof uses OpenAI's
-    determinant construction for an arbitrary design of five integer parameters,
-    here (72,11,4,6,4), with a determinant of size 72N whose value is a polynomial
-    of degree 66N in the constant. At a prime p the denominator of the
-    determinant is smaller by the dimension of the kernel of the reduction modulo
-    p of the matrix of rational parts. Closed formulas, a counting inequality for
-    the nullity and a rank theorem for digit blocks, applied on windows of primes
-    to fixed rational subspaces whose ranks are certified by exact integer
-    computations, give a piecewise linear profile of area at least 34.50397 in
-    units of N^2. At the real place a signed bound for the determinant of the row
-    functions (a Pick matrix argument, a Schur complement, Heine's formula for the
-    negative block and an energy inequality for signed measures) adds 12.79086 to
-    the decay rate. A quadrature formula with 66N nodes, the inverse images under
-    a fixed polynomial of Chebyshev nodes (due to C. Davis), with the exact Green
-    function of the inverse image, a binomial bound for generalized Vandermonde
-    determinants and a contour bound for each column weight, extends the bound to
-    an interval of length exp(-rho N) around G, with rho = 368.268856. The energy
+    |G-a/b| > b^(-295) for every integer a and all sufficiently large b, so the
+    irrationality exponent of G is at most 295. The proof uses OpenAI's
+    determinant construction for general parameters, here the design
+    (58,9,3,5,3), with a determinant of size 58N whose value is a polynomial of
+    degree at most 53N in the constant. At a prime p each unit of corank modulo p
+    of the matrix of rational parts lowers the denominator by a factor p. Closed
+    formulas and one counting inequality, applied on the remaining intervals of
+    primes to every constant subspace at once, with upper bounds for ranks from
+    forced intersections of row spaces, give a piecewise linear profile of area
+    at least 22.0607 in units of N^2. At the real place, a phase inequality for
+    Pick matrices, proved by interpolation with a finite Blaschke product, shows
+    that the determinant det L of OpenAI's integrand loses only a factor 499^n
+    when the weight of the positive nodes is replaced by 0, as soon as a phase
+    statistic of the nodes is large enough. The statistic is large on every
+    configuration close to the maximum of OpenAI's energy, and OpenAI's bound
+    suffices on the others. With weight 0 the determinant factors through two Gram
+    determinants, which Fischer's inequality and a finite Andreief identity bound
+    by two logarithmic gases, and tangent inequalities against fixed reference
+    measures bound the gases. This adds 23.11 to the decay rate. A quadrature
+    formula with 53N nodes, the inverse images under a fixed polynomial of
+    Chebyshev nodes (due to C. Davis), with the exact Green function of the
+    inverse image, a binomial bound for generalized Vandermonde determinants and
+    one contour of radius 3/5 for the column weights, extends the bound to an
+    interval of length exp(-rho N) around G, with rho = 295.849794. The energy
     estimates use trial sequences given by logarithmic potentials of point
-    charges, verified on cells with exact polynomial enclosures. The decay rate is
-    eta = 60.7644388, and a criterion with a free lower end of the window of
-    primes gives the exponent 400: its last condition reads
-    400 > d rho / (eta - 4 d delta) = 399.99999... with d = 66 and
-    delta = 2.9e-7. Denominator and content asymptotics and the choice of the
-    prime use the prime number theorem. All numerical bounds are ordinary
-    kernel-checked rational proofs.
+    charges. The fields of the reference measures are bounded by polynomial
+    majorants and exact sum of squares identities. The decay rate is
+    eta = 53.16065, and a criterion with a free lower end of the window of primes
+    gives the exponent 295: its last condition reads
+    295 > d rho / (eta - 4 d delta) = 294.956... with d = 53 and delta = 2.9e-7.
+    Denominator and content asymptotics and the choice of the prime use the prime
+    number theorem. All numerical bounds are ordinary kernel-checked rational
+    proofs.
   authors:
     - "Sean Litsey"
   license: "Apache-2.0"
@@ -130,21 +137,20 @@ status:
   scope: >-
     The statement in Challenge.lean, with Catalan's constant written as a series,
     is fully proved in Solution.lean by
-    CatalanMeasure.GenD.Signed.Data.Trial72.Measure400.catalan_irrationalityMeasure_400.
+    CatalanMeasure.GenD.Signed.RouteI.Measure295.catalan_irrationalityMeasure_295.
     Every result of the companion paper is formalized, including the degree and
-    denominator bounds, the nonvanishing, the closed formulas and the counting
-    inequality and the digit-block rank theorem for the rank deficiencies with
-    their exact rank certificates, the
-    divisibility of the coefficients, the signed bound for the determinant of the
-    row functions, the quadrature perturbation estimate, the energy bounds and
-    their numerical certificates, and the criterion with the
-    choice of the prime. The prime number theorem comes from the PNT+ project
-    through OpenAI's vendored formalization. The paper's remarks on the method
-    are not formalized. The solution has no sorry and no native_decide;
-    #print axioms reports only propext, Classical.choice and Quot.sound.
-    comparator.json configures lake comparator for this statement, and the
-    comparator job of the CI workflow runs it with Lean's kernel and the NanoDa
-    and con-ron kernels bundled with the toolchain.
+    denominator bounds, the nonvanishing, the closed formulas, the counting
+    inequality and its application to every constant subspace with the rank data,
+    the divisibility of the coefficients, the phase inequality for Pick matrices,
+    the Gram and logarithmic gas bounds for the row determinant, the quadrature
+    perturbation estimate, the energy bounds, the reference measures and their
+    numerical certificates, and the criterion with the choice of the prime. The
+    prime number theorem comes from the PNT+ project through OpenAI's vendored
+    formalization. The paper's remarks on the method are not formalized. The
+    solution has no sorry and no native_decide; #print axioms reports only
+    propext, Classical.choice and Quot.sound. The proof is kernel-checked: Lean's
+    kernel accepts every declaration. comparator.json configures lake comparator
+    for this statement, but the proof has not been run through it.
   sorry_count: 0
   sorry_in_definitions: 0
   axioms: []
@@ -185,10 +191,10 @@ alignment:
   namespace: "CatalanIrrationalityMeasure"
   statements:
     - source: "Litsey (2026), Theorem 1.1"
-      lean: "CatalanIrrationalityMeasure.catalan_irrationalityMeasure_400"
+      lean: "CatalanIrrationalityMeasure.catalan_irrationalityMeasure_295"
       module: "Challenge"
       status: proved
-      note: "For all large b and all integers a, b^(-400) < |G - a/b|."
+      note: "For all large b and all integers a, b^(-295) < |G - a/b|."
 
 acknowledgements: >-
   OpenAI's formalization of the irrationality of Catalan's constant; Cinna
