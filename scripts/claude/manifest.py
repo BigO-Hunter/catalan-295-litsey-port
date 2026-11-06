@@ -163,6 +163,10 @@ if __name__ == '__main__':
         save(scope, rows); print('added', m)
     elif a[0] == 'rebuild-ok':
         scope, rows = load()
+        held = [l for l in (MAN.parent / 'hold.txt').read_text(encoding='utf-8').splitlines()
+                if l.partition('#')[0].strip() and a[1].startswith(l.partition('#')[0].strip())]
+        if held:
+            sys.exit('refused: module is under a coordinator hold, lift it first: ' + held[0])
         rows[a[1]].update(status='rebuild-ok', note=rows[a[1]]['note'] + ' | rebuild-ok: ' + ' '.join(a[2:]))
         save(scope, rows); print('rebuild-ok', a[1])
     elif a[0] == 'owner':
