@@ -1,7 +1,7 @@
 """Serial guarded Lean build with Windows memory observations; never kills jobs."""
 import ctypes as C
 from ctypes import wintypes as W
-import json, subprocess, sys, time
+import json, os, subprocess, sys, time
 from pathlib import Path
 sys.stdout.reconfigure(encoding='utf-8')
 
@@ -77,6 +77,24 @@ def snapshot(root,root_birth):
 
 target=sys.argv[1]; mode=sys.argv[2] if len(sys.argv)>2 else 'preflight'
 assert mode in ('preflight','build')
+# 6 Nov (Sean): the route-I build manifest gates direct builds too (the coordinator's manual
+# builds bypassed lanes.submit). Owner is checked only when LANES_OWNER is set: lanes-admitted
+# jobs were already owner-checked in submit, and the driver's environment does not carry it.
+if mode=='build':
+    sys.path.insert(0,os.path.dirname(os.path.abspath(__file__)))
+    import manifest as _man
+    _own=os.environ.get('LANES_OWNER','')
+    _r=_man.refusal(target,_own) if _own else _man.refusal(target,(_man.load()[1].get(target) or {}).get('owner',''))
+    if _r is not None:
+        _rc,_msg=_r
+        if _rc=='check-stale':
+            _pf=subprocess.run([sys.executable,'-I',os.path.abspath(__file__),target,'preflight','3'],
+                               capture_output=True,text=True,encoding='utf-8',errors='replace')
+            _n=sum(1 for l in _pf.stdout.splitlines() if 'Building ' in l)
+            if _n==0:
+                print(f'run_guarded: {_msg}; up to date, nothing built',flush=True); sys.exit(0)
+            _rc,_msg=93,f'{_msg}, but an import changed after it was built (stale {_n}); needs coordinator rebuild-ok'
+        print(f'run_guarded: refused by manifest: {_msg}',flush=True); sys.exit(_rc)
 # Parent-authorized exact provider gate; new invocations only, before reservation.
 _bank_provider_marker = OUT.parent/'bank-provider-hold.json'
 _bank_announced = False
@@ -140,5 +158,6 @@ print(json.dumps(result),flush=True)
 logtext=(OUT/(label+'.log')).read_text(encoding='utf-8')
 print('\n'.join(line for line in logtext.splitlines() if any(key in line for key in
     ('Built ', 'Building ', 'Build completed', 'error:', 'depends on axioms', 'does not depend on any axioms', 'Some required targets'))),flush=True)
+if mode=='build' and rc==0:
+    _man.mark_built(target,0)
 sys.exit(rc)
-
