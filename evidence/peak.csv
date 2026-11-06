@@ -1,0 +1,8 @@
+utc,module,wall_s,maxrss_mb,exit
+2026-11-06T22:26:43Z,W4Probe/Blocks.lean,143.94,671.2,143
+2026-11-06T22:27:58Z,W4Probe/Floor.lean,4.57,1435.3,0
+2026-11-06T22:28:04Z,W4Probe/OneMono.lean,5.89,1795.9,0
+2026-11-06T22:30:52Z,W4Probe/OneCov.lean,168.40,2921.7,0
+2026-11-06T22:32:47Z,W4Probe/OneCovSplit.lean,33.96,1612.4,0
+2026-11-06T23:02:21Z,Submission/CatalanMeasure/GenD/Signed/Data/Consts/LinkSlope.lean,32.23,671.2,143
+2026-11-06T23:07:58Z,Submission/CatalanMeasure/GenD/Signed/Data/Consts/LinkSlope.lean,184.03,1933.9,0

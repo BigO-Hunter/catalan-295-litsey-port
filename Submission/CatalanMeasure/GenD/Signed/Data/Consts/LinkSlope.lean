@@ -20,7 +20,20 @@ def c0S0 : ℚ := (768498781808 : ℤ) / 2 ^ 40
 def PnS0 : List ℤ := raw_ints% [-206561083391, 0, 73876711208124, 0, -4444599862150304, 0, 213324850951074176, 0, -7661961419699225344, 0, 203608697024565094400, 0, -4056074084229528514560, 0, 61808332622689626849280, 0, -735237479415212547932160, 0, 6951776549970588868018176, 0, -53055253453954299210498048, 0, 331040372087211806347493376, 0, -1706506676565657076117798912, 0, 7329696786849390104810618880, 0, -26406916489136317284636164096, 0, 80206832894709670116384047104, 0, -206127282088825982725673451520, 0, 449209062510192516674602663936, 0, -830814462842512643300224139264, 0, 1303252731354216982179452289024, 0, -1730084393658379297325141983232, 0, 1935916633381347854395184775168, 0, -1814757426345137986913704083456, 0, 1412579059989673448626832015360, 0, -901656746653564812363709808640, 0, 463706523650262056628842921984, 0, -187315766314805612934068174848, 0, 57200995897487731524418666496, 0, -12408450442406584471452123136, 0, 1703354912710886579178045440, 0, -111199472233682412482068480]
 theorem monoS0 : chebGen c0S0 gS0 = PnS0.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS0 : List ℤ := raw_ints% [-14, -12, -8, -4, 0, 4, 8, 12, 14]
-theorem covS0 : covM1P1 (slopeN PnS0 247) 4 cutsS0 = true := by decide +kernel
+theorem covS0_cell0 : zNonnegCheck (slopeN PnS0 247) 4 (-(2 : ℤ) ^ 4) (-14 : ℤ) = true := by decide +kernel
+theorem covS0_cell1 : zNonnegCheck (slopeN PnS0 247) 4 (-14 : ℤ) (-12 : ℤ) = true := by decide +kernel
+theorem covS0_cell2 : zNonnegCheck (slopeN PnS0 247) 4 (-12 : ℤ) (-8 : ℤ) = true := by decide +kernel
+theorem covS0_cell3 : zNonnegCheck (slopeN PnS0 247) 4 (-8 : ℤ) (-4 : ℤ) = true := by decide +kernel
+theorem covS0_cell4 : zNonnegCheck (slopeN PnS0 247) 4 (-4 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS0_cell5 : zNonnegCheck (slopeN PnS0 247) 4 (0 : ℤ) (4 : ℤ) = true := by decide +kernel
+theorem covS0_cell6 : zNonnegCheck (slopeN PnS0 247) 4 (4 : ℤ) (8 : ℤ) = true := by decide +kernel
+theorem covS0_cell7 : zNonnegCheck (slopeN PnS0 247) 4 (8 : ℤ) (12 : ℤ) = true := by decide +kernel
+theorem covS0_cell8 : zNonnegCheck (slopeN PnS0 247) 4 (12 : ℤ) (14 : ℤ) = true := by decide +kernel
+theorem covS0_cell9 : zNonnegCheck (slopeN PnS0 247) 4 (14 : ℤ) (2 ^ 4) = true := by decide +kernel
+theorem covS0 : covM1P1 (slopeN PnS0 247) 4 cutsS0 = true := by
+  have h : cutsS0 = ([-14, -12, -8, -4, 0, 4, 8, 12, 14] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS0_cell0, covS0_cell1, covS0_cell2, covS0_cell3, covS0_cell4, covS0_cell5, covS0_cell6, covS0_cell7, covS0_cell8, covS0_cell9, Bool.and_true]
 theorem slope0 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS0.length (gcertG e gS0) (c0S0 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((247 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 247) he (by norm_num) monoS0 covS0 hy
@@ -31,7 +44,18 @@ def c0S1 : ℚ := (734141555917 : ℤ) / 2 ^ 40
 def PnS1 : List ℤ := raw_ints% [-206561083392, 0, 43526806489664, 0, -1669483368627952, 0, 58079675074195456, 0, -1694349423386258560, 0, 39465626786961697280, 0, -721573410993254971392, 0, 10373961421816971067392, 0, -118419002439602896371712, 0, 1086202391628056924913664, 0, -8100597431699824815112192, 0, 49639351459662704597270528, 0, -252215246779891050801528832, 0, 1070575633707010083780558848, 0, -3819309318798203984453566464, 0, 11504918664710154771098501120, 0, -29358823439201690211735044096, 0, 63592055750271185623898390528, 0, -116990400357171615580096036864, 0, 182661227334792649106067030016, 0, -241484312147042100389391368192, 0, 269219924182712301904698802176, 0, -251537778765579851233962754048, 0, 195210236301147302707347849216, 0, -124267532971162705774302461952, 0, 63751660510159675331329392640, 0, -25694860650558522202859241472, 0, 7830322957069950289337909248, 0, -1695386777332873856525795328, 0, 232324213530957180376711168, 0, -15142102106624853991751680]
 theorem monoS1 : chebGen c0S1 gS1 = PnS1.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS1 : List ℤ := raw_ints% [-14, -12, -8, 0, 8, 12, 14]
-theorem covS1 : covM1P1 (slopeN PnS1 325) 4 cutsS1 = true := by decide +kernel
+theorem covS1_cell0 : zNonnegCheck (slopeN PnS1 325) 4 (-(2 : ℤ) ^ 4) (-14 : ℤ) = true := by decide +kernel
+theorem covS1_cell1 : zNonnegCheck (slopeN PnS1 325) 4 (-14 : ℤ) (-12 : ℤ) = true := by decide +kernel
+theorem covS1_cell2 : zNonnegCheck (slopeN PnS1 325) 4 (-12 : ℤ) (-8 : ℤ) = true := by decide +kernel
+theorem covS1_cell3 : zNonnegCheck (slopeN PnS1 325) 4 (-8 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS1_cell4 : zNonnegCheck (slopeN PnS1 325) 4 (0 : ℤ) (8 : ℤ) = true := by decide +kernel
+theorem covS1_cell5 : zNonnegCheck (slopeN PnS1 325) 4 (8 : ℤ) (12 : ℤ) = true := by decide +kernel
+theorem covS1_cell6 : zNonnegCheck (slopeN PnS1 325) 4 (12 : ℤ) (14 : ℤ) = true := by decide +kernel
+theorem covS1_cell7 : zNonnegCheck (slopeN PnS1 325) 4 (14 : ℤ) (2 ^ 4) = true := by decide +kernel
+theorem covS1 : covM1P1 (slopeN PnS1 325) 4 cutsS1 = true := by
+  have h : cutsS1 = ([-14, -12, -8, 0, 8, 12, 14] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS1_cell0, covS1_cell1, covS1_cell2, covS1_cell3, covS1_cell4, covS1_cell5, covS1_cell6, covS1_cell7, Bool.and_true]
 theorem slope1 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS1.length (gcertG e gS1) (c0S1 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((325 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 325) he (by norm_num) monoS1 covS1 hy
@@ -42,7 +66,16 @@ def c0S2 : ℚ := (701343803445 : ℤ) / 2 ^ 40
 def PnS2 : List ℤ := raw_ints% [-206561083391, 0, 28422379759324, 0, -727415014531872, 0, 18017291327806336, 0, -408861482855320448, 0, 8022750903211890176, 0, -130815772391731335168, 0, 1740362669564528664576, 0, -18819156239982863024128, 0, 165999232609555132055552, 0, -1202387325430911522045952, 0, 7204895410310929513971712, 0, -35967996166192634397720576, 0, 150522964794991456349585408, 0, -530789338346718364226813952, 0, 1583495750600679330169225216, 0, -4007946777123929293817118720, 0, 8620884992628877312451936256, 0, -15764422513596508536521621504, 0, 24484356696082133300316995584, 0, -32219722815061811358968315904, 0, 35773401190763758010499072000, 0, -33301922343529999130618232832, 0, 25759962701163600754868486144, 0, -16349957649718414405382701056, 0, 8365407611859759736108875776, 0, -3363433546503650531501670400, 0, 1022699991574532876356550656, 0, -220978091607163517752311808, 0, 30224365281317603411755008, 0, -1966498434615989950742528]
 theorem monoS2 : chebGen c0S2 gS2 = PnS2.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS2 : List ℤ := raw_ints% [-6, -4, 0, 4, 6]
-theorem covS2 : covM1P1 (slopeN PnS2 403) 3 cutsS2 = true := by decide +kernel
+theorem covS2_cell0 : zNonnegCheck (slopeN PnS2 403) 3 (-(2 : ℤ) ^ 3) (-6 : ℤ) = true := by decide +kernel
+theorem covS2_cell1 : zNonnegCheck (slopeN PnS2 403) 3 (-6 : ℤ) (-4 : ℤ) = true := by decide +kernel
+theorem covS2_cell2 : zNonnegCheck (slopeN PnS2 403) 3 (-4 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS2_cell3 : zNonnegCheck (slopeN PnS2 403) 3 (0 : ℤ) (4 : ℤ) = true := by decide +kernel
+theorem covS2_cell4 : zNonnegCheck (slopeN PnS2 403) 3 (4 : ℤ) (6 : ℤ) = true := by decide +kernel
+theorem covS2_cell5 : zNonnegCheck (slopeN PnS2 403) 3 (6 : ℤ) (2 ^ 3) = true := by decide +kernel
+theorem covS2 : covM1P1 (slopeN PnS2 403) 3 cutsS2 = true := by
+  have h : cutsS2 = ([-6, -4, 0, 4, 6] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS2_cell0, covS2_cell1, covS2_cell2, covS2_cell3, covS2_cell4, covS2_cell5, Bool.and_true]
 theorem slope2 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS2.length (gcertG e gS2) (c0S2 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((403 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 403) he (by norm_num) monoS2 covS2 hy
@@ -53,7 +86,16 @@ def c0S3 : ℚ := (670680799323 : ℤ) / 2 ^ 40
 def PnS3 : List ℤ := raw_ints% [-206561083391, 0, 19991941431002, 0, -360792131363544, 0, 6466092085781120, 0, -111805020309307520, 0, 1785659504258875904, 0, -25162815939547131904, 0, 302559731233349074944, 0, -3048563189479023378432, 0, 25567862982687005605888, 0, -178464962681274868170752, 0, 1039928918134467810295808, 0, -5080439752447058128142336, 0, 20900258626909270469246976, 0, -72688196339404899025420288, 0, 214397825722832917148729344, 0, -537531220980442872856707072, 0, 1146957430552077470806310912, 0, -2083003739949728204584910848, 0, 3216037567976318258412257280, 0, -4210206859967906212646748160, 0, 4653309720902912129170931712, 0, -4314363201704963922357911552, 0, 3325278332103951948357566464, 0, -2103757707650101264334716928, 0, 1073248165458512315869560832, 0, -430376393928889897072984064, 0, 130547703448084183626285056, 0, -28145913556918270192254976, 0, 3841910449875704032002048, 0, -249503742811967754076160]
 theorem monoS3 : chebGen c0S3 gS3 = PnS3.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS3 : List ℤ := raw_ints% [-6, -4, 0, 4, 6]
-theorem covS3 : covM1P1 (slopeN PnS3 481) 3 cutsS3 = true := by decide +kernel
+theorem covS3_cell0 : zNonnegCheck (slopeN PnS3 481) 3 (-(2 : ℤ) ^ 3) (-6 : ℤ) = true := by decide +kernel
+theorem covS3_cell1 : zNonnegCheck (slopeN PnS3 481) 3 (-6 : ℤ) (-4 : ℤ) = true := by decide +kernel
+theorem covS3_cell2 : zNonnegCheck (slopeN PnS3 481) 3 (-4 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS3_cell3 : zNonnegCheck (slopeN PnS3 481) 3 (0 : ℤ) (4 : ℤ) = true := by decide +kernel
+theorem covS3_cell4 : zNonnegCheck (slopeN PnS3 481) 3 (4 : ℤ) (6 : ℤ) = true := by decide +kernel
+theorem covS3_cell5 : zNonnegCheck (slopeN PnS3 481) 3 (6 : ℤ) (2 ^ 3) = true := by decide +kernel
+theorem covS3 : covM1P1 (slopeN PnS3 481) 3 cutsS3 = true := by
+  have h : cutsS3 = ([-6, -4, 0, 4, 6] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS3_cell0, covS3_cell1, covS3_cell2, covS3_cell3, covS3_cell4, covS3_cell5, Bool.and_true]
 theorem slope3 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS3.length (gcertG e gS3) (c0S3 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((481 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 481) he (by norm_num) monoS3 covS3 hy
@@ -64,7 +106,14 @@ def c0S4 : ℚ := (642233076823 : ℤ) / 2 ^ 40
 def PnS4 : List ℤ := raw_ints% [-206561083395, 0, 14840047253204, 0, -198043568518912, 0, 2650706567459200, 0, -35041520997627648, 0, 446575560639350272, 0, -5288211499416590336, 0, 56019013655719124992, 0, -515707154231746920448, 0, 4054703101575691894784, 0, -27003395443393772912640, 0, 151945752190421095677952, 0, -722796813536613774655488, 0, 2912360380777986227437568, 0, -9962657511248710581878784, 0, 28993901549884395384471552, 0, -71893130006166234149683200, 0, 151989521275462930049007616, 0, -273875217031937920098893824, 0, 420017495040236900363272192, 0, -546670552058065144766267392, 0, 601146429078366834644746240, 0, -554875084266503471200468992, 0, 425977833558827632703832064, 0, -268547199106859102631886848, 0, 136567836033950530007990272, 0, -54607820077834707308380160, 0, 16521517049417149863428096, 0, -3553621130612069262950400, 0, 484023108943748393861120, 0, -31371570601104609640448]
 theorem monoS4 : chebGen c0S4 gS4 = PnS4.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS4 : List ℤ := raw_ints% [-2, 0, 2]
-theorem covS4 : covM1P1 (slopeN PnS4 559) 2 cutsS4 = true := by decide +kernel
+theorem covS4_cell0 : zNonnegCheck (slopeN PnS4 559) 2 (-(2 : ℤ) ^ 2) (-2 : ℤ) = true := by decide +kernel
+theorem covS4_cell1 : zNonnegCheck (slopeN PnS4 559) 2 (-2 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS4_cell2 : zNonnegCheck (slopeN PnS4 559) 2 (0 : ℤ) (2 : ℤ) = true := by decide +kernel
+theorem covS4_cell3 : zNonnegCheck (slopeN PnS4 559) 2 (2 : ℤ) (2 ^ 2) = true := by decide +kernel
+theorem covS4 : covM1P1 (slopeN PnS4 559) 2 cutsS4 = true := by
+  have h : cutsS4 = ([-2, 0, 2] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS4_cell0, covS4_cell1, covS4_cell2, covS4_cell3, Bool.and_true]
 theorem slope4 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS4.length (gcertG e gS4) (c0S4 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((559 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 559) he (by norm_num) monoS4 covS4 hy
@@ -75,7 +124,14 @@ def c0S5 : ℚ := (616007997493 : ℤ) / 2 ^ 40
 def PnS5 : List ℤ := raw_ints% [-206561083392, 0, 11471652102978, 0, -117483858444080, 0, 1213517102018656, 0, -12488641786374528, 0, 126670901021768704, 0, -1237855428982525952, 0, 11286801172751663104, 0, -92947783160390483968, 0, 673842101124286251008, 0, -4229998736800894418944, 0, 22784814730737960878080, 0, -104880081949244553953280, 0, 412041483893355596218368, 0, -1381820218090826034577408, 0, 3958097168963926809903104, 0, -9688413218049813762801664, 0, 20264533845935523075457024, 0, -36189615021370249171697664, 0, 55080242495910842281754624, 0, -71223043041044280744345600, 0, 77878989125023093636464640, 0, -71530308904042976256196608, 0, 54675490652460403233128448, 0, -34336093202615222256271360, 0, 17401368206759888680910848, 0, -6936615888596027899379712, 0, 2092819234031360142213120, 0, -449008990935229508091904, 0, 61016929479436617646080, 0, -3946450310269237198848]
 theorem monoS5 : chebGen c0S5 gS5 = PnS5.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS5 : List ℤ := raw_ints% [-2, 0, 2]
-theorem covS5 : covM1P1 (slopeN PnS5 637) 2 cutsS5 = true := by decide +kernel
+theorem covS5_cell0 : zNonnegCheck (slopeN PnS5 637) 2 (-(2 : ℤ) ^ 2) (-2 : ℤ) = true := by decide +kernel
+theorem covS5_cell1 : zNonnegCheck (slopeN PnS5 637) 2 (-2 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS5_cell2 : zNonnegCheck (slopeN PnS5 637) 2 (0 : ℤ) (2 : ℤ) = true := by decide +kernel
+theorem covS5_cell3 : zNonnegCheck (slopeN PnS5 637) 2 (2 : ℤ) (2 ^ 2) = true := by decide +kernel
+theorem covS5 : covM1P1 (slopeN PnS5 637) 2 cutsS5 = true := by
+  have h : cutsS5 = ([-2, 0, 2] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS5_cell0, covS5_cell1, covS5_cell2, covS5_cell3, Bool.and_true]
 theorem slope5 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS5.length (gcertG e gS5) (c0S5 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((637 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 637) he (by norm_num) monoS5 covS5 hy
@@ -86,7 +142,14 @@ def c0S6 : ℚ := (591983547586 : ℤ) / 2 ^ 40
 def PnS6 : List ℤ := raw_ints% [-206561083395, 0, 9154866624062, 0, -74026572638064, 0, 607131193200288, 0, -4975328426797568, 0, 40565490464753664, 0, -325338909937057792, 0, 2512055382521888768, 0, -18146951674765082624, 0, 119180344054888660992, 0, -695384934618402127872, 0, 3548431895242316185600, 0, -15686045097567811796992, 0, 59758481995393501495296, 0, -195684518833001982853120, 0, 550068334277008793010176, 0, -1326212064589186009661440, 0, 2739871263829123185770496, 0, -4843156191689455834234880, 0, 7308076890095323388575744, 0, -9381043596468547762520064, 0, 10193472711611958142435328, 0, -9311628996007508358201344, 0, 7083678201305787585789952, 0, -4429894305840501647998976, 0, 2236699986102713336201216, 0, -888642788986565953585152, 0, 267309273377931549212672, 0, -57196111584372507803648, 0, 7753541233669121769472, 0, -500367932999371587584]
 theorem monoS6 : chebGen c0S6 gS6 = PnS6.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS6 : List ℤ := raw_ints% [-2, 0, 2]
-theorem covS6 : covM1P1 (slopeN PnS6 715) 2 cutsS6 = true := by decide +kernel
+theorem covS6_cell0 : zNonnegCheck (slopeN PnS6 715) 2 (-(2 : ℤ) ^ 2) (-2 : ℤ) = true := by decide +kernel
+theorem covS6_cell1 : zNonnegCheck (slopeN PnS6 715) 2 (-2 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS6_cell2 : zNonnegCheck (slopeN PnS6 715) 2 (0 : ℤ) (2 : ℤ) = true := by decide +kernel
+theorem covS6_cell3 : zNonnegCheck (slopeN PnS6 715) 2 (2 : ℤ) (2 ^ 2) = true := by decide +kernel
+theorem covS6 : covM1P1 (slopeN PnS6 715) 2 cutsS6 = true := by
+  have h : cutsS6 = ([-2, 0, 2] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS6_cell0, covS6_cell1, covS6_cell2, covS6_cell3, Bool.and_true]
 theorem slope6 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS6.length (gcertG e gS6) (c0S6 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((715 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 715) he (by norm_num) monoS6 covS6 hy
@@ -97,7 +160,14 @@ def c0S7 : ℚ := (570115238291 : ℤ) / 2 ^ 40
 def PnS7 : List ℤ := raw_ints% [-206561083393, 0, 7498383580094, 0, -48937938205952, 0, 326236670547008, 0, -2175277382907264, 0, 14481041193619968, 0, -95776148189196288, 0, 621857653112938496, 0, -3882946877838721024, 0, 22715835113913057280, 0, -121336286953796534272, 0, 579444987317631057920, 0, -2437246073467593293824, 0, 8942109886714394705920, 0, -28446929627043917201408, 0, 78176341060888578490368, 0, -185122828291290699923456, 0, 376928611373631901007872, 0, -658367105789875539935232, 0, 983604127804445113188352, 0, -1252051369343001967984640, 0, 1350772084392771094315008, 0, -1226320010451762527862784, 0, 927905908213527152164864, 0, -577553157673199962423296, 0, 290400724988436276051968, 0, -114949728270216836677632, 0, 34463084579711596101632, 0, -7352072348486806274048, 0, 993962452159177949184, 0, -63987143505680007168]
 theorem monoS7 : chebGen c0S7 gS7 = PnS7.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS7 : List ℤ := raw_ints% [-2, 0, 2]
-theorem covS7 : covM1P1 (slopeN PnS7 793) 2 cutsS7 = true := by decide +kernel
+theorem covS7_cell0 : zNonnegCheck (slopeN PnS7 793) 2 (-(2 : ℤ) ^ 2) (-2 : ℤ) = true := by decide +kernel
+theorem covS7_cell1 : zNonnegCheck (slopeN PnS7 793) 2 (-2 : ℤ) (0 : ℤ) = true := by decide +kernel
+theorem covS7_cell2 : zNonnegCheck (slopeN PnS7 793) 2 (0 : ℤ) (2 : ℤ) = true := by decide +kernel
+theorem covS7_cell3 : zNonnegCheck (slopeN PnS7 793) 2 (2 : ℤ) (2 ^ 2) = true := by decide +kernel
+theorem covS7 : covM1P1 (slopeN PnS7 793) 2 cutsS7 = true := by
+  have h : cutsS7 = ([-2, 0, 2] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS7_cell0, covS7_cell1, covS7_cell2, covS7_cell3, Bool.and_true]
 theorem slope7 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS7.length (gcertG e gS7) (c0S7 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((793 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 793) he (by norm_num) monoS7 covS7 hy
@@ -108,7 +178,12 @@ def c0S8 : ℚ := (550339618720 : ℤ) / 2 ^ 40
 def PnS8 : List ℤ := raw_ints% [-206561083393, 0, 6277751076742, 0, -33644299957272, 0, 185816141182848, 0, -1027219099290880, 0, 5676173237287424, 0, -31293448765736960, 0, 171157236586913792, 0, -917262916944429056, 0, 4721979137076756480, 0, -22791068341349908480, 0, 100725429297269964800, 0, -399727498618623492096, 0, 1404118668371839418368, 0, -4322921568005324275712, 0, 11587841893542389612544, 0, -26919056917978129891328, 0, 53996426807623326629888, 0, -93207147736712116961280, 0, 137947495561743229255680, 0, -174271028915869407248384, 0, 186859826722146854371328, 0, -168794741199414396715008, 0, 127195572027513056002048, 0, -78902218372588679200768, 0, 39562333671497834430464, 0, -15623955381268135280640, 0, 4675321881162133012480, 0, -995835949604164075520, 0, 134459470474773528576, 0, -8646911284551352320]
 theorem monoS8 : chebGen c0S8 gS8 = PnS8.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS8 : List ℤ := raw_ints% [0]
-theorem covS8 : covM1P1 (slopeN PnS8 871) 1 cutsS8 = true := by decide +kernel
+theorem covS8_cell0 : zNonnegCheck (slopeN PnS8 871) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS8_cell1 : zNonnegCheck (slopeN PnS8 871) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS8 : covM1P1 (slopeN PnS8 871) 1 cutsS8 = true := by
+  have h : cutsS8 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS8_cell0, covS8_cell1, Bool.and_true]
 theorem slope8 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS8.length (gcertG e gS8) (c0S8 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((871 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 871) he (by norm_num) monoS8 covS8 hy
@@ -119,7 +194,12 @@ def c0S9 : ℚ := (532577582497 : ℤ) / 2 ^ 40
 def PnS9 : List ℤ := raw_ints% [-206561083393, 0, 5356763248848, 0, -23898846920464, 0, 111077073309888, 0, -517255828021888, 0, 2408655440834560, 0, -11208326135937024, 0, 52000804334624768, 0, -239021808905682944, 0, 1074676485535956992, 0, -4635631387051294720, 0, 18747698502130728960, 0, -69521537095123861504, 0, 232034816466823938048, 0, -687314868267890245632, 0, 1788762547842585722880, 0, -4060714582295432921088, 0, 7996777369597137387520, 0, -13597359004558089519104, 0, 19871315089048440143872, 0, -24832523875041511735296, 0, 26373986204912260743168, 0, -23622569092616900575232, 0, 17664257571465275113472, 0, -10880401010264083791872, 0, 5419969561549707673600, 0, -2127432909975411752960, 0, 632980927626923212800, 0, -134099182504583888896, 0, 18014398509481984000, 0, -1152921504606846976]
 theorem monoS9 : chebGen c0S9 gS9 = PnS9.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS9 : List ℤ := raw_ints% [0]
-theorem covS9 : covM1P1 (slopeN PnS9 949) 1 cutsS9 = true := by decide +kernel
+theorem covS9_cell0 : zNonnegCheck (slopeN PnS9 949) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS9_cell1 : zNonnegCheck (slopeN PnS9 949) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS9 : covM1P1 (slopeN PnS9 949) 1 cutsS9 = true := by
+  have h : cutsS9 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS9_cell0, covS9_cell1, Bool.and_true]
 theorem slope9 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS9.length (gcertG e gS9) (c0S9 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((949 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 949) he (by norm_num) monoS9 covS9 hy
@@ -130,7 +210,12 @@ def c0S10 : ℚ := (516737646325 : ℤ) / 2 ^ 40
 def PnS10 : List ℤ := raw_ints% [-206561083390, 0, 4648880390612, 0, -17457056885848, 0, 69161844709248, 0, -274967360140544, 0, 1093395166588928, 0, -4346826835134464, 0, 17259229222133760, 0, -68207432407121920, 0, 266031862582607872, 0, -1008418872594268160, 0, 3636242339350970368, 0, -12181077197783564288, 0, 37088949225425731584, 0, -100833535531067375616, 0, 241503809582156218368, 0, -504499582214026035200, 0, 912139970122314940416, 0, -1418008541602521284608, 0, 1883520833640539881472, 0, -2123026057475680894976, 0, 2014134664478070931456, 0, -1591837284129073790976, 0, 1033986821656921767936, 0, -541949668358883377152, 0, 223335194371163160576, 0, -69616643039893127168, 0, 15420325124116578304, 0, -2161727821137838080, 0, 144115188075855872, 0, 0]
 theorem monoS10 : chebGen c0S10 gS10 = PnS10.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS10 : List ℤ := raw_ints% [0]
-theorem covS10 : covM1P1 (slopeN PnS10 1027) 1 cutsS10 = true := by decide +kernel
+theorem covS10_cell0 : zNonnegCheck (slopeN PnS10 1027) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS10_cell1 : zNonnegCheck (slopeN PnS10 1027) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS10 : covM1P1 (slopeN PnS10 1027) 1 cutsS10 = true := by
+  have h : cutsS10 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS10_cell0, covS10_cell1, Bool.and_true]
 theorem slope10 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS10.length (gcertG e gS10) (c0S10 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((1027 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 1027) he (by norm_num) monoS10 covS10 hy
@@ -141,7 +226,12 @@ def c0S11 : ℚ := (502719101708 : ℤ) / 2 ^ 40
 def PnS11 : List ℤ := raw_ints% [-206561083392, 0, 4096981671042, 0, -13067080453088, 0, 44593325215712, 0, -153094310600832, 0, 525814541434880, 0, -1805084090843136, 0, 6182606374256640, 0, -21020382545870848, 0, 70173089998962688, 0, -225985209762840576, 0, 686426125173260288, 0, -1920988271626682368, 0, 4849751965661396992, 0, -10856413964623937536, 0, 21257759105832976384, 0, -36013571658399875072, 0, 52292840868919902208, 0, -64496055486253105152, 0, 66920747593531129856, 0, -57760344725038039040, 0, 40887501518710767616, 0, -23296294039643488256, 0, 10407290973271883776, 0, -3506615259861352448, 0, 837106580737490944, 0, -126100789566373888, 0, 9007199254740992, 0, 0, 0, 0, 0, 0]
 theorem monoS11 : chebGen c0S11 gS11 = PnS11.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS11 : List ℤ := raw_ints% [0]
-theorem covS11 : covM1P1 (slopeN PnS11 1105) 1 cutsS11 = true := by decide +kernel
+theorem covS11_cell0 : zNonnegCheck (slopeN PnS11 1105) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS11_cell1 : zNonnegCheck (slopeN PnS11 1105) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS11 : covM1P1 (slopeN PnS11 1105) 1 cutsS11 = true := by
+  have h : cutsS11 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS11_cell0, covS11_cell1, Bool.and_true]
 theorem slope11 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS11.length (gcertG e gS11) (c0S11 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((1105 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 1105) he (by norm_num) monoS11 covS11 hy
@@ -152,7 +242,12 @@ def c0S12 : ℚ := (490414941195 : ℤ) / 2 ^ 40
 def PnS12 : List ℤ := raw_ints% [-206561083392, 0, 3662131856944, 0, -9998400776336, 0, 29639419897568, 0, -88720430378112, 0, 265833462126592, 0, -796122417901568, 0, 2377563286388736, 0, -7034766895874048, 0, 20340812899680256, 0, -56245824469860352, 0, 144865352627519488, 0, -338546753194164224, 0, 701877477831606272, 0, -1267885993998942208, 0, 1967359375194456064, 0, -2590923009673920512, 0, 2863339281882021888, 0, -2623416705010892800, 0, 1963979967687557120, 0, -1178979930185138176, 0, 552902616166694912, 0, -194895033093062656, 0, 48519249110499328, 0, -7599824371187712, 0, 562949953421312, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 theorem monoS12 : chebGen c0S12 gS12 = PnS12.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS12 : List ℤ := raw_ints% [0]
-theorem covS12 : covM1P1 (slopeN PnS12 1183) 1 cutsS12 = true := by decide +kernel
+theorem covS12_cell0 : zNonnegCheck (slopeN PnS12 1183) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS12_cell1 : zNonnegCheck (slopeN PnS12 1183) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS12 : covM1P1 (slopeN PnS12 1183) 1 cutsS12 = true := by
+  have h : cutsS12 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS12_cell0, covS12_cell1, Bool.and_true]
 theorem slope12 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS12.length (gcertG e gS12) (c0S12 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((1183 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 1183) he (by norm_num) monoS12 covS12 hy
@@ -163,7 +258,12 @@ def c0S13 : ℚ := (479714488891 : ℤ) / 2 ^ 40
 def PnS13 : List ℤ := raw_ints% [-206561083392, 0, 3317051430418, 0, -7807992600496, 0, 20238422119328, 0, -53248125378048, 0, 140400370228224, 0, -370233522999296, 0, 975021089538048, 0, -2553445389172736, 0, 6578744827052032, 0, -16352006304694272, 0, 38179505094787072, 0, -81362567913537536, 0, 154157288121171968, 0, -254106595770761216, 0, 358025900035407872, 0, -424686628221485056, 0, 417960060895887360, 0, -335856340784119808, 0, 216053210224263168, 0, -108345875801047040, 0, 40741303855611904, 0, -10792806138249216, 0, 1794402976530432, 0, -140737488355328, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 theorem monoS13 : chebGen c0S13 gS13 = PnS13.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS13 : List ℤ := raw_ints% [0]
-theorem covS13 : covM1P1 (slopeN PnS13 1261) 1 cutsS13 = true := by decide +kernel
+theorem covS13_cell0 : zNonnegCheck (slopeN PnS13 1261) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS13_cell1 : zNonnegCheck (slopeN PnS13 1261) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS13 : covM1P1 (slopeN PnS13 1261) 1 cutsS13 = true := by
+  have h : cutsS13 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS13_cell0, covS13_cell1, Bool.and_true]
 theorem slope13 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS13.length (gcertG e gS13) (c0S13 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((1261 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 1261) he (by norm_num) monoS13 covS13 hy
@@ -174,7 +274,12 @@ def c0S14 : ℚ := (470505693837 : ℤ) / 2 ^ 40
 def PnS14 : List ℤ := raw_ints% [-206561083391, 0, 3042167017318, 0, -6218150174440, 0, 14162422069504, 0, -32966760401280, 0, 77047248865280, 0, -180146627569664, 0, 420625135157248, 0, -976732683796480, 0, 2233555011108864, 0, -4940071717830656, 0, 10302173273391104, 0, -19680367560622080, 0, 33491272190656512, 0, -49542598217433088, 0, 62374460883206144, 0, -65570007282614272, 0, 56456288543965184, 0, -38949649658150912, 0, 20936075782389760, 0, -8425557603647488, 0, 2383741209018368, 0, -422212465065984, 0, 35184372088832, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 theorem monoS14 : chebGen c0S14 gS14 = PnS14.map (fun n : ℤ => (n : ℚ) / 2 ^ 40) := by decide +kernel
 def cutsS14 : List ℤ := raw_ints% [0]
-theorem covS14 : covM1P1 (slopeN PnS14 1339) 1 cutsS14 = true := by decide +kernel
+theorem covS14_cell0 : zNonnegCheck (slopeN PnS14 1339) 1 (-(2 : ℤ) ^ 1) (0 : ℤ) = true := by decide +kernel
+theorem covS14_cell1 : zNonnegCheck (slopeN PnS14 1339) 1 (0 : ℤ) (2 ^ 1) = true := by decide +kernel
+theorem covS14 : covM1P1 (slopeN PnS14 1339) 1 cutsS14 = true := by
+  have h : cutsS14 = ([0] : List ℤ) := rfl
+  rw [h]
+  simp only [covM1P1, zNonnegCov, covS14_cell0, covS14_cell1, Bool.and_true]
 theorem slope14 {e : ℝ} (he : e ∈ Set.Ioo (0 : ℝ) (1 / 8)) {y : ℝ} (hy : y ∈ Set.Icc (-1 : ℝ) 1) :
     evalCert e gS14.length (gcertG e gS14) (c0S14 : ℝ) y + 3 / 16 ≤ 1 - slopeKernel ((1339 : ℝ) / 2 ^ 11) y :=
   slope_sound (T := 1339) he (by norm_num) monoS14 covS14 hy
