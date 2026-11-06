@@ -45,3 +45,26 @@ it needs the full 2,727-module closure and this host cannot deliver that while 7
   biggest measured 147 KB file peaks at 1.9 GB).
 * The verifier building the top-level tree anyway (R2) → OOM returns at `EvalRefE1`.
 * A wide `-j` on a low-memory box (R1) → OOM by summation even though every module fits.
+
+## Confirmation (post-storm, no re-measurement possible)
+
+The comparator build could not be completed: two full-closure attempts were SIGTERM'd by host
+contention at 168/2,727 and 238/2,727 oleans (swap 7.3/8.2 GB, load 100-157; no Lean errors in
+either log). This verdict is therefore a **bounded extrapolation from two clean points plus the
+flat floor**, not a completed build.
+
+It is confirmed, with the mechanism made precise:
+
+* the fitted quantity is **fixed import cost**, not the proof term. A 1.4 KB module importing
+  nothing peaks at 0.70 GB; the mirror's 91 KB and 147 KB modules peak at 1.74 GB and 1.90 GB.
+  Marginal cost is ~2.8 MB of peak per KB of source, which puts even the mirror's largest module
+  (293 KB) at ~2.3 GB against a 14 GiB cap. **The repoint alone clears the single-module axis by
+  ~6x.**
+* the remaining risk is therefore NOT "is a 13.75 GB module still in the judged path" (it is not:
+  that shape lives only in the top-level tree, which the repoint stops importing), but R1
+  (**sum of concurrent modules**) and R2 (**the top-level tree surviving in the submitted
+  archive**). Neither can be settled by any single-module measurement.
+
+Verdict unchanged: **FITS, conditional on R1 and R2 being handled.** Every module measured or
+extrapolated fits with >=6x headroom; the cap is reachable only by summation or by shipping the
+pre-cure duplicate.
