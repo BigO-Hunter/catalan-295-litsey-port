@@ -1329,6 +1329,105 @@ theorem freeNear_capSource
 end
 end CatalanMeasure.GenD.Signed.RouteI.T4Instance
 
+namespace CatalanMeasure.GenD.Signed.RouteI.T4Instance
+
+open Finset Filter CatalanMeasure.GenD.Signed.RouteI.CompletedGas CatalanMeasure.CellCert
+open CatalanMeasure.GenD CatalanMeasure.GenD.D58 CatalanMeasure.GenD.Analytic
+open CatalanMeasure.GenD.Signed.RouteI.CapFields CatalanMeasure.GenD.Signed.RouteI.CapSourceData
+open CatalanMeasure.GenD.Signed.RouteI.InterceptSource
+
+noncomputable section
+
+/-! ### Anchor `1` needs no data
+
+The budget uses anchor `0` alone, so the anchor-`1` entries of `CapBundle` only have to exist.  The
+free fields are bounded above at every anchor; no value is needed. -/
+
+theorem row_cap_exists (a : Fin 2) : ∃ c, capSource.FreeRowCap Trunc.exact a c := by
+  obtain ⟨H, hH⟩ := free_row_bounded colCell_capSource capSource_admissible a
+  refine ⟨max (H + 3 / 29 * Real.log 2) (capSource.freeRow Trunc.exact a (-1)), fun x hx => ?_⟩
+  by_cases hm : x = -1
+  · rw [hm]
+    exact le_max_right _ _
+  refine le_trans ?_ (le_max_left _ _)
+  have hx1 : x ∈ Set.Ioo (-1 : ℝ) 1 := by
+    rcases hx with h | h
+    · exact ⟨lt_of_le_of_ne h.1 (Ne.symm hm), by linarith [h.2]⟩
+    · exact ⟨by linarith [h.1], h.2⟩
+  have hx0 : x ≠ 0 := by
+    rcases hx with h | h
+    · exact h.2.ne
+    · exact h.1.ne'
+  have h := hH x hx1 hx0
+  have l1 : Real.log (1 - x) ≤ Real.log 2 :=
+    Real.log_le_log (by linarith [hx1.2]) (by linarith [hx1.1])
+  have l2 : Real.log |x| ≤ 0 :=
+    Real.log_nonpos (abs_nonneg x) (abs_le.mpr ⟨hx1.1.le, hx1.2.le⟩)
+  linarith
+
+theorem col_cap_exists (a : Fin 2) : ∃ c, capSource.FreeColCap a c := by
+  obtain ⟨H, hH⟩ := free_col_bounded colCell_capSource capSource_admissible a
+  refine ⟨H, fun s hs => ?_⟩
+  have h := hH s hs
+  have l : Real.log (1 - s) ≤ 0 :=
+    Real.log_nonpos (by linarith [hs.2]) (by linarith [hs.1])
+  linarith
+
+/-- The cap bundle from the anchor-`0` caps.  The intercept caps are the intercepts. -/
+def bundle0 {R C nc : ℝ} {oc : Sign → ℝ} (hR : capSource.FreeRowCap Trunc.exact 0 R)
+    (hC : capSource.FreeColCap 0 C) (ho : ∀ σ, capSource.OrdCap Trunc.exact σ (oc σ))
+    (hn : capSource.NearCap Trunc.exact nc)
+    (ha : ∀ σ, capSource.AngCap Trunc.exact σ (kappa σ)) :
+    capSource.CapBundle Trunc.exact (gasConst capSource) anchorVal where
+  rowCap := ![R, Classical.choose (row_cap_exists 1)]
+  colCap := ![C, Classical.choose (col_cap_exists 1)]
+  ordCap := oc
+  nearCap := nc
+  angCap := kappa
+  gasICap := gasConst capSource
+  anchICap := anchorVal
+  row a := by
+    fin_cases a
+    · exact hR
+    · exact Classical.choose_spec (row_cap_exists 1)
+  col a := by
+    fin_cases a
+    · exact hC
+    · exact Classical.choose_spec (col_cap_exists 1)
+  ord := ho
+  near := hn
+  ang := ha
+  gasI_le := le_rfl
+  anchI_le _ := le_rfl
+
+/-- The near bound from the anchor-`0` caps alone. -/
+theorem freeNear_anchor0 {R C nc : ℝ} {oc : Sign → ℝ}
+    (hR : capSource.FreeRowCap Trunc.exact 0 R) (hC : capSource.FreeColCap 0 C)
+    (ho : ∀ σ, capSource.OrdCap Trunc.exact σ (oc σ)) (hn : capSource.NearCap Trunc.exact nc)
+    (ha : ∀ σ, capSource.AngCap Trunc.exact σ (kappa σ))
+    (hrc : R + C ≤ -5526387 / 1000000) (hoc : ∀ σ, oc σ ≤ -976 / 1000) (hnc : nc ≤ -976 / 1000)
+    (hi : -refQuad capSource 0 + gasConst capSource ≤ 2367346 / 1000000)
+    {t₀ residual nearCap c₀ : ℝ}
+    (D : SecondTrialBoundsEnd P58 alpha296 t₀ residual nearCap c₀ G58)
+    (hDp : D.p = trialSeqS Cert590.Pc Cert590.P)
+    (hDn : D.normCap ≤ 1547241039 / 2000000000) (hDf : D.fieldCap ≤ -253949899 / 100000000)
+    (hres : residual ≤ -315531 / 5000000) (hnear : nearCap ≤ -7563 / 10000)
+    (Nd : ∀ (N m : ℕ), (Fin m → ℝ) → Prop)
+    (hole : CatalanMeasure.GenD.Signed.PhysicalPick.PhaseHole) :
+    FreeNearBound P58 G58 Nd T296 (58 * cost296) alpha296 := by
+  refine freeNear_capSource (bundle0 hR hC ho hn ha) (fun _ => le_rfl) hrc ?_ ?_ D hDp hDn hDf
+    hres hnear Nd hole
+  · exact max_le (max_le (hoc _) (hoc _)) hnc
+  · have e : anchorVal 0 = -refQuad capSource 0 :=
+      anchorIntercept_refQuad capSource_admissible colCell_capSource 0
+    change anchorVal 0 + gasConst capSource ≤ _
+    rw [e]
+    exact hi
+
+end
+end CatalanMeasure.GenD.Signed.RouteI.T4Instance
+
+#print axioms CatalanMeasure.GenD.Signed.RouteI.T4Instance.freeNear_anchor0
 #print axioms CatalanMeasure.GenD.Signed.RouteI.T4Instance.selected_free_capSource
 #print axioms CatalanMeasure.GenD.Signed.RouteI.T4Instance.freeNear_capSource
 #print axioms CatalanMeasure.GenD.Signed.RouteI.T4Instance.anchorIntercept_refQuad
