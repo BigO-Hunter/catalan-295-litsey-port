@@ -33,6 +33,10 @@ giant terms). Trust profile unchanged: every slice is still `decide +kernel` on 
 data; **no `native_decide`, no `sorry`, no axiom added** (`#print axioms` of the module's
 theorems still shows only `propext, Classical.choice, Quot.sound`).
 
+`#print axioms` on the cured module (`W4Probe/AxCheck.lean`): `covS0` -> `[propext]`,
+`covS0_cell0` -> `[propext]`; the untouched `slope0` / `monoS0` still report
+`[propext, Classical.choice, Quot.sound]` (inherited from the imported lemmas). No new axiom.
+
 Split: 15 blocks, 69 cells (covS0 10, covS1 8, covS2/3 6, covS4–7 4, covS8–14 2).
 Left whole, with reasons — §4.
 
