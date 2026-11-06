@@ -7,8 +7,6 @@ public import CatalanMeasure.GenD.Signed.PhysicalPick
 /-! # Proof of `PhysicalPick.PhaseHole`. Paper proof: lean-plan-2c/PHASEHOLE-PROOF.md. -/
 
 
-
-
 /-!
 # R7a: the positive-node transfer matrix, algebra
 
@@ -168,8 +166,6 @@ theorem core (h : TD p g M) (f k : ι → ℂ) :
 end
 
 end CatalanMeasure.GenD.Signed.PhysicalPick
-
-
 
 
 
@@ -709,8 +705,6 @@ end CatalanMeasure.GenD.Signed.PhysicalPick
 
 
 
-
-
 /-!
 # R7c: the real forms and the resolvent bound (PHASEHOLE-PROOF.md §2.1, §2.2)
 -/
@@ -949,6 +943,7 @@ theorem res_diff (h : Nodes p) (t : ℕ) {c c' : ℝ} (hc : c ^ 2 < 1) (hc' : c'
       _ = (c' ^ 2 - c ^ 2) • (M' * N * M) := by
           simp only [Matrix.mul_sub, Matrix.sub_mul, Matrix.mul_smul, Matrix.smul_mul,
             Matrix.mul_assoc]
+          module
   have k2 : W * M' * W - W * M * W = (c' ^ 2 - c ^ 2) • (W * (M' * N * M) * W) := by
     have : W * (M' - M) * W = W * M' * W - W * M * W := by
       simp only [Matrix.mul_sub, Matrix.sub_mul]
@@ -968,6 +963,7 @@ theorem res_diff (h : Nodes p) (t : ℕ) {c c' : ℝ} (hc : c ^ 2 < 1) (hc' : c'
   have : W * M * W = W * M' * W - (c' ^ 2 - c ^ 2) • (W * (M' * N * M) * W) := by
     rw [← k2]; abel
   rw [this]
+  module
 
 /-- §2.1, §2.2 together. -/
 theorem S_bound (h : Nodes p) (t : ℕ) {c c' : ℝ} (hc : c ^ 2 < 1) (hc' : c' ^ 2 < 1)
@@ -1001,8 +997,6 @@ theorem S_bound (h : Nodes p) (t : ℕ) {c c' : ℝ} (hc : c ^ 2 < 1) (hc' : c' 
 end
 
 end CatalanMeasure.GenD.Signed.PhysicalPick
-
-
 
 
 
@@ -1432,8 +1426,6 @@ end CatalanMeasure.GenD.Signed.PhysicalPick
 
 
 
-
-
 /-!
 # R7e: the lift `ℓ` of `W = Θ_22 (1 + σ s)` on the arc (PHASEHOLE-PROOF.md §2.5, §2.6)
 -/
@@ -1792,8 +1784,6 @@ end CatalanMeasure.GenD.Signed.PhysicalPick
 
 
 
-
-
 /-!
 # R7f: the phase of `h = ε z^s P/P*` on the circle (PHASEHOLE-PROOF.md §3.1)
 -/
@@ -2040,8 +2030,6 @@ theorem phase_h {P R : ℝ[X]} (hroots : ∀ ζ : ℂ, aeval ζ P = 0 → ‖ζ�
 end
 
 end CatalanMeasure.GenD.Signed.PhysicalPick
-
-
 
 
 
@@ -2465,8 +2453,6 @@ theorem count (h : Nodes p) {NN : ℝ[X]} {L : ℕ}
 end
 
 end CatalanMeasure.GenD.Signed.PhysicalPick
-
-
 
 
 
