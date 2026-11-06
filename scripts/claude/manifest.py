@@ -109,7 +109,7 @@ def mark_built(target, rc):
         return
     scope, rows = load()
     r = rows.get(target)
-    if r is None:
+    if r is None or (r['status'] == 'built' and r['src_sha'] == sha(target)):
         return
     r.update(status='built', src_sha=sha(target),
              note=(r['note'] + ' ' if r['note'] else '') + time.strftime('built %Y-%m-%dT%H:%MZ', time.gmtime()))
