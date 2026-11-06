@@ -132,6 +132,26 @@ them. The build-cost lever is therefore exactly one: repoint `Solution`.
 | 3. delete trigamma/hybrid/frames trees | 0 | ~14 | none |
 | 4. shard remaining one-shot `decide +kernel` (siblings' lane) | 0 | 0 | the actual peak driver |
 
+## Where the sharding work actually stands
+
+Files with `decide` occurrences ≤ 3 but a large literal (the signature of an *unsharded*
+one-shot kernel reduction), live trees only:
+
+| file | size | `decide` | tree |
+|---|---|---|---|
+| `GenD/D58/Cert590/XTab.lean` | 1,027 KB | 3 | top-level (pre-cure) |
+| `GenD/D58/Cert590/YTab.lean` | 791 KB | 3 | top-level (pre-cure) |
+| `GenD/D58/Cert590/RTab.lean` | 768 KB | 3 | top-level (pre-cure) |
+| `…Signed/Data/Trial/T1Fields/P3.lean` (and `T2Fields`) | 113 KB | 2 | mirror |
+| `…T1Fields/P1,P2` (and `T2Fields`) | 102 KB | 1 | mirror |
+
+Only **nine** such files exist, and the three large ones are precisely the three the mirror
+has *already sharded* (`XTab` → `P1..P12`, `YTab`/`RTab` → `P1..P9`). The largest unsharded
+`decide` module left in the verifier-facing mirror is **113 KB**. So the chunking campaign is
+effectively finished on the tree the build uses, while every giant the campaign was pointed at
+(and the three above it has already replaced) still sits unsharded in the tree the comparator
+uses.
+
 ## Open question feeding the budget draft
 
 The receipt's work counter reads `[4255/5858]`; the package's own modules total 5,181 for
