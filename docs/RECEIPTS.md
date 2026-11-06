@@ -47,3 +47,46 @@ Established without it:
   * W8's closure audit: sorry = 0, native_decide = 0, axiom = 0 in both trees.
 
 ## 5. Archive trio — parked (docs/PARKED.md)
+
+
+---
+
+## 6. Build-killed log and the exact resume recipe (do not restart blindly)
+
+Two full-closure attempts, both SIGTERM'd by host contention — **not** by Lean errors:
+
+| run | started | ended | oleans | exit | cause |
+|---|---|---|---|---|---|
+| run1 | 13:57 | 14:15 | 168/2,727 | 143 (SIGTERM) | session/host teardown |
+| run2 | 14:16 | ~14:27 | 238/2,727 | 143 (SIGTERM) | fleet memory storm (swap 7.3/8.2 GB, load ~100-157) |
+
+No `error:` line appears in either log. The comparator is therefore **incomplete because the
+host cannot carry 2,727 module compiles while seven sibling workers rebuild the same closure**,
+not because anything in the repointed tree fails to elaborate.
+
+Resume recipe (one build only, serialized, shared mathlib):
+
+    ln -s ~/bigo-campaign/staircase-port/.lake/packages ./packages   # `.lake` is already a
+                                                                     # clonefile copy of it
+    cd repo && LEAN_NUM_THREADS=1 LAKE_JOBS=1 \
+      lake build Submission > ../build_resume.log 2>&1
+    # then, only when the lib is complete:
+    cd repo && LEAN_NUM_THREADS=1 lake env lean Solution.lean   # the comparator + #print axioms
+
+Check `grep -c BUILD_EXIT ../build_resume.log` before claiming anything; exit 143 means
+SIGTERM, i.e. unfinished, and must never be reported as green.
+
+## 7. Peak model — what the two clean points actually say
+
+| module | KB | peak | peak minus 0.7 GB floor |
+|---|---|---|---|
+| ArcsineDenominator | 91 | 1,741 MB | ~1.0 GB |
+| ReflectionEnergy | 147 | 1,897 MB | ~1.2 GB |
+
+The floor (0.70 GB) was measured on a 1.4 KB module that imports no Mathlib at all; a module
+that pulls Mathlib's oleans starts higher, so most of these 1.7-1.9 GB is **fixed import cost,
+not the term**. Marginal cost is ~2.8 MB of peak per KB of source (slope between the two
+points), which extrapolates the mirror's largest module (293 KB) to **~2.3 GB** — the same
+order as the live >=2.07 GB sample. Implication for the workers' targeting: single-term
+chunking on modules of this size now buys ~0.2-0.4 GB, while the concurrency sum (R1) can cost
+7x that. Budget the effort accordingly.
