@@ -480,9 +480,37 @@ def drive():
         time.sleep(3)
 
 
+def manifest_gate(target):
+    """6 Nov (Sean: nothing built twice): route-I build manifest, checked in the submitter so it
+    applies without restarting the driver. Returns an exit code to stop with, or None to queue."""
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import manifest
+    owner = os.environ.get('LANES_OWNER', '')
+    r = manifest.refusal(target, owner)
+    if r is None:
+        return None
+    rc, msg = r
+    if rc == 'check-stale':
+        n = stale_count(target)
+        if n == 0:
+            print(f'lanes: {msg}; up to date, nothing built')
+            print(json.dumps({'target': target, 'rc': 0, 'budget': None}))
+            return 0
+        rc, msg = 93, (f'{msg}, but an import changed after it was built (stale frontier {n}); '
+                       'a rebuild needs coordinator rebuild-ok (build-once rule)')
+    print(f'lanes: refused by manifest: {msg}')
+    print(json.dumps({'target': target, 'rc': rc, 'budget': None}))
+    return rc
+
+
 def submit(target, budget=3, cmd=None):
+    if not cmd:
+        g = manifest_gate(target)
+        if g is not None:
+            sys.exit(g)
     jid = f'{int(time.time()*1000)}-{uuid.uuid4().hex[:6]}'
-    spec = {'target': target, 'budget': budget, 'submitted': time.time()}
+    spec = {'target': target, 'budget': budget, 'submitted': time.time(),
+            'owner': os.environ.get('LANES_OWNER', '')}
     if cmd:   # arbitrary heavy job (lean --run generator, Python), admitted like a build
         spec.update(cmd=cmd, cwd=os.getcwd())
     tmp = Q / f'{jid}.tmp'
@@ -493,6 +521,9 @@ def submit(target, budget=3, cmd=None):
     r = json.loads((DONE / f'{jid}.json').read_text(encoding='utf-8'))
     print(r.get('output', ''))
     print(json.dumps({k: r.get(k) for k in ('target', 'rc', 'budget')}))
+    if not cmd and r['rc'] == 0:
+        import manifest
+        manifest.mark_built(target, 0)
     sys.exit(r['rc'])
 
 
