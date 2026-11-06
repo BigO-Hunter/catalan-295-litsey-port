@@ -29,7 +29,18 @@
   3 orphan-docstring repairs, ArcsineDenominator reverted to the original single file.
 - Full `lake build Submission` green: BUILD_EXIT=0 (logs /private/tmp/catalan_oomfix_build{2,3,4}.log).
 
-## Next step (recommended)
+## RESOLVED (2026-11-06) — read this before the sections below
+
+The investigation above measured the *pre-cure* copy. The cure commits (`90db8505`,
+`39d9d20f`, `bfa20018`) landed only under `Submission/`, while `Solution.lean` still
+imported the pre-cure top-level tree — so the verifier judged the copy with the 13.75 GB
+module. `Solution.lean` now imports the cured module and the pre-cure tree has been deleted
+(14,919 → 4,041 modules). Statement identity, measured peaks and the residuals are in
+`docs/RESUBMISSION.md`. The recommendation below is superseded: resubmit, with the caveat that
+the per-cgroup cap is still reachable by *concurrency* (7 × ~2 GB modules), which is the one
+thing a submission cannot pin.
+
+## Next step (recommended) — SUPERSEDED, see RESOLVED above
 File a factual resource-outcome comment on bigospeedrun/verifier#157 citing the measured
 13.75 GB single-module peak and ask the maintainer whether the sandbox cap can be raised,
 or whether a submission of this size is expected to fit. Retry only after an answer, or

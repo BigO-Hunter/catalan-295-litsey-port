@@ -4,7 +4,7 @@ public import Mathlib.Analysis.SpecialFunctions.Pow.Real
 public import Mathlib.Topology.Algebra.InfiniteSum.Real
 public import Mathlib.Order.Filter.AtTopBot.Basic
 
-import CatalanMeasure.GenD.Signed.Data.Assembly.CellsAll
+import Submission.CatalanMeasure.GenD.Signed.Data.Assembly.CellsAll
 
 public section
 

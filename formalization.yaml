@@ -59,7 +59,7 @@ sources:
       Preprint dated September 24, 2026, released October 6, 2026. Supplies the
       determinant construction, the local estimates, the nonvanishing argument and
       the energy method at the real place on which the measure is built. Its Lean
-      formalization is vendored in OAI/ (see NOTICE). The irrationality measure
+      formalization is vendored in Submission/OAI/ (see NOTICE). The irrationality measure
       itself is not in that work.
     license: "Apache-2.0"
     author_endorsement: not-contacted
@@ -92,7 +92,7 @@ related_formalizations:
     relationship: builds-on
     note: >-
       OpenAI's formalization of the irrationality of Catalan's constant. 479
-      files of it are vendored in OAI/, of which the proof imports 386, together
+      files of it are vendored in Submission/OAI/, of which the proof imports 386, together
       with the 10 files that OpenAI adds to PrimeNumberTheoremAnd; they were
       converted to Lean's module system and ported from Lean v4.34.1 to
       v4.35.0-rc2. Apart from comparison constants given to seven digits in 37

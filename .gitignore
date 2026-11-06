@@ -6,3 +6,4 @@ __pycache__/
 
 # research notes stay local (never published)
 research/
+.w7/
