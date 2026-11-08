@@ -1,0 +1,13 @@
+Diff ledger: Submission/ (this repository) vs Sean Litsey's tree at 65cfcc21
+Comparison: byte-for-byte, line endings preserved (all source files are CRLF).
+
+Files compared: 2730
+Files whose ONLY difference is the Submission. import prefix: 2576
+Files with any other change: 2
+  CatalanMeasure/GenD/Cert/Assembly.lean: non-import lines [163]
+  CatalanMeasure/GenD/Signed/SheetNear.lean: one line added (set_option maxHeartbeats), line count 1052->1053
+Files with no upstream counterpart: ['CatalanStatement.lean']
+  (Submission.lean, the new bridge, is at the repository root, not under Submission/)
+
+Submission/CatalanStatement.lean sha256: e379b0055fef11cb75652681adf960198fdcbcdd052014acd12ebc269c3c4c24
+  (byte-identical to challenges/catalan/Statement.lean of bigospeedrun/verifier)
