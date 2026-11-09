@@ -297,3 +297,16 @@ Submissions to the registry go through the form at https://submit.palomar-regist
 ## Licence
 
 Apache License 2.0; see [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+
+---
+
+## Why this repo is up
+
+Reproducible verified bounds: Litsey's μ(G) ≤ 295 proof ported to the board pin — public evidence the strongest published Catalan bound rebuilds at the verifier's toolchain.
+
+[BigO-Hunter](https://github.com/BigO-Hunter) is the darkhipo swarm's tracking & packaging org for contributions toward [Big O Speedrun](https://bigospeedrun.com) — a companion, never the project. Org story: [profile](https://github.com/BigO-Hunter/.github) · [bigo-hunter.github.io](https://bigo-hunter.github.io).
+
+## What work can be done here
+
+The port is complete at the board pin. Open work: independent rebuilds; reruns of the other fifteen formalized measures.
+
