@@ -1,5 +1,9 @@
-import Submission.CatalanStatement
-import Submission.CatalanMeasure.GenD.Signed.RouteI.Measure295
+module
+
+public import Submission.CatalanStatement
+public import Submission.CatalanMeasure.GenD.Signed.RouteI.Measure295
+
+@[expose] public section
 
 -- Bridge from Sean Litsey's fixed-exponent mu(G) <= 295 theorem to the BigOSpeedrun
 -- Catalan adapter. The transfer (Endpoint at a fixed exponent implies
