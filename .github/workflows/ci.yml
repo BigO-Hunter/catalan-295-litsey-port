@@ -74,13 +74,21 @@ jobs:
           raise SystemExit(failed)
           PY
 
-  build-cone:
-    name: Build with Lean (cone)
+  build-base:
+    name: Build with Lean (base)
     runs-on: ubuntu-latest
-    # The cone is every module outside the generated cell leaves. Measured 2026-11-25 from the
-    # cancelled 6-hour run (job 138851813665): the 508 non-cell modules that finished cost
-    # 6,079 CPU-seconds, while the 1,111 finished cell modules cost 79,029 -- the cells are the
-    # cost, so they are the shards and this job is small.
+    # Three stages, from an import census of the tree (scripts/ci_partition_cells.py):
+    #
+    #   base   1534 non-cell modules whose import closure contains no cell
+    #   cells  1189 generated cells, sharded; 1187 of them import other cells
+    #   top      20 non-cell modules that import cells
+    #
+    # The first sharded workflow put every non-cell module into one "small" job.
+    # But a module's invocation builds its whole import closure, so the 20 top
+    # modules dragged the cells into it: run 45637321075 was cancelled at
+    # GitHub's six-hour ceiling with lake's counter at 5389 of 5405 for the
+    # invocation in flight, and the cell shards, which waited on that job, never
+    # started. The base is built first, the cells in dependency order, the top last.
     #
     # Serial on purpose. One module per lake invocation keeps exactly one kernel-certificate
     # elaboration in flight: the earlier parallel attempt was killed after 2h07m with "the hosted
@@ -104,31 +112,40 @@ jobs:
       - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
         with:
           build: false
-      - name: Build every module outside the generated cell leaves
+      - name: Report the partition
+        run: python3 scripts/ci_partition_cells.py report --shards 16
+      - name: Build every module whose import closure contains no cell
         shell: bash
         run: |
           set -euo pipefail
-          mapfile -t MODULES < <(git ls-files 'Submission' | grep '\.lean$' | grep -v '^Submission/CatalanMeasure/GenD/Signed/Data/Cells/' | sed -e 's#\.lean$##' -e 's#/#.#g')
-          echo "cone modules: ${#MODULES[@]}"
+          mapfile -t MODULES < <(python3 scripts/ci_partition_cells.py base)
+          echo "base modules: ${#MODULES[@]}"
           for m in "${MODULES[@]}"; do
             lake build "$m"
           done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
         with:
-          name: cone-oleans
+          name: base-oleans
           path: .lake/build/lib/lean
           if-no-files-found: error
           retention-days: 7
 
-  build-cell:
-    name: Build with Lean (cells ${{ matrix.shard }} of 8)
-    needs: build-cone
+  build-cells:
+    name: Build with Lean (cells ${{ matrix.shard }} of 16)
+    needs: build-base
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    # Sixteen shards run at once; the hosted ceiling is twenty concurrent jobs.
+    # Each shard's slice is chosen from the import graph: a cell joins the shard
+    # that already holds its imported cells unless that shard is overloaded beyond
+    # its fair share by more than the cost of rebuilding them. By the build times
+    # recorded in run 45637321075 (scripts/ci_cell_costs.json) that duplicates
+    # 1.35x of the cell work and leaves the heaviest shard at about 2.9 h, where a
+    # round-robin split duplicates 2.80x.
+    timeout-minutes: 360
     strategy:
       fail-fast: false
       matrix:
-        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     steps:
       - name: Make room on the runner
         run: |
@@ -147,21 +164,17 @@ jobs:
           build: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: cone-oleans
+          name: base-oleans
           path: .lake/build/lib/lean
       - name: Build this shard's cells
         shell: bash
+        env:
+          SHARDS: 16
         run: |
           set -euo pipefail
-          SHARDS=8
-          SHARD=${{ matrix.shard }}
-          mapfile -t CELLS < <(git ls-files 'Submission/CatalanMeasure/GenD/Signed/Data/Cells' | grep '\.lean$' | sed -e 's#\.lean$##' -e 's#/#.#g')
-          sel=()
-          for i in "${!CELLS[@]}"; do
-            if (( i % SHARDS == SHARD )); then sel+=("${CELLS[$i]}"); fi
-          done
-          echo "shard ${SHARD}/${SHARDS}: ${#sel[@]} of ${#CELLS[@]} cell modules"
-          for m in "${sel[@]}"; do
+          mapfile -t CELLS < <(python3 scripts/ci_partition_cells.py cells --shard "${{ matrix.shard }}" --shards "$SHARDS")
+          echo "shard ${{ matrix.shard }}/${SHARDS}: ${#CELLS[@]} cells"
+          for m in "${CELLS[@]}"; do
             lake build "$m"
           done
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
@@ -171,24 +184,71 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  build-top:
+    name: Build with Lean (top)
+    needs: build-cells
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - name: Make room on the runner
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo fallocate -l 48G /swapfile2 && sudo chmod 600 /swapfile2
+          sudo mkswap /swapfile2 >/dev/null && sudo swapon /swapfile2
+          free -m; df -h / | tail -1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Check Lean source requirements before builds
+        run: python3 scripts/check-lean-sources.py
+      - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
+        with:
+          build: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: base-oleans
+          path: .lake/build/lib/lean
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          # A cell rebuilt in two shards as a dependency is byte-identical in both.
+          pattern: cells-oleans-*
+          merge-multiple: true
+          path: .lake/build/lib/lean
+      - name: Build the modules that import cells
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t MODULES < <(python3 scripts/ci_partition_cells.py top)
+          echo "top modules: ${#MODULES[@]}"
+          for m in "${MODULES[@]}"; do
+            lake build "$m"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: top-oleans
+          path: .lake/build/lib/lean
+          if-no-files-found: error
+          retention-days: 7
+
   build:
     name: Build with Lean
-    # The submission cone needs about 12 h on a 4-vCPU runner, past GitHub's 6-hour job cap, so
-    # it is built as a cone job plus eight cell shards. This job keeps the published check name
-    # and passes only when every one of them passed.
-    needs: [build-cone, build-cell]
+    # The submission needs more than the 6-hour cap of one hosted job, so it is built
+    # as a base job, sixteen cell shards and a top job. This job keeps the published
+    # check name and passes only when every one of them passed.
+    needs: [build-base, build-cells, build-top]
     runs-on: ubuntu-latest
     steps:
-      - run: echo "cone and all cell shards built"
+      - run: echo "base, all sixteen cell shards and the top modules built"
 
   docs:
     name: Build API documentation
     # doc-gen4 needs the elaborated environment, and a fresh checkout has none: the 2026-11-25 run
     # spent its whole 6 hours building 2,116 Submission modules from scratch (zero Mathlib modules,
-    # because the cache fetch works) before being cancelled. So this job waits for the cone and the
-    # shards and restores their oleans instead of re-elaborating; docbuild requires the parent
+    # because the cache fetch works) before being cancelled. So this job waits for the base, the
+    # cell shards and the top job and restores their oleans instead of re-elaborating; docbuild requires the parent
     # package by path, so `lake build Submission:docs` from there reuses them.
-    needs: [build-cone, build-cell]
+    needs: [build-base, build-cells, build-top]
     runs-on: ubuntu-latest
     timeout-minutes: 360
     steps:
@@ -209,7 +269,7 @@ jobs:
           build: false
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          # cone-oleans plus cells-oleans-0..7: the whole elaborated library, restored once.
+          # base-oleans, cells-oleans-0..15 and top-oleans: the whole library, restored once.
           pattern: "*-oleans*"
           merge-multiple: true
           path: .lake/build/lib/lean
