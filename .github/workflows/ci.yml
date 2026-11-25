@@ -74,57 +74,26 @@ jobs:
           raise SystemExit(failed)
           PY
 
-  build:
-    name: Build with Lean
+  build-cone:
+    name: Build with Lean (cone)
     runs-on: ubuntu-latest
-    # Raised from 300: with the swap above in place the job no longer gets killed mid-build, and
-    # this submission's cone (6147 targets) reached the 300-minute wall while still working -- the
-    # 6-hour ceiling GitHub allows is the honest limit. 295 finishes the same job in ~135 minutes;
-    # this port's kernel certificates are much heavier.
+    # The cone is every module outside the generated cell leaves. Measured 2026-11-25 from the
+    # cancelled 6-hour run (job 138851813665): the 508 non-cell modules that finished cost
+    # 6,079 CPU-seconds, while the 1,111 finished cell modules cost 79,029 -- the cells are the
+    # cost, so they are the shards and this job is small.
+    #
+    # Serial on purpose. One module per lake invocation keeps exactly one kernel-certificate
+    # elaboration in flight: the earlier parallel attempt was killed after 2h07m with "the hosted
+    # runner lost communication with the server" because adjacent heavy modules swapped the
+    # runner past its heartbeat. lake has no -j in this toolchain (it answers "unknown short option
+    # '-j'"), so invocation granularity is the lever.
     timeout-minutes: 360
     steps:
       - name: Make room on the runner
-        # `lake build Submission` compiles the whole submission cone and needs more memory than a
-        # standard runner has free. Every attempt so far died at the same place -- ~4990/5372
-        # targets, ~24 s into the next module -- with exit code 143 and "the runner has received a
-        # shutdown signal", i.e. the worker was killed, not a Lean error. Disk is not the
-        # constraint: 106 GB free after the SDK removal below. Peak RSS of the remaining
-        # `decide +kernel` certificates is. Provision the same swap the comparator job already
-        # carries for its kernel replay.
         run: |
           df -h / | tail -1
           sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo fallocate -l 24G /swapfile2 && sudo chmod 600 /swapfile2
-          sudo mkswap /swapfile2 >/dev/null && sudo swapon /swapfile2
-          free -m; df -h / | tail -1
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
-        with:
-          persist-credentials: false
-      - name: Check Lean source requirements before builds
-        run: python3 scripts/check-lean-sources.py
-      - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
-        with:
-          build: true
-          # This workspace has no default targets: the lakefile declares a single library,
-          # `Submission`, and does not list it in `defaultTargets`. A bare `lake build` therefore
-          # printed "no targets specified and no default targets configured / Nothing to build."
-          # and this job reported a vacuous green without compiling anything. Name the target so
-          # the job actually builds the submission.
-          build-args: "Submission"
-
-  docs:
-    name: Build API documentation
-    runs-on: ubuntu-latest
-    # Raised with the build job for the same reason: doc-gen4 elaborates the same cone.
-    timeout-minutes: 360
-    steps:
-      - name: Make room on the runner
-        # Same reasoning as the build job: doc-gen4 elaborates the whole tree and holds its own
-        # dependency set, so this job needs the SDK space and the swap too.
-        run: |
-          df -h / | tail -1
-          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
-          sudo fallocate -l 24G /swapfile2 && sudo chmod 600 /swapfile2
+          sudo fallocate -l 48G /swapfile2 && sudo chmod 600 /swapfile2
           sudo mkswap /swapfile2 >/dev/null && sudo swapon /swapfile2
           free -m; df -h / | tail -1
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
@@ -135,6 +104,115 @@ jobs:
       - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
         with:
           build: false
+      - name: Build every module outside the generated cell leaves
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t MODULES < <(git ls-files 'Submission' | grep '\.lean$' | grep -v '^Submission/CatalanMeasure/GenD/Signed/Data/Cells/' | sed -e 's#\.lean$##' -e 's#/#.#g')
+          echo "cone modules: ${#MODULES[@]}"
+          for m in "${MODULES[@]}"; do
+            lake build "$m"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: cone-oleans
+          path: .lake/build/lib/lean
+          if-no-files-found: error
+          retention-days: 7
+
+  build-cell:
+    name: Build with Lean (cells ${{ matrix.shard }} of 8)
+    needs: build-cone
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - name: Make room on the runner
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo fallocate -l 48G /swapfile2 && sudo chmod 600 /swapfile2
+          sudo mkswap /swapfile2 >/dev/null && sudo swapon /swapfile2
+          free -m; df -h / | tail -1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Check Lean source requirements before builds
+        run: python3 scripts/check-lean-sources.py
+      - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
+        with:
+          build: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cone-oleans
+          path: .lake/build/lib/lean
+      - name: Build this shard's cells
+        shell: bash
+        run: |
+          set -euo pipefail
+          SHARDS=8
+          SHARD=${{ matrix.shard }}
+          mapfile -t CELLS < <(git ls-files 'Submission/CatalanMeasure/GenD/Signed/Data/Cells' | grep '\.lean$' | sed -e 's#\.lean$##' -e 's#/#.#g')
+          sel=()
+          for i in "${!CELLS[@]}"; do
+            if (( i % SHARDS == SHARD )); then sel+=("${CELLS[$i]}"); fi
+          done
+          echo "shard ${SHARD}/${SHARDS}: ${#sel[@]} of ${#CELLS[@]} cell modules"
+          for m in "${sel[@]}"; do
+            lake build "$m"
+          done
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        with:
+          name: cells-oleans-${{ matrix.shard }}
+          path: .lake/build/lib/lean/Submission/CatalanMeasure/GenD/Signed/Data/Cells
+          if-no-files-found: error
+          retention-days: 7
+
+  build:
+    name: Build with Lean
+    # The submission cone needs about 12 h on a 4-vCPU runner, past GitHub's 6-hour job cap, so
+    # it is built as a cone job plus eight cell shards. This job keeps the published check name
+    # and passes only when every one of them passed.
+    needs: [build-cone, build-cell]
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "cone and all cell shards built"
+
+  docs:
+    name: Build API documentation
+    # doc-gen4 needs the elaborated environment, and a fresh checkout has none: the 2026-11-25 run
+    # spent its whole 6 hours building 2,116 Submission modules from scratch (zero Mathlib modules,
+    # because the cache fetch works) before being cancelled. So this job waits for the cone and the
+    # shards and restores their oleans instead of re-elaborating; docbuild requires the parent
+    # package by path, so `lake build Submission:docs` from there reuses them.
+    needs: [build-cone, build-cell]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    steps:
+      - name: Make room on the runner
+        run: |
+          df -h / | tail -1
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo fallocate -l 48G /swapfile2 && sudo chmod 600 /swapfile2
+          sudo mkswap /swapfile2 >/dev/null && sudo swapon /swapfile2
+          free -m; df -h / | tail -1
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - name: Check Lean source requirements before builds
+        run: python3 scripts/check-lean-sources.py
+      - uses: leanprover/lean-action@fe408643ea7367d8c0404a8be3975bb145f5fb64
+        with:
+          build: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          # cone-oleans plus cells-oleans-0..7: the whole elaborated library, restored once.
+          pattern: "*-oleans*"
+          merge-multiple: true
+          path: .lake/build/lib/lean
       - name: Build doc-gen4 output
         working-directory: docbuild
         env:
@@ -152,7 +230,7 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -ne 0 ]; then
             # Surface the end of the log as an annotation, readable without the log archive.
-            msg=$(grep -v '^\s*$' "$RUNNER_TEMP/step.log" | tail -c 3800 | sed -e 's/%/%25/g' | sed -e ':a;N;$!ba;s/\n/%0A/g')
+            msg=$(grep -v '^\s*$' "$RUNNER_TEMP/step.log" | tail -c 3800 | sed -e 's/%/%25/g' -e ':a;N;$!ba;s/\n/%0A/g')
             echo "::error title=Tail of the failing step::$msg"
           fi
           exit "$status"
