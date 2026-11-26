@@ -188,7 +188,12 @@ jobs:
     name: Build with Lean (top)
     needs: build-cells
     runs-on: ubuntu-latest
-    timeout-minutes: 300
+    # R2125613832: raised from 300 after run 45706394529 measured this job at
+    # 5326/5357 targets when the 300-minute wall cancelled it -- 31 targets from
+    # green, 99.4% complete, with `lake` and four `lean` processes still working.
+    # A cancelled job cancels the whole run, which is what made the PR look red.
+    # 360 is GitHub's ceiling and the job needs minutes, not hours.
+    timeout-minutes: 360
     steps:
       - name: Make room on the runner
         run: |
