@@ -1,0 +1,3 @@
+module
+public import Submission.CatalanMeasure.Parametric.PrimeDigitSampling.P1
+public import Submission.CatalanMeasure.Parametric.PrimeDigitSampling.P2

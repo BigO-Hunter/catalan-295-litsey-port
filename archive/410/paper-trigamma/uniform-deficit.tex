@@ -1,0 +1,229 @@
+\section{A uniform rescaled-core deficit}
+\label{sec:uniform-deficit}
+
+The determinant family and the clean-prime estimates are those of
+Section~\ref{sec:content}.  A common rescaled-core argument supplies three additional,
+disjoint groups of prime windows.  The gain comes from a first-order
+cancellation and an elementary assignment dual; no assertion about a Smith
+normal form or the optimality of the tropical bound is required.
+The argument applies to both offsets $o\in\{1,3\}$.
+
+\paragraph{Monic rescaling.}
+For the finite certificate take $m=\lfloor r/8\rfloor$; the same leading estimates hold for
+$m=r/8+O(1)$, since all endpoint and border losses are bounded per prime. Put $N=r+2m$ and write $C=[0,r)$ for the
+common core and $Z=[r,N)$ for the interleaved border zone.  We use primes
+$p\ge13$ satisfying $4(N+1)<p^2$.  In the normalized symmetric rational
+matrix $R$, whose omitted normalization factors are $p$-adic units, every
+entry has valuation at least $-2$.  Replace the polynomial variable $X$
+by $x/p^2$ and set
+\[
+ A=R_{CC}+\frac{x}{p^2}I_r,\qquad Q=p^2A=p^2R_{CC}+xI_r.
+\]
+The entries of $Q$ are integral for the $p$-adic Gauss valuation.  Its
+reduction is block diagonal according to residues of core nodes modulo
+$p$.  Every reduced block has the form $M+xI$, so its determinant is
+monic and nonzero over $\mathbb F_p(x)$.  Consequently
+\[
+ v_G(\det Q)=0,\qquad v_G(\det A)=-2r.
+\]
+This remains valid when the constant matrix $M$ is singular.  The single
+Gauss unit $\det Q$ and its adjugate suffice to express all inverse
+entries; separate denominators for individual residue blocks are unnecessary.
+
+Let $T$ be the Schur matrix left after eliminating $C$, and let $w_{zy}\ge0$ be
+integers with $v_G(T_{zy})\ge-w_{zy}$. If every assignment in the $m\times m$
+zone matrix has total weight $\sum w_{z\sigma(z)}$ at most $\tau$, then the
+determinant expansion gives
+\[
+ v_G\bigl(F(x/p^2)\bigr)\ge-2r-\tau.
+\]
+Indeed, for $F(X)=\sum_i c_iX^i$ the left side is
+$\min_i(v_p(c_i)-2i)$.  Thus every coefficient satisfies
+$v_p(c_i)\ge-2r-\tau+2i\ge-2r-\tau$.
+The substitution estimates coefficients of the original polynomial and
+introduces no new approximation family.
+
+\paragraph{Translation and cancellation.}
+The singular cuts are the integers in the two residue classes
+$0$ and $(cp+o)/4$ modulo $p$, where $c=1$ or $3$ is determined by the
+prime class.  For a zone node $z$, its core chain consists of
+\[
+ \{z-ip: i\ge1,\ 0\le z-ip<r\}.
+\]
+Between consecutive singular cuts and the core-exit cuts $r+ip$, translation
+by $y-z$ identifies the chains of $z$ and $y$, their leading node data,
+the leading core--zone vectors, and their symmetric leading chain matrices.
+For the one-interval construction below, clipping the right endpoint at
+$r+p$ controls the core-exit cut.  The formal diagonal $xI$ is preserved
+by the same identification.
+
+For completeness, write $Q=B+pE$, where $B$ retains the full
+same-residue blocks of $Q$.  Modulo $p^2$,
+\[
+ Q^{-1}=B^{-1}-pB^{-1}EB^{-1}.
+\]
+For two distinct residues the order $-2$ Schur term vanishes.  For two
+nodes in one translated class, let $g$ be the common leading inverse
+vector and $L$ the leading node datum.  Up to one common normalization,
+the three order $-1$ correction sums are
+\[
+ \begin{gathered}\frac\gamma{y-z}\sum_u g_u\bigl(L(z)-L(u)\bigr),\\
+ \frac\gamma{y-z}\sum_u g_u\bigl(L(u)-L(z)\bigr),\\
+ -\frac\gamma{y-z}\sum_{u,v}g_ug_v\bigl(L(u)-L(v)\bigr).\end{gathered}
+\]
+The first two cancel termwise, and the last vanishes by interchanging
+$u,v$.  The direct order $-1$ entry also vanishes since $L(y)=L(z)$.
+This proves integrality within the selected class. Between distinct
+residues the Schur entry has denominator exponent at most $1$, and between
+equal residues at most $2$.
+No specialization at $x=0$ or additional spectral hypothesis enters this
+calculation.
+
+\paragraph{One interval and a $0/1/2$ dual.}
+Choose consecutive singular cut indices $A_4<B_4$, with no permitted
+numerator strictly between them, and put
+\[
+ \begin{gathered} a=\max\left(r,\left\lfloor\frac{A_4p+\epsilon_{A_4}}4\right\rfloor\right),
+ \\ b=\min\left(N,r+p,
+       \left\lfloor\frac{B_4p+\epsilon_{B_4}}4\right\rfloor\right),
+ \\ \epsilon_j=\begin{cases}0&j\equiv0\pmod4,\\o&\text{otherwise}.\end{cases}\end{gathered}
+\]
+In the high range $p>2m$ the clipping at $r+p$ is redundant.
+All nodes of $[a,b)$ lie in one translated class and have distinct
+residues.  In the low range $m<p<2m$, use the smaller interval
+\[
+ J=[\max(a,N-p),b),
+\]
+interpreting its length as zero when its left endpoint exceeds its right
+endpoint.  Since $b\le r+p$, a node in $J$ has no other zone node of the
+same residue.  In the high range take $J=[a,b)$.
+Assign potential $0$ to every row or column node in $J$, and potential
+$1$ to every other zone node. Two nodes in $J$ have an integral Schur
+entry; a Schur entry between a node of $J$ and a node outside $J$ has
+denominator exponent at most $1$, and one between two nodes outside $J$ has
+denominator exponent at most $2$. Therefore these potentials are a feasible
+dual for the assignment problem of Lemma~\ref{lem:trop}, and
+\[
+ \tau\le2m-|J|.
+\]
+This single interval replaces the counting of residue classes and parities
+in Section~\ref{sec:content}.
+
+The second member adds one row and one column to the Schur matrix. Every new
+entry, including the rescaled diagonal entry, has denominator exponent at
+most $2$. An assignment uses at most two of the new entries, so the bound
+increases by at most $4$. Thus both members satisfy
+\[
+ \operatorname{denexp}_p F_i\le2r+2m-|J|+4\qquad(i=1,2),
+\]
+where $\operatorname{denexp}_p F$ is the largest power of $p$ in the
+denominators of the coefficients of $F$. The constant $4$ is kept in the
+deficit below.
+
+\paragraph{The deficit.}
+Let $T_4$ be the bound for the denominator exponent at $p$ used in
+Section~\ref{sec:content}, after the rank deficits of Theorem~\ref{thm:deficits}.
+In the ranges of primes considered here we compare it with
+\[
+ B_0=\begin{cases}2r+3m-p,&m<p<2m,\\2r+m,&p>2m;\end{cases}
+\]
+the affine bounds of Section~\ref{sec:content} already give $T_4\le B_0+O(1)$
+there, so the tropical integral is unchanged. The bound just proved gives the
+nonnegative integer deficit
+\[
+ \delta_p=\begin{cases}
+ (m+|J|-p-4)_+,&m<p<2m,\\
+ (|J|-m-4)_+,&p>2m.
+ \end{cases}
+\]
+We use $\delta_p$ only at primes where the rank deficits of
+Theorem~\ref{thm:deficits} give no saving, so that the two savings are never
+added at the same prime; elsewhere the new deficit is set to zero.
+
+\paragraph{The profile.}
+Write $u=p/r$, $A=A_4/4$ and $B=B_4/4$. The deficit is bounded below by
+$r f(p/r)-8$, where $f$ is a function of $u$ that is affine on each of finitely
+many intervals. On each interval the inequality to be checked is, in the range
+$m<p<2m$,
+\[
+ \begin{gathered}a_0=\max(1,Au),\qquad b_0=\min(5/4,Bu,1+u),\\
+ f(u)\le\min(1/8-u+b_0-a_0,\ b_0-9/8),\end{gathered}
+\]
+and in the range $p>2m$,
+\[
+ f(u)\le\min(5/4,Bu)-\max(1,Au)-1/8.
+\]
+For affine $f$ each of these reduces to finitely many inequalities at the
+endpoints: nine in the first range and four in the second. There are $61$
+intervals: $37$ in the range $m<p<2m$, $20$ for non-clean primes with $u<3/5$,
+and $4$ further intervals listed below. For each interval one also checks that
+$A_4$ and $B_4$ are consecutive singular cuts, the residue class of $p$, that
+$f\ge0$, and that the intervals of one class of primes are disjoint.
+
+Each interval $[s,t]$ is shrunk to $[s+\eta,t-\eta]$ with $\eta=10^{-7}$. This
+leaves a strict margin at the boundaries of the windows of
+Theorem~\ref{thm:deficits}, and a finite check shows that for all large $r$
+the shrunk intervals avoid those windows; this is how the two savings are kept
+apart. Replacing $m$ by $r/8$ and the cuts by $A_4p/4$, $B_4p/4$ moves the
+endpoints by bounded amounts, and the explicit rounding bounds give, uniformly,
+\[
+ \delta_p\ge r f(p/r)-8.
+\]
+Both offsets use the same profile: the class $c=1$ corresponds to
+$p\equiv4-o\pmod4$ and $c=3$ to $p\equiv o\pmod4$, so passing from $\lambda_-$ to
+$\lambda_+$ exchanges the two classes of primes without changing their
+contribution.
+
+\paragraph{Prime summation and the final constants.}
+For an affine piece $f(u)=\alpha+\beta u$ on $[s,t]$, the prime number theorem in
+progressions gives the contribution
+\[
+ \frac12\int_s^t f(u)\,du
+ =\frac12\left(\alpha(t-s)+\frac\beta2(t^2-s^2)\right)
+\]
+to the coefficient of $r^2$; the constant $8$ contributes only $O(r)$. Before
+shrinking, the three groups of intervals contribute
+{\renewcommand{\arraystretch}{1.8}
+\[
+\begin{array}{c|c|c}
+\text{primes}&\text{intervals}&\text{contribution}\\\hline
+m<p<2m&37&\frac{14667950664797}{5028641371353600}\simeq0.0029168814\\
+\text{non-clean}&20&\frac{160166243}{12415603200}\simeq0.0129003996\\
+\text{upper}&4&\frac{109}{22400}\simeq0.0048660714
+\end{array}
+\]
+}
+The four upper affine pieces are
+{\renewcommand{\arraystretch}{1.8}
+\[
+\begin{array}{c|c|c}
+c&u\text{-interval}&f(u)\\\hline
+1&(4/5,9/10)&9/8-5u/4\\
+1&(3/5,5/8)&2u-9/8\\
+3&(5/8,9/14)&9/8-7u/4\\
+3&(3/5,5/8)&u/4-1/8.
+\end{array}
+\]
+}
+After shrinking, the total of the $61$ pieces is exactly
+\[
+ \Delta_\eta=
+ \frac{4420349242147094110541}{213717258282528000000000}
+ =0.0206831646525407\ldots,
+\]
+and the shrinking costs less than $1.879\times10^{-7}$. The content constant
+of Section~\ref{sec:content}, in the rational form used in the formal proof, is
+\[
+ \begin{aligned}\Lambda_4&=\frac{24729491161}{6665218560}-\frac1{448}-\frac1{576}-\frac1{352}
+\\ &=\frac{320572813}{86561280}=3.7034204323226274\ldots,\end{aligned}
+\]
+and the new content constant is at most
+\[
+ \Lambda_4-\Delta_\eta
+ =3.6827372676700867\ldots
+ \ <\ \frac{184137}{50000}=3.68274.
+\]
+This is the content constant $\LamMid$ used in the next section; it uses no
+saving at primes $p<m$. The argument is first-order: it uses only the first
+Smith coefficient. Section~\ref{sec:next-level} adds the second level at
+non-clean primes.

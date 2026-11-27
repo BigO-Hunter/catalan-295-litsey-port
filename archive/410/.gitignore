@@ -1,0 +1,8 @@
+/.cache/
+/.lake/
+/docbuild/.lake/
+__pycache__/
+
+
+# research notes stay local (never published)
+research/

@@ -1,0 +1,75 @@
+An irrationality measure for Catalan's constant -- Lean formalization
+Copyright 2026 Sean Litsey
+
+This repository is licensed under the Apache License, Version 2.0 (see LICENSE).
+It contains third-party material, also licensed under the Apache License, Version 2.0:
+
+1. OAI/  (478 files)
+   From OpenAI's mathematics repository, https://github.com/openai/math,
+   commit fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb, directory lean/OAI/
+   (the formalization accompanying "Catalan's constant is irrational", OpenAI, 2026).
+   Only the files needed by this development are included. They were modified as follows:
+   - each file was mechanically converted to Lean's module system (a `module` header,
+     `public import`, and `@[expose] public section` after the imports);
+   - minimal changes were made for Lean v4.35.0-rc2 and Mathlib v4.35.0-rc2 (see PORTING.md);
+   - in the 37 point-evaluation files OAI/NumberTheory/Catalan/SecondBarrier/
+     BarrierCaseTwoPoint{X0..X18,Y0..Y17}.lean and in BarrierCaseTwoGlobalBounds.lean, the
+     comparison constants -98399/100000 and -160890/100000 were replaced by the sharper
+     -9840333/10000000 and -16089463/10000000; the evaluation points and rational
+     approximations are unchanged, and BarrierCaseTwoGlobalBounds.lean keeps OpenAI's original
+     statements as corollaries (barrierCase2X_global_upper, barrierCase2Y_global_upper).
+   Apart from these sharpened constants, the mathematical content and the declarations are
+   unchanged.
+
+2. PrimeNumberTheoremAnd/  (10 files)
+   Files that OpenAI's repository adds to the PrimeNumberTheoremAnd project
+   (https://github.com/AlexKontorovich/PrimeNumberTheoremAnd, commit
+   c39a751132c88b6e8080b74c74023fd95b3d8be0) through its compatibility patch
+   lean/patches/PrimeNumberTheoremAnd-lean4341.patch at the commit above.
+   They were modified in the same way as item 1.
+
+3. scripts/, test/, docbuild/, .github/, Gemfile, Gemfile.lock
+   From the Palomar submission template, https://github.com/PalomarRegistry/PalomarTemplate,
+   adapted to this project.
+
+Everything else (CatalanMeasure/, CatalanMeasure.lean, Challenge.lean, Solution.lean,
+comparator.json, formalization.yaml, README.md, PORTING.md, paper/, scripts/certgen/) is new work
+for this project.
+
+The general determinant lemmas and first-case dual bound were later moved, with unchanged
+statements and proof bodies, from RealDeterminantUpper.lean into the new vendored file
+OAI/NumberTheory/Catalan/Determinants/RealDeterminantCore.lean. Two generic denominator
+lemmas from OpenAI's Case2Height namespace were also copied, with unchanged proof bodies,
+into CatalanMeasure/Cert/DenominatorBounds.lean. These changes isolate reusable lemmas from
+the old second-case certificate, which the current main proof supersedes.
+
+4. Submission layout conversion for bigospeedrun/verifier (2026-11-04)
+   The proof was converted to the verifier's Submission layout following
+   docs/convert-layout.md of bigospeedrun/verifier: the transitive import
+   closure of CatalanMeasure.GenD.Signed.Data.Assembly.CellsAll (2453 files
+   from CatalanMeasure/, CatalanCore/, OAI/, PrimeNumberTheoremAnd/) was moved
+   under Submission/ with `Submission.`-prefixed imports; nothing else was
+   changed in the moved sources. Submission/CatalanStatement.lean is a
+   byte-for-byte copy of challenges/catalan/Statement.lean from
+   bigospeedrun/verifier (Apache-2.0). Submission.lean at the root is a new
+   bridge proving Race.bound : BigOSpeedrun.Catalan.Bound (410/1) from
+   catalan_irrationalityMeasure_410 (transfer lemma inlined from
+   challenges/catalan/Validation.lean of bigospeedrun/verifier). The build
+   profile files lean-toolchain, lakefile.toml and lake-manifest.json are set
+   to the verifier's Catalan profile (Lean v4.34.1, Mathlib
+   d13f23b723b8a846827a245b89c10fc7d3f11612); the upstream v4.35.0-rc2 copies
+   are kept as lean-toolchain-upstream and lakefile-upstream.toml.
+   Three proof-level adjustments were needed for the profile (Lean v4.34.1,
+   Mathlib d13f23b7), none changing any statement or mathematical content:
+   in Submission/CatalanMeasure/GenD/Cert/Assembly.lean the last conjunct of
+   `blockOK_ofS` now closes via `decide_eq_true_eq.mpr (of_decide_eq_true hPb)`
+   rather than `of_decide_eq_true hPb` alone, because the `PolyDataS.toD`->`toD`
+   rewrite reaches the decided proposition but not the `Decidable` instance term
+   carried by `decide`; in Submission/CatalanMeasure/GenD/Signed/SheetNear.lean
+   `set_option maxHeartbeats 1600000 in` was added before `near_Sterm_le`,
+   whose elaboration exceeds the default 200000 heartbeats under this profile
+   (the same option is already used in 191 files of this development); and the
+   Submission.lean bridge opens `BigOSpeedrun.Catalan` and takes its cast step
+   from the smoke fixture's documented bridge in docs/convert-layout.md.
+   Conversion by D. I. Arkhipov; the proof and all attributions above are
+   Sean Litsey's, OpenAI's, and the other cited authors', unchanged.

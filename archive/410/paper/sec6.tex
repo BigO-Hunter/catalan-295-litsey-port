@@ -1,0 +1,149 @@
+\section{The energy method with prescribed columns}\label{sec:energy}
+
+This section recalls OpenAI's energy method, extends it to determinants with prescribed columns, and
+proves Theorem~\ref{thm:real} assuming the bound of Section~\ref{sec:signed}.
+
+\subsection{OpenAI's energy}\label{ssec:energy}
+By Andr\'eief's identity, $\det\cA_N$ is an integral over $n$ points $x_i\in(-1,1)$ and $n$ points
+$s_j\in(0,1)$. OpenAI bounds the integrand by $e^{n^2E}$, where $E$ is a discrete logarithmic energy of the
+points, written in the coordinate $x$ with $t=2x/(1+x^2)$ \cite[\S5]{OpenAI2026}. It has the form
+\begin{multline*}
+ n^2E=\sum_iV_1(x_i)+\sum_jV_2(s_j)+\sum_{i<i'}\bigl(\log|x_i-x_{i'}|+\log(1-x_ix_{i'})\bigr)\\
+ +\sum_{j<j'}\log|s_j-s_{j'}|-\sum_{i,j}\log(1-2x_is_j+x_i^2),
+\end{multline*}
+schematically, with external fields $V_1,V_2$ of order $n$. The first two sums are the
+external fields. The next two are the logarithmic interactions among points of the same kind, and the last
+is the interaction between the two kinds. There are two cases, according to which of OpenAI's two bounds for
+the determinant of the row functions is used \cite[Props.~5.2, 5.3]{OpenAI2026}. In the \emph{constrained
+case} the row field acquires a term with a multiplier $\lambda_1$ for the constraint that defines the case,
+In the \emph{case with doubled interaction} the interaction among the $x_i$ has weight $2$ instead of $1$. This case also bounds a determinant
+$\det\mathsf L$ of size $n$ by $6^n$, which is the factor that Section~\ref{sec:signed} improves.
+
+The energy is bounded from above by duality. Given trial sequences $u=(u_k)$ and $v=(v_k)$, one writes the
+interaction terms as quadratic forms in the moments $\frac1n\sum_iT_k(x_i)$ and $\frac1n\sum_js_j^k$. Then one
+completes the squares against $u$ and $v$. What remains is the sum of the norms $\|u\|^2=\sum_ku_k^2/k$ and
+$\|v\|^2$ and, for each point, a function of one variable. With $\mathsf T(u,x)=\sum_ku_kT_k(x)/k$ and
+$\mathsf S(v,x)=\sum_kv_kx^k/k$, these functions are, in the case with doubled interaction,
+\begin{align*}
+ X(x)&=\alpha_A\log|x|+\beta_h\log(1-x)-\gamma_H\log(1+x^2)-4\mathsf T(u,x)-\mathsf S(v,x),\\
+ Y(s)&=\tfrac{b_0}{n_0}\log s+\tfrac{q_0}{n_0}\log(1-s)+2\mathsf T(v,s).
+\end{align*}
+In the constrained case, with a trial sequence $u'$ in place of $u$, they are
+\begin{multline*}
+ X_1(x)=\alpha_A\log|x|+\beta_h\log(1-x)-(\gamma_H-\tfrac12)\log(1+x^2)\\
+ +\lambda_1\bigl(\tfrac{2g_0}{n_0}-\tfrac{2x^2}{1+x^2}\bigr)-2\mathsf T(u',x)-\mathsf S(v,x),
+\end{multline*}
+with the same $Y$. If $X\le M_X$ and $Y\le M_Y$ on the whole domains, the energy of every configuration is at
+most a constant determined by $M_X$, $M_Y$ and the norms. In the language of potential theory the extremal
+configuration is described by an equilibrium problem for two interacting measures in an external field
+\cite{SaffTotik}. The best trial sequences are the moments of its solution, as Carreira observed
+\cite{Carreira2026}. Any trial sequences give a valid upper bound.
+
+\subsection{Prescribed points}
+When $m$ of the $n$ columns are point values, only $n-m$ points of each kind are integrated over, and the
+energy is still normalized by $n$. The prescribed points enter through the row determinant, now evaluated
+at the free points together with the prescribed ones. There are two kinds of prescribed points: the
+quadrature nodes, which satisfy $|x|>g_*$, and points $y\in(0,1)$. Let $\alpha=m/n$ be the fraction of
+prescribed columns and $\alpha_2$ the fraction of prescribed points of the second kind. Each missing free point
+changes the energy bound by a bounded amount. The total change is linear in $m$, and its slope $c_2$ enters
+$\rho$.
+
+Every step of OpenAI's argument remains valid uniformly in the number of free points. The regularization of
+the logarithmic interactions, the diagonal corrections and the completion of squares only involve sums over
+the points present. For the prescribed points of the first kind the relevant field is
+\[
+ F_1(x)=-\gamma_d\log(1+x^2)-2\mathsf T(u,x),\qquad g_*\le|x|\le1 .
+\]
+For those of the second kind it is
+\[
+ F_2(y)=-\gamma_d\log(1+y^2)+\frac{n_0-2g_0-1}{n_0}\log y-u_1y,\qquad0<y<1,
+\]
+where $u_1$ is the first coefficient of $u$. The coefficient $(n_0-2g_0-1)/n_0$ is a lower bound, valid for all
+$N\ge1$, of $(n-1-2g)/n$. By Lemma~\ref{lem:binomvand} the generalized Vandermonde determinant contributes only
+the factor $\prod_{i<l}|s_i-s_l|$ to the energy, and the binomial factors are assigned to the columns. The
+energy bound then reduces to a quadratic inequality in $\alpha$ and $\alpha_2$.
+
+\begin{lemma}[energy inequality with prescribed points]\label{lem:energy-ineq}
+Let $\ell=\log2$, and let $\mathcal N,\mathcal F,\mathcal R,\mathcal F_2$, $c_2$ and $m_0\ge0$ be real numbers
+with
+\begin{gather*}
+ \mathcal N+\mathcal F+U-a_0\ell\le-m_0,\qquad \ell-\mathcal R+\mathcal F_2\le0,\\
+ \bigl((a_1-1)\ell-\mathcal F+\mathcal R-c_2\bigr)^2\le4\ell m_0 .
+\end{gather*}
+Then for all $\alpha,\alpha_2\ge0$
+\begin{multline*}
+ \bigl(-(a_0-\tfrac12)+(a_1-1)\alpha-\alpha^2+\alpha_2-\alpha_2^2\bigr)\ell+\mathcal N+(1-\alpha)\mathcal F\\
+ +(\alpha-\alpha_2)\mathcal R+\alpha_2\mathcal F_2\le-U+\tfrac12\ell+c_2\alpha .
+\end{multline*}
+\end{lemma}
+
+\begin{proof}
+The left side minus the right side equals
+\[
+ (\mathcal N+\mathcal F+U-a_0\ell)+\alpha\bigl((a_1-1)\ell-\mathcal F+\mathcal R-c_2\bigr)-\ell\alpha^2
+ +\alpha_2(\ell-\mathcal R+\mathcal F_2)-\ell\alpha_2^2 .
+\]
+The last two terms are nonpositive by the second hypothesis. The first three form a concave quadratic in
+$\alpha$. It is nonpositive for all $\alpha$, since $a+s\alpha-\ell\alpha^2\le0$ for all $\alpha$ as soon as
+$s^2+4\ell a\le0$.
+\end{proof}
+
+The lemma is applied with $\mathcal N$ a bound for $2\|u\|^2+\frac12\|v\|^2$, $\mathcal F=M_X+M_Y$,
+$\mathcal R$ a bound for the supremum of $F_1$ and $\mathcal F_2$ a bound for the supremum of $F_2$. The
+analogue for the constrained case has no prescribed points of the second kind. Its polynomial in $\alpha$ is
+\[
+ \bigl(-(a_0-\tfrac12)+(a_1-1)\alpha-\alpha^2\bigr)\ell+n_1+(1-\alpha)\mathcal F_1+\alpha\lambda_1\tfrac{2g_0}{n_0}
+ \le-U+\tfrac12\ell+c_1\alpha,
+\]
+with $n_1$ a bound for the norms of the trial sequences and $\mathcal F_1=M_{X_1}+M_Y$. It holds for all real
+$\alpha$ when its discriminant is nonpositive and $c_1\le(a_1-1)\ell-\mathcal F_1+\lambda_1\tfrac{2g_0}{n_0}$.
+
+For our parameters the trial sequences of Appendix~\ref{app:field} give, with $U=\Utarget$, the hypotheses of
+Lemma~\ref{lem:energy-ineq} with $m_0=\Mmargin$ and $c_2=\Ctwo$. The constrained case admits $c_1=\Cone<c_2$.
+
+\subsection{The trial sequences}\label{ssec:trials}
+The trial sequences have the form
+\begin{equation}\label{eq:trial}
+ u_k=c_k+\operatorname{Re}\sum_jr_jz_j^k\qquad(k\ge1;\ c_k=0\text{ for }k>\Kcoef),
+\end{equation}
+with $\Kcoef$ Chebyshev coefficients and finitely many geometric terms. The geometric terms have a simple
+meaning. Since $\sum_{k\ge1}z^kT_k(x)/k=-\frac12\log(1-2xz+z^2)$, a term $(z,r)$ contributes
+$-\frac12\operatorname{Re}\,r\log(1-2xz+z^2)$ to the potential $\mathsf T(u,x)$. If
+$x_0+i\epsilon_0=\frac12(z+z^{-1})$, then $1-2xz+z^2=2z(x_0+i\epsilon_0-x)$. So the term is, up to a constant,
+the logarithmic potential of a point charge of complex strength $r$ at $x_0+i\epsilon_0$ and its conjugate. The
+extremal measure has a gap in its support around $x=0$. Its potential has a logarithmic singularity at $x=0$
+and square-root behaviour at the edges of the gap. A Chebyshev expansion converges slowly near such points,
+while a charge at a small distance $\epsilon_0$ reproduces the local behaviour with one term. This is also why
+the quadrature nodes of Section~\ref{sec:real} avoid $|x|\le g_*$. Appendix~\ref{app:field} gives the charges
+and the certified bounds.
+
+\subsection{The two cases at the improved rate}\label{ssec:cases}
+Theorem~\ref{thm:real} asks for the rate $U_0=U+\Gamma_0/n_0^2$ instead of $U$. In the constrained case the
+inequality of Lemma~\ref{lem:energy-ineq} still holds at $U_0$ for every $\alpha$, with the slope $c_2$. In the
+case with doubled interaction it holds at $U_0$ only for $\alpha\ge\frac1{16}$, because the extra term $U_0-U$
+is absorbed by the term $c_2\alpha$ once $\alpha$ is not small. So a new argument is needed only in the case
+with doubled interaction with fewer than $n/16$ prescribed columns. Section~\ref{sec:signed} supplies it,
+with the same constant $c_2$. Precisely, it proves the following.
+
+\begin{proposition}\label{prop:signed-goal}
+In the case with doubled interaction, for every configuration with $m\le n/16$ prescribed columns, the
+integrand of Lemma~\ref{lem:andreief}, with the generalized Vandermonde determinant replaced by the bound of
+Lemma~\ref{lem:binomvand}, is at most
+\[
+ \exp\Bigl(n^2\bigl(-U_0+\tfrac12\log2+c_2\alpha+o(1)\bigr)\Bigr)\,C_0^m\prod_j\mathcal B(k_j),\qquad \alpha=m/n,
+\]
+with an absolute constant $C_0$.
+\end{proposition}
+
+\begin{proof}[Proof of Theorem~\ref{thm:real}, given Proposition~\ref{prop:signed-goal}]
+By Proposition~\ref{prop:signed-goal} and the discussion above, in both cases a determinant $M_f$ with $m$
+prescribed columns $k_1,\ldots,k_m$ is at most
+$C_0^m\prod_j\mathcal B(k_j)e^{n_0c_2Nm}\exp\bigl(n_0^2N^2(-U_0+\frac12\log2+o(1))\bigr)$. The factor $C_0^m$ comes
+from the expansion of the row functions at the prescribed points. By \eqref{eq:wk} and the bound for
+$\mathcal B(k)$, the constants of Lemma~\ref{lem:expansion} satisfy
+\[
+ \log(B_kC_k)\le\bigl(n_0c_2+w(k/n)+n_0\tilde h_2(k/n)+o(1)\bigr)N\le(\rho+o(1))N .
+\]
+For $|\varepsilon|\le e^{-\rho N}$ Lemma~\ref{lem:expansion} gives a factor $(1+O(N^5))^n=e^{o(N^2)}$. With
+$D=n_0^2(U_0-\frac12\log2)$ this is the claim.
+\end{proof}

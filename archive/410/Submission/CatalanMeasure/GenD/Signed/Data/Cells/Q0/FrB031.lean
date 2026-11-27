@@ -1,0 +1,205 @@
+module
+
+public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.FrFq
+public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.PolySplit
+public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.FrB031H1
+public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.FrB028
+public import Submission.CatalanMeasure.GenD.Signed.Data.Cells.Q0.FrB029
+@[expose] public section
+
+/-! Block 31 of FR, alpha = 0.0: 26 cells. -/
+
+namespace CatalanMeasure.GenD.Signed.Data.Cells
+open Set CatalanMeasure.CellCert CatalanMeasure.GenD.Signed.TaylorCell
+open CatalanMeasure.GenD.Signed.LogEval
+
+set_option maxRecDepth 100000
+def q0frB031Bl10 : List ℚ := [dy3 (8476843) 0 20, dy3 (6892585) 0 12, dy3 (6453315) 0 7, dy3 (565195) 4 0, dy3 (12124385) 4 0, dy3 (12722479) 11 0, dy3 (6658945) 16 0, dy3 (11131263) 22 0, dy3 (9595357) 26 0, dy3 (13272891) 32 0, dy3 (610565) 40 0, dy3 (11471329) 42 0, dy3 (14804573) 45 0, dy3 (15026237) 51 0, dy3 (271127) 60 0, dy3 (15425779) 60 0, dy3 (4050357) 65 0]
+theorem q0frB031C10 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1761782181285062342193414246702306414637535142284467042986397 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc10 q0frB031Blo q0frB031Bhi q0frB031P10 q0frB031P11 q0frB031Ls10 q0frB031Es10 q0frB031A0_10 q0frB031L1_10 q0frB031U1_10 q0frB031A2_10 q0frB031Bl10 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R10 : ∀ x ∈ Icc ((q0frB031P10 : ℚ) : ℝ) ((q0frB031P11 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C10 q0frB031Facts
+
+def q0frB031Cc11 : ℚ := (Rat.mk' (-738871813865195) 9007199254740992 : ℚ)
+def q0frB031Ls11 : List ℚ := []
+def q0frB031Es11 : List ℚ := []
+def q0frB031A0_11 : ℚ := dy3 (-54132222862024583) 0 59
+def q0frB031L1_11 : ℚ := dy3 (-156612747927) 0 49
+def q0frB031U1_11 : ℚ := dy3 (-313225495853) 0 50
+def q0frB031A2_11 : ℚ := dy3 (68353197066465) 0 49
+def q0frB031Bl11 : List ℚ := [dy3 (9700599) 0 20, dy3 (6687529) 0 12, dy3 (963017) 0 4, dy3 (8765251) 0 0, dy3 (14433167) 4 0, dy3 (12327349) 11 0, dy3 (7871689) 16 0, dy3 (10789509) 22 0, dy3 (11217613) 26 0, dy3 (12879177) 32 0, dy3 (11248451) 36 0, dy3 (1393857) 45 0, dy3 (4180349) 47 0, dy3 (3660697) 53 0, dy3 (4786851) 56 0, dy3 (15080227) 60 0, dy3 (8697927) 64 0]
+theorem q0frB031C11 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1750536763106653872168087661358772517665006948326626318083254 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc11 q0frB031Blo q0frB031Bhi q0frB031P11 q0frB031P12 q0frB031Ls11 q0frB031Es11 q0frB031A0_11 q0frB031L1_11 q0frB031U1_11 q0frB031A2_11 q0frB031Bl11 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R11 : ∀ x ∈ Icc ((q0frB031P11 : ℚ) : ℝ) ((q0frB031P12 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C11 q0frB031Facts
+
+def q0frB031Cc12 : ℚ := (Rat.mk' (-1372190511463897) 18014398509481984 : ℚ)
+def q0frB031Ls12 : List ℚ := []
+def q0frB031Es12 : List ℚ := []
+def q0frB031A0_12 : ℚ := dy3 (-108262055227779719) 0 60
+def q0frB031L1_12 : ℚ := dy3 (10979306877) 0 44
+def q0frB031U1_12 : ℚ := dy3 (702675640129) 0 50
+def q0frB031A2_12 : ℚ := dy3 (-51835035003477) 0 50
+def q0frB031Bl12 : List ℚ := [dy3 (2452561) 0 17, dy3 (1268487) 0 11, dy3 (8662289) 0 6, dy3 (3313489) 0 0, dy3 (16223589) 5 0, dy3 (2330273) 12 0, dy3 (4429267) 18 0, dy3 (16345571) 20 0, dy3 (12657893) 27 0, dy3 (9789301) 31 0, dy3 (3186621) 39 0, dy3 (8518795) 41 0, dy3 (297791) 52 0, dy3 (5630719) 51 0, dy3 (10993211) 56 0, dy3 (11693639) 59 0, dy3 (5039479) 66 0]
+theorem q0frB031C12 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1739433992938965085336463351424452994755730512495814977045810 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc12 q0frB031Blo q0frB031Bhi q0frB031P12 q0frB031P13 q0frB031Ls12 q0frB031Es12 q0frB031A0_12 q0frB031L1_12 q0frB031U1_12 q0frB031A2_12 q0frB031Bl12 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R12 : ∀ x ∈ Icc ((q0frB031P12 : ℚ) : ℝ) ((q0frB031P13 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C12 q0frB031Facts
+
+def q0frB031Cc13 : ℚ := (Rat.mk' (-1301821767286235) 18014398509481984 : ℚ)
+def q0frB031Ls13 : List ℚ := []
+def q0frB031Es13 : List ℚ := []
+def q0frB031A0_13 : ℚ := dy3 (-6766307625413045) 0 56
+def q0frB031L1_13 : ℚ := dy3 (-32240158413) 0 47
+def q0frB031U1_13 : ℚ := dy3 (-257921267303) 0 50
+def q0frB031A2_13 : ℚ := dy3 (-141511610663523) 0 50
+def q0frB031Bl13 : List ℚ := [dy3 (1028855) 0 17, dy3 (6923251) 0 12, dy3 (12575585) 0 8, dy3 (9063257) 0 0, dy3 (11769605) 4 0, dy3 (12721729) 11 0, dy3 (3218711) 17 0, dy3 (11105949) 22 0, dy3 (9234679) 26 0, dy3 (6607157) 33 0, dy3 (9356805) 36 0, dy3 (2849269) 44 0, dy3 (7053885) 46 0, dy3 (14899283) 51 0, dy3 (16446973) 54 0, dy3 (15266335) 60 0, dy3 (15270557) 63 0]
+theorem q0frB031C13 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1732110060337121207257391567106040449582718453160813391937887 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc13 q0frB031Blo q0frB031Bhi q0frB031P13 q0frB031P14 q0frB031Ls13 q0frB031Es13 q0frB031A0_13 q0frB031L1_13 q0frB031U1_13 q0frB031A2_13 q0frB031Bl13 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R13 : ∀ x ∈ Icc ((q0frB031P13 : ℚ) : ℝ) ((q0frB031P14 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C13 q0frB031Facts
+
+def q0frB031Cc14 : ℚ := (Rat.mk' (-598134325509871) 9007199254740992 : ℚ)
+def q0frB031Ls14 : List ℚ := []
+def q0frB031Es14 : List ℚ := []
+def q0frB031A0_14 : ℚ := dy3 (-54132229870201647) 0 59
+def q0frB031L1_14 : ℚ := dy3 (-320729421027) 0 50
+def q0frB031U1_14 : ℚ := dy3 (-160364710513) 0 49
+def q0frB031A2_14 : ℚ := dy3 (2132430819685) 0 44
+def q0frB031Bl14 : List ℚ := [dy3 (4913921) 0 19, dy3 (13319247) 0 13, dy3 (1978235) 0 5, dy3 (272113) 5 0, dy3 (7403147) 5 0, dy3 (12214913) 11 0, dy3 (8068045) 16 0, dy3 (83305) 29 0, dy3 (22445) 35 0, dy3 (1586759) 35 0, dy3 (11522651) 36 0, dy3 (10960513) 42 0, dy3 (4283845) 47 0, dy3 (1794091) 54 0, dy3 (153421) 61 0, dy3 (3684909) 62 0, dy3 (558291) 68 0]
+theorem q0frB031C14 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1721239076694844503784772750406284843210468586799208382420377 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc14 q0frB031Blo q0frB031Bhi q0frB031P14 q0frB031P15 q0frB031Ls14 q0frB031Es14 q0frB031A0_14 q0frB031L1_14 q0frB031U1_14 q0frB031A2_14 q0frB031Bl14 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R14 : ∀ x ∈ Icc ((q0frB031P14 : ℚ) : ℝ) ((q0frB031P15 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C14 q0frB031Facts
+
+def q0frB031Cc15 : ℚ := (Rat.mk' (-1090715534753249) 18014398509481984 : ℚ)
+def q0frB031Ls15 : List ℚ := []
+def q0frB031Es15 : List ℚ := []
+def q0frB031A0_15 : ℚ := dy3 (-27065519604270997) 0 58
+def q0frB031L1_15 : ℚ := dy3 (711538862641) 0 50
+def q0frB031U1_15 : ℚ := dy3 (355769431321) 0 49
+def q0frB031A2_15 : ℚ := dy3 (-50082936882073) 0 50
+def q0frB031Bl15 : List ℚ := [dy3 (4918123) 0 18, dy3 (4879341) 0 13, dy3 (1089625) 0 3, dy3 (12702239) 0 2, dy3 (16293863) 5 0, dy3 (1112535) 13 0, dy3 (8880087) 17 0, dy3 (15545309) 20 0, dy3 (1583201) 30 0, dy3 (9269859) 31 0, dy3 (12731979) 37 0, dy3 (16059023) 40 0, dy3 (9502567) 47 0, dy3 (2640653) 52 0, dy3 (10944921) 56 0, dy3 (1363929) 62 0, dy3 (10019575) 65 0]
+theorem q0frB031C15 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1710503697838126265092522343395738008163537750166891353364578 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc15 q0frB031Blo q0frB031Bhi q0frB031P15 q0frB031P16 q0frB031Ls15 q0frB031Es15 q0frB031A0_15 q0frB031L1_15 q0frB031U1_15 q0frB031A2_15 q0frB031Bl15 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R15 : ∀ x ∈ Icc ((q0frB031P15 : ℚ) : ℝ) ((q0frB031P16 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C15 q0frB031Facts
+
+def q0frB031Cc16 : ℚ := (Rat.mk' (-1020346790575587) 18014398509481984 : ℚ)
+def q0frB031Ls16 : List ℚ := []
+def q0frB031Es16 : List ℚ := []
+def q0frB031A0_16 : ℚ := dy3 (-108260897170675027) 0 60
+def q0frB031L1_16 : ℚ := dy3 (-247253460801) 0 50
+def q0frB031U1_16 : ℚ := dy3 (-3863335325) 0 44
+def q0frB031A2_16 : ℚ := dy3 (-143064880140733) 0 50
+def q0frB031Bl16 : List ℚ := [dy3 (1968363) 0 18, dy3 (6979439) 0 12, dy3 (6007399) 0 7, dy3 (9119721) 0 0, dy3 (2801689) 6 0, dy3 (6388887) 12 0, dy3 (763333) 19 0, dy3 (11135497) 22 0, dy3 (8724539) 26 0, dy3 (3306849) 34 0, dy3 (8801135) 36 0, dy3 (2847547) 44 0, dy3 (13207793) 45 0, dy3 (3716925) 53 0, dy3 (15321419) 54 0, dy3 (15212103) 60 0, dy3 (14151435) 63 0]
+theorem q0frB031C16 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1703420866791181682926663602173433185759759452428770471202992 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc16 q0frB031Blo q0frB031Bhi q0frB031P16 q0frB031P17 q0frB031Ls16 q0frB031Es16 q0frB031A0_16 q0frB031L1_16 q0frB031U1_16 q0frB031A2_16 q0frB031Bl16 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R16 : ∀ x ∈ Icc ((q0frB031P16 : ℚ) : ℝ) ((q0frB031P17 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C16 q0frB031Facts
+
+def q0frB031Cc17 : ℚ := (Rat.mk' (-457396837154547) 9007199254740992 : ℚ)
+def q0frB031Ls17 : List ℚ := []
+def q0frB031Es17 : List ℚ := []
+def q0frB031A0_17 : ℚ := dy3 (-27066113326355547) 0 58
+def q0frB031L1_17 : ℚ := dy3 (-167918837935) 0 49
+def q0frB031U1_17 : ℚ := dy3 (-335837675869) 0 50
+def q0frB031A2_17 : ℚ := dy3 (33941810449517) 0 48
+def q0frB031Bl17 : List ℚ := [dy3 (524097) 0 16, dy3 (13233177) 0 13, dy3 (16480163) 0 8, dy3 (8635013) 0 0, dy3 (15404445) 4 0, dy3 (12087817) 11 0, dy3 (8389773) 16 0, dy3 (10529377) 22 0, dy3 (11948765) 26 0, dy3 (6253603) 33 0, dy3 (374507) 41 0, dy3 (10774641) 42 0, dy3 (8917097) 46 0, dy3 (14076515) 51 0, dy3 (5115433) 56 0, dy3 (14421621) 60 0, dy3 (4661019) 65 0]
+theorem q0frB031C17 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 3 1692905923169020063183074522396263028349751431898241965787746 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc17 q0frB031Blo q0frB031Bhi q0frB031P17 q0frB031P18 q0frB031Ls17 q0frB031Es17 q0frB031A0_17 q0frB031L1_17 q0frB031U1_17 q0frB031A2_17 q0frB031Bl17 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R17 : ∀ x ∈ Icc ((q0frB031P17 : ℚ) : ℝ) ((q0frB031P18 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C17 q0frB031Facts
+
+def q0frB031Cc18 : ℚ := (Rat.mk' (-809240558042601) 18014398509481984 : ℚ)
+def q0frB031Ls18 : List ℚ := []
+def q0frB031Es18 : List ℚ := []
+def q0frB031A0_18 : ℚ := dy3 (-108262117954148541) 0 60
+def q0frB031L1_18 : ℚ := dy3 (359333659277) 0 49
+def q0frB031U1_18 : ℚ := dy3 (718667318555) 0 50
+def q0frB031A2_18 : ℚ := dy3 (-11856954662475) 0 48
+def q0frB031Bl18 : List ℚ := [dy3 (9885041) 0 19, dy3 (2302373) 0 12, dy3 (8798579) 0 6, dy3 (11951003) 0 2, dy3 (16422325) 5 0, dy3 (16691521) 9 0, dy3 (558587) 21 0, dy3 (14522705) 20 0, dy3 (12730055) 27 0, dy3 (8624971) 31 0, dy3 (12780271) 37 0, dy3 (7438179) 41 0, dy3 (4763491) 48 0, dy3 (9738821) 50 0, dy3 (10960461) 56 0, dy3 (5005161) 60 0, dy3 (10023059) 65 0]
+theorem q0frB031C18 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1682519997260013725515117930699790272261644322591366169869939 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc18 q0frB031Blo q0frB031Bhi q0frB031P18 q0frB031P19 q0frB031Ls18 q0frB031Es18 q0frB031A0_18 q0frB031L1_18 q0frB031U1_18 q0frB031A2_18 q0frB031Bl18 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R18 : ∀ x ∈ Icc ((q0frB031P18 : ℚ) : ℝ) ((q0frB031P19 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C18 q0frB031Facts
+
+def q0frB031Cc19 : ℚ := (Rat.mk' (-738871813864939) 18014398509481984 : ℚ)
+def q0frB031Ls19 : List ℚ := []
+def q0frB031Es19 : List ℚ := []
+def q0frB031A0_19 : ℚ := dy3 (-108260886100793113) 0 60
+def q0frB031L1_19 : ℚ := dy3 (-235028370753) 0 50
+def q0frB031U1_19 : ℚ := dy3 (-3672318293) 0 44
+def q0frB031A2_19 : ℚ := dy3 (-144790993006033) 0 50
+def q0frB031Bl19 : List ℚ := [dy3 (14860927) 0 21, dy3 (7053671) 0 12, dy3 (2817981) 0 6, dy3 (287647) 5 0, dy3 (5240157) 5 0, dy3 (804975) 15 0, dy3 (5690885) 16 0, dy3 (11209921) 22 0, dy3 (8099269) 26 0, dy3 (13299681) 32 0, dy3 (2034035) 38 0, dy3 (5719665) 43 0, dy3 (12154627) 45 0, dy3 (3728947) 53 0, dy3 (14031537) 54 0, dy3 (7622993) 61 0, dy3 (6446799) 64 0]
+theorem q0frB031C19 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1675666555315985062568629953926551676496113495844448243187891 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc19 q0frB031Blo q0frB031Bhi q0frB031P19 q0frB031P20 q0frB031Ls19 q0frB031Es19 q0frB031A0_19 q0frB031L1_19 q0frB031U1_19 q0frB031A2_19 q0frB031Bl19 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R19 : ∀ x ∈ Icc ((q0frB031P19 : ℚ) : ℝ) ((q0frB031P20 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C19 q0frB031Facts
+
+def q0frB031Cc20 : ℚ := (Rat.mk' (-668503069687277) 18014398509481984 : ℚ)
+def q0frB031Ls20 : List ℚ := []
+def q0frB031Es20 : List ℚ := []
+def q0frB031A0_20 : ℚ := dy3 (-6766457973224089) 0 56
+def q0frB031L1_20 : ℚ := dy3 (-181708523419) 0 48
+def q0frB031U1_20 : ℚ := dy3 (-726834093675) 0 50
+def q0frB031A2_20 : ℚ := dy3 (22886447041869) 0 49
+def q0frB031Bl20 : List ℚ := [dy3 (4924023) 0 18, dy3 (8884121) 0 14, dy3 (8847759) 0 6, dy3 (44983) 6 0, dy3 (8252151) 6 0, dy3 (8028875) 10 0, dy3 (8977131) 17 0, dy3 (3486527) 22 0, dy3 (1597517) 30 0, dy3 (16532047) 30 0, dy3 (12824403) 37 0, dy3 (14226193) 40 0, dy3 (9555601) 47 0, dy3 (9291251) 50 0, dy3 (10988821) 56 0, dy3 (9526167) 59 0, dy3 (5022579) 66 0]
+theorem q0frB031C20 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1668868719391786214628800123196513288999207589388676521507972 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc20 q0frB031Blo q0frB031Bhi q0frB031P20 q0frB031P21 q0frB031Ls20 q0frB031Es20 q0frB031A0_20 q0frB031L1_20 q0frB031U1_20 q0frB031A2_20 q0frB031Bl20 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R20 : ∀ x ∈ Icc ((q0frB031P20 : ℚ) : ℝ) ((q0frB031P21 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C20 q0frB031Facts
+
+def q0frB031Cc21 : ℚ := (Rat.mk' (-598134325509615) 18014398509481984 : ℚ)
+def q0frB031Ls21 : List ℚ := []
+def q0frB031Es21 : List ℚ := []
+def q0frB031A0_21 : ℚ := dy3 (-108264606293895667) 0 60
+def q0frB031L1_21 : ℚ := dy3 (111661891441) 0 49
+def q0frB031U1_21 : ℚ := dy3 (223323782883) 0 50
+def q0frB031A2_21 : ℚ := dy3 (145762547471231) 0 50
+def q0frB031Bl21 : List ℚ := [dy3 (7318315) 0 20, dy3 (14191723) 0 13, dy3 (5422407) 0 7, dy3 (9255693) 0 0, dy3 (2517249) 6 0, dy3 (6472239) 12 0, dy3 (2729153) 17 0, dy3 (11261101) 22 0, dy3 (15507055) 25 0, dy3 (6677263) 33 0, dy3 (7772509) 36 0, dy3 (11481795) 42 0, dy3 (2896213) 47 0, dy3 (14965479) 51 0, dy3 (13340743) 54 0, dy3 (7645727) 61 0, dy3 (12226397) 63 0]
+theorem q0frB031C21 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1662125815475055608568605670309057541121347304575530922953063 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc21 q0frB031Blo q0frB031Bhi q0frB031P21 q0frB031P22 q0frB031Ls21 q0frB031Es21 q0frB031A0_21 q0frB031L1_21 q0frB031U1_21 q0frB031A2_21 q0frB031Bl21 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R21 : ∀ x ∈ Icc ((q0frB031P21 : ℚ) : ℝ) ((q0frB031P22 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C21 q0frB031Facts
+
+def q0frB031Cc22 : ℚ := (Rat.mk' (-527765581331953) 18014398509481984 : ℚ)
+def q0frB031Ls22 : List ℚ := []
+def q0frB031Es22 : List ℚ := []
+def q0frB031A0_22 : ℚ := dy3 (-27065546636356897) 0 58
+def q0frB031L1_22 : ℚ := dy3 (364413126057) 0 49
+def q0frB031U1_22 : ℚ := dy3 (728826252115) 0 50
+def q0frB031A2_22 : ℚ := dy3 (-43959002291059) 0 50
+def q0frB031Bl22 : List ℚ := [dy3 (9956259) 0 19, dy3 (8535973) 0 14, dy3 (1112593) 0 3, dy3 (5524253) 0 1, dy3 (8297969) 6 0, dy3 (15382171) 9 0, dy3 (9023135) 17 0, dy3 (13335363) 20 0, dy3 (3210125) 29 0, dy3 (15776309) 30 0, dy3 (12880195) 37 0, dy3 (846613) 44 0, dy3 (9593887) 47 0, dy3 (2206383) 52 0, dy3 (5514699) 57 0, dy3 (141017) 65 0, dy3 (10079401) 65 0]
+theorem q0frB031C22 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1655437180402725217703524841591097882485457135154735008846439 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc22 q0frB031Blo q0frB031Bhi q0frB031P22 q0frB031P23 q0frB031Ls22 q0frB031Es22 q0frB031A0_22 q0frB031L1_22 q0frB031U1_22 q0frB031A2_22 q0frB031Bl22 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R22 : ∀ x ∈ Icc ((q0frB031P22 : ℚ) : ℝ) ((q0frB031P23 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C22 q0frB031Facts
+
+def q0frB031Cc23 : ℚ := (Rat.mk' (-457396837154291) 18014398509481984 : ℚ)
+def q0frB031Ls23 : List ℚ := []
+def q0frB031Es23 : List ℚ := []
+def q0frB031A0_23 : ℚ := dy3 (-108260883381694409) 0 60
+def q0frB031L1_23 : ℚ := dy3 (-216769781049) 0 50
+def q0frB031U1_23 : ℚ := dy3 (-27096222631) 0 47
+def q0frB031A2_23 : ℚ := dy3 (-73326498047949) 0 49
+def q0frB031Bl23 : List ℚ := [dy3 (6911561) 0 20, dy3 (7140957) 0 12, dy3 (2597713) 0 6, dy3 (4655571) 1 0, dy3 (2408241) 6 0, dy3 (1627139) 14 0, dy3 (1303267) 18 0, dy3 (2830061) 24 0, dy3 (14781923) 25 0, dy3 (13420221) 32 0, dy3 (3696607) 37 0, dy3 (11534771) 42 0, dy3 (10993573) 45 0, dy3 (7515187) 52 0, dy3 (12627375) 54 0, dy3 (15353951) 60 0, dy3 (5770289) 64 0]
+theorem q0frB031C23 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1648802161643599849438103986851588292155991579528513994801332 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc23 q0frB031Blo q0frB031Bhi q0frB031P23 q0frB031P24 q0frB031Ls23 q0frB031Es23 q0frB031A0_23 q0frB031L1_23 q0frB031U1_23 q0frB031A2_23 q0frB031Bl23 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R23 : ∀ x ∈ Icc ((q0frB031P23 : ℚ) : ℝ) ((q0frB031P24 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C23 q0frB031Facts
+
+def q0frB031Cc24 : ℚ := (Rat.mk' (-387028092976629) 18014398509481984 : ℚ)
+def q0frB031Ls24 : List ℚ := []
+def q0frB031Es24 : List ℚ := []
+def q0frB031A0_24 : ℚ := dy3 (-108263301067213243) 0 60
+def q0frB031L1_24 : ℚ := dy3 (-367754263243) 0 49
+def q0frB031U1_24 : ℚ := dy3 (-735508526485) 0 50
+def q0frB031A2_24 : ℚ := dy3 (21109825910953) 0 49
+def q0frB031Bl24 : List ℚ := [dy3 (9927385) 0 19, dy3 (8167619) 0 14, dy3 (2239359) 0 4, dy3 (2639073) 0 0, dy3 (2086997) 8 0, dy3 (14673175) 9 0, dy3 (9074663) 17 0, dy3 (6348747) 21 0, dy3 (6455043) 28 0, dy3 (7495385) 31 0, dy3 (12946575) 37 0, dy3 (1605231) 43 0, dy3 (9641033) 47 0, dy3 (16691591) 49 0, dy3 (346289) 61 0, dy3 (8511085) 59 0, dy3 (10124907) 65 0]
+theorem q0frB031C24 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1642220117086144114645538041951207958700045281897776903000872 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc24 q0frB031Blo q0frB031Bhi q0frB031P24 q0frB031P25 q0frB031Ls24 q0frB031Es24 q0frB031A0_24 q0frB031L1_24 q0frB031U1_24 q0frB031A2_24 q0frB031Bl24 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R24 : ∀ x ∈ Icc ((q0frB031P24 : ℚ) : ℝ) ((q0frB031P25 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C24 q0frB031Facts
+
+def q0frB031Cc25 : ℚ := (Rat.mk' (-316659348798967) 18014398509481984 : ℚ)
+def q0frB031Ls25 : List ℚ := []
+def q0frB031Es25 : List ℚ := []
+def q0frB031A0_25 : ℚ := dy3 (-108264645498047945) 0 60
+def q0frB031L1_25 : ℚ := dy3 (51677641643) 0 48
+def q0frB031U1_25 : ℚ := dy3 (206710566573) 0 50
+def q0frB031A2_25 : ℚ := dy3 (147778368030731) 0 50
+def q0frB031Bl25 : List ℚ := [dy3 (6775453) 0 20, dy3 (14376945) 0 13, dy3 (4957303) 0 7, dy3 (2342639) 2 0, dy3 (9177509) 4 0, dy3 (3274131) 13 0, dy3 (9916045) 15 0, dy3 (11386479) 22 0, dy3 (14031011) 25 0, dy3 (6747865) 33 0, dy3 (14004107) 35 0, dy3 (11597365) 42 0, dy3 (5193103) 46 0, dy3 (7554651) 52 0, dy3 (23237) 63 0, dy3 (15432267) 60 0, dy3 (10841219) 63 0]
+theorem q0frB031C25 : cellW q0frFq 12 56 200 1606938044258990275541962092341162602522202993782792835301376 0 2 1635690414831332133364236281356839364920280943373682161746591 116426194196013340132069552692147602407348072620924929572864 q0frB031Cc25 q0frB031Blo q0frB031Bhi q0frB031P25 q0frB031P26 q0frB031Ls25 q0frB031Es25 q0frB031A0_25 q0frB031L1_25 q0frB031U1_25 q0frB031A2_25 q0frB031Bl25 q0frB031BM q0frT = true := by decide +kernel
+theorem q0frB031R25 : ∀ x ∈ Icc ((q0frB031P25 : ℚ) : ℝ) ((q0frB031P26 : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cellW_sound _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ q0frB031C25 q0frB031Facts
+
+theorem q0frB031Bound : ∀ x ∈ Icc ((q0frB031Blo : ℚ) : ℝ) ((q0frB031Bhi : ℚ) : ℝ), fieldTower q0frFq (poleF q0frFq.poles) 0 x ≤ (q0frT : ℝ) :=
+  cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (cover_union (q0frB031R0) q0frB031R1) q0frB031R2) q0frB031R3) q0frB031R4) q0frB031R5) q0frB031R6) q0frB031R7) q0frB031R8) q0frB031R9) q0frB031R10) q0frB031R11) q0frB031R12) q0frB031R13) q0frB031R14) q0frB031R15) q0frB031R16) q0frB031R17) q0frB031R18) q0frB031R19) q0frB031R20) q0frB031R21) q0frB031R22) q0frB031R23) q0frB031R24) q0frB031R25
+
+end CatalanMeasure.GenD.Signed.Data.Cells

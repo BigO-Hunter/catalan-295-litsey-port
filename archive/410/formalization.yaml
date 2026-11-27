@@ -1,0 +1,172 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/mathlib-initiative/formalization.yaml/main/schema/formalization.schema.json
+version: "v0.4"
+
+project:
+  name: "An irrationality measure for Catalan's constant"
+  description: >-
+    For Catalan's constant G = sum_{j >= 0} (-1)^j / (2j+1)^2, we prove
+    |G-a/b| > b^(-410) for every integer a and all sufficiently large b, so the
+    irrationality exponent of G is at most 410. The proof uses OpenAI's
+    determinant construction for an arbitrary design of five integer parameters,
+    here (58,9,3,5,3), with a determinant of size 58N whose value is a polynomial
+    of degree 53N in the constant. At a prime p the denominator of the
+    determinant is smaller by the dimension of the kernel of the reduction modulo
+    p of the matrix of rational parts. Four closed formulas and a counting
+    inequality for the nullity, applied on 34 windows of primes to fixed rational
+    subspaces with stored integer kernel vectors, give a piecewise linear profile
+    of area at least 22.05325 in units of N^2. At the real place a signed bound
+    for the determinant of the row functions (a Pick matrix argument, a Schur
+    complement, Heine's formula for the negative block and an energy inequality
+    for signed measures) adds 8.29824 to the decay rate. A Gauss quadrature
+    formula with 53N nodes, with a binomial bound for generalized Vandermonde
+    determinants and a contour bound for each column weight, extends the bound to
+    an interval of length exp(-rho N) around G, with rho = 296.586... The energy
+    estimates use trial sequences given by logarithmic potentials of point
+    charges, verified on cells with an exact local Taylor expansion. The decay
+    rate is eta = 38.33924, and a criterion with a free lower end of the window
+    of primes gives the exponent 410: its last condition reads
+    410 > d rho / (eta - 4 d delta) = 409.99999... with d = 53 and
+    delta = 2.9e-7. Denominator and content asymptotics and the choice of the
+    prime use the prime number theorem. All numerical bounds are ordinary
+    kernel-checked rational proofs.
+  authors:
+    - "Sean Litsey"
+  license: "Apache-2.0"
+  responsible_maintainers:
+    - "Sean Litsey"
+
+classification:
+  arxiv: ["math.NT"]
+  msc2020: ["11J82", "11J72"]
+
+sources:
+  - title: "An irrationality measure for Catalan's constant"
+    type: original-proof
+    relationship: other
+    note: >-
+      The companion paper by S. Litsey (2026), whose arguments the Lean
+      development follows. LaTeX source and PDF are in paper/
+      (catalan-measure-hexagon.tex is the single-file version); Hexagon preprint
+      hexagon:2610.00187.
+  - title: "Catalan's constant is irrational"
+    authors:
+      - "OpenAI"
+    id: "https://github.com/openai/math/tree/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/preprints/Catalans-constant-is-irrational-September-24-2026"
+    type: "preprint with Lean formalization"
+    location: "https://github.com/openai/math"
+    relationship: other
+    note: >-
+      Preprint dated September 24, 2026, released October 6, 2026. Supplies the
+      determinant construction, the local estimates, the nonvanishing argument and
+      the energy method at the real place on which the measure is built. Its Lean
+      formalization is vendored in OAI/ (see NOTICE). The irrationality measure
+      itself is not in that work.
+    license: "Apache-2.0"
+    author_endorsement: not-contacted
+  - title: "A finite irrationality measure for Catalan's constant"
+    authors:
+      - "Rohit Kumar Jha"
+    id: "doi:10.5281/zenodo.23237269"
+    type: preprint
+    location: "https://doi.org/10.5281/zenodo.23237269"
+    relationship: background
+    note: >-
+      Independent proof of mu(G) <= 10^8, also formalized in Lean on top of
+      OpenAI's work. Not used in this proof.
+    author_endorsement: not-contacted
+  - title: "General designs and an irrationality exponent for Catalan's constant"
+    authors:
+      - "Marcos Costa Santos Carreira"
+    id: "doi:10.5281/zenodo.23532239"
+    type: preprint
+    location: "https://github.com/MarcosCarreira/catalan-designs"
+    relationship: background
+    note: >-
+      Five-parameter determinant designs, the bound mu(G) < 2294 and a
+      two-measure equilibrium formulation of the real-place constant; cited in
+      the companion paper. No code or theorem from that work is imported.
+    author_endorsement: not-contacted
+
+related_formalizations:
+  - id: "https://github.com/openai/math/tree/fd4aeeb2ee4fc729c18d98444fed42fd0529eeeb/lean/OAI/NumberTheory/Catalan"
+    relationship: builds-on
+    note: >-
+      OpenAI's formalization of the irrationality of Catalan's constant. 479
+      files of it are vendored in OAI/, of which the proof imports 386, together
+      with the 10 files that OpenAI adds to PrimeNumberTheoremAnd; they were
+      converted to Lean's module system and ported from Lean v4.34.1 to
+      v4.35.0-rc2. Apart from comparison constants given to seven digits in 37
+      certificate files, which the proof does not import, their mathematical
+      content is unchanged.
+  - id: "https://github.com/rohitkrjha/catalan-measure"
+    relationship: independent
+    note: >-
+      Jha's formalization of mu(G) <= 10^8, built independently on OpenAI's
+      formalization. No code is shared.
+
+status:
+  scope: >-
+    The statement in Challenge.lean, with Catalan's constant written as a series,
+    is fully proved in Solution.lean by
+    CatalanMeasure.GenD.Signed.catalan_irrationalityMeasure_410.
+    Every result of the companion paper is formalized, including the degree and
+    denominator bounds, the nonvanishing, the closed formulas and the counting
+    inequality for the rank deficiencies with the stored kernel vectors, the
+    divisibility of the coefficients, the signed bound for the determinant of the
+    row functions, the quadrature perturbation estimate, the energy bounds and
+    their numerical certificates, and the criterion with the
+    choice of the prime. The prime number theorem comes from the PNT+ project
+    through OpenAI's vendored formalization. The paper's remarks on the method
+    are not formalized. The solution has no sorry and no native_decide;
+    #print axioms reports only propext, Classical.choice and Quot.sound.
+    comparator.json configures lake comparator for this statement, and the
+    comparator job of the CI workflow runs it with Lean's kernel and the NanoDa
+    and con-ron kernels bundled with the toolchain.
+  sorry_count: 0
+  sorry_in_definitions: 0
+  axioms: []
+
+automation:
+  methods:
+    - method: agent
+      models: ["Claude Opus 5.5", "Claude Sonnet 5.5", "Claude Haiku 5.5"]
+      framework: "Claude Code"
+      tool_setup: >-
+        AI agents wrote the mathematics, Lean proofs, certificate generators and text, using Python, Lean 4, Lake and Mathlib.
+    - method: agent
+      models: ["GPT-6.1 Sol (OpenAI)"]
+      framework: "Codex"
+      tool_setup: >-
+        AI agents wrote the mathematics, Lean proofs, certificate generators and text, using Python, Lean 4, Lake and Mathlib.
+  spend_usd: "subscription-based"
+  notes: >-
+    Both systems worked at the request of the human author, who posed the problem,
+    directed the work and is responsible for the submission. New certificates use
+    decide +kernel, without native_decide or additional axioms.
+
+fidelity:
+  divergences: >-
+    None known. The Lean statement is the paper's Theorem 1.1 in the form
+    "for all sufficiently large b and all integers a" (Filter.atTop), which is
+    the definition of an irrationality-measure bound.
+
+review:
+  status: "self-assessed"
+  reviewers: []
+  notes: >-
+    The statement in Challenge.lean was checked against the companion paper, and
+    the constants, definitions and hypotheses stated in the paper were checked
+    against the Lean development. No independent human review has been performed.
+
+alignment:
+  namespace: "CatalanIrrationalityMeasure"
+  statements:
+    - source: "Litsey (2026), Theorem 1.1"
+      lean: "CatalanIrrationalityMeasure.catalan_irrationalityMeasure_410"
+      module: "Challenge"
+      status: proved
+      note: "For all large b and all integers a, b^(-410) < |G - a/b|."
+
+acknowledgements: >-
+  OpenAI's formalization of the irrationality of Catalan's constant; the
+  PrimeNumberTheoremAnd project; Mathlib; the Lean FRO.
