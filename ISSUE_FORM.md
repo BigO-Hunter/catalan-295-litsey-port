@@ -10,6 +10,5 @@ The construction and the proof are Sean Litsey's (slitsey/catalan-irrationality-
 @ 65cfcc21); our role is the toolchain port to Lean v4.34.1 + Mathlib d13f23b7 and the
 Submission-layout conversion, with attribution in NOTICE-PORT.md and the statement
 `Race.bound : BigOSpeedrun.Catalan.Bound (295/1)` built and axiom-audited here.
-The local repository is at /Volumes/Substrate-1/bigo/litsey295-port on branch
-catalan-295-v4.34.1-port; it needs to be pushed to a public repository before filing,
-and the SHA above must then be replaced with the pushed commit.
+The port is published in the repository above; the SHA above must be replaced
+with the filed commit.

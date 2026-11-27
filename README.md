@@ -5,6 +5,8 @@ trigamma-difference measures to the Big O Speedrun board pin (Lean v4.34.1, Math
 Construction + proof: Litsey @ `65cfcc21`; port: darkhipo swarm. This is the catalan cluster's
 frontier repo.
 
+> Board (Nov 26 2026): this repo verifies μ(G) ≤ 295 (Lean); the open race is currently led by S. Litsey's claimed μ(G) ≤ 270 (Nov 8) — see [bigospeedrun.com](https://bigospeedrun.com).
+
 > **Theorem.** μ(G) ≤ 295; μ(G ± 5π²/48) ≤ 31.2876 (both signs); μ(L(2, χ₋₃)) ≤ 13.7046;
 > μ(L(2, χ₋₃) ± π²/9) ≤ 9.4998 (both signs); μ(ψ′(a/5) − π²/6) ≤ 23.8272 (a = 1…4);
 > μ(ψ′(a/7) − π²/6) ≤ 2207.8697 (a = 1…6); μ(π²) ≤ 6.5253 (completeness only).
@@ -14,7 +16,7 @@ frontier repo.
 
 | repo | role |
 |---|---|
-| **catalan-295-litsey-port** (this repo) | frontier: the strongest published Catalan bound, ported and verified at the board pin |
+| **catalan-295-litsey-port** (this repo) | frontier: the strongest Lean-verified Catalan bound in this org, ported at the board pin |
 | [`archive/410/`](archive/410/) | the superseded μ(G) ≤ 410 conversion (former `catalan-irrationality-measure-410`), folded byte-exact with full history; its research branches are preserved as `archive/410/*` refs — [branch map](archive/410-BRANCHES.md) · [OOM engineering](docs/oom-engineering.md) |
 | [catalan-constant-gen5](https://github.com/BigO-Hunter/catalan-constant-gen5) | distinct Davis-chain method (generated degree-130 Zolotarev polynomial, μ(G) ≤ 528.2315). This port imports Davis's quadrature nodes + 33 Lean files @ `3c45153` from that chain: [`CatalanMeasure/GenD/Signed/Davis/`](CatalanMeasure/GenD/Signed/Davis/), Apache-2.0, NOTICE + PROVENANCE.json |
 | [catalan-irrationality-measure-411](https://github.com/BigO-Hunter/catalan-irrationality-measure-411) | byte-identical twin of the 410 main (`0738347d`) carrying the CI-sharding PR #1 (the OOM build fix) |
