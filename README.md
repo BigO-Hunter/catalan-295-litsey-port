@@ -17,7 +17,7 @@ frontier repo.
 | **catalan-295-litsey-port** (this repo) | frontier: the strongest published Catalan bound, ported and verified at the board pin |
 | [`archive/410/`](archive/410/) | the superseded μ(G) ≤ 410 conversion (former `catalan-irrationality-measure-410`), folded byte-exact with full history; its research branches are preserved as `archive/410/*` refs — [branch map](archive/410-BRANCHES.md) · [OOM engineering](docs/oom-engineering.md) |
 | [catalan-constant-gen5](https://github.com/BigO-Hunter/catalan-constant-gen5) | distinct Davis-chain method (generated degree-130 Zolotarev polynomial, μ(G) ≤ 528.2315). This port imports Davis's quadrature nodes + 33 Lean files @ `3c45153` from that chain: [`CatalanMeasure/GenD/Signed/Davis/`](CatalanMeasure/GenD/Signed/Davis/), Apache-2.0, NOTICE + PROVENANCE.json |
-| [catalan-irrationality-measure-411](https://github.com/BigO-Hunter/catalan-irrationality-measure-411) | byte-identical twin of the 410 main (`0738347d`) carrying the in-flight CI-sharding PR #1 (the OOM build fix); no distinct bound — slated to fold here once PR #1 lands |
+| [catalan-irrationality-measure-411](https://github.com/BigO-Hunter/catalan-irrationality-measure-411) | byte-identical twin of the 410 main (`0738347d`) carrying the CI-sharding PR #1 (the OOM build fix) |
 
 ## What's in it
 
@@ -37,8 +37,8 @@ the board verifies at the pin). The archived 410 head is explicitly **unverified
 
 ## Next steps
 
-Independent rebuilds; reruns of the other fifteen measures; the OOM/build engineering continues
-in 411 PR #1 (cone + 8 cell shards) and folds here when green — [docs/oom-engineering.md](docs/oom-engineering.md).
+Independent rebuilds; reruns of the other fifteen measures. OOM/build engineering:
+[docs/oom-engineering.md](docs/oom-engineering.md) (411 PR #1 — cone + 8 cell shards).
 
 ## Reproduction
 
@@ -64,15 +64,6 @@ at https://submit.palomar-registry.org/. Apache License 2.0 — [`LICENSE`](LICE
 
 ---
 
-## Why this repo is up
-
-Reproducible verified bounds: the strongest published Catalan proof rebuilds at the verifier's
-toolchain — public evidence, and the tidy home of the superseded 410 port and its OOM research.
-
-[BigO-Hunter](https://github.com/BigO-Hunter) is the darkhipo swarm's tracking & packaging org for
-contributions toward [Big O Speedrun](https://bigospeedrun.com) — a companion, never the project.
-Org story: [profile](https://github.com/BigO-Hunter/.github) · [bigo-hunter.github.io](https://bigo-hunter.github.io).
-
-## What work can be done here
-
-Independent rebuilds; reruns of the fifteen trigamma measures; fold 411's CI sharding once PR #1 is green.
+[BigO-Hunter](https://github.com/BigO-Hunter) — the darkhipo swarm's tracking & packaging org for
+[Big O Speedrun](https://bigospeedrun.com) contributions. [Org profile](https://github.com/BigO-Hunter/.github) ·
+[bigo-hunter.github.io](https://bigo-hunter.github.io).
